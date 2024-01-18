@@ -1,0 +1,1 @@
+ssh -i C:\Users\grube\.ssh\id_rsa -l ubuntu 138.246.236.90 

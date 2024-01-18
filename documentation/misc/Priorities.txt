@@ -1,0 +1,17 @@
+High:
+	Graph Lib
+	Zwischenergebnisse speichern
+	Paper (-> Evaluation: Mergen vs Regierungsbezirke/PLZ/Ground Truth)
+	Uni Kassel einlesen
+	Dennis Kompilieren und zum Laufen kriegen
+
+Mid:
+	IO Lib
+	Filter (zb nach Siedlungsgröße)
+
+	DichteFkt
+	Straßenkarte für die Bildung von Kanten (-> Software unterstützen)
+
+Low:
+	GUI ?
+	Preview (->GUI)

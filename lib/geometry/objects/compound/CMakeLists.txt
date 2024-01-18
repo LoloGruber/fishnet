@@ -1,0 +1,3 @@
+add_library(geometry_compound_features INTERFACE)
+target_include_directories(geometry_compound_features INTERFACE ${CMAKE_CURRENT_LIST_DIR})
+target_link_libraries(geometry_compound_features INTERFACE geometry_objects_base)

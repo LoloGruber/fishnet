@@ -1,0 +1,7 @@
+/.vscode
+/build
+/.idea
+/cmake-build-debug
+/uni_kassel
+cmake-build-debug/CMakeFiles/clion-environment.txt
+cmake-build-debug/CMakeFiles/clion-log.txt

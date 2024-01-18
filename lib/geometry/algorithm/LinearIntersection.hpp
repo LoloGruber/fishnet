@@ -1,0 +1,33 @@
+#pragma once
+#include "Vec2D.hpp"
+#include <optional>
+#include "LinearGeometry.hpp"
+
+namespace fishnet::geometry{
+
+constexpr static std::optional<Vec2DReal> inline linearIntersection(ILine auto  const& l, ILine auto  const & r) noexcept {
+    if (l.isParallel(r)) return std::nullopt;
+    auto dThis = Vec2DReal(l.direction());
+    const auto & p = l.p;
+    const auto & q = l.q;
+    using namespace fishnet::math;
+    DEFAULT_FLOATING_POINT denominator = (p.x - q.x) * (r.p.y - r.q.y) - (p.y - q.y) *(r.p.x - r.q.x);
+    DEFAULT_FLOATING_POINT lambda = ((p.x - r.p.x) * (r.p.y - r.q.y) - (p.y - r.p.y) * (r.p.x - r.q.x)) /denominator;
+    Vec2DReal intersectionOfLines =  p + (dThis * lambda);
+    return std::optional(intersectionOfLines);
+}
+
+constexpr static std::optional<Vec2DReal> inline linearIntersection(LinearGeometry auto const& lhs, LinearGeometry auto const& rhs) noexcept {
+    auto intersection =  linearIntersection(lhs.toLine(),rhs.toLine());
+    if (intersection and lhs.contains(*intersection) and rhs.contains(*intersection)) return intersection;
+    return std::nullopt;
+}
+
+constexpr static bool inline areParallel(LinearGeometry auto const & lhs, LinearGeometry auto const & rhs) noexcept {
+    return lhs.direction().isParallel(rhs.direction());
+}
+
+constexpr static bool intersect(LinearGeometry auto const & lhs,LinearGeometry auto const& rhs) noexcept {
+    return linearIntersection(lhs,rhs).has_value();
+}
+}

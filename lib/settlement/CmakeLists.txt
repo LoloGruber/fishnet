@@ -1,0 +1,9 @@
+add_library(settlement STATIC
+Settlement.h
+Settlement.cpp
+builder/ISettlementBuilder.h
+builder/OverlappingPolygonBuilder.h
+builder/OverlappingPolygonBuilder.cpp
+factory/SettlementFactory.h
+)
+target_link_libraries(settlement geometry)

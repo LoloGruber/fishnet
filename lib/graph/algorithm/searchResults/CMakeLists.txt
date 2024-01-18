@@ -1,0 +1,3 @@
+add_library(graph_algo_result INTERFACE)
+target_link_libraries(graph_algo_result INTERFACE graph_model util)
+target_include_directories(graph_algo_result INTERFACE ${CMAKE_CURRENT_LIST_DIR})

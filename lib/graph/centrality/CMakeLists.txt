@@ -1,0 +1,3 @@
+add_library(graph_centrality INTERFACE)
+target_include_directories(graph_centrality INTERFACE ${CMAKE_CURRENT_LIST_DIR})
+target_link_libraries(graph_centrality INTERFACE graph_model)

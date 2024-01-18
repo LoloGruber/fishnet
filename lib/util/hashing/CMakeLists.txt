@@ -1,0 +1,7 @@
+add_library(util_hashing_concepts INTERFACE)
+target_include_directories(util_hashing_concepts INTERFACE ${CMAKE_CURRENT_LIST_DIR}/concepts)
+target_link_libraries(util_hashing_concepts INTERFACE util_functional_concepts)
+
+add_library(util_hashing INTERFACE)
+target_include_directories(util_hashing INTERFACE ${CMAKE_CURRENT_LIST_DIR})
+target_link_libraries(util_hashing INTERFACE util_hashing_concepts)

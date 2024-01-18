@@ -1,0 +1,5 @@
+Task "Reading Input" took   15s 295.9ms
+Task "Filtering" took       15s 210.3ms
+Task "Neighbours" took       9s 271.7ms
+Task "Contraction" took     40s 796.6ms
+Task "Visualization" took  106s 044.0ms

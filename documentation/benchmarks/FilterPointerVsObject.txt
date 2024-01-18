@@ -1,0 +1,51 @@
+SimpleFilter:
+
+Pointer:
+Task "Filter" took 426.062ms
+Task "Filter" took 421.778ms
+Task "Filter" took 425.217ms
+Task "Filter" took 422.799ms
+Task "Filter" took 422.949ms
+Task "Filter" took 419.438ms
+Task "Filter" took 420.96ms
+Task "Filter" took 421.857ms
+Task "Filter" took 422.344ms
+Task "Filter" took 421.456ms
+
+Object:
+Task "Filter" took 443.123ms
+Task "Filter" took 449.547ms
+Task "Filter" took 450.683ms
+Task "Filter" took 453.047ms
+Task "Filter" took 448.89ms
+Task "Filter" took 452.911ms
+Task "Filter" took 449.653ms
+Task "Filter" took 448.705ms
+Task "Filter" took 448.033ms
+Task "Filter" took 447.919ms
+
+Complex Filter:
+
+Pointer:
+Task "Filter" took 14735.7ms
+Task "Filter" took 14576.2ms
+Task "Filter" took 14467.8ms
+Task "Filter" took 14412.7ms
+Task "Filter" took 14666.8ms
+Task "Filter" took 14612.2ms
+Task "Filter" took 14738.4ms
+Task "Filter" took 14740ms
+Task "Filter" took 14576.3ms
+Task "Filter" took 14492.9ms
+
+Object:
+Task "Filter" took 14645.2ms
+Task "Filter" took 14587ms
+Task "Filter" took 14554.8ms
+Task "Filter" took 14549.8ms
+Task "Filter" took 14511.9ms
+Task "Filter" took 14734ms
+Task "Filter" took 14786.6ms
+Task "Filter" took 14881.4ms
+Task "Filter" took 14985.1ms
+Task "Filter" took 15097.3ms
