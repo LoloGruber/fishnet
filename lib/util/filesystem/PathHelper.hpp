@@ -4,7 +4,7 @@
 
 namespace util {
 
-constexpr static const char * PROJECT_NAME = "2022-mp-lorenz-gruber";
+constexpr static const char * PROJECT_NAME = "fishnet";
 class PathHelper{
 public:
     static std::filesystem::path getCurrentPath() noexcept;

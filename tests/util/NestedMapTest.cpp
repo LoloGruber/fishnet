@@ -45,8 +45,8 @@ TEST_F(NestedMapTest, contains) {
     EXPECT_FALSE(map.contains(3,"Three"));
     EXPECT_FALSE(map.contains(1,"one"));
     EXPECT_TRUE(map.contains(0,"Zero"));
-    EXPECT_TRUE(map.containsOuter(0));
-    EXPECT_FALSE(map.containsOuter(-1));
+    EXPECT_TRUE(map.containsOuterKey(0));
+    EXPECT_FALSE(map.containsOuterKey(-1));
 }
 
 TEST_F(NestedMapTest, try_insert) {

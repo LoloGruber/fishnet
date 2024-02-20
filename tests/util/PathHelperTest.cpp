@@ -6,6 +6,6 @@ TEST(PathHelperTest, getCurrentPath) {
 }
 
 TEST(PathHelperTest, projectDirectory) {
-    EXPECT_EQ(PathHelper::projectDirectory("2022-mp-lorenz-gruber"),std::filesystem::path("/home/lolo/Documents/fishnet/2022-mp-lorenz-gruber"));
+    EXPECT_EQ(PathHelper::projectDirectory("fishnet"),std::filesystem::path("/home/lolo/Documents/fishnet"));
 }
 

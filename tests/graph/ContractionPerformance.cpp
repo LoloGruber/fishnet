@@ -8,6 +8,9 @@
 #include <fstream>
 #include "WeightedGraph.h"
 #define PERFORMANCE_TEST true
+
+using namespace fishnet::graph;
+
 struct MergePredicate{
     bool operator()(const XYNode & n1, const XYNode & n2)const{
         return n1.distanceTo(n2) <= 1.0;
@@ -27,20 +30,19 @@ struct DistanceFunction{
 };
 
 struct EdgeLessThan{
-    bool operator()(const graph::WeightedEdge auto  & e1, const graph::WeightedEdge auto & e2) const {
+    bool operator()(const WeightedEdge auto  & e1, const WeightedEdge auto & e2) const {
         return e1.getWeight() < e2.getWeight();
     }
 };
 
 struct EdgeGreaterThan{
-    bool operator()(const graph::WeightedEdge auto & e1, const graph::WeightedEdge auto & e2) const {
+    bool operator()(const WeightedEdge auto & e1, const WeightedEdge auto & e2) const {
         return e1.getWeight() > e2.getWeight();
     }
 };
 
 
-
-using WG = graph::Weighted<graph::UndirectedGraph<XYNode>,double,DistanceFunction>;
+using WG = Weighted<UndirectedGraph<XYNode>,double,DistanceFunction>;
 static void legacyMerge( WG& copy, std::function<bool(const XYNode &,const XYNode &)> Predicate){
     MergeFunction Merger;
 
@@ -109,7 +111,7 @@ static void benchmarkConnectedComponentsMerge(std::ofstream & outputFile, const 
     };
     {
         StopWatch w;
-        auto result = graph::contract(source,MergePred(),MergeFunction(),workers);
+        auto result = contract(source,MergePred(),MergeFunction(),workers);
         outputFile << w.stop() <<";";
     }
 }
