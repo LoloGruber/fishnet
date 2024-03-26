@@ -1,6 +1,6 @@
 #pragma once
 #include <typeinfo>
-#include <gdal/ogr_feature.h>
+#include <ogr_feature.h>
 #include <variant>
 #include <typeindex>
 #include "FieldType.hpp"

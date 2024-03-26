@@ -15,10 +15,10 @@
 #include "AlternativeKeyMap.hpp"
 #include "NestedMap.hpp"
 
-#include <gdal/ogr_spatialref.h>
-#include <gdal/gdal.h>
-#include <gdal/gdal_priv.h>
-#include <gdal/ogr_core.h>
+#include <ogr_spatialref.h>
+#include <gdal.h>
+#include <gdal_priv.h>
+#include <ogr_core.h>
 
 namespace fishnet {
 
@@ -60,6 +60,7 @@ private:
 
     static void initGDAL()noexcept{
         GDALAllRegister();
+        CPLSetConfigOption("PROJ_LIB", "/home/lolo/CLionProjects/fishnet/cmake-build-debug/vcpkg_installed/x64-linux/share/proj/proj.db");
         initializedGDAL = true;
     }
 
@@ -67,8 +68,10 @@ private:
     constexpr static const char * FISHNET_ID_FIELD_NAME = "FISHNET_ID";
 
     VectorLayer(const Shapefile & shapefile){
-        if(not initializedGDAL) initGDAL();
-        if(not shapefile.exists()) return;
+        if(not initializedGDAL)
+            initGDAL();
+        if(not shapefile.exists())
+            return;
         GDALDataset * ds = (GDALDataset *) GDALOpenEx(shapefile.getPath().c_str(), GDAL_OF_VECTOR,0,0,0);
         OGRLayer * layer = ds->GetLayer(0);
         for(const auto & feature: layer){

@@ -1,6 +1,6 @@
 #pragma once
 #include "GeometryType.hpp"
-#include <gdal/ogrsf_frmts.h>
+#include <ogrsf_frmts.h>
 
 namespace fishnet {
 using namespace fishnet::geometry;
