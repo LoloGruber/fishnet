@@ -7,6 +7,7 @@
 #include "GeometryObject.hpp"
 #include "CollectionConcepts.hpp"
 #include "Shapefile.hpp"
+#include "GDALInitializer.hpp"
 
 #include "FieldType.hpp"
 #include "GeometryTypeWKBAdapter.hpp"
@@ -14,6 +15,8 @@
 #include "OGRGeometryAdapter.hpp"
 #include "AlternativeKeyMap.hpp"
 #include "NestedMap.hpp"
+
+#include "Feature.hpp"
 
 #include <ogr_spatialref.h>
 #include <gdal.h>
@@ -47,29 +50,20 @@ namespace fishnet {
 template<geometry::GeometryObject G>
 class VectorLayer{
 private:
-
-
     OGRSpatialReference spatialRef;
     size_t objectCounter = 0;
     std::vector<std::pair<size_t,G>> objects;
-    // std::unordered_map<size_t,AttributeSet> attributes;
+
+
     util::NestedMap<size_t,FieldID,FieldType> attributes; // (geometryID,FieldID) -> Value 
 
     size_t fieldCounter = 0;
     util::AlternativeKeyMap<FieldID,std::string,std::type_index> fields;
 
-    static void initGDAL()noexcept{
-        GDALAllRegister();
-        CPLSetConfigOption("PROJ_LIB", "/home/lolo/CLionProjects/fishnet/cmake-build-debug/vcpkg_installed/x64-linux/share/proj/proj.db");
-        initializedGDAL = true;
-    }
-
-    static inline bool initializedGDAL = false;
     constexpr static const char * FISHNET_ID_FIELD_NAME = "FISHNET_ID";
 
     VectorLayer(const Shapefile & shapefile){
-        if(not initializedGDAL)
-            initGDAL();
+        GDALInitializer::init();
         if(not shapefile.exists())
             return;
         GDALDataset * ds = (GDALDataset *) GDALOpenEx(shapefile.getPath().c_str(), GDAL_OF_VECTOR,0,0,0);
@@ -88,8 +82,7 @@ private:
     }
 
     VectorLayer(const OGRSpatialReference & spatialReference):spatialRef(spatialReference){
-        if(not initializedGDAL)
-            initGDAL();
+        GDALInitializer::init();
     }
 
     constexpr void writeToDisk(const Shapefile & destination) const noexcept{
