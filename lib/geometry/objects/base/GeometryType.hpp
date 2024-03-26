@@ -5,7 +5,7 @@ enum class GeometryType {
     POINT,SEGMENT,RAY,LINE,RING,POLYGON,MULTIPOLYGON
 };
 }
-
+#include <string>
 namespace std {
     static string to_string(fishnet::geometry::GeometryType type) noexcept {
         switch(type) {
