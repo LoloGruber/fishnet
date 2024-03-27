@@ -24,7 +24,7 @@ private:
             return std::get<T>(value);
         }
 
-        size_t getFieldID() const {
+        [[nodiscard]] size_t getFieldID() const {
             return fieldID;
         }
     };

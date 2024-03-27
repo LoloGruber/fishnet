@@ -59,5 +59,9 @@ TEST(FeatureTest, hasAttribute){
 }
 
 TEST(FeatureTest, getAttribute) {
-    TODO();
+    Feature f{geometry::Vec2DStd(0, 0)};
+    auto myField = FieldDefinitionTestFactory<int>::createField("amount");
+    EXPECT_EMPTY(f.getAttribute(myField));
+    f.addAttribute(myField, 1);
+    EXPECT_VALUE(f.getAttribute(myField));
 }
