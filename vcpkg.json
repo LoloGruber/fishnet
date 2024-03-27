@@ -8,5 +8,8 @@
   }, {
     "name" : "proj",
     "version>=" : "9.0.0"
+  }, {
+    "name" : "curl",
+    "version>=" : "8.6.0#1"
   } ]
 }
