@@ -172,13 +172,24 @@ void EXPECT_CONTAINS_ALL( std::ranges::view auto  view, std::ranges::range auto 
     EXPECT_TRUE(result);
 }
 
+template<typename T>
+concept supportsIOAppend = requires(const T & t, std::ostream & os){
+    {os << t} -> std::convertible_to<std::ostream>;
+};
+
 void EXPECT_UNSORTED_RANGE_EQ(std::ranges::forward_range auto const & actual, std::ranges::forward_range auto const & expected) {
     if(util::size(actual) != util::size(expected)){
         FAIL() << "Ranges have a different size!"<<"\nExpecting: "<<util::size(expected)<<" but was: " << util::size(actual);
         return;
     }
     for(const auto & expectedElement : expected){
-        EXPECT_NE(std::ranges::find(actual,expectedElement),std::ranges::end(actual)) <<"Actual does not contain " << expectedElement;
+        if constexpr (supportsIOAppend<decltype(expectedElement)>){
+            EXPECT_NE(std::ranges::find(actual,expectedElement),std::ranges::end(actual)) <<"Actual does not contain " << expectedElement;
+        }
+        else {
+            EXPECT_NE(std::ranges::find(actual, expectedElement), std::ranges::end(actual))
+                                << "Actual does not contain expected element";
+        }
     }
 }
 
@@ -280,12 +291,15 @@ void EXPECT_TYPE(const auto & value){
 }
 
 template<typename T>
-void EXPECT_VALUE(const std::optional<T> & opt) {
+concept OptionalOrExpected = requires(const T & t){
+    {t.has_value()} -> std::convertible_to<bool>;
+};
+
+void EXPECT_VALUE(const OptionalOrExpected auto & opt) {
     EXPECT_TRUE(opt.has_value());
 }
 
-template<typename T>
-void EXPECT_EMPTY(const std::optional<T> & opt){
+void EXPECT_EMPTY(const OptionalOrExpected auto & opt){
     EXPECT_FALSE(opt.has_value());
 }
 
