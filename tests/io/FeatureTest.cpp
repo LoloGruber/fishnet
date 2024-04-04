@@ -50,7 +50,7 @@ TEST(FeatureTest, hasAttribute){
     Feature f{geometry::Vec2DStd(0, 0)};
     auto length = FieldDefinitionTestFactory<double>::createField("length");
     EXPECT_FALSE(f.hasAttribute(length));
-    EXPECT_TRUE(f.addAttribute(length,1));
+    EXPECT_TRUE(f.addAttribute(length,1.0));
     EXPECT_TRUE(f.hasAttribute(length));
     auto amount = FieldDefinitionTestFactory<int>::createField("amount");
     EXPECT_FALSE(f.hasAttribute(amount));
@@ -64,4 +64,33 @@ TEST(FeatureTest, getAttribute) {
     EXPECT_EMPTY(f.getAttribute(myField));
     f.addAttribute(myField, 1);
     EXPECT_VALUE(f.getAttribute(myField));
+}
+
+TEST(FeatureTest, removeAttribute) {
+    Feature f{geometry::Vec2DStd(0, 0)};
+    auto myField = FieldDefinitionTestFactory<int>::createField("amount");
+    f.addAttribute(myField, 0);
+    EXPECT_TRUE(f.hasAttribute(myField));
+    auto otherField = FieldDefinitionTestFactory<double>::createField("unused");
+    EXPECT_NO_FATAL_FAILURE(f.removeAttribute(otherField));
+    EXPECT_TRUE(f.hasAttribute(myField));
+    EXPECT_NO_FATAL_FAILURE(f.removeAttribute(myField));
+    EXPECT_FALSE(f.hasAttribute(myField));
+    EXPECT_FALSE(f.hasAttribute(otherField));
+}
+
+TEST(FeatureTest, equality) {
+    Feature lhs{geometry::Vec2DReal(0, 0)};
+    Feature rhs{geometry::Vec2DReal(0, 0)};
+    EXPECT_EQ(lhs,rhs);
+    auto myField = FieldDefinitionTestFactory<int>::createField("amount");
+    lhs.addAttribute(myField, 1);
+    EXPECT_NE(lhs,rhs);
+    auto otherField = FieldDefinitionTestFactory<long>::createField("different Field");
+    rhs.addAttribute(otherField, 1); // Same value but different field
+    EXPECT_NE(lhs,rhs);
+    Feature copyOfLhs = lhs;
+    EXPECT_EQ(lhs,copyOfLhs);
+    lhs.setAttribute(myField, 2); // Same field, different value
+    EXPECT_NE(lhs,copyOfLhs);
 }
