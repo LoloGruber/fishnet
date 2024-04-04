@@ -4,6 +4,7 @@
 #include <variant>
 #include <typeindex>
 #include "FieldType.hpp"
+#include "FieldDefinition.hpp"
 namespace fishnet{
 
 class OGRFieldAdapter{
@@ -16,13 +17,19 @@ public:
         return OFTString;
     }
 
-    static void setFieldValue(OGRFeature * feature, const std::string & fieldName, const FieldType & value) noexcept {
-        std::visit([&feature,&fieldName](auto && arg){
-            using T = std::decay_t<decltype(arg)>;
-            if constexpr(std::integral<T>)
-                feature->SetField(fieldName.c_str(),GIntBig(( (long long) arg)));
-        },value);
-
+    template<typename T>
+    static void setFieldValue(OGRFeature * feature, const std::string & fieldName, const T & value) noexcept {
+            const char * name = fieldName.c_str();
+            if constexpr(std::same_as<T,int>)
+                feature->SetField(name, value);
+            else if constexpr(std::integral<T>)
+                feature->SetField(name, GIntBig((static_cast<long long>(value))));
+            else if constexpr (std::floating_point<T>)
+                feature->SetField(name, static_cast<double>(value));
+            else if constexpr (std::same_as<T,std::string>)
+                feature->SetField(name, value.c_str());
+            else
+                feature->SetField(name, value);
     }
 };
 }

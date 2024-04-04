@@ -237,10 +237,9 @@ int main(int argc, char * argv[]){
     auto contractedVerticesLayer = fishnet::VectorLayer<MultiPolygon<Polygon<double>>>::empty(filteredLayer.getSpatialReference());
     auto contractedEdgesLayer = fishnet::VectorLayer<SimplePolygon<double>>::empty(filteredLayer.getSpatialReference());
     contractedVerticesLayer.addAllGeometry(contracted.getNodes());
-    const std::string areaField = "Area";
-    contractedVerticesLayer.addField<double>(areaField);
-    for(const auto & [id,polygon]:contractedVerticesLayer.enumerateGeometries()){
-        contractedVerticesLayer.addAttribute(id,areaField,polygon.area());
+    auto areaFieldExpected = contractedVerticesLayer.addField<double>("Area");
+    for( auto & feature:contractedVerticesLayer.getFeatures()){
+        feature.addAttribute(areaFieldExpected.value(), feature.getGeometry().area());
     }
     contractedVerticesLayer.write(contractedVerticesFile);
     for(const auto & edge:contracted.getEdges()){

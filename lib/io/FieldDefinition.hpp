@@ -3,32 +3,81 @@
 #include <string>
 #include <utility>
 #include "FieldType.hpp"
+#include <typeindex>
+#include "GeometryObject.hpp"
 template<fishnet::FieldValueType T>
 class FieldDefinitionTestFactory;
 
+
+
+
 namespace fishnet {
+
+template<FieldValueType T>
+class FieldDefinition;
+
+namespace __impl {
+template<typename Variant>
+struct FieldDefinitionTypes;
+
+template<typename... Types>
+struct FieldDefinitionTypes<std::variant<Types...>> {
+    using type = std::variant<FieldDefinition<Types>...>;
+};
+}
+using FieldDefinitionVariant = fishnet::__impl::FieldDefinitionTypes<FieldType>::type;
+
+class FieldCounter{
+private:
+    static inline int id = 0;
+    FieldCounter()= default;
+public:
+    [[nodiscard]] static int operator()() noexcept {
+        return id++;
+    }
+};
+
+/**
+ * Defines an Interface for FieldDefinitions, which can be used as an parametet
+ * @tparam T has to satisfy the FieldValueType Concept
+ */
+template<class T>
+concept IFieldDefinition = FieldValueType<typename T::value_type> && std::equality_comparable<T> && requires(const T & fieldDef){
+    typename T::value_type;
+    {fieldDef.getFieldName()} -> std::convertible_to<std::string_view>;
+    {fieldDef.getFieldID()} -> std::integral;
+};
+
 
 template<FieldValueType T>
 class FieldDefinition {
 private:
     friend class FieldDefinitionTestFactory<T>;
 
-    static inline size_t fieldIDCounter = 0;
-    std::string fieldName;
-    size_t fieldID;
+    template<geometry::GeometryObject G>
+    friend class VectorLayer;
 
-    constexpr explicit FieldDefinition(std::string fieldName) : fieldName(std::move(fieldName)), fieldID(fieldIDCounter++) {}
+
+    std::string fieldName;
+    int fieldID;
+
+    constexpr explicit FieldDefinition(std::string fieldName) : fieldName(std::move(fieldName)), fieldID(FieldCounter::operator()()) {}
 
 public:
-
     using value_type = T;
 
     [[nodiscard]] constexpr const std::string &getFieldName() const noexcept {
         return this->fieldName;
     }
 
-    [[nodiscard]] constexpr size_t getFieldID() const noexcept {
+    [[nodiscard]] constexpr int getFieldID() const noexcept {
         return this->fieldID;
     }
+
+    template<FieldValueType U>
+    constexpr bool inline operator==(const FieldDefinition<U> & other )const noexcept {
+        return this->fieldID == other.getFieldID();
+    }
 };
+
 }

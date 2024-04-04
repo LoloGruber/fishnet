@@ -7,6 +7,7 @@ add_subdirectory(gdal)
 add_library(io INTERFACE
         Feature.hpp
         FieldDefinition.hpp
+        ../util/functional/IDProducer.hpp
 )
 
 target_include_directories(io INTERFACE ${CMAKE_CURRENT_LIST_DIR})

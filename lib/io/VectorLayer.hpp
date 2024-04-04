@@ -1,22 +1,24 @@
 #pragma once
 #include <ranges>
+#include <utility>
 #include <vector>
 #include <algorithm>
-#include <typeindex>
+#include <expected>
+
 
 #include "GeometryObject.hpp"
 #include "CollectionConcepts.hpp"
+#include "FunctionalConcepts.hpp"
 #include "Shapefile.hpp"
-#include "GDALInitializer.hpp"
 
-#include "FieldType.hpp"
+#include "GDALInitializer.hpp"
 #include "GeometryTypeWKBAdapter.hpp"
 #include "OGRFieldAdapter.hpp"
 #include "OGRGeometryAdapter.hpp"
-#include "AlternativeKeyMap.hpp"
-#include "NestedMap.hpp"
 
+#include "FieldType.hpp"
 #include "Feature.hpp"
+
 
 #include <ogr_spatialref.h>
 #include <gdal.h>
@@ -25,48 +27,31 @@
 
 namespace fishnet {
 
-struct FieldID{
-    size_t value;
-    constexpr operator size_t() {
-        return this->value;
-    }
-    constexpr inline bool operator==(const FieldID & other) const noexcept {
-        return this->value == other.value;
-    }
-}; 
-}
-
-namespace std {
-    template<>
-    struct hash<fishnet::FieldID>{
-        constexpr inline size_t operator()(const fishnet::FieldID & fieldID) const noexcept {
-            return fieldID.value;
-        }
-    };
-}
-
-namespace fishnet {
-
+/**
+ * Stores the geometries, wrapped in features (which hold the field values)
+ * Keeps track of the fields available for the features
+ * Stores a SpatialReference
+ * @tparam G
+ */
 template<geometry::GeometryObject G>
 class VectorLayer{
 private:
     OGRSpatialReference spatialRef;
-    size_t objectCounter = 0;
-    std::vector<std::pair<size_t,G>> objects;
+    std::vector<Feature<G>> features;
+
+    std::unordered_map<std::string,FieldDefinitionVariant> fields;
+
+    using error_type = std::string;
+
+//    const static inline FieldDefinition<size_t> FISHNET_ID_FIELD {"FISHNET_ID"}; //TODO move to external class
 
 
-    util::NestedMap<size_t,FieldID,FieldType> attributes; // (geometryID,FieldID) -> Value 
-
-    size_t fieldCounter = 0;
-    util::AlternativeKeyMap<FieldID,std::string,std::type_index> fields;
-
-    constexpr static const char * FISHNET_ID_FIELD_NAME = "FISHNET_ID";
-
-    VectorLayer(const Shapefile & shapefile){
+    explicit VectorLayer(const Shapefile & shapefile){
         GDALInitializer::init();
         if(not shapefile.exists())
             return;
-        GDALDataset * ds = (GDALDataset *) GDALOpenEx(shapefile.getPath().c_str(), GDAL_OF_VECTOR,0,0,0);
+        auto * ds = (GDALDataset *) GDALOpenEx(shapefile.getPath().c_str(), GDAL_OF_VECTOR,nullptr, nullptr,
+                                                      nullptr);
         OGRLayer * layer = ds->GetLayer(0);
         for(const auto & feature: layer){
             auto geo = feature->GetGeometryRef();
@@ -81,7 +66,7 @@ private:
         GDALClose(ds);
     }
 
-    VectorLayer(const OGRSpatialReference & spatialReference):spatialRef(spatialReference){
+    explicit VectorLayer(OGRSpatialReference  spatialReference):spatialRef(std::move(spatialReference)){
         GDALInitializer::init();
     }
 
@@ -90,26 +75,41 @@ private:
         destination.remove();
         GDALDataset * outputDataset = driver->Create(destination.getPath().c_str(),0,0,0,GDT_Unknown,0);
         OGRLayer * outputLayer = outputDataset->CreateLayer(destination.getPath().c_str(),this->getSpatialReference().Clone(),GeometryTypeWKBAdapter::toWKB(G::type),0);
-        auto uidFieldDef = OGRFieldDefn(FISHNET_ID_FIELD_NAME,OFTInteger64);
-        outputLayer->CreateField(&uidFieldDef);
-        for(const auto & [fieldID, typeInfo]: fields) {
-            auto fieldDefinition = OGRFieldDefn(fields.getAlternative(fieldID).value_or("UNDEFINED").c_str(),OGRFieldAdapter::fromTypeIndex(typeInfo));
-            outputLayer->CreateField(&fieldDefinition);
+//        auto uidFieldDef = OGRFieldDefn(FISHNET_ID_FIELD.getFieldName().c_str(),OFTInteger64);
+//        outputLayer->CreateField(&uidFieldDef);
+        for(const auto & [fieldName,fieldDefinition] :  fields) {
+            OGRFieldType fieldType;
+            std::visit([&fieldType](auto && fieldVariant){
+                using T = typename  std::decay_t<decltype(fieldVariant)>::value_type;
+                fieldType = OGRFieldAdapter::fromTypeIndex(typeid(T));
+            },fieldDefinition);
+            auto fieldDefn = OGRFieldDefn(fieldName.c_str(),fieldType);
+            outputLayer->CreateField(&fieldDefn);
         }
-        for(const auto & [id,g] : this->objects){
-            OGRFeature * feature = new OGRFeature(outputLayer->GetLayerDefn());
-            feature->SetGeometry(OGRGeometryAdapter::toOGR(g).get());
-            feature->SetField(FISHNET_ID_FIELD_NAME,GIntBig(id));
-            for(const auto & [fieldID, value] : this->attributes.innerMap(id)){
-                
+        for(const auto & f : this->features){
+            auto * feature = new OGRFeature(outputLayer->GetLayerDefn());
+            feature->SetGeometry(OGRGeometryAdapter::toOGR(f.getGeometry()).get());
+
+            for(const auto & [fieldName,fieldDefinition]: this->fields){
+                std::visit([&fieldName,&f,feature]( auto && var){
+                    auto optionalAttribute = f.getAttribute(var);
+                    if(optionalAttribute)
+                        OGRFieldAdapter::setFieldValue(feature, fieldName, optionalAttribute.value());
+                },fieldDefinition);
+
             }
             OGRErr success = outputLayer->CreateFeature(feature);
             if(success != 0){
-                std::cout << "Could not write Geometry: "+g.toString() << std::endl;
+                std::cout << "Could not write Geometry: "+f.getGeometry().toString() << std::endl;
             }
         }
         outputLayer->SyncToDisk();
         GDALClose(outputDataset);
+    }
+
+    constexpr void remove(util::Predicate<Feature<G>> auto && predicate)noexcept {
+        const auto removed = std::ranges::remove_if(this->features,predicate);
+        this->features.erase(removed.begin(),removed.end());
     }
 
 public: 
@@ -125,11 +125,15 @@ public:
     }
 
     constexpr util::view_of<G> auto getGeometries() const noexcept {
-        return std::views::all(objects) | std::views::transform([](const auto & pair){return pair.second;});
+        return std::views::all(features) | std::views::transform([](const auto & feature){return feature.getGeometry();});
     }
 
-    constexpr util::view_of<std::pair<size_t,G>> auto enumerateGeometries() const noexcept {
-        return std::views::all(objects);
+    constexpr util::view_of<Feature<G>> auto getFeatures() const noexcept {
+        return std::views::all(features);
+    }
+
+    constexpr util::view_of<Feature<G>> auto getFeatures()  noexcept {
+        return std::views::all(features);
     }
 
     constexpr const OGRSpatialReference & getSpatialReference() const noexcept {
@@ -140,29 +144,16 @@ public:
         this->spatialRef = spatialReference;
     }
 
-    constexpr size_t addGeometry(const G & g) noexcept {
-        auto id = objectCounter++;
-        objects.emplace_back(std::make_pair(id,g));
-        attributes.try_insert(id);
-        return id;
+    constexpr void addGeometry(const G & g) noexcept {
+        addFeature(Feature<G>(g));
     }
 
-    /**
-     * @brief returns the geomety object associated with the id
-     * WARNING: this method might be slow, since it checks the ids of all geometries for a match
-     * @param id 
-     * @return  std::optional<const G &> 
-     */
-    constexpr std::optional<const G &> getGeometry(size_t id) const noexcept {
-        auto result = std::ranges::find_if(objects,[id](const auto & geometryPair){return id == geometryPair.first;});
-        if(result != std::ranges::end(objects))
-            return std::make_optional<const G &>(result->second);
-        return std::nullopt;
+    constexpr void addGeometry(G && g) noexcept {
+        addFeature(Feature<G>(std::move(g)));
     }
 
-    constexpr util::view_of<size_t> auto addAllGeometry(util::forward_range_of<G> auto const & geometries) noexcept {
-        std::ranges::for_each(geometries,[this](const G & g){ addGeometry(g);});
-        return std::views::all(objects) | std::views::transform([](const auto & pair){return pair.first;});
+    constexpr void addAllGeometry(util::forward_range_of<G> auto const & geometries) noexcept {
+        std::ranges::for_each(geometries,[this](const auto & g){ addGeometry(g);});
     }
 
     /**
@@ -173,67 +164,71 @@ public:
      * @return false 
      */
     constexpr bool containsGeometry(const G & g) const noexcept {
-        return std::ranges::find_if(this->objects,[&g](const auto & pair){return pair.second == g;}) != std::ranges::end(this->objects);
+        return std::ranges::find_if(this->features,[&g](const auto & feature){return feature.getGeometry() == g;}) != std::ranges::end(this->features);
     }
 
-    constexpr bool containsGeometry(size_t id) const noexcept {
-        return this->attributes.containsOuterKey(id);
-    }
 
     constexpr void removeGeometry(const G & g) noexcept {
-        auto removePredicate = [&g](const auto & objPair){return objPair.second == g;};
-        const auto removed = std::ranges::remove_if(this->objects,removePredicate);
-        this->attributes.eraseOuterKey(std::ranges::begin(removed)->first);
-        this->objects.erase(removed.begin(),removed.end());
+        remove( [&g](const auto & feature){return feature.getGeometry() == g;});
+    }
+
+    constexpr void addFeature(Feature<G> && feature) noexcept {
+        features.emplace_back(std::forward<Feature<G>>(feature));
+    }
+
+    constexpr void addFeature(const Feature<G> & feature) noexcept {
+        features.push_back(feature);
+    }
+
+    constexpr bool containsFeature(const Feature<G> & feature) noexcept {
+        return std::ranges::contains(this->features, feature);
+    }
+
+    constexpr void removeFeature(const Feature<G> & feature) noexcept {
+        remove([&feature](const auto & f){return f==feature;});
     }
 
     template<FieldValueType T>
-    constexpr bool addField(const std::string & fieldName) noexcept {
+    [[nodiscard]] constexpr std::expected<FieldDefinition<T>,error_type> addField(const std::string & fieldName) noexcept {
         if(fieldName.length() > 10){
-            std::cerr << "Field name \""+ fieldName+"\" must not exceed a length of 10 characters";
-            return false;
+            return std::unexpected("Field name \""+ fieldName+"\" must not exceed a length of 10 characters");
         }
-        if(this->fields.containsAlternative(fieldName) || fieldName == FISHNET_ID_FIELD_NAME)
-            return false;
-        auto success = this->fields.insert({fieldCounter},fieldName,typeid(T));
-        if (success)
-            fieldCounter++;
-        return success;
+        if(this->fields.contains(fieldName))
+            return std::unexpected("Field \"" + fieldName + "\" already exists");
+        FieldDefinition<T> field{fieldName};
+        this->fields.emplace(fieldName, field);
+        return field;
     }
 
-    constexpr bool addIntegerField(const std::string & fieldName) noexcept {
+    constexpr std::expected<FieldDefinition<int>,error_type> addIntegerField(const std::string & fieldName) noexcept {
         return addField<int>(fieldName);
     }
 
-    constexpr bool addDoubleField(const std::string & fieldName) noexcept {
+    constexpr std::expected<FieldDefinition<double>,error_type> addDoubleField(const std::string & fieldName) noexcept {
         return addField<double>(fieldName);
     }
 
-    constexpr bool addTextField(const std::string & fieldName) noexcept {
+    constexpr std::expected<FieldDefinition<std::string>,error_type> addTextField(const std::string & fieldName) noexcept {
         return addField<std::string>(fieldName);
     }
 
-    constexpr bool addSizeField(const std::string & fieldName) noexcept {
+    constexpr std::expected<FieldDefinition<size_t>,error_type> addSizeField(const std::string & fieldName) noexcept {
         return addField<size_t>(fieldName);
     }
 
     constexpr bool hasField(const std::string & fieldName) const noexcept {
-        return this->fields.containsAlternative(fieldName);
+        return this->fields.contains(fieldName);
     }
 
     constexpr void removeField(const std::string & fieldName) noexcept {
-        auto removedFieldID = this->fields.getKey(fieldName);
-        if (not removedFieldID or not this->fields.eraseFromKey(removedFieldID.value()))
-            return;
-        this->attributes.eraseInnerKey(removedFieldID.value());
+        this->fields.erase(fieldName);
     }
 
     constexpr void clearFields() noexcept {
         fields.clear();
-        std::ranges::for_each(attributes,[this](const auto & idAttributePair){idAttributePair.second.clear();});
     }
 
-    constexpr bool addAttribute(size_t geometryID, const std::string & fieldName, FieldType value){
+/*    constexpr bool addAttribute(size_t geometryID, const std::string & fieldName, FieldType value){
         auto expectedType = fields.getOrElse(fieldName,typeid(nullptr));
         auto actualType = std::type_index(std::visit( [](auto&&x)->decltype(auto){ return typeid(x);}, value ));
         if (expectedType != actualType){
@@ -283,7 +278,7 @@ public:
         if(not this->attributes.contains(geometryID)) return false;
         this->attributes.erase(geometryID,this->fields.getKey(fieldName).value());
         return true;
-    }
+    }*/
 
     constexpr void write(const Shapefile & destination) const noexcept {
         if(destination.exists()){

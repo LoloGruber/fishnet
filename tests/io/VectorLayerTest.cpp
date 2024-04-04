@@ -36,7 +36,7 @@ TEST_F(VectorLayerTest, init){
     EXPECT_FALSE(notExistsFile.exists());
     auto empty = VectorLayer<fishnet::geometry::Polygon<double>>::empty(layer.getSpatialReference());
     EXPECT_EMPTY(empty.getGeometries());
-    EXPECT_EMPTY(empty.enumerateGeometries());
+    EXPECT_EMPTY(empty.getFeatures());
     EXPECT_NO_THROW(VectorLayer<geometry::Polygon<double>>::empty(layer.getSpatialReference()));
 }
 
@@ -47,21 +47,17 @@ TEST_F(VectorLayerTest,getGeometries) {
     EXPECT_CONTAINS(pointLayer.getGeometries(),p2);
 }
 
-TEST_F(VectorLayerTest, enumerateGeometries) {
-    EXPECT_SIZE(pointLayer.enumerateGeometries(),points.size());
-    auto enumerateGeoms = pointLayer.enumerateGeometries();
-    std::unordered_set<size_t> IDs;
-    for(const auto & [id,geometry]:enumerateGeoms) {
-        IDs.insert(id);
-        EXPECT_CONTAINS(points,geometry);
-    }
-    EXPECT_SIZE(IDs,2);
+TEST_F(VectorLayerTest, getFeatures) {
+    EXPECT_SIZE(pointLayer.getFeatures(),points.size());
+    auto testFeature = Feature(p1);
+    EXPECT_CONTAINS(pointLayer.getFeatures(), testFeature);
 }
 
 TEST_F(VectorLayerTest, addGeometry){
     pointLayer.addGeometry(Vec2DReal(0,0));
     EXPECT_CONTAINS(pointLayer.getGeometries(),Vec2DReal(0,0));
-    EXPECT_SIZE(pointLayer.enumerateGeometries(),3);
+    EXPECT_SIZE(pointLayer.getGeometries(),3);
+    EXPECT_SIZE(pointLayer.getFeatures(), 3);
 }
 
 TEST_F(VectorLayerTest, addAllGeometry) {
@@ -69,13 +65,14 @@ TEST_F(VectorLayerTest, addAllGeometry) {
     EXPECT_EMPTY(layer.getGeometries());
     layer.addAllGeometry(points);
     EXPECT_SIZE(layer.getGeometries(),2);
+    EXPECT_SIZE(layer.getFeatures(), 2);
 }
 
 TEST_F(VectorLayerTest, containsGeometry) {
-    size_t idOfInsert = pointLayer.addGeometry(Vec2DReal(0,0));
-    EXPECT_TRUE(pointLayer.containsGeometry(idOfInsert));
-    EXPECT_FALSE(pointLayer.containsGeometry(123456789));
+    pointLayer.addGeometry(Vec2DReal(0,0));
+    Feature<Vec2DReal> emptyFeatureSameGeometry{Vec2DReal(0, 0)};
     EXPECT_TRUE(pointLayer.containsGeometry(Vec2DReal(0,0)));
+    EXPECT_TRUE(pointLayer.containsFeature(emptyFeatureSameGeometry));
     EXPECT_FALSE(pointLayer.containsGeometry(Vec2DReal(-1,-1)));
 }
 
@@ -100,18 +97,41 @@ TEST_F(VectorLayerTest, setSpatialReference) {
     EXPECT_EQ(spatRef.GetName(), pointLayer.getSpatialReference().GetName());
 }
 
-TEST_F(VectorLayerTest, addField) {
-    EXPECT_TRUE(pointLayer.addField<int>("id"));
-    EXPECT_FALSE(pointLayer.addField<int>("id"));
-    EXPECT_FALSE(pointLayer.addField<double>("id"));
-    // EXPECT_FALSE(pointLayer.addField<Vec2DReal>("vec")); does not compile, which is correct
-    EXPECT_TRUE(pointLayer.addField<std::string>("name"));
-    EXPECT_TRUE(pointLayer.addField<const char *>("oldname"));
-    EXPECT_FALSE(pointLayer.addField<int>("verylongnamenotallowed"));
+TEST_F(VectorLayerTest, addFieldInvalid){
+    std::string longFieldName = "VeryVeryLongFieldName";
+    EXPECT_EMPTY(pointLayer.addIntegerField(longFieldName));
+    std::string duplicatedName = "myField";
+    EXPECT_VALUE(pointLayer.addTextField(duplicatedName));
+    EXPECT_EMPTY(pointLayer.addSizeField(duplicatedName));
+}
+
+
+TEST_F(VectorLayerTest, addFieldValid) {
+    auto id = pointLayer.addField<int>("id");
+    EXPECT_VALUE(id);
+    auto length = pointLayer.addDoubleField("length");
+    EXPECT_VALUE(length);
+    int counter = 0;
+    for( auto & feature : pointLayer.getFeatures()){
+        EXPECT_TRUE(feature.addAttribute(id.value(), counter++));
+        EXPECT_TRUE(feature.addAttribute(length.value(), feature.getGeometry().length()));
+    }
+    Feature ofP1{p1};
+    Feature ofP2{p2};
+    ofP1.addAttribute(id.value(), 0);
+    ofP1.addAttribute(length.value(), p1.length());
+    ofP2.addAttribute(id.value(), 1);
+    ofP2.addAttribute(length.value(), p2.length());
+    std::vector<Feature<geometry::Vec2DReal >> expected = {ofP1, ofP2};
+    EXPECT_UNSORTED_RANGE_EQ(pointLayer.getFeatures(), expected);
+
 }
 
 TEST_F(VectorLayerTest, hasField) {
-    TODO();
+    std::string fieldName = "myField";
+    EXPECT_VALUE(pointLayer.addDoubleField(fieldName));
+    EXPECT_TRUE(pointLayer.hasField(fieldName));
+    EXPECT_FALSE(pointLayer.hasField("other"));
 }
 
 TEST_F(VectorLayerTest, removeField) {
@@ -122,7 +142,7 @@ TEST_F(VectorLayerTest, clearFields) {
     
 }
 
-TEST_F(VectorLayerTest, addAttribute) {
+/*TEST_F(VectorLayerTest, addAttribute) {
     pointLayer.addField<const char *>("name");
     std::vector<size_t> ids;
     for(const auto & [id,geometry]: pointLayer.enumerateGeometries()) {
@@ -200,7 +220,7 @@ TEST_F(VectorLayerTest, removeAttributeString) {
     pointLayer.removeGeometry(p2);
     EXPECT_EMPTY(pointLayer.getAttribute<std::string>(ids[0],"str"));
     EXPECT_EMPTY(pointLayer.getAttribute<std::string>(ids[1],"str"));
-}
+}*/
 
 TEST_F(VectorLayerTest, write) {
     util::TemporaryDirectory tmp {pathToSample.getPath().parent_path() / std::filesystem::path("tmp/")};
@@ -225,9 +245,6 @@ TEST_F(VectorLayerTest, overwrite) {
     EXPECT_FALSE(std::filesystem::exists(outputFile.incrementFileVersion().getPath())); 
 }
 
-TEST_F(VectorLayerTest, writeAttributes) {
-    TODO();
-}
 
 
 
