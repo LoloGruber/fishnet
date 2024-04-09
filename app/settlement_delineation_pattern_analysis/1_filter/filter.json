@@ -1,0 +1,17 @@
+{
+  "input": "/home/lolo/CLionProjects/fishnet/data/output/small_dataset/Punjab_Small.shp",
+  "output": "",
+  "unary-filters": [
+    {
+      "name": "AreaFilter",
+      "args": {
+        "requiredArea": 0.000001
+      }
+    }
+  ],
+  "binary-filters": [
+    {
+      "name": "WithinPolygonFilter"
+    }
+  ]
+}
