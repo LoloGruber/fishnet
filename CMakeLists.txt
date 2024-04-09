@@ -15,6 +15,7 @@ else()
     # gcc / clang flags
     add_compile_options(-Wall -Wextra -Wpedantic -Wconversion -Wno-unused-parameter -Wno-unused-function -fconcepts-diagnostics-depth=4)
 endif()
+add_subdirectory(extern)
 add_subdirectory(lib)
 add_subdirectory(app)
 if(ENABLE_TESTING)
