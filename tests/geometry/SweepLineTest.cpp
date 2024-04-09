@@ -87,4 +87,8 @@ TEST(SweepLineTest, polygonFiltering) {
 
     EXPECT_CONTAINS(filtered,polygons[0]);
     EXPECT_SIZE(filtered,1);
+
+    auto filtered_view = filter(std::views::all(polygons) | std::views::transform([](const auto & v){return v;}),binaryFilterCondition,areaFilter);
+    EXPECT_SIZE(filtered_view, 1); //added test for views, to discover reference errors
+
 }

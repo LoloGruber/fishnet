@@ -18,7 +18,7 @@ public:
     PolygonFilterInsertEvent(const BoundingBoxPolygon<P> & box,BinaryFilter  & binaryCondition, Filter  & condition):PolygonFilter<P>::InsertEvent(box),filter(condition),binaryFilter(binaryCondition){}
     
     virtual void process(PolygonFilter<P> & sweepLine, std::vector<P> & output)const{
-        auto polygonUnderTest = this->obj->getPolygon();
+        const auto & polygonUnderTest = this->obj->getPolygon();
         if(not filter(polygonUnderTest))
             return;
         sweepLine.addSLS(this->obj);
@@ -49,11 +49,13 @@ struct PolygonFilterRemoveEvent: public PolygonFilter<P>::DefaultRemoveEvent {
 }
 
 struct ContainedOrInHoleFilter{
-    template<IPolygon P>
-    bool operator()(const P & p, const P & underTest)const noexcept{
+    static bool operator()(const IPolygon auto & p, const IPolygon auto & underTest) noexcept{
         return p != underTest and not p.contains(underTest) and not p.isInHole(underTest);
     }
 };
+
+
+
 
 template<PolygonRange R,util::BiPredicate<std::ranges::range_value_t<R>> BinaryFilter, util::Predicate<std::ranges::range_value_t<R>> Filter = util::TruePredicate>
 static std::vector<std::ranges::range_value_t<R>> filter( const R & polygons, BinaryFilter binaryCondition, Filter condition = Filter()) noexcept {
