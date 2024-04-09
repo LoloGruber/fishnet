@@ -1,0 +1,1 @@
+add_executable(${WORKFLOW_NAME}Filter SettlementFilter.cpp)

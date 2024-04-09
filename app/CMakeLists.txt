@@ -1,5 +1,4 @@
-add_subdirectory(settlement_patterns)
-add_subdirectory(settlement_filter)
+add_subdirectory(settlement_delineation_pattern_analysis)
 
 
 #include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../lib)
