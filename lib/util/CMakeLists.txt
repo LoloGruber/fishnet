@@ -9,5 +9,5 @@ target_link_libraries(util_concepts INTERFACE util_collections_concepts util_fun
 target_include_directories(util_concepts INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 
 add_library(util INTERFACE ${UTIL_SOURCES})
-target_link_libraries(util INTERFACE util_concepts util_hashing util_collections util_filesystem)
+target_link_libraries(util INTERFACE util_concepts util_hashing util_collections util_filesystem util_functional)
 target_include_directories(util INTERFACE ${CMAKE_CURRENT_LIST_DIR}/inc)

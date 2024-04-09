@@ -20,8 +20,14 @@ concept BiOperator = BiFunction<F,T,T,T>;
 template<typename F, typename T>
 concept Predicate = UnaryFunction<F,T,bool>;
 
+template<typename T>
+using Predicate_t = std::function<bool(const T &)>;
+
 template<typename F,typename T,typename R= T>
 concept BiPredicate = BiFunction<F,T,R,bool>;
+
+template<typename T, typename  R = T>
+using BiPredicate_t = std::function<bool(const T &, const R &)>;
 
 template<typename F, typename T>
 concept Producer = std::convertible_to<F,std::function<T()>>;
