@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
-#include "Graph.h"
+#include <fishnet/Graph.hpp>
 #include "Testutil.h"
 #include "IDNode.h"
 #include "GraphTestUtil.h"
-#include "DegreeCentrality.h"
+#include <fishnet/DegreeCentrality.hpp>
 
 using namespace fishnet::graph;
 using namespace testutil;

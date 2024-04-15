@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "Radians.hpp"
+#include <fishnet/Radians.hpp>
 
 using namespace fishnet::math;
 

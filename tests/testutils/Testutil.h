@@ -5,8 +5,8 @@
 #include <concepts>
 #include <algorithm>
 #include <ranges>
-#include "CollectionConcepts.hpp"
-#include "NumericConcepts.hpp"
+#include <fishnet/CollectionConcepts.hpp>
+#include <fishnet/NumericConcepts.hpp>
 namespace testutil{
 
 static void TODO() {

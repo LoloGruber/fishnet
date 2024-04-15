@@ -1,6 +1,6 @@
 #include "Testutil.h"
-#include "BlockingQueue.h"
-#include "FiniteBlockingQueue.h"
+#include <fishnet/BlockingQueue.hpp>
+#include <fishnet/FiniteBlockingQueue.hpp>
 
 static inline int MAX_VALUE= 10000;
 

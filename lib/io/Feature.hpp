@@ -1,5 +1,5 @@
 #pragma once
-#include "GeometryObject.hpp"
+#include <fishnet/GeometryObject.hpp>
 #include "FieldType.hpp"
 #include "FieldDefinition.hpp"
 

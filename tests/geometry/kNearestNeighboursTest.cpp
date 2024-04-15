@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "NearestNeighbours.hpp"
+#include <fishnet/NearestNeighbours.hpp>
 #include "Testutil.h"
 
 using namespace fishnet::geometry;

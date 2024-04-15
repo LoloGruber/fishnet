@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "Line.hpp"
+#include <fishnet/Line.hpp>
 #include <iostream>
 using namespace fishnet::geometry;
 
@@ -92,7 +92,7 @@ TEST(LineTest, isLeftisRight) {
     EXPECT_TRUE(Line(1,0).isLeft(Vec2D(0,1)));
 }
 
-#include "Segment.hpp"
+#include <fishnet/Segment.hpp>
 TEST(LineTest, isParallel){
     EXPECT_TRUE(xAxis.isParallel(Line<double>::horizontalLine(1)));
     EXPECT_TRUE(Line(1,0).isParallel(Line(1,1)));

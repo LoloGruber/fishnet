@@ -1,4 +1,3 @@
 add_library(graph_algo INTERFACE)
-add_subdirectory(searchResults)
-target_link_libraries(graph_algo INTERFACE graph_model graph_algo_result)
-target_include_directories(graph_algo INTERFACE ${CMAKE_CURRENT_LIST_DIR})
+target_link_libraries(graph_algo INTERFACE graph_model)
+target_include_directories(graph_algo INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)

@@ -5,7 +5,7 @@
 #include <iostream>
 #include <set>
 #include "GeometryAlgorithm.h"
-#include <WGS84Ellipsoid.hpp>
+#include "include/fishnet/WGS84Ellipsoid.hpp"
 #include "Ring.h"
 
 double const GeometryAlgorithm::PI = 3.14159265358979323846;

@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "Testutil.h"
-#include "NestedMap.hpp"
+#include <fishnet/NestedMap.hpp>
 using namespace testutil;
 using namespace util;
 

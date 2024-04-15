@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
-#include "SweepLine.hpp"
-#include "Vec2D.hpp"
-#include "PolygonFilter.hpp"
+#include <fishnet/SweepLine.hpp>
+#include <fishnet/Vec2D.hpp>
+#include <fishnet/PolygonFilter.hpp>
 #include "ShapeSamples.h"
 #include "Testutil.h"
 

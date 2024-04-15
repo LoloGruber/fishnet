@@ -3,8 +3,8 @@
 //
 #include "Feature.hpp"
 #include "FieldDefinitionTestFactory.hpp"
-#include "Vec2D.hpp"
-#include "Line.hpp"
+#include <fishnet/Vec2D.hpp>
+#include <fishnet/Line.hpp>
 #include <gtest/gtest.h>
 #include "Testutil.h"
 using namespace fishnet;

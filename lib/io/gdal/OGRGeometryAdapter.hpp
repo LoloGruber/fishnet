@@ -3,13 +3,12 @@
 #include <ogr_geometry.h>
 
 #include <optional>
-#include "GeometryObject.hpp"
-
-#include "Vec2D.hpp"
-#include "Ring.hpp"
-#include "Polygon.hpp"
-#include "SimplePolygon.hpp"
-#include "MultiPolygon.hpp"
+#include <fishnet/GeometryObject.hpp>
+#include <fishnet/Vec2D.hpp>
+#include <fishnet/Ring.hpp>
+#include <fishnet/Polygon.hpp>
+#include <fishnet/SimplePolygon.hpp>
+#include <fishnet/MultiPolygon.hpp>
 
 using namespace fishnet::geometry;
 

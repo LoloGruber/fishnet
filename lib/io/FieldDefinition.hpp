@@ -4,7 +4,7 @@
 #include <utility>
 #include "FieldType.hpp"
 #include <typeindex>
-#include "GeometryObject.hpp"
+#include <fishnet/GeometryObject.hpp>
 template<fishnet::FieldValueType T>
 class FieldDefinitionTestFactory;
 

@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "Graph.h"
+#include <fishnet/Graph.hpp>
 #include "IDNode.h"
 #include "Testutil.h"
 #include "GraphTestUtil.h"

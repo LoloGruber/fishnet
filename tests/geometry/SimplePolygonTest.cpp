@@ -1,8 +1,8 @@
 
 #include <gtest/gtest.h>
 #include "Testutil.h"
-#include "SimplePolygon.hpp"
-#include "GeometryObject.hpp"
+#include <fishnet/SimplePolygon.hpp>
+#include <fishnet/GeometryObject.hpp>
 #include "ShapeSamples.h"
 
 using namespace fishnet::geometry;

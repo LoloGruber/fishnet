@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "Vec2D.hpp"
+#include <fishnet/Vec2D.hpp>
 #include "Testutil.h"
 using namespace testutil;
 using namespace fishnet::geometry;

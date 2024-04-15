@@ -1,3 +1,3 @@
 add_library(geometry_objects_base INTERFACE)
-target_include_directories(geometry_objects_base INTERFACE ${CMAKE_CURRENT_LIST_DIR})
-target_link_libraries(geometry_objects_base INTERFACE util_concepts util_hashing math)
+target_include_directories(geometry_objects_base INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
+target_link_libraries(geometry_objects_base INTERFACE util math)

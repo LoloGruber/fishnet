@@ -1,10 +1,10 @@
 #include <gtest/gtest.h>
 #include "VectorLayer.hpp"
-#include "Vec2D.hpp"
+#include <fishnet/Vec2D.hpp>
 #include <list>
 #include "Testutil.h"
-#include "PathHelper.hpp"
-#include "TemporaryDirectiory.hpp"
+#include <fishnet/PathHelper.h>
+#include <fishnet/TemporaryDirectiory.h>
 
 using namespace testutil;
 using namespace fishnet;

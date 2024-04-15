@@ -6,9 +6,9 @@
 #include <expected>
 
 
-#include "GeometryObject.hpp"
-#include "CollectionConcepts.hpp"
-#include "FunctionalConcepts.hpp"
+#include <fishnet/GeometryObject.hpp>
+#include <fishnet/CollectionConcepts.hpp>
+#include <fishnet/FunctionalConcepts.hpp>
 #include "Shapefile.hpp"
 
 #include "GDALInitializer.hpp"

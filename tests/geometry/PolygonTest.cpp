@@ -2,8 +2,8 @@
 #include <memory>
 #include "Testutil.h"
 #include "ShapeSamples.h"
-#include "Polygon.hpp"
-#include "GeometryObject.hpp"
+#include <fishnet/Polygon.hpp>
+#include <fishnet/GeometryObject.hpp>
 #include <list>
 
 using namespace fishnet::geometry;

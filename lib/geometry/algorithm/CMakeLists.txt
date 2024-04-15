@@ -1,3 +1,3 @@
 add_library(geometry_algo INTERFACE)
-target_include_directories(geometry_algo INTERFACE ${CMAKE_CURRENT_LIST_DIR})
-target_link_libraries(geometry_algo INTERFACE geometry_objects_base geometry_linear_features util_concepts geometry_shape_features)
+target_include_directories(geometry_algo INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
+target_link_libraries(geometry_algo INTERFACE util geometry_objects)

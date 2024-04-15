@@ -1,12 +1,16 @@
 #include <gtest/gtest.h>
-#include "Graph.h"
+#include <fishnet/Graph.hpp>
+#include <fishnet/BFSAlgorithm.hpp>
 #include "Testutil.h"
 #include "IDNode.h"
 #include "GraphTestUtil.h"
-#include "BFSAlgorithm.h"
+
 #include "XYNode.h"
 #include <math.h>
 #include <future>
+
+static_assert(util::BiPredicate<util::TrueBiPredicate,XYNode>);
+static_assert(fishnet::graph::NodeBiPredicate<util::TrueBiPredicate,XYNode>);
 
 using namespace fishnet::graph;
 using namespace testutil;

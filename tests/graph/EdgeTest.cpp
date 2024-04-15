@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "Edge.h"
+#include <fishnet/Edge.hpp>
 #include "IDNode.h"
 #include "XYNode.h"
 using namespace fishnet::graph;

@@ -1,7 +1,7 @@
 #pragma once
-#include "ShapeGeometry.hpp"
+#include <fishnet/ShapeGeometry.hpp>
 
-#include "WGS84Ellipsoid.hpp"
+#include <fishnet/WGS84Ellipsoid.hpp>
 
 class AreaFilter {
 private:

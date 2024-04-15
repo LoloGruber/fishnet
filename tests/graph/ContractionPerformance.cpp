@@ -1,12 +1,13 @@
 #include <gtest/gtest.h>
-#include "Contraction.h"
-#include "Graph.h"
+#include <fishnet/Contraction.hpp>
+#include <fishnet/Graph.hpp>
+#include <fishnet/WeightedGraph.hpp>
 #include "XYNode.h"
 #include "GraphTestUtil.h"
-#include "StopWatch.h"
+#include <fishnet/StopWatch.h>
 #include <queue>
 #include <fstream>
-#include "WeightedGraph.h"
+
 #define PERFORMANCE_TEST true
 
 using namespace fishnet::graph;

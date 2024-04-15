@@ -24,4 +24,4 @@ target_link_libraries(geometry INTERFACE
 geometry_objects 
 #PRIVATE util ${GDAL_LIBRARIES} 
 )
-# target_include_directories(geometry PUBLIC ${CMAKE_CURRENT_LIST_DIR}/inc)
+# target_include_directories(geometry PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)

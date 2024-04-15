@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "WeightedGraph.h"
+#include <fishnet/WeightedGraph.hpp>
 #include "XYNode.h"
 #include "Testutil.h"
 #include "GraphTestUtil.h"

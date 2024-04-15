@@ -1,6 +1,6 @@
 #pragma once
-#include "Ring.hpp"
-#include "SimplePolygon.hpp"
+#include <fishnet/Ring.hpp>
+#include <fishnet/SimplePolygon.hpp>
 #include <memory>
 using namespace fishnet::geometry;
 

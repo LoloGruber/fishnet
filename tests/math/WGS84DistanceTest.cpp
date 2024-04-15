@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "WGS84Ellipsoid.hpp"
+#include <fishnet/WGS84Ellipsoid.hpp>
 using namespace fishnet::math;
 
 TEST(WGS84EllipsoidTest, flattening) {

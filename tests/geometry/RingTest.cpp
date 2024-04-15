@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "Ring.hpp"
+#include <fishnet/Ring.hpp>
 #include "Testutil.h"
 
 using namespace fishnet::geometry;
@@ -180,7 +180,7 @@ TEST_F(RingTest, containsSegment){
     EXPECT_TRUE(ring->contains(Segment({0,0},{0,0})));
     EXPECT_FALSE(ring->contains(Segment({-100,-100},{-100,-100})));
 }
-#include "Line.hpp"
+#include <fishnet/Line.hpp>
 TEST_F(RingTest, intersections){
     std::vector<Vec2D<double>> expected {Vec2D(0,4),Vec2D(0,1),Vec2D(0,-0.5)};
     auto actual = ring -> intersections(yAxis);
@@ -230,7 +230,7 @@ TEST_F(RingTest, containsRing){
     EXPECT_TRUE(ring->contains(triangleInside));
 }
 
-    #include "ShapeGeometry.hpp"
+    #include <fishnet/ShapeGeometry.hpp>
     static_assert(ShapeGeometry<Ring<double>>);
 
 TEST_F(RingTest, touchesRing){

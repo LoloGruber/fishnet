@@ -1,6 +1,6 @@
 #pragma once
 #include <variant>
-#include "NumericConcepts.hpp"
+#include <fishnet/NumericConcepts.hpp>
 
 namespace fishnet {
 

@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
-#include "MultiPolygon.hpp"
-#include "Polygon.hpp"
+#include <fishnet/MultiPolygon.hpp>
+#include <fishnet/Polygon.hpp>
 #include "Testutil.h"
 #include "ShapeSamples.h"
 

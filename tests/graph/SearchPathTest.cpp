@@ -1,9 +1,10 @@
 #include <gtest/gtest.h>
-#include "Graph.h"
 #include "Testutil.h"
-#include "BFSAlgorithm.h"
+#include <fishnet/Graph.hpp>
+#include <fishnet/BFSAlgorithm.hpp>
+#include <fishnet/DFSAlgorithm.hpp>
 #include "DataIDNode.h"
-#include "DFSAlgorithm.h"
+
 
 using namespace fishnet::graph;
 using namespace testutil;

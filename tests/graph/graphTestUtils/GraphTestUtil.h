@@ -1,7 +1,7 @@
 #ifndef GraphTestUtil_H
 #define GraphTestUtil_H
 
-#include "Graph.h"
+#include <fishnet/Graph.hpp>
 #include "IDNode.h"
 #include "XYNode.h"
 #include <random>

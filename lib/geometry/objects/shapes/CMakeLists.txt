@@ -1,3 +1,3 @@
 add_library(geometry_shape_features INTERFACE)
-target_include_directories(geometry_shape_features INTERFACE ${CMAKE_CURRENT_LIST_DIR})
+target_include_directories(geometry_shape_features INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
 target_link_libraries(geometry_shape_features INTERFACE geometry_linear_features)

@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "Degrees.hpp"
+#include <fishnet/Degrees.hpp>
 
 using namespace fishnet::math;
 

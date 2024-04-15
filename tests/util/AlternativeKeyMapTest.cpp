@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "AlternativeKeyMap.hpp"
+#include <fishnet/AlternativeKeyMap.hpp>
 #include "Testutil.h"
 using namespace testutil;
 using namespace util;

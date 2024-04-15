@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include "Shapefile.hpp"
-#include "TemporaryDirectiory.hpp"
-#include "PathHelper.hpp"
+#include <fishnet/TemporaryDirectiory.h>
+#include <fishnet/PathHelper.h>
 using namespace fishnet;
 
 static const std::filesystem::path example {util::PathHelper::projectDirectory() / std::filesystem::path("data/output/small_dataset/Punjab_Small.shp")};

@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "Segment.hpp"
+#include <fishnet/Segment.hpp>
 #include "Testutil.h"
 
 using namespace fishnet::geometry;

@@ -2,12 +2,13 @@
 // Created by lolo on 09.04.24.
 //
 #pragma once
-#include "GeometryObject.hpp"
+
 #include "VectorLayer.hpp"
 #include "Shapefile.hpp"
-#include "CompositePredicate.hpp"
+#include <fishnet/CompositePredicate.hpp>
 
-#include "PolygonFilter.hpp"
+#include <fishnet/GeometryObject.hpp>
+#include <fishnet/PolygonFilter.hpp>
 
 #include <nlohmann/json.hpp> // Copyright (c) 2013-2022 Niels Lohmann
 
