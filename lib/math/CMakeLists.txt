@@ -4,6 +4,7 @@ target_include_directories(math_concepts INTERFACE ${CMAKE_CURRENT_LIST_DIR}/con
 set(MATH_SOURCES
 Degrees.cpp
 Radians.cpp
+        WGS84Ellipsoid.hpp
 )
 
 add_library(math STATIC ${MATH_SOURCES})

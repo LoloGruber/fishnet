@@ -10,7 +10,7 @@
 #include <ogr_core.h>
 #include <iostream>
 #include "ogrsf_frmts.h"
-#include "GeoUtil.h"
+#include "WGS84Ellipsoid.hpp"
 #include "GeometryAlgorithm.h"
 #include "CharacteristicShape.h"
 
