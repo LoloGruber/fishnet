@@ -203,6 +203,13 @@ public:
 }; 
 static_assert(IPolygon<Polygon<double>>);
 static_assert(ShapeGeometry<Polygon<double>>);
+
+//Deduction guides
+template<math::Number T>
+Polygon(const Ring<T> &, auto) -> Polygon<T>;
+
+template<math::Number T>
+Polygon(const SimplePolygon<T> &, auto) -> Polygon<T>;
 }
 namespace std{
     template<typename T>

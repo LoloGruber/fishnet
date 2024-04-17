@@ -44,6 +44,16 @@ public:
 };
 static_assert(IPolygon<SimplePolygon<double>>);
 static_assert(ShapeGeometry<SimplePolygon<double>>);
+
+//Deduction guides
+template<math::Number T>
+SimplePolygon(const Ring<T> &)->SimplePolygon<T>;
+
+template<typename T>
+SimplePolygon(std::initializer_list<Vec2D<T>> && points)->SimplePolygon<T>;
+
+template<std::ranges::random_access_range R>
+SimplePolygon(const R & )->SimplePolygon<typename std::ranges::range_value_t<R>::numeric_type>;
 }
 namespace std{
     template<typename T>

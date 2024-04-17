@@ -133,6 +133,10 @@ public:
 constexpr Line<double> xAxis = Line<double>::X_AXIS;
 constexpr Line<double> yAxis = Line<double>::Y_AXIS;
 static_assert(LinearGeometry<Line<double>>);
+
+//Deduction guides
+template<math::Number T>
+Line(Vec2D<T>,Vec2D<T>) -> Line<T>;
 }
 
 namespace std{

@@ -89,9 +89,9 @@ TEST_F(PolygonTest, toSimple) {
 }
 
 TEST_F(PolygonTest, area) {
-    auto unitSquare = Polygon<double>(SimplePolygonSamples::aaBB(Vec2D(0,0),Vec2D(1,1)));
+    auto unitSquare = Polygon(SimplePolygonSamples::aaBB(Vec2D(0,0),Vec2D(1,1)));
     EXPECT_EQ(unitSquare.area(),1.0);
-    auto unitSquareWithRhombusInside = Polygon<double>(unitSquare.toSimple(),{SimplePolygonSamples::aaRhombus(Vec2D(0.5,0.5),0.5)});
+    auto unitSquareWithRhombusInside = Polygon(unitSquare.toSimple(),{SimplePolygonSamples::aaRhombus(Vec2D(0.5,0.5),0.5)});
     EXPECT_EQ(unitSquareWithRhombusInside.area(),0.5);
     EXPECT_EQ(polygon->area(),polygon->getBoundary().area() - h1.area()-h2.area());
 }

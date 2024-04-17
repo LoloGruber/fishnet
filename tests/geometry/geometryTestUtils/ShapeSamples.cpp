@@ -6,12 +6,12 @@ Ring<double> LinearRingSamples::aaBB(Vec2D<double>  topLeft, Vec2D<double>   bot
         throw std::invalid_argument("Points are coinciding");
     if(topLeft.x == botRight.x || topLeft.y == botRight.y)
         throw std::invalid_argument("Points do not form an area");
-    return Ring<double>(std::initializer_list<Vec2D<double>>{topLeft,Vec2D(botRight.x,topLeft.y),botRight,Vec2D(topLeft.x,botRight.y)});
+    return Ring(std::initializer_list<Vec2D<double>>{topLeft,Vec2D(botRight.x,topLeft.y),botRight,Vec2D(topLeft.x,botRight.y)});
 }
 
 Ring<double> LinearRingSamples::triangle(Vec2D<double> a, Vec2D<double> b, Vec2D<double> c) {
     if(Line(a,b).contains(c)) throw std::invalid_argument("Points are collinear");
-    return Ring<double>(std::initializer_list<Vec2D<double>>{a,b,c});
+    return Ring(std::initializer_list<Vec2D<double>>{a,b,c});
 }
 
 Ring<double> LinearRingSamples::aaRhombus(Vec2D<double> center, double radius){
@@ -31,12 +31,12 @@ static std::vector<Vec2D<double>> getPointsOfComplexRing(){
         points.emplace_back(Vec2D<double>(0,4));
         return points;
 }
-const  Ring<double> LinearRingSamples::COMPLEX_RING = Ring<double>(getPointsOfComplexRing());
+const  Ring<double> LinearRingSamples::COMPLEX_RING = Ring(getPointsOfComplexRing());
 
-const SimplePolygon<double> SimplePolygonSamples::COMPLEX_BOUNDARY = SimplePolygon<double>(LinearRingSamples::COMPLEX_RING);
+const SimplePolygon<double> SimplePolygonSamples::COMPLEX_BOUNDARY = SimplePolygon(LinearRingSamples::COMPLEX_RING);
 
 SimplePolygon<double> SimplePolygonSamples::aaBB(Vec2D<double> topLeft, Vec2D<double> botRight){
-    return SimplePolygon<double>(LinearRingSamples::aaBB(topLeft,botRight));
+    return SimplePolygon(LinearRingSamples::aaBB(topLeft,botRight));
 }
 
 SimplePolygon<double> SimplePolygonSamples::triangle(Vec2D<double> a, Vec2D<double> b, Vec2D<double> c){

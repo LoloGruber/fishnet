@@ -45,15 +45,15 @@ TEST_F(RingTest, init){
         Segment(Vec2D(1,0),Vec2D(1,1)), // segment connects with neighbours but p and q must be flipped when calling getPoints()
         Segment(Vec2D(1,0),Vec2D(0,0))
     };
-    Ring<int> r {segments};
+    Ring r {segments};
     EXPECT_RANGE_EQ(r.getSegments(),segments);
     std::vector<Vec2D<int>> expectedPoints {
         Vec2D(0,0), Vec2D(0,1),Vec2D(1,1),Vec2D(1,0)
     };
     EXPECT_RANGE_EQ(r.getPoints(), expectedPoints);
     std::vector<Vec2D<int>> notEnoughPoints {Vec2D<int>(0,0),Vec2D<int>(1,1)};
-    EXPECT_ANY_THROW(Ring<int>(std::vector<Vec2D<int>>()));
-    EXPECT_ANY_THROW(Ring<int>{notEnoughPoints});
+    EXPECT_ANY_THROW(Ring(std::vector<Vec2D<int>>()));
+    EXPECT_ANY_THROW(Ring{notEnoughPoints});
     std::vector<Segment<int>> intersecting {
         Segment(Vec2D(0,0),Vec2D(1,1)),
         Segment(Vec2D(1,1),Vec2D(2,-1)),
