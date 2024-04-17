@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "OGRGeometryAdapter.hpp"
+#include <fishnet/OGRGeometryAdapter.hpp>
 #include "Testutil.h"
 
 using namespace testutil;

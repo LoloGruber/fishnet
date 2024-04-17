@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "VectorLayer.hpp"
+#include <fishnet/VectorLayer.hpp>
 #include <fishnet/Vec2D.hpp>
 #include <list>
 #include "Testutil.h"

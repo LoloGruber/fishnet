@@ -1,13 +1,5 @@
-find_package(PROJ CONFIG REQUIRED)
-find_package(GDAL CONFIG REQUIRED)
-
-add_subdirectory(gis)
 add_subdirectory(gdal)
-
-add_library(io INTERFACE
-        Feature.hpp
-        FieldDefinition.hpp
-)
-
-target_include_directories(io INTERFACE ${CMAKE_CURRENT_LIST_DIR})
-target_link_libraries(io INTERFACE  geometry_objects util util_collections io_gdal_adapter io_gis PROJ::proj GDAL::GDAL)
+add_subdirectory(gis)
+add_subdirectory(vector)
+add_library(io INTERFACE)
+target_link_libraries(io INTERFACE io_gis io_gdal_adapter io_vector )

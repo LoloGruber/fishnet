@@ -1,6 +1,6 @@
 #pragma once
 
-#include "FieldDefinition.hpp"
+#include <fishnet/FieldDefinition.hpp>
 template<fishnet::FieldValueType T>
 class FieldDefinitionTestFactory{
 public:

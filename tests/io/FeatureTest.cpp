@@ -1,7 +1,7 @@
 //
 // Created by lolo on 3/26/24.
 //
-#include "Feature.hpp"
+#include <fishnet/Feature.hpp>
 #include "FieldDefinitionTestFactory.hpp"
 #include <fishnet/Vec2D.hpp>
 #include <fishnet/Line.hpp>

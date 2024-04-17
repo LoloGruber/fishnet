@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "Shapefile.hpp"
+#include <fishnet/Shapefile.hpp>
 #include <fishnet/TemporaryDirectiory.h>
 #include <fishnet/PathHelper.h>
 using namespace fishnet;

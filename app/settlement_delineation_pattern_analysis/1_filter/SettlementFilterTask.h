@@ -3,8 +3,8 @@
 //
 #pragma once
 
-#include "VectorLayer.hpp"
-#include "Shapefile.hpp"
+#include <fishnet/VectorLayer.hpp>
+#include <fishnet/Shapefile.hpp>
 #include <fishnet/CompositePredicate.hpp>
 
 #include <fishnet/GeometryObject.hpp>

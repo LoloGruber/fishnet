@@ -3,5 +3,6 @@
 /.idea
 /cmake-build-debug
 /uni_kassel
+/extern/json/
 cmake-build-debug/CMakeFiles/clion-environment.txt
 cmake-build-debug/CMakeFiles/clion-log.txt
