@@ -1,7 +1,6 @@
 
 # find_package(GDAL REQUIRED)
 # include_directories(include ${GDAL_INCLUDE_DIRS})
-
 add_subdirectory(objects)
 add_subdirectory(algorithm)
 

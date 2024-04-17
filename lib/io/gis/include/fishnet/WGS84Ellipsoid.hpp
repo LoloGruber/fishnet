@@ -7,6 +7,11 @@
 #include <fishnet/Radians.hpp>
 #include <fishnet/Degrees.hpp>
 #include <fishnet/Angle.hpp>
+#include <fishnet/GeometryObject.hpp>
+#include <fishnet/Ring.hpp>
+#include <fishnet/Polygon.hpp>
+#include <algorithm>
+#include <ranges>
 
 namespace fishnet {
 
@@ -33,6 +38,15 @@ private:
 
     static double sin2(Degrees angle){
         return pow(angle.sin(), 2);
+    }
+
+    static auto projectToSinusoidal(geometry::IRing auto const & ring) noexcept {
+        double lat_dist = math::DEG_TO_RAD * radiusInMeter;
+        return geometry::Ring(ring.getPoints() | std::views::transform([&lat_dist](const auto & point){
+            auto lon = point.x;
+            auto lat = point.y;
+            return geometry::Vec2D(lon * lat_dist * Radians(lat).cos(), lat * lat_dist);
+        })); // https://stackoverflow.com/questions/4681737/how-to-calculate-the-area-of-a-polygon-on-the-earths-surface-using-python
     }
 
 public:
@@ -69,6 +83,22 @@ public:
         }
     }
 
+    static double distance(geometry::IPoint auto const & p, geometry::IPoint auto const & q,bool exact = true)noexcept{
+        return distance(p.x, p.y, q.x, q.y, exact);
+    }
+
+    /**
+     * Calculate the area of a Polygon in m² by projection
+     * @param polygon source polygon
+     * @return area in m²
+     */
+    static double area(geometry::IPolygon auto const & polygon)noexcept{
+        return geometry::Polygon(projectToSinusoidal(polygon.getBoundary()),std::views::transform(polygon.getHoles(),[](const auto & ring){ return projectToSinusoidal(ring);})).area();
+    }
+
+    static double area(geometry::IRing auto const & ring) noexcept {
+        return projectToSinusoidal(ring).area();
+    }
 };
 
 }
