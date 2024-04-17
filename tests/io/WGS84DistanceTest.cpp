@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include <fishnet/WGS84Ellipsoid.hpp>
-using namespace fishnet::math;
+using namespace fishnet;
 
 TEST(WGS84EllipsoidTest, flattening) {
     double flatteningExpected = 0.00335281066474748;

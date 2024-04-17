@@ -3,17 +3,20 @@
 //
 #pragma once
 #include <math.h>
-#include "Constants.hpp"
-#include "Radians.hpp"
-#include "Degrees.hpp"
-#include "Angle.hpp"
+#include <fishnet/Constants.hpp>
+#include <fishnet/Radians.hpp>
+#include <fishnet/Degrees.hpp>
+#include <fishnet/Angle.hpp>
 
-namespace fishnet::math {
+namespace fishnet {
 
 /**
  * Util class for geographic computations
  */
+
+using namespace math;
 class WGS84Ellipsoid {
+
 private:
     static double cos2(double angle) {
         return pow(cos((math::PI / 180) * angle), 2);
@@ -65,6 +68,7 @@ public:
             return distance * correction;
         }
     }
+
 };
 
 }

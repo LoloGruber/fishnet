@@ -2,7 +2,7 @@ add_executable(mathTest
 NormalizeTest.cpp
 DegreeTest.cpp
 RadiansTest.cpp
-        WGS84DistanceTest.cpp
+
 )
 gtest_discover_tests(mathTest)
 
