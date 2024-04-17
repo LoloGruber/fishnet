@@ -20,15 +20,15 @@ Ring<double> LinearRingSamples::aaRhombus(Vec2D<double> center, double radius){
 
 static std::vector<Vec2D<double>> getPointsOfComplexRing(){
         auto points = std::vector<Vec2D<double>>();
-        points.emplace_back(Vec2D<double>(0,4));
-        points.emplace_back(Vec2D<double>(2,3));
-        points.emplace_back(Vec2D<double>(2,2));
-        points.emplace_back(Vec2D<double>(4,2));
-        points.emplace_back(Vec2D<double>(2,0));
-        points.emplace_back(Vec2D<double>(-2,-1));
-        points.emplace_back(Vec2D<double>(0,1));
-        points.emplace_back(Vec2D<double>(-3,2));
-        points.emplace_back(Vec2D<double>(0,4));
+        points.emplace_back(0,4);
+        points.emplace_back(2,3);
+        points.emplace_back(2,2);
+        points.emplace_back(4,2);
+        points.emplace_back(2,0);
+        points.emplace_back(-2,-1);
+        points.emplace_back(0,1);
+        points.emplace_back(-3,2);
+        points.emplace_back(0,4);
         return points;
 }
 const  Ring<double> LinearRingSamples::COMPLEX_RING = Ring(getPointsOfComplexRing());
