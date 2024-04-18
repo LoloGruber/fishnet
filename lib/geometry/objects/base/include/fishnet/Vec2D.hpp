@@ -5,9 +5,9 @@
 #include <fishnet/Degrees.hpp>
 #include <fishnet/CantorPairing.hpp>
 #include "GeometryType.hpp"
-
-namespace fishnet::geometry{
 #include <fishnet/Printable.hpp>
+namespace fishnet::geometry{
+
 /**
  * Util class for geometric computations in the two-dimensional space
  */

@@ -2,8 +2,9 @@
 #include <fishnet/CollectionConcepts.hpp>
 #include <fishnet/Segment.hpp>
 #include <fishnet/NumericConcepts.hpp>
-namespace fishnet::geometry{
 #include <fishnet/Printable.hpp>
+namespace fishnet::geometry{
+
 namespace __impl{
 template<typename S, typename T = typename std::remove_cvref_t<S>::numeric_type>
 concept LocationQueries = fishnet::math::Number<T> && requires(const S & shape, const Vec2D<T> & p , const Segment<T> & s, const Line<T> & l){
