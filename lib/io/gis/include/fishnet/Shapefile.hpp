@@ -8,11 +8,10 @@
 #include "GISFile.hpp"
 namespace fishnet{
 
-class Shapefile{
+class Shapefile: public AbstractGISFile{
 private:
-    std::filesystem::path pathToShp;
 
-    std::vector<std::filesystem::path> getAssociatedFiles()const;
+    [[nodiscard]] std::vector<std::filesystem::path> getAssociatedFiles()const;
 
     const static inline std::array<std::string,5> FILE_EXTENSIONS = {
         ".shp",".shx",".prj",".dbf",".cpg"
@@ -23,24 +22,22 @@ public:
         return std::ranges::any_of(FILE_EXTENSIONS,[&path](const auto & ext){return ext == path.extension().string();});
     }
 
-    Shapefile(const std::filesystem::path & path):pathToShp(path){
+    Shapefile(const std::filesystem::path & path):AbstractGISFile(path){
         if(not supportsExtension(path))
             throw std::invalid_argument("Not a shapefile!");
     };
 
-    const std::filesystem::path & getPath() const noexcept{
-        return this->pathToShp;
+    [[nodiscard]] Shapefile changeFilename(const std::string & filename) const noexcept;
+
+    [[nodiscard]] Shapefile appendToFilename(const std::string & postfix) const noexcept;
+
+    [[nodiscard]] Shapefile incrementFileVersion() const noexcept;
+
+    [[nodiscard]] bool remove() const noexcept;
+
+    [[nodiscard]]constexpr static GISFileType type()  noexcept{
+        return GISFileType::SHP;
     }
-
-    Shapefile changeFilename(const std::string & filename) const noexcept;
-
-    Shapefile appendToFilename(const std::string & postfix) const noexcept;
-
-    Shapefile incrementFileVersion() const noexcept;
-
-    bool exists() const noexcept;
-
-    bool remove() const noexcept;
 
     Shapefile & move(const std::filesystem::path & path) ;
 

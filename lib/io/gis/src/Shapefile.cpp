@@ -18,17 +18,17 @@ std::vector<fs::path> Shapefile::getAssociatedFiles() const{
 
 Shapefile Shapefile::changeFilename(const std::string & filename) const noexcept {
     if (not filename.ends_with(".shp"))
-        return this->pathToShp.parent_path() / std::filesystem::path(filename+".shp");
-    return this->pathToShp.parent_path() / std::filesystem::path(filename);
+        return this->pathToFile.parent_path() / std::filesystem::path(filename+".shp");
+    return this->pathToFile.parent_path() / std::filesystem::path(filename);
 }
 
 Shapefile Shapefile::appendToFilename(const std::string & postfix) const noexcept {
-    return changeFilename(this->pathToShp.stem().string() + postfix);
+    return changeFilename(this->pathToFile.stem().string() + postfix);
 }
 
 Shapefile Shapefile::incrementFileVersion() const noexcept {
     std::regex endsWithVersionRegex {"_(\\d+)$"};
-    const std::string & currentFilename = this->pathToShp.stem().string();
+    const std::string & currentFilename = this->pathToFile.stem().string();
     std::smatch matcher;
     if(std::regex_search(currentFilename,matcher,endsWithVersionRegex)){
         size_t splitIndex = currentFilename.find_last_of('_');
@@ -37,10 +37,6 @@ Shapefile Shapefile::incrementFileVersion() const noexcept {
         return this->changeFilename(filename+"_"+std::to_string(version));
     }
     return this->appendToFilename("_1");
-}
-
-bool Shapefile::exists() const noexcept {
-    return std::filesystem::exists(this->pathToShp);
 }
 
 bool Shapefile::remove() const noexcept {
@@ -58,7 +54,7 @@ bool Shapefile::remove() const noexcept {
 Shapefile & Shapefile::move(const fs::path & path) {
     if(not supportsExtension(path))
         throw std::invalid_argument("Target path has to contain a valid shapefile extension");
-    this->pathToShp = path;
+    this->pathToFile = path;
     for(const auto & file : getAssociatedFiles()){
         fs::rename(file,fs::path(path.root_path() / fs::path(path.stem().string()+file.extension().string())));
     }
@@ -90,7 +86,7 @@ Shapefile Shapefile::copy(const fs::path & rootPath, std::string filename) const
 std::string Shapefile::toString() const noexcept {
     std::ostringstream oss;
     oss << "Shapefile: ";
-    oss << this->pathToShp;
+    oss << this->pathToFile;
     oss << std::endl;
     for(const auto & file: getAssociatedFiles()){
         oss << "\t" << file.string() << std::endl;
