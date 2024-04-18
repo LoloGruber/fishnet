@@ -1,5 +1,6 @@
 add_library(io_gdal_adapter INTERFACE
-        include/fishnet/WGS84Ellipsoid.hpp)
+        include/fishnet/WGS84Ellipsoid.hpp
+)
 
 find_package(GDAL  REQUIRED)
 
