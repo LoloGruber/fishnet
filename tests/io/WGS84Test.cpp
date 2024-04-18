@@ -45,6 +45,7 @@ TEST(WGS84EllipsoidTest, SquareKilometerArea){
         if(p.area() < min.area())
             min = p;
     }
+    std::cout << min.area() << std::endl;
     std::cout << WGS84Ellipsoid::area(min) << std::endl;
     std::cout << min << std::endl;
     testutil::TODO();
