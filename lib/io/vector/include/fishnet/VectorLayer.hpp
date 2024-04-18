@@ -20,10 +20,10 @@
 #include "Feature.hpp"
 
 
-#include <ogr_spatialref.h>
-#include <gdal.h>
-#include <gdal_priv.h>
-#include <ogr_core.h>
+#include <gdal/ogr_spatialref.h>
+#include <gdal/gdal.h>
+#include <gdal/gdal_priv.h>
+#include <gdal/ogr_core.h>
 
 namespace fishnet {
 

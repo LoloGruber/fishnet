@@ -1,6 +1,6 @@
 #pragma once
-#include <gdal.h>
-#include <ogr_geometry.h>
+#include <gdal/gdal.h>
+#include <gdal/ogr_geometry.h>
 
 #include <optional>
 #include <fishnet/GeometryObject.hpp>

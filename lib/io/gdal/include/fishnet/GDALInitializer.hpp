@@ -4,8 +4,8 @@
 
 #ifndef FISHNET_PROJECT_GDALINITIALIZER_HPP
 #define FISHNET_PROJECT_GDALINITIALIZER_HPP
-#include <gdal.h>
-#include <gdal_priv.h>
+#include <gdal/gdal.h>
+#include <gdal/gdal_priv.h>
 
 namespace fishnet {
 

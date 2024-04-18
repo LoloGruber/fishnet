@@ -1,6 +1,6 @@
 #pragma once
 #include <typeinfo>
-#include <ogr_feature.h>
+#include <gdal/ogr_feature.h>
 #include <variant>
 #include <typeindex>
 #include <fishnet/FieldType.hpp>

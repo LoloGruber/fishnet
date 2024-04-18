@@ -12,6 +12,10 @@
 #include <fishnet/Polygon.hpp>
 #include <algorithm>
 #include <ranges>
+#include "gdal/gdal.h"
+#include "gdal/ogr_geometry.h"
+#include "gdal/ogr_spatialref.h"
+#include "OGRGeometryAdapter.hpp"
 
 namespace fishnet {
 
@@ -40,18 +44,28 @@ private:
         return pow(angle.sin(), 2);
     }
 
-    static auto projectToSinusoidal(geometry::IRing auto const & ring) noexcept {
-        double lat_dist = math::DEG_TO_RAD * radiusInMeter;
-        return geometry::Ring(ring.getPoints() | std::views::transform([&lat_dist](const auto & point){
-            auto lon = point.x;
-            auto lat = point.y;
-            return geometry::Vec2D(lon * lat_dist * Radians(lat).cos(), lat * lat_dist);
-        })); // https://stackoverflow.com/questions/4681737/how-to-calculate-the-area-of-a-polygon-on-the-earths-surface-using-python
+    static auto projectToEckertIV(geometry::IRing auto const & ring) noexcept {
+        OGRSpatialReference targetRef = OGRSpatialReference();
+        targetRef.SetEckertIV(ring.centroid().x, 0, 0);
+        OGRCoordinateTransformation *transformation = OGRCreateCoordinateTransformation(&spatialReference, &targetRef);
+        auto ogrPolygonPointer = OGRGeometryAdapter::toOGR(ring);
+        ogrPolygonPointer->transform(transformation);
+        OCTDestroyCoordinateTransformation(transformation);
+        return OGRGeometryAdapter::fromOGR(*ogrPolygonPointer).value();
+    }
+
+
+
+    static inline OGRSpatialReference initWGS84(){
+        OGRSpatialReference wgs84 = OGRSpatialReference();
+        wgs84.importFromEPSG(4326);
+        return wgs84;
     }
 
 public:
     constexpr static double flattening = 1.0 / 298.257223563; // Flattening of the Earth: https://en.wikipedia.org/wiki/Earth_ellipsoid
     constexpr static double radiusInMeter = 6378137; //Earth radius in m;
+    static inline OGRSpatialReference spatialReference = initWGS84();
 
     /**
      *
@@ -93,11 +107,12 @@ public:
      * @return area in m²
      */
     static double area(geometry::IPolygon auto const & polygon)noexcept{
-        return geometry::Polygon(projectToSinusoidal(polygon.getBoundary()),std::views::transform(polygon.getHoles(),[](const auto & ring){ return projectToSinusoidal(ring);})).area();
+        return geometry::Polygon(projectToEckertIV(polygon.getBoundary()), std::views::transform(polygon.getHoles(), [](const auto & ring){ return projectToEckertIV(
+                ring);})).area();
     }
 
     static double area(geometry::IRing auto const & ring) noexcept {
-        return projectToSinusoidal(ring).area();
+        return projectToEckertIV(ring).area();
     }
 };
 
