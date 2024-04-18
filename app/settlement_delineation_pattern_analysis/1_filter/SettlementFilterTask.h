@@ -75,5 +75,9 @@ public:
             output = input.appendToFilename("_filtered");
         //TODO
     }
+
+    static SettlementFilterTask<P> create(fishnet::Shapefile input, fishnet::Shapefile output) noexcept{
+        return SettlementFilterTask(input, output);
+    }
 };
 

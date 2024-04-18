@@ -1,6 +1,4 @@
 {
-  "input": "/home/lolo/CLionProjects/fishnet/data/output/small_dataset/Punjab_Small.shp",
-  "output": "",
   "unary-filters": [
     {
       "name": "AreaFilter",
