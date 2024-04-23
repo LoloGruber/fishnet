@@ -1,0 +1,5 @@
+add_executable(workflowTest
+FilterTest.cpp
+)
+gtest_discover_tests(workflowTest)
+target_link_libraries(workflowTest PRIVATE workflowFilters testutil geometryTestUtils) 
