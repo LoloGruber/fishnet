@@ -11,6 +11,7 @@
 #include <CLI/CLI.hpp>
 
 #include "ProjectedAreaFilter.hpp"
+#include "ApproxAreaFilter.hpp"
 /**
  * MIT License Copyright (c) 2013-2022 Niels Lohmann
 
@@ -75,17 +76,18 @@ static SettlementFilterTask<fishnet::geometry::Polygon<double>> readFromJson(std
  * @return
  */
 int main(int argc, char * argv[]){
-    CLI::App app{"FilterTask"};
-    app.ensure_utf8(argv);
-    std::string inputFilename;
-    std::string configFilename;
-    std::string outputFilename;
-    app.add_option("-i,--input",inputFilename,"Input GIS file for the filter step")->required()->check(CLI::ExistingFile);
-    app.add_option("-c,--config", configFilename, "Path to filter.json file")->required()->check(CLI::ExistingFile);
-    app.add_option("-o,--output", outputFilename, "Output Shapefile path");
-    CLI11_PARSE(app,argc,argv);
-    json config = json::parse(std::ifstream(configFilename));
-    std::cout << configFilename << std::endl;
-
+    // CLI::App app{"FilterTask"};
+    // app.ensure_utf8(argv);
+    // std::string inputFilename;
+    // std::string configFilename;
+    // std::string outputFilename;
+    // app.add_option("-i,--input",inputFilename,"Input GIS file for the filter step")->required()->check(CLI::ExistingFile);
+    // app.add_option("-c,--config", configFilename, "Path to filter.json file")->required()->check(CLI::ExistingFile);
+    // app.add_option("-o,--output", outputFilename, "Output Shapefile path");
+    // CLI11_PARSE(app,argc,argv);
+    // json config = json::parse(std::ifstream(configFilename));
+    // std::cout << configFilename << std::endl;
+    
+    ApproxAreaFilter filter {100.0};
     return 0;
 }

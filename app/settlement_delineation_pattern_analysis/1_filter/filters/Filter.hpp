@@ -4,6 +4,9 @@
 #pragma once
 #include <fishnet/FunctionalConcepts.hpp>
 
+namespace fishnet::geometry{
+
+
 enum class UnaryFilterType{
     ApproxAreaFilter, ProjectedAreaFilter
 };
@@ -21,3 +24,4 @@ template<typename FilterType, typename T>
 concept BinaryFilter = util::BiPredicate<FilterType,T> && requires(const FilterType & f){
     {f.getType()} -> std::same_as<BinaryFilterType>;
 };
+}

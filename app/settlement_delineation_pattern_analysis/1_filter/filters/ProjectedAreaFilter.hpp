@@ -2,10 +2,10 @@
 #include <fishnet/ShapeGeometry.hpp>
 #include <fishnet/WGS84Ellipsoid.hpp>
 #include "Filter.hpp"
-
+namespace fishnet::geometry{
 class ProjectedAreaFilter {
 private:
-    double requiredSize; //  Area in [long * lat]
+    double requiredSize; //  Area in [m²]
 public:
     explicit ProjectedAreaFilter(double requiredSize): requiredSize(requiredSize){}
 
@@ -17,3 +17,4 @@ public:
         return UnaryFilterType::ProjectedAreaFilter;
     }
 };
+}
