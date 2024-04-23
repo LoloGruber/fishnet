@@ -48,13 +48,6 @@ struct PolygonFilterRemoveEvent: public PolygonFilter<P>::DefaultRemoveEvent {
 };
 }
 
-struct ContainedOrInHoleFilter{
-    static bool operator()(const IPolygon auto & p, const IPolygon auto & underTest) noexcept{
-        return p != underTest and not p.contains(underTest) and not p.isInHole(underTest);
-    }
-};
-
-
 
 
 template<PolygonRange R,util::BiPredicate<std::ranges::range_value_t<R>> BinaryFilter, util::Predicate<std::ranges::range_value_t<R>> Filter = util::TruePredicate>
