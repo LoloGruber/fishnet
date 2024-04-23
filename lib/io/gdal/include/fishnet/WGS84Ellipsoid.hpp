@@ -10,6 +10,7 @@
 #include <fishnet/GeometryObject.hpp>
 #include <fishnet/Ring.hpp>
 #include <fishnet/Polygon.hpp>
+#include <fishnet/SimplePolygon.hpp>
 #include <algorithm>
 #include <ranges>
 #include "gdal/gdal.h"
@@ -113,6 +114,11 @@ public:
 
     static double area(geometry::IRing auto const & ring) noexcept {
         return projectToEckertIV(ring).area();
+    }
+
+    template<typename T>
+    static double area(geometry::SimplePolygon<T> const & polygon) noexcept {
+        return area(polygon.getBoundary());
     }
 };
 
