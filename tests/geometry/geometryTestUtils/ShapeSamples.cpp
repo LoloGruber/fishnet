@@ -54,3 +54,14 @@ SimplePolygon<double> SimplePolygonSamples::aaRhombus(Vec2D<double> center, doub
     });
 }
 
+static std::vector<Vec2DReal> pointsOfSquareKilometerWue(){
+    auto A = Vec2DReal(49.78136164352572, 9.966929808562949);
+    auto B = Vec2DReal(49.78136164352572, 9.975970902326768);
+    auto C = Vec2DReal(49.790481800072, 9.975970902326768);
+    return std::vector<Vec2DReal>({
+        A,B,C,Vec2DReal(C.x,A.y)
+    });
+}
+
+const SimplePolygon<double> SimplePolygonSamples::SQUARE_KILOMETER = SimplePolygon(pointsOfSquareKilometerWue());
+
