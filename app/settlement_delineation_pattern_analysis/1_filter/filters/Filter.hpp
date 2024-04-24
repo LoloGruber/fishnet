@@ -3,9 +3,11 @@
 //
 #pragma once
 #include <fishnet/FunctionalConcepts.hpp>
-
-namespace fishnet::geometry{
-
+#include <string_view>
+#include <expected>
+#include <nlohmann/json.hpp>
+#include <unordered_map>
+#include <fishnet/BidirectionalMap.hpp>
 
 enum class UnaryFilterType{
     ApproxAreaFilter, ProjectedAreaFilter
@@ -15,13 +17,30 @@ enum class BinaryFilterType{
     InsideBoundaryFilter
 };
 
-template<typename FilterType,typename T>
-concept UnaryFilter = util::Predicate<FilterType,T> && requires (const FilterType & f){
-    {f.getType()} -> std::same_as<UnaryFilterType>;
-};
+namespace FILTERS{
 
-template<typename FilterType, typename T>
-concept BinaryFilter = util::BiPredicate<FilterType,T> && requires(const FilterType & f){
-    {f.getType()} -> std::same_as<BinaryFilterType>;
+const static inline util::BidirectionalMap<std::string,UnaryFilterType> UNARY = {{
+    {"ApproxAreaFilter",UnaryFilterType::ApproxAreaFilter},
+    {"ProjectedAreaFilter",UnaryFilterType::ProjectedAreaFilter}
+}};
+
+
+
+const static inline util::BidirectionalMap<std::string,BinaryFilterType> BINARY = {
+    {"InsideBoundaryFilter",BinaryFilterType::InsideBoundaryFilter}
 };
 }
+
+
+template<typename F,typename T>
+concept UnaryFilter = util::Predicate<F,T> && requires(const nlohmann::json & json) {
+    {F::type()} -> std::same_as<UnaryFilterType>;
+    {F::fromJson(json)} -> std::same_as<std::expected<nlohmann::json,std::string>>;
+};
+
+template<typename F,typename T>
+concept BinaryFilter = util::BiPredicate<F,T> && requires(const nlohmann::json & json) {
+    {F::type()} -> std::same_as<BinaryFilterType>;
+    {F::fromJson(json)} -> std::same_as<std::expected<F,std::string>>;
+};
+

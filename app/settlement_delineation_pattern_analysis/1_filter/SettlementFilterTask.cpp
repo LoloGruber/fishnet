@@ -10,8 +10,7 @@
 #include <fstream>
 #include <CLI/CLI.hpp>
 
-#include "ProjectedAreaFilter.hpp"
-#include "ApproxAreaFilter.hpp"
+#include "FilterConfigJsonReader.hpp"
 /**
  * MIT License Copyright (c) 2013-2022 Niels Lohmann
 
@@ -53,41 +52,41 @@ using json=nlohmann::json;
 using namespace fishnet;
 
 
-static SettlementFilterTask<fishnet::geometry::Polygon<double>> readFromJson(std::string inputFile, std::string outputFile, json config){
-    auto inputShapefile = GISFactory::asShapefile(inputFile);
-
-    auto task = inputShapefile.transform([&outputFile](const auto & input){
-       Shapefile output = GISFactory::asShapefile(outputFile).value_or(input.appendToFilename("_filtered"));
-        return SettlementFilterTask<fishnet::geometry::Polygon<double>>::create(input, output);
-    });
-    if(not task)
-        std::cout << task.error() << std::endl;
-    task->addPredicate(ProjectedAreaFilter(500.0));
-    return *task;
-}
-
-
 
 
 /**
- * The main method launching the filter workflow step expects exactly one argument, which is a valid path to the task specification json file
+ * 
  * @param argc
  * @param argv
  * @return
  */
 int main(int argc, char * argv[]){
-    // CLI::App app{"FilterTask"};
-    // app.ensure_utf8(argv);
-    // std::string inputFilename;
-    // std::string configFilename;
-    // std::string outputFilename;
-    // app.add_option("-i,--input",inputFilename,"Input GIS file for the filter step")->required()->check(CLI::ExistingFile);
-    // app.add_option("-c,--config", configFilename, "Path to filter.json file")->required()->check(CLI::ExistingFile);
-    // app.add_option("-o,--output", outputFilename, "Output Shapefile path");
-    // CLI11_PARSE(app,argc,argv);
-    // json config = json::parse(std::ifstream(configFilename));
-    // std::cout << configFilename << std::endl;
-    
-    ApproxAreaFilter filter {100.0};
+    CLI::App app{"FilterTask"};
+    app.ensure_utf8(argv);
+    std::string inputFilename = "/home/lolo/Documents/fishnet/data/output/small_dataset/Punjab_Small.shp";
+    std::string configFilename = "/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/1_filter/config/filter.json";
+    std::string outputFilename;
+    app.add_option("-i,--input",inputFilename,"Input GIS file for the filter step")->required()->check(CLI::ExistingFile);
+    app.add_option("-c,--config", configFilename, "Path to filter.json file")->required()->check(CLI::ExistingFile);
+    app.add_option("-o,--output", outputFilename, "Output Shapefile path");
+    CLI11_PARSE(app,argc,argv);
+    std::cout << inputFilename << std::endl;
+    std::cout << configFilename << std::endl;
+
+    auto inputShapefile = GISFactory::asShapefile(inputFilename);
+    auto task = inputShapefile.transform([&outputFilename](const auto & input){
+       Shapefile output = GISFactory::asShapefile(outputFilename).value_or(input.appendToFilename("_filtered"));
+        return SettlementFilterTask<fishnet::geometry::Polygon<double>>::create(input, output);
+    });
+    if(not task)
+        std::cout << task.error() << std::endl;
+
+    auto jsonReader = FilterConfigJsonReader::createFromPath(std::filesystem::path(configFilename));
+    if(not jsonReader)
+        std::cout << jsonReader.error() << std::endl;
+    auto success = jsonReader->read(task.value());
+    if(not success)
+        std::cout << success.error() << std::endl;
+    task->run();
     return 0;
 }

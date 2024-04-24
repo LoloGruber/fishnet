@@ -6,22 +6,36 @@
 #include <fishnet/WGS84Ellipsoid.hpp>
 #include "Filter.hpp"
 #include <cmath>
+#include <optional>
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
 
 class ApproxAreaFilter{
 private:
-    double requiredSize; // Area in [m²]
+    double requiredArea; // Area in [m²]
 public:
-    explicit ApproxAreaFilter(double requiredSize):requiredSize(requiredSize){}
+    explicit ApproxAreaFilter(double requiredArea):requiredArea(requiredArea){}
 
     bool operator() (const fishnet::geometry::IPolygon auto & p) const noexcept {
         double areaInLongLat = p.area();
         auto anySegment = *std::ranges::begin(p.getBoundary().getSegments());
         double squaredFactor = pow(fishnet::WGS84Ellipsoid::distance(anySegment.p(),anySegment.q()),2)/pow(anySegment.length(),2);
         double approxArea = areaInLongLat * squaredFactor;
-        return approxArea >= requiredSize;
+        return approxArea >= requiredArea;
     }
 
-    UnaryFilterType getType() const noexcept {
+    constexpr static UnaryFilterType type()  noexcept {
         return UnaryFilterType::ApproxAreaFilter;
     }
+
+    static std::expected<ApproxAreaFilter,std::string> fromJson(json const & filterDesc) {
+        try{
+            auto area = filterDesc.at("requiredArea");
+            return ApproxAreaFilter(area.template get<double>());
+        }catch(  const json::exception & e){
+            return std::unexpected(e.what());
+        }
+    }
 };
+
