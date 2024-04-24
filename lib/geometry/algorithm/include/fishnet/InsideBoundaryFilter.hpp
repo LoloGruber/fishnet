@@ -1,5 +1,4 @@
 #pragma once
-#include "Filter.hpp"
 #include <fishnet/ShapeGeometry.hpp>
 namespace fishnet::geometry{
 
