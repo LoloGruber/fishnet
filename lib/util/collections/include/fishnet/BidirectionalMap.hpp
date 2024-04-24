@@ -10,6 +10,16 @@ private:
     std::unordered_map<FromType,ToType> map;
     std::unordered_map<ToType,FromType> inverse;
 public:
+    using value_type = std::pair<const FromType,const ToType>;
+
+    constexpr BidirectionalMap(std::initializer_list<value_type> init){
+        for(const auto & [from,to]:init){
+            try_insert(from,to);
+        }
+    }
+
+    constexpr BidirectionalMap()=default;
+
     constexpr std::optional<ToType> getTo(const FromType & key) const noexcept {
         if(not map.contains(key))
             return std::nullopt;
