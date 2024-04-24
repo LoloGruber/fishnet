@@ -25,7 +25,8 @@ inputs:
     doc: "Configuration"
 
 outputs:
-  output
+  exampleOut:
+    type: stdout
 
 stdout: output.log
 stderr: error.log

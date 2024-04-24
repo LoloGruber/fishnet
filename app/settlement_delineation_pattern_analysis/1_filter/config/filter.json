@@ -1,7 +1,7 @@
 {
   "unary-filters": [
     {
-      "name": "AreaFilter",
+      "name": "ApproxAreaFilter",
       "requiredArea": 0.000001 
     }
   ],
