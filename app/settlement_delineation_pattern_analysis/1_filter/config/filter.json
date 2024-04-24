@@ -2,9 +2,7 @@
   "unary-filters": [
     {
       "name": "AreaFilter",
-      "args": {
-        "requiredArea": 0.000001
-      }
+      "requiredArea": 0.000001 
     }
   ],
   "binary-filters": [
