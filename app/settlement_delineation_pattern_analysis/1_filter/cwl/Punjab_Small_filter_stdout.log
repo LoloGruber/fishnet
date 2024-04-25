@@ -1,0 +1,6 @@
+"/tmp/k4zk5kmz/stgfe071ec6-a733-47f5-8d94-7a33d6e41c0b/Punjab_Small.shp"
+"Punjab_Small_filtered.shp"
+Task: Filter
+	Input: Punjab_Small.shp
+	Output:Punjab_Small_filtered.shp
+Elapsed time: 7.43438ms
