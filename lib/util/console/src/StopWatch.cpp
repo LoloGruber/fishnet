@@ -18,7 +18,7 @@ double StopWatch::stop(){
 void StopWatch::stopAndPrint(){
     double ms = stop()*1000.0;
     if (task != ""){
-        std::cout << "Task \""<< this->task << "\" took "<< ms << "ms" << std::endl;
+        std::cout << "Task: "<< this->task << "\nTime elapsed: "<< ms << "ms" << std::endl;
     }else {
         std::cout << "Time elapsed: " << ms << "ms" << std::endl;
     }
