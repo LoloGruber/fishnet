@@ -69,12 +69,11 @@ Shapefile Shapefile::copy(const fs::path & path) const {
     //TODO ensure file exists
     if(not supportsExtension(path))
         throw std::invalid_argument("Target path has to contain a valid shapefile extension");
-    Shapefile destination {path};
     for(const auto & file : getAssociatedFiles()){
         auto target = fs::path(path.parent_path() / fs::path(path.stem().string() + file.extension().string()));
         fs::copy(file,target);
     }
-    return destination;
+    return Shapefile {path};
 }
 
 Shapefile Shapefile::copy(const fs::path & rootPath, std::string filename) const {

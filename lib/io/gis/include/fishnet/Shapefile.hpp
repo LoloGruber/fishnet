@@ -13,8 +13,12 @@ private:
 
     [[nodiscard]] std::vector<std::filesystem::path> getAssociatedFiles()const;
 
-    const static inline std::array<std::string,5> FILE_EXTENSIONS = {
+    constexpr static inline std::array<std::string,5> FILE_EXTENSIONS = {
         ".shp",".shx",".prj",".dbf",".cpg"
+    };
+
+    constexpr static inline std::array<std::string,4> REQUIRED_FILES = {
+        ".shp",".shx",".dbf",".prj"
     };
 
 public:
@@ -22,10 +26,18 @@ public:
         return std::ranges::any_of(FILE_EXTENSIONS,[&path](const auto & ext){return ext == path.extension().string();});
     }
 
+    static bool isValid(const std::filesystem::path & path) {
+        return std::ranges::all_of(REQUIRED_FILES,[&path](const auto & ext){return std::filesystem::exists(path.parent_path() / std::filesystem::path(path.stem().string()+ext));});
+    }
+
     Shapefile(const std::filesystem::path & path):AbstractGISFile(path){
         if(not supportsExtension(path))
             throw std::invalid_argument("Not a shapefile!");
     };
+
+    [[nodiscard]] bool exists() const noexcept{
+        return AbstractGISFile::exists() && isValid(this->pathToFile);
+    }
 
     [[nodiscard]] Shapefile changeFilename(const std::string & filename) const noexcept;
 
@@ -33,13 +45,13 @@ public:
 
     [[nodiscard]] Shapefile incrementFileVersion() const noexcept;
 
-    [[nodiscard]] bool remove() const noexcept;
+    bool remove() const noexcept;
 
     [[nodiscard]]constexpr static GISFileType type()  noexcept{
         return GISFileType::SHP;
     }
 
-    Shapefile & move(const std::filesystem::path & path) ;
+    Shapefile & move(const std::filesystem::path & path);
 
     Shapefile & move(const std::filesystem::path & rootPath, std::string filename) ;
 
