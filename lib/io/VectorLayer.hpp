@@ -100,7 +100,7 @@ private:
             }
             OGRErr success = outputLayer->CreateFeature(feature);
             if(success != 0){
-                std::cout << "Could not write Geometry: "+f.getGeometry().toString() << std::endl;
+                std::cerr << "Could not write Geometry: "+f.getGeometry().toString() << std::endl;
             }
         }
         outputLayer->SyncToDisk();
