@@ -4,6 +4,7 @@
 #pragma once
 
 #include <fishnet/VectorLayer.hpp>
+#include <fishnet/Feature.hpp>
 #include <fishnet/Shapefile.hpp>
 #include <fishnet/CompositePredicate.hpp>
 
@@ -11,6 +12,7 @@
 #include <fishnet/PolygonFilter.hpp>
 
 #include <nlohmann/json.hpp> // Copyright (c) 2013-2022 Niels Lohmann
+#include <sstream>
 
 template<fishnet::geometry::IPolygon P>
 class SettlementFilterTask {
@@ -19,7 +21,6 @@ private:
     util::AllOfPredicate<P> unaryCompositeFilter;
     util::AllOfPredicate<P,P> binaryCompositeFilter;
     fishnet::Shapefile output;
-
 public:
     SettlementFilterTask(fishnet::Shapefile  input, fishnet::Shapefile  output):input(std::move(input)),output(std::move(output)){}
 
@@ -27,7 +28,16 @@ public:
         auto inputLayer = fishnet::VectorLayer<P>::read(input);
         auto result = filter(inputLayer.getGeometries(), binaryCompositeFilter, unaryCompositeFilter);
         auto outputLayer = fishnet::VectorLayer<P>::empty(inputLayer.getSpatialReference());
-        outputLayer.addAllGeometry(result);
+        auto idField = outputLayer.addSizeField("FISHNET_ID");
+        if(not idField){
+            std::cerr << "Coult not create ID Field" << std::endl;
+        }
+        auto polygonHasher = std::hash<P>();
+        for(auto && geometry: result) {
+            fishnet::Feature<P> current {std::move(geometry)};
+            current.addAttribute(*idField,polygonHasher(current.getGeometry()));
+            outputLayer.addFeature(current);
+        }
         outputLayer.overwrite(output);
     }
 
@@ -60,21 +70,24 @@ public:
         this->output = outputFile;
         return *this;
     }
-    using json = nlohmann::json;
 
-    static std::expected<SettlementFilterTask<P>,std::string> fromJson(const json & j) noexcept {
-        std::string inputFilename;
-        j.at("input").get_to(inputFilename);
-        std::string outputFilename;
-        j.at("output").get_to(outputFilename);
-        fishnet::Shapefile input{inputFilename};
-        if(not input.exists())
-            return std::unexpected("Input file: \"" + inputFilename + "\" does not exist.");
-        fishnet::Shapefile output{outputFilename};
-        if(outputFilename.empty())
-            output = input.appendToFilename("_filtered");
-        //TODO
+    const fishnet::Shapefile & getInput() const noexcept {
+        return this->input;
     }
+
+    const fishnet::Shapefile & getOutput() const noexcept {
+        return this->output;
+    }
+
+    std::string getTaskName() const noexcept {
+        std::stringstream builder;
+        builder << "Filter\n"
+            << "\tInput: "<<getInput().getPath().filename().string() <<"\n"
+            << "\tOutput:"<<getOutput().getPath().filename().string();
+        return builder.str();
+    }
+
+    using json = nlohmann::json;
 
     static SettlementFilterTask<P> create(fishnet::Shapefile input, fishnet::Shapefile output) noexcept{
         return SettlementFilterTask(input, output);
