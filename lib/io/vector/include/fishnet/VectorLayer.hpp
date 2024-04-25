@@ -50,9 +50,7 @@ private:
         GDALInitializer::init();
         if(not shapefile.exists())
             return;
-        auto * ds = (GDALDataset *) GDALOpenEx(shapefile.getPath().c_str(), GDAL_OF_VECTOR,nullptr, nullptr,
-                                                      nullptr);
-        std::cout << "Create DS" << std::to_string(ds == nullptr)<< std::endl;
+        auto * ds = (GDALDataset *) GDALOpenEx(shapefile.getPath().c_str(), GDAL_OF_VECTOR,nullptr, nullptr,nullptr);
         OGRLayer * layer = ds->GetLayer(0);
         for(const auto & feature: layer){
             auto geo = feature->GetGeometryRef();
