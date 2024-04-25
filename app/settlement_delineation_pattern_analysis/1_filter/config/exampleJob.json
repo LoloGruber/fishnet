@@ -1,7 +1,12 @@
 {
     "input":{
         "class": "File",
-        "path": "/home/lolo/Documents/fishnet/data/output/small_dataset/Punjab_Small.shp"
+        "path": "/home/lolo/Documents/fishnet/data/output/small_dataset/Punjab_Small.shp",
+        "secondaryFiles": [
+            {"class": "File", "path": "/home/lolo/Documents/fishnet/data/output/small_dataset/Punjab_Small.shx"},
+            {"class": "File", "path": "/home/lolo/Documents/fishnet/data/output/small_dataset/Punjab_Small.dbf"},
+            {"class": "File", "path": "/home/lolo/Documents/fishnet/data/output/small_dataset/Punjab_Small.prj"}
+        ]
     },
     "output":"",
     "filterConfig":{
