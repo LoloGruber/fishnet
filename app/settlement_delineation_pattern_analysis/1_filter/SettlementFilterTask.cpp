@@ -6,6 +6,7 @@
 #include <fishnet/PathHelper.h>
 #include <fishnet/StopWatch.h>
 #include <fishnet/GISFactory.hpp>
+#include <fishnet/StopWatch.h>
 #include <nlohmann/json.hpp>
 #include <fstream>
 #include <CLI/CLI.hpp>
@@ -52,7 +53,7 @@ using json=nlohmann::json;
 using namespace fishnet;
 
 
-
+constexpr static const char * OUTPUT_SUFFIX = "_filtered.shp";
 
 /**
  * 
@@ -62,31 +63,31 @@ using namespace fishnet;
  */
 int main(int argc, char * argv[]){
     CLI::App app{"FilterTask"};
-    app.ensure_utf8(argv);
     std::string inputFilename = "/home/lolo/Documents/fishnet/data/output/small_dataset/Punjab_Small.shp";
     std::string configFilename = "/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/1_filter/config/filter.json";
-    std::string outputFilename;
+    std::string outputDirectory;
     app.add_option("-i,--input",inputFilename,"Input GIS file for the filter step")->required()->check(CLI::ExistingFile);
     app.add_option("-c,--config", configFilename, "Path to filter.json file")->required()->check(CLI::ExistingFile);
-    app.add_option("-o,--output", outputFilename, "Output Shapefile path");
+    app.add_option("-o,--output", outputDirectory, "Output directory path")->check(CLI::ExistingDirectory);
     CLI11_PARSE(app,argc,argv);
-    std::cout << inputFilename << std::endl;
-    std::cout << configFilename << std::endl;
-
     auto inputShapefile = GISFactory::asShapefile(inputFilename);
-    auto task = inputShapefile.transform([&outputFilename](const auto & input){
-       Shapefile output = GISFactory::asShapefile(outputFilename).value_or(input.appendToFilename("_filtered"));
+    auto taskExpected = inputShapefile.transform([&outputDirectory](const auto & input){
+        std::filesystem::path outPath = std::filesystem::path(outputDirectory) / std::filesystem::path(input.getPath().stem().string() + OUTPUT_SUFFIX);
+        Shapefile output = Shapefile(outPath);
         return SettlementFilterTask<fishnet::geometry::Polygon<double>>::create(input, output);
     });
-    if(not task)
-        std::cout << task.error() << std::endl;
-
+    if(not taskExpected)
+        std::cerr << taskExpected.error() << std::endl;
+    auto & task = *taskExpected;
+    std::cout << task.getInput().getPath() << std::endl;
+    std::cout << task.getOutput().getPath() << std::endl;
     auto jsonReader = FilterConfigJsonReader::createFromPath(std::filesystem::path(configFilename));
     if(not jsonReader)
-        std::cout << jsonReader.error() << std::endl;
-    auto success = jsonReader->read(task.value());
+        std::cerr << jsonReader.error() << std::endl;
+    auto success = jsonReader->read(task);
     if(not success)
-        std::cout << success.error() << std::endl;
-    task->run();
+        std::cerr << success.error() << std::endl;
+    StopWatch filterWatch {task.getTaskName()};
+    task.run();
     return 0;
 }
