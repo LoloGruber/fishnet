@@ -1,23 +1,13 @@
 cmake_minimum_required(VERSION 3.16)
 project(fishnet_project VERSION 1.0.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 23)
-# set(Boost_USE_STATIC_LIBS OFF)
-# set(Boost_USE_MULTITHREADED ON)
-# set(Boost_USE_STATIC_RUNTIME OFF)
-#set(CGAL_DO_NOT_WARN_ABOUT_CMAKE_BUILD_TYPE TRUE)
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 option(FISHNET_Tests "Enable unit tests for Fishnet components" ON)
-
-
-if (MSVC)
-    # warning level 4
-    add_compile_options(/W4)
-else()
-    # gcc / clang flags
-    add_compile_options(-Wall -Wextra -Wpedantic -Wconversion -Wno-unused-parameter -Wno-unused-function -fconcepts-diagnostics-depth=4)
-endif()
+option(FISHNET_Apps "Build applications" ON)
 add_subdirectory(extern)
 add_subdirectory(lib)
+if(FISHNET_Apps)
+    add_subdirectory(app)
+endif()
 add_subdirectory(app)
 if(FISHNET_Tests)
     include(FetchContent)
