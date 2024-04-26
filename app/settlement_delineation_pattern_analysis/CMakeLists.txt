@@ -1,5 +1,5 @@
 set(WORKFLOW_NAME "SettlementDelineationPatternAnalysis")
 add_subdirectory(1_filter)
-#add_subdirectory(2_neighbours)
+add_subdirectory(2_neighbours)
 #add_subdirectory(3_contract)
 #add_subdirectory(4_analysis)
