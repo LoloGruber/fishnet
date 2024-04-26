@@ -1,4 +1,6 @@
 set(JSON_BuildTests OFF CACHE INTERNAL "")
-add_subdirectory(json)
-add_subdirectory(CLI11)
+if(FISHNET_Apps)
+    add_subdirectory(json)
+    add_subdirectory(CLI11)
+endif()
 add_subdirectory(memgraph)
