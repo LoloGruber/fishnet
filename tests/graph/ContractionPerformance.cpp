@@ -112,7 +112,7 @@ static void benchmarkConnectedComponentsMerge(std::ofstream & outputFile, const 
     };
     {
         StopWatch w;
-        auto result = contract(source,MergePred(),MergeFunction(),workers);
+        auto result = contract(source,MergePred(),MergeFunction(),u_int8_t(workers));
         outputFile << w.stop() <<";";
     }
 }
@@ -140,7 +140,7 @@ static std::vector<std::pair<WG,double>> getTestSet(u_int32_t neighbours = 3, do
     std::vector<std::pair<WG,double>> dataSet;
     for(u_int32_t i = 1; i < maxNodesInExponenetOf10; i++){
         for(int j = 1; j < 10; j++) {
-            int amountOfNodes = pow(10,i)*j;
+            int amountOfNodes = int(pow(10,i)*j);
             std::vector<XYNode> nodes = randomNodes(amountOfNodes);
             std::cout << "Constructing Test Graph with " << amountOfNodes << " nodes" << std::endl;
             WG graph{nodes};
@@ -181,7 +181,7 @@ static void testPerformanceConnectedComponents( int neighbours = 3,double mergeP
     }
     out << std::endl;
     for(u_int32_t i = 0; i <= maxWorkersExponentOf2; i++){
-        u_int32_t workers = pow(2,i);
+        u_int32_t workers = u_int32_t(pow(2,i));
         out << "[ConnectedComponents Merge (Threads: "<< workers<<")];" ;
         for(auto & pair: dataset){
             benchmarkConnectedComponentsMerge(out,pair.first,pair.second,workers);

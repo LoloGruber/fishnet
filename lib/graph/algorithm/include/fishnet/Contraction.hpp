@@ -9,8 +9,6 @@
 
 #include <fishnet/CollectionConcepts.hpp>
 #include <chrono>
-
-#define PERFORMANCE_TEST false //change to false in production
 namespace fishnet::graph{
 
 namespace __impl {
