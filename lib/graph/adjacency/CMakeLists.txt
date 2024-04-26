@@ -25,8 +25,7 @@ if (WIN32)
   set_property(TARGET ${MGCLIENT_LIBRARY} PROPERTY IMPORTED_IMPLIB ${MGCLIENT_INSTALL_DIR}/lib/mgclient.lib)
 endif()
 add_dependencies(${MGCLIENT_LIBRARY} mgclient-proj)
-
-
+target_include_directories(${MGCLIENT_LIBRARY} INTERFACE  ${MGCLIENT_INCLUDE_DIRS})
 add_library(graph_adjacency INTERFACE)
 target_include_directories(graph_adjacency INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
 target_link_libraries(graph_adjacency INTERFACE util ${MGCLIENT_LIBRARY})
