@@ -8,6 +8,7 @@ SearchPathTest.cpp
 ContractionTest.cpp 
 WeightedGraphTest.cpp
 EdgeTest.cpp
+MemgraphTest.cpp
 )
 gtest_discover_tests(graphTest)
 
