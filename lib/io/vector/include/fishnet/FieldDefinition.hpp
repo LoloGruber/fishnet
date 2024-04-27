@@ -62,6 +62,7 @@ private:
     int fieldID;
 
     constexpr explicit FieldDefinition(std::string fieldName) : fieldName(std::move(fieldName)), fieldID(FieldCounter::operator()()) {}
+    constexpr explicit FieldDefinition(std::string fieldName,int id) : fieldName(std::move(fieldName)), fieldID(id) {}
 
 public:
     using value_type = T;

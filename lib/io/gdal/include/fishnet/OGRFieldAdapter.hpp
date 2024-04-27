@@ -12,7 +12,9 @@ public:
     static OGRFieldType fromTypeIndex(const std::type_index & type) noexcept {
         if (typeid(double) == type || typeid(float) == type)
             return OFTReal;
-        if (typeid(int) == type || typeid(long) == type || typeid(size_t) == type)
+        if(typeid(int) == type)
+            return OFTInteger;
+        if (typeid(long) == type || typeid(size_t) == type)
             return OFTInteger64;
         return OFTString;
     }

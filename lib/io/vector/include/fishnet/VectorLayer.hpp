@@ -43,8 +43,45 @@ private:
 
     using error_type = std::string;
 
-//    const static inline FieldDefinition<size_t> FISHNET_ID_FIELD {"FISHNET_ID"}; //TODO move to external class
+    void addOGRField(OGRFieldDefn * fieldDef,int id){
+        std::string fieldName = fieldDef->GetNameRef();
+        switch (fieldDef->GetType()){
+        case OFTReal:
+            fields.emplace(fieldName,FieldDefinition<double>(fieldName,id));
+            break;
+        case OFTInteger:
+             fields.emplace(fieldName,FieldDefinition<int>(fieldName,id));
+            break;
+        case OFTInteger64:
+             fields.emplace(fieldName,FieldDefinition<long long>(fieldName,id));
+            break;
+        case OFTString:
+            fields.emplace(fieldName,FieldDefinition<std::string>(fieldName,id));
+            break;
+        default:
+            break;
+        }
+    }
 
+    struct AddAttributeVisitor{
+        Feature<G> * feature;
+        OGRFeature * ogrFeature;
+
+        template<typename T>
+        bool operator()(FieldDefinition<T> const & fieldDef) {
+            if constexpr(std::same_as<T,int>)
+               return feature->addAttribute(fieldDef,ogrFeature->GetFieldAsInteger(fieldDef.getFieldID()));
+                
+            else if constexpr(std::integral<T>)
+                return feature->addAttribute(fieldDef,T(ogrFeature->GetFieldAsInteger64(fieldDef.getFieldID())));
+      
+            else if constexpr(std::floating_point<T>)
+                return feature->addAttribute(fieldDef,T(ogrFeature->GetFieldAsDouble(fieldDef.getFieldID())));
+         
+            else if constexpr(std::convertible_to<T,std::string>)
+                return feature->addAttribute(fieldDef,ogrFeature->GetFieldAsString(fieldDef.getFieldID()));
+        }
+    };
 
     explicit VectorLayer(const Shapefile & shapefile){
         GDALInitializer::init();
@@ -52,13 +89,21 @@ private:
             return;
         auto * ds = (GDALDataset *) GDALOpenEx(shapefile.getPath().c_str(), GDAL_OF_VECTOR,nullptr, nullptr,nullptr);
         OGRLayer * layer = ds->GetLayer(0);
-        for(const auto & feature: layer){
-            auto geo = feature->GetGeometryRef();
+        OGRFeatureDefn * layerDef = layer->GetLayerDefn();
+        for(int i = 0; i < layerDef->GetFieldCount();i++) {
+            addOGRField(layerDef->GetFieldDefn(i),i);
+        }
+        for(const auto & ogrFeature: layer){
+            auto geo = ogrFeature->GetGeometryRef();
             if(geo && wkbFlatten(geo->getGeometryType() == GeometryTypeWKBAdapter::toWKB(G::type))) {
                 auto converted = OGRGeometryAdapter::fromOGR<G::type>(*geo);
-                if (converted) {
-                    addGeometry(converted.value());
+                if (not converted) 
+                    continue;
+                Feature f {converted.value()};
+                for(const auto & [_,fieldDefinition]: this->fields){
+                    std::visit(AddAttributeVisitor(&f,ogrFeature.get()),fieldDefinition);
                 }
+                addFeature(std::move(f));
             }
         }
         this->spatialRef = *layer->GetSpatialRef()->Clone();
@@ -74,8 +119,6 @@ private:
         destination.remove();
         GDALDataset * outputDataset = driver->Create(destination.getPath().c_str(),0,0,0,GDT_Unknown,0);
         OGRLayer * outputLayer = outputDataset->CreateLayer(destination.getPath().c_str(),this->getSpatialReference().Clone(),GeometryTypeWKBAdapter::toWKB(G::type),0);
-//        auto uidFieldDef = OGRFieldDefn(FISHNET_ID_FIELD.getFieldName().c_str(),OFTInteger64);
-//        outputLayer->CreateField(&uidFieldDef);
         for(const auto & [fieldName,fieldDefinition] :  fields) {
             OGRFieldType fieldType;
             std::visit([&fieldType](auto && fieldVariant){
