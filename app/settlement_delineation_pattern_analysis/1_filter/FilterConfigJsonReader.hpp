@@ -7,6 +7,7 @@
 #include "Filter.hpp"
 #include "ApproxAreaFilter.hpp"
 #include "ProjectedAreaFilter.hpp"
+#include "InsidePolygonFilter.hpp"
 
 using json = nlohmann::json;
 
@@ -33,6 +34,15 @@ public:
     }
 
     template<typename T>
+    static std::expected<util::BiPredicate_t<T>,std::string> fromBinaryType(BinaryFilterType type, json const & filterDesc){
+        switch(type){
+            case BinaryFilterType::InsidePolygonFilter:
+                return InsidePolygonFilter();
+        }
+        return std::unexpected("Unexpected BinaryFilterType");
+    }
+
+    template<typename T>
     [[nodiscard]] std::expected<void,std::string> read(SettlementFilterTask<T> & task) const noexcept {
         try{
             for(const auto & jsonFilter:  config.at(UNARY_FILTERS)){
@@ -47,6 +57,18 @@ public:
                     return std::unexpected(predicate.error());
                 }
                 task.addPredicate(predicate.value());
+            }
+            for(const auto & jsonFilter : config.at(BINARY_FILTERS)) {
+                std::string filterName;
+                jsonFilter.at("name").get_to(filterName);
+                auto filterType = FILTERS::BINARY.get(filterName);
+                if(not filterType) {
+                    return std::unexpected("Filter name \""+filterName+"\" not supported");
+                }
+                auto biPredicate = fromBinaryType<T>(filterType.value(),jsonFilter);
+                if(not biPredicate)
+                    return std::unexpected(biPredicate.error());
+                task.addBiPredicate(biPredicate.value());
             }
             return {};
         }catch(const json::exception & e){

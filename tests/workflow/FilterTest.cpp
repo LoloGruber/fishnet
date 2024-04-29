@@ -2,7 +2,7 @@
 #include "ApproxAreaFilter.hpp"
 #include "ProjectedAreaFilter.hpp"
 #include <fishnet/WGS84Ellipsoid.hpp>
-#include <fishnet/InsideBoundaryFilter.hpp>
+#include "InsidePolygonFilter.hpp"
 #include "ShapeSamples.h"
 #include "Testutil.h"
 using namespace fishnet;
@@ -26,6 +26,12 @@ TEST(FilterTest, ProjectedAreaFilter) {
 }
 
 TEST(FilterTest, InsideBoundaryFilter) {
-    geometry::ContainedOrInHoleFilter filter;
-    testutil::TODO();
+    using namespace fishnet::geometry;
+    InsidePolygonFilter filter;
+    auto box = SimplePolygonSamples::aaBB({0,0},{4,4});
+    auto inside = SimplePolygonSamples::triangle({1,1},{2,2},{1,2});
+    auto intersecting = SimplePolygonSamples::aaRhombus({4,2},2);
+    EXPECT_FALSE(filter(box,inside));
+    EXPECT_FALSE(filter(box,box));
+    EXPECT_TRUE(filter(box,intersecting));
 }

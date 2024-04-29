@@ -14,7 +14,7 @@ enum class UnaryFilterType{
 };
 
 enum class BinaryFilterType{
-    InsideBoundaryFilter
+    InsidePolygonFilter
 };
 
 namespace FILTERS{
@@ -27,7 +27,7 @@ const static inline util::BidirectionalMap<std::string,UnaryFilterType> UNARY = 
 
 
 const static inline util::BidirectionalMap<std::string,BinaryFilterType> BINARY = {
-    {"InsideBoundaryFilter",BinaryFilterType::InsideBoundaryFilter}
+    {"InsidePolygonFilter",BinaryFilterType::InsidePolygonFilter}
 };
 }
 
