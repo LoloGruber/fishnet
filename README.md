@@ -18,6 +18,11 @@ cd build
 cmake ..
 cmake --build . <add custom cmake parameters here>
 ```
+When utilizing the **Memgraph** client, a running instance of the **Memgraph** database can be obtained using docker compose:
+```
+cd prod/memgraph
+sudo docker compose up -d
+```
 
 
 
