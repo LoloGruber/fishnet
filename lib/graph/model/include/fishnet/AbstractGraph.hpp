@@ -77,6 +77,16 @@ public:
         return impl().addEdge(edge);
     }
 
+    void addEdges(util::forward_range_of<std::pair<N,N>> auto  & edges){
+        impl().addEdges(edges);
+    }
+
+    void addEdges(util::forward_range_of<E> auto const & edges) {
+        std::vector<std::pair<N,N>> pairs;
+        std::ranges::for_each(edges,[&pairs](const auto & e){pairs.emplace_back(e.getFrom(),e.getTo());});
+        addEdges(pairs);
+    }
+
     bool containsEdge(const N & from, const N & to) const noexcept {
         return impl().containsEdge(from,to);
     }

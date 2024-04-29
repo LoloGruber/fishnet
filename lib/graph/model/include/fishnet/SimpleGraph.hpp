@@ -43,11 +43,11 @@ public:
     }
 
     bool addNodes(util::forward_range_of<N> auto & nodes){
-        return Base::addNodes(nodes);
+        return adj.addNodes(nodes);
     }
 
     bool addNodes(util::forward_range_of<N> auto && nodes){
-        return Base::addNodes(nodes);
+        return adj.addNodes(nodes);
     }
 
     bool containsNode(const N & node) const noexcept {
@@ -78,6 +78,19 @@ public:
             return true;
         }
         return false;
+    }
+
+    void addEdges(util::forward_range_of<std::pair<N,N>> auto  & edges){
+        if constexpr(not E::isDirected()){
+            std::vector<std::pair<N,N>> reversed;
+            std::ranges::transform(edges,std::back_inserter(reversed),[]( auto & pair){return std::pair(pair.second,pair.first);});
+            adj.addAdjacencies(std::move(reversed));
+        }
+        adj.addAdjacencies(edges);
+    }
+
+    void addEdges(util::forward_range_of<E> auto const & edges) {
+        Base::addEdges(edges);
     }
 
     bool addEdge(const E & edge) {

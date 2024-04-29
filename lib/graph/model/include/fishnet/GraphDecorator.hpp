@@ -66,6 +66,14 @@ public:
         return g.addEdge(edge);
     }
 
+    void addEdges(util::forward_range_of<std::pair<N,N>> auto const & edges){
+        g.addEdges(edges);
+    }
+
+    void addEdges(util::forward_range_of<E> auto const & edges) {
+        g.addEdges(edges);
+    }
+
     bool containsEdge(const N & from, const N & to) const noexcept{
         return g.containsEdge(from,to);
     }
