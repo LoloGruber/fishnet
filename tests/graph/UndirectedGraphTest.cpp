@@ -131,6 +131,28 @@ TEST_F(UndirectedGraphTest, getReachableFrom){
     EXPECT_EQ(graph.getReachableFrom(notContained).size(),0);
 }
 
+TEST_F(UndirectedGraphTest, addEdgesPairs) {
+    std::vector<std::pair<IDNode,IDNode>> edges = {
+        {n0,n1},{n2,n3}
+    };
+    empty.addEdges(edges);
+    EXPECT_SIZE(empty.getEdges(),2);
+    EXPECT_TRUE(empty.containsNode(n0));
+    EXPECT_TRUE(empty.containsNode(n1));
+    EXPECT_TRUE(empty.containsEdge(n0,n1));
+    EXPECT_TRUE(empty.containsEdge(n2,n3));
+    EXPECT_UNSORTED_RANGE_EQ(empty.getNodes(),std::vector<IDNode>({n0,n1,n2,n3}));
+}
+
+TEST_F(UndirectedGraphTest, addEdges){
+    std::vector<typename UGraph::edge_type> edges = {
+        {n0,n1},{n0,n2}
+    };
+    empty.addEdges(edges);
+    EXPECT_SIZE(empty.getEdges(),2);
+    EXPECT_UNSORTED_RANGE_EQ(empty.getNodes(),std::vector<IDNode>({n0,n1,n2}));
+}
+
 
 TEST_F(UndirectedGraphTest, addEdge){
     UGraph g;
