@@ -31,12 +31,20 @@ public:
         map[from].emplace_back(to);
     }
 
+    void addAdjacencies(util::forward_range_of<std::pair<N,N>> auto && pairs){
+        std::ranges::for_each(pairs,[this](auto & pair){addAdjacency(pair.first,pair.second);});
+    }
+
     bool inline addNode(N & node){
         return map.try_emplace(node,NodeRange()).second;
     }
 
     bool inline addNode(N && node){
         return map.try_emplace(node,NodeRange()).second;
+    }
+
+    bool addNodes(util::forward_range_of<N> auto && nodes) {
+        return std::ranges::fold_left(nodes,false,[this](bool prev, auto && n){return addNode(n) & prev;});
     }
 
     void inline removeNode(const N& node){
@@ -48,11 +56,19 @@ public:
         }
     }
 
+    void removeNodes(util::forward_range_of<N> auto && nodes){
+        std::ranges::for_each(nodes,[this](auto && n){removeNode(n);});
+    }
+
     void removeAdjacency(const N & from, const N & to){
         if(map.contains(from)) {
              auto [begin,end] = std::ranges::remove_if(map.at(from),[this,&to](N & element ){return eq(element,to);});
              map.at(from).erase(begin,end);
         }
+    }
+
+    void removeAdjacencies(util::forward_range_of<std::pair<N,N>> auto && adjacencies) {
+        std::ranges::for_each(adjacencies,[this](auto && pair){removeAdjacency(pair.first,pair.second);});
     }
 
     bool inline contains(const N & node) const noexcept{

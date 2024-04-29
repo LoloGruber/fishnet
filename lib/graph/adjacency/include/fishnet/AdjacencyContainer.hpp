@@ -4,14 +4,17 @@
 #include <fishnet/UtilConcepts.hpp>
 namespace fishnet::graph{
 template<class C, typename N>
-concept AdjacencyContainer= requires (C & container, const C & constContainer, N & nodeRef, const N & constNodeRef, N && nodeRval, bool b ){
-    {C()};
+concept AdjacencyContainer= requires (C & container, const C & constContainer, N & nodeRef, const N & constNodeRef, N && nodeRval, std::vector<N>  nodes, std::vector<std::pair<N,N>> adjacencies){
     {container.addAdjacency(nodeRef,nodeRef)};
     {container.addAdjacency(nodeRval,nodeRval)};
+    {container.addAdjacencies(adjacencies)};
     {container.addNode(nodeRef)} -> std::convertible_to<bool>;
     {container.addNode(nodeRval)} -> std::convertible_to<bool>;
+    {container.addNodes(nodes)} -> std::convertible_to<bool>;
     {container.removeNode(constNodeRef)};
+    {container.removeNodes(nodes)};
     {container.removeAdjacency(constNodeRef,constNodeRef)};
+    {container.removeAdjacencies(adjacencies)};
     {container.clear()};
     {constContainer.contains(constNodeRef)} -> std::convertible_to<bool>;
     {constContainer.hasAdjacency(constNodeRef,constNodeRef)} -> std::convertible_to<bool>;
