@@ -5,16 +5,30 @@ using namespace testutil;
 using namespace fishnet::graph;
 
 struct ExampleNode{
-    size_t id;
-    size_t key() const {
+    int64_t id;
+    int64_t key() const {
         return id;
     }
 };
-// static_assert(AdjacencyContainer<MemgraphClient<ExampleNode>,ExampleNode>);
+static_assert(AdjacencyContainer<MemgraphClient<ExampleNode>,ExampleNode>);
 
+class MemgraphTest: public ::testing::Test {
+protected:
+    void SetUp() override {
+        if(not mgclient) {
+            throw std::runtime_error("Could not connected to Database\nAborting Tests");
+        }
+    }
 
-TEST(MemgraphTest, init) {
     u_int16_t port = 7687;
     std::string hostname = "localhost";
-    auto mgclient = fishnet::graph::MemgraphClient<ExampleNode>::create(hostname,port);
+    std::optional<MemgraphClient<ExampleNode>> mgclient = MemgraphClient<ExampleNode>::create(hostname,port);
+};
+
+
+TEST_F(MemgraphTest, addAdjacency) {
+    ExampleNode n {1};
+    ExampleNode n2 {2};
+    mgclient->addAdjacency(n,n2);
 }
+
