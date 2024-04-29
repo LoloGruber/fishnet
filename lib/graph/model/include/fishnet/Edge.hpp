@@ -54,6 +54,8 @@ namespace __impl{
 
             BaseEdge(const N & from, const N & to):from(from),to(to){}
 
+            BaseEdge( N && from,  N && to):from(std::move(from)),to(std::move(to)){}
+
             const N & getFrom()const {
                 return from;
             }
