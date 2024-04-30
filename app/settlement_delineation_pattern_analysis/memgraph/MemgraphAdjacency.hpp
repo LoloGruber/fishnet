@@ -8,14 +8,14 @@
 #include "MemgraphClient.hpp"
 
 
-namespace fishnet::graph{
 
 template<typename N>
 concept DatabaseNode = requires(const N & node) {
     {node.key()} -> std::same_as<size_t>;
+    {node.file()} -> std::same_as<const FileReference &>;
 };
 
-
+using namespace fishnet::graph;
 /**
  * @brief Specialized Adjacency Container which connects to a (central) memgraph instance for graph model changes and queries
  * The memgraph database just stores the id of the nodes in the graph (obtained through node.key()), while a map tracks the mapping from key to the object
@@ -23,6 +23,7 @@ concept DatabaseNode = requires(const N & node) {
  */
 template<DatabaseNode N>
 class MemgraphAdjacency{
+
 public: 
     struct Equal{
         static bool operator()(const N & lhs, const N & rhs)  noexcept{
@@ -39,13 +40,13 @@ public:
     using hash_function = Hash;
 private:
     std::unordered_map<size_t,N> keyToNodeMap;
-    __impl::MemgraphClient client;
+    MemgraphClient client;
     AdjacencyMap<N,Hash,Equal> adjMap;
 public:
-    explicit MemgraphAdjacency(__impl::MemgraphClient && client):client(std::move(client)){}
+    explicit MemgraphAdjacency(MemgraphClient && client):client(std::move(client)){}
 
     static std::expected<MemgraphAdjacency<N>,std::string> create(const mg::Client::Params & params ) {
-        return __impl::MemgraphClient::create(params).transform([](auto && client){return MemgraphAdjacency<N>(std::move(client));});
+        return MemgraphClient::create(params).transform([](auto && client){return MemgraphAdjacency<N>(std::move(client));});
     }
 
     static std::expected<MemgraphAdjacency<N>,std::string> create(std::string hostname, uint16_t port) {
@@ -56,17 +57,19 @@ public:
         return create(params);
     }
 
-    void addAdjacency(N & from, N & to) noexcept {
+    bool addAdjacency(N & from, N & to) noexcept {
         N copyFrom  = from;
         N copyTo = to;
-        addAdjacency(std::move(copyFrom),std::move(copyTo));
+        return addAdjacency(std::move(copyFrom),std::move(copyTo));
     }
 
-    void addAdjacency(N && from, N && to) noexcept {
+    bool addAdjacency(N && from, N && to) noexcept {
         if (hasAdjacency(from,to))
-            return;
-        if(client.insertEdge(from.key(),to.key()))
+            return false;
+        if(client.insertEdge({from.key(),from.file()},{to.key(),to.file()})){
             adjMap.addAdjacency(std::move(from),std::move(to));
+            return true;
+        }
     }
 
     void addAdjacencies(util::forward_range_of<std::pair<N,N>> auto && edges) {
@@ -74,11 +77,21 @@ public:
     }
 
     bool addNode(N & node) noexcept {
-
+        if(contains(node))
+            return false;
+        N copy = node;
+        return addNode(std::move(copy));
     }
 
     bool addNode(N && node) noexcept {
-
+        if(contains(node)) {
+            return false;
+        }
+        if(client.insertNode({node.key(),node.file()})){
+            adjMap.addNode(std::move(node));
+            return true;
+        }
+        return false;
     }
 
     bool addNodes(util::forward_range_of<N> auto && nodes) {
@@ -102,10 +115,10 @@ public:
     }
 
     bool contains(const N & node) const noexcept {
-        if(keyToNodeMap.contains(node.key()))
+        if(adjMap.contains(node))
             return true;
         return false;
-        
+        //TODO
     }
 
     bool hasAdjacency(const N & from, const N & to) const noexcept {
@@ -124,6 +137,10 @@ public:
         return std::views::empty<std::pair<const N,const N>>;
     }
 
+    const MemgraphClient & getDatabaseConnection() const noexcept {
+        return this->client;
+    }
+
 
 
     void clear()  {
@@ -131,6 +148,6 @@ public:
         //todo clear db but not all nodes
     }
 };
-}
+
 
 
