@@ -1,17 +1,18 @@
 #pragma once
-#include "AdjacencyContainer.hpp"
+#include <fishnet/AdjacencyContainer.hpp>
+#include <fishnet/AdjacencyMap.hpp>
 #include <unordered_map>
 #include <expected>
 #include <sstream>
 #include <mgclient.hpp>
-#include "AdjacencyMap.hpp"
+#include "MemgraphClient.hpp"
 
 
 namespace fishnet::graph{
 
 template<typename N>
 concept DatabaseNode = requires(const N & node) {
-    {node.key()} -> std::same_as<int64_t>;
+    {node.key()} -> std::same_as<size_t>;
 };
 
 
@@ -21,7 +22,7 @@ concept DatabaseNode = requires(const N & node) {
  * @tparam N type of node stored in adjacency container. 
  */
 template<DatabaseNode N>
-class MemgraphClient{
+class MemgraphAdjacency{
 public: 
     struct Equal{
         static bool operator()(const N & lhs, const N & rhs)  noexcept{
@@ -37,25 +38,17 @@ public:
     using equality_predicate = Equal;
     using hash_function = Hash;
 private:
-    std::unordered_map<int64_t,N> keyToNodeMap;
-    std::unique_ptr<mg::Client> client;
+    std::unordered_map<size_t,N> keyToNodeMap;
+    __impl::MemgraphClient client;
     AdjacencyMap<N,Hash,Equal> adjMap;
 public:
-    explicit MemgraphClient(std::unique_ptr<mg::Client> && clientPtr):client(std::move(clientPtr)){}
+    explicit MemgraphAdjacency(__impl::MemgraphClient && client):client(std::move(client)){}
 
-    static std::optional<MemgraphClient<N>> create(const mg::Client::Params & params ) {
-        auto clientPtr = mg::Client::Connect(params);
-        if(not clientPtr){
-            std::cerr << "Could not connect to memgraph database!" << std::endl;
-            std::cerr << "\tHost: " <<params.host << std::endl;
-            std::cerr << "\tPort: " << std::to_string(params.port) << std::endl;
-            std::cerr << "\tUsername: " << params.username << std::endl;
-            return std::nullopt;
-        }
-        return std::optional<MemgraphClient<N>>(std::move(clientPtr));
+    static std::expected<MemgraphAdjacency<N>,std::string> create(const mg::Client::Params & params ) {
+        return __impl::MemgraphClient::create(params).transform([](auto && client){return MemgraphAdjacency<N>(std::move(client));});
     }
 
-    static std::optional<MemgraphClient<N>> create(std::string hostname, uint16_t port) {
+    static std::expected<MemgraphAdjacency<N>,std::string> create(std::string hostname, uint16_t port) {
         mg::Client::Params params;
         params.host = hostname;
         params.port = port;
@@ -63,24 +56,17 @@ public:
         return create(params);
     }
 
-
-
     void addAdjacency(N & from, N & to) noexcept {
-        if (hasAdjacency(from,to))
-            return;
-        mg::Map params(2);
-        std::stringstream query;
-        params.Insert("from",mg::Value(from.key()));
-        params.Insert("to",mg::Value(to.key()));
-        query << "MERGE (f:Node {id:$from})" << std::endl;
-        query << "MERGE (t:Node {id:$to})" << std::endl;
-        query << "MERGE (f)-[:adj]->(t)" << std::endl;
-        client->Execute(query.str(),params.AsConstMap());
-
+        N copyFrom  = from;
+        N copyTo = to;
+        addAdjacency(std::move(copyFrom),std::move(copyTo));
     }
 
     void addAdjacency(N && from, N && to) noexcept {
-
+        if (hasAdjacency(from,to))
+            return;
+        if(client.insertEdge(from.key(),to.key()))
+            adjMap.addAdjacency(std::move(from),std::move(to));
     }
 
     void addAdjacencies(util::forward_range_of<std::pair<N,N>> auto && edges) {
@@ -143,11 +129,6 @@ public:
     void clear()  {
         this->keyToNodeMap.clear();
         //todo clear db but not all nodes
-    }
-
-    ~MemgraphClient(){
-        client.reset(nullptr);
-        mg::Client::Finalize();
     }
 };
 }

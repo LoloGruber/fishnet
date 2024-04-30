@@ -1,5 +1,6 @@
 add_executable(workflowTest
 FilterTest.cpp
+MemgraphTest.cpp
 )
 gtest_discover_tests(workflowTest)
-target_link_libraries(workflowTest PRIVATE workflowFilters testutil geometryTestUtils) 
+target_link_libraries(workflowTest PRIVATE workflowFilters memgraphAdapter testutil geometryTestUtils) 
