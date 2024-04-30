@@ -39,6 +39,10 @@ public:
         return AbstractGISFile::exists() && isValid(this->pathToFile);
     }
 
+    operator bool() const noexcept {
+        return this->exists();
+    }
+
     [[nodiscard]] Shapefile changeFilename(const std::string & filename) const noexcept;
 
     [[nodiscard]] Shapefile appendToFilename(const std::string & postfix) const noexcept;
