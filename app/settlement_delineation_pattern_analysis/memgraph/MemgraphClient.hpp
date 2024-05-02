@@ -5,6 +5,7 @@
 #include <sstream>
 #include <mgclient.hpp>
 #include <filesystem>
+#include <fishnet/CollectionConcepts.hpp>
 
 struct FileReference{
     int64_t fileId;
@@ -12,13 +13,17 @@ struct FileReference{
 
 struct NodeReference{
     size_t nodeId;
-    FileReference const & fileRef;
+    FileReference fileRef;
 };
 
 
 class MemgraphClient{
 private:
-    std::unique_ptr<mg::Client> client;
+    std::unique_ptr<mg::Client> mgClient;
+
+    static int64_t asInt(size_t value) {
+        return mg::Id::FromUint(value).AsInt();
+    }
 public:
     class Query {
         protected:
@@ -127,6 +132,11 @@ public:
                 return query;
             }
 
+            ParameterizedQuery & debug() noexcept {
+                std::cout << query.str() << std::endl;
+                return *this;
+            }
+
             bool execute(const std::unique_ptr<mg::Client> & clientPtr) {
                 return clientPtr->Execute(query.str(),params.AsConstMap());
             }
@@ -139,14 +149,14 @@ public:
             }
     };
 
-    explicit MemgraphClient(std::unique_ptr<mg::Client> && clientPtr):client(std::move(clientPtr)){
+    explicit MemgraphClient(std::unique_ptr<mg::Client> && clientPtr):mgClient(std::move(clientPtr)){
         if(not createConstraints()) {
             throw std::runtime_error("Could not create constraints. Check the database connection");
         }
     }
 
     MemgraphClient(MemgraphClient && other) {
-        this->client = std::move(other.client);
+        this->mgClient = std::move(other.mgClient);
     }
 
     static std::expected<MemgraphClient,std::string> create(const mg::Client::Params & params ) {
@@ -170,10 +180,10 @@ public:
         return create(params);
     }
 
-    bool createConstraints() noexcept {
-        return Query("CREATE CONSTRAINT ON (n:Node) ASSERT n.id IS UNIQUE").executeAndDiscard(client)
-            && Query("CREATE CONSTRAINT ON (f:File) ASSERT f.id IS UNIQUE").executeAndDiscard(client)
-            && Query("CREATE CONSTRAINT ON (f:File) ASSERT exists(f.path)").executeAndDiscard(client);
+    bool createConstraints()const noexcept {
+        return Query("CREATE CONSTRAINT ON (n:Node) ASSERT n.id IS UNIQUE").executeAndDiscard(mgClient)
+            && Query("CREATE CONSTRAINT ON (f:File) ASSERT f.id IS UNIQUE").executeAndDiscard(mgClient)
+            && Query("CREATE CONSTRAINT ON (f:File) ASSERT exists(f.path)").executeAndDiscard(mgClient);
     }
 
 
@@ -182,10 +192,10 @@ public:
         query.append("MERGE (f:File {path:$path})");
         query.set("path",mg::Value(path));
         query.append("RETURN ID(f)");
-        if(not query.execute(client)) {
+        if(not query.execute(mgClient)) {
             return std::nullopt;
         }
-        auto queryResult = client->FetchAll();
+        auto queryResult = mgClient->FetchAll();
         if(queryResult && queryResult->front().front().type() == mg::Value::Type::Int) {
             return FileReference(queryResult->front().front().ValueInt());
         }
@@ -205,37 +215,109 @@ public:
             .line("MERGE (f)-[:adj]->(t)")
             .line("MERGE (f)-[:stored]->(ff)")
             .line("MERGE (t)-[:stored]->(ft)")
-            .executeAndDiscard(client);
+            .executeAndDiscard(mgClient);
     }
 
     bool insertEdge(size_t from, size_t to,FileReference const & fileRef) const noexcept {
         return insertEdge({from,fileRef},{to,fileRef});
     }
 
-    bool insertEdges(){
-
+    bool insertEdges(util::forward_range_of<std::pair<NodeReference,NodeReference>> auto && edges)const noexcept{
+        ParameterizedQuery query(1);
+        query.line("UNWIND $data AS edge");
+        query.line("MATCH (ff:File) WHERE ID(ff)=edge.fromFile");
+        query.line("MATCH (tf:File) WHERE ID(tf)=edge.toFile");
+        query.line("MERGE (f:Node {id:edge.from})");
+        query.line("MERGE (t:Node {id:edge.to})");
+        query.line("MERGE (f)-[:stored]->(ff)");
+        query.line("MERGE (t)-[:stored]->(tf)");
+        query.line("MERGE (f)-[:adj]->(t)");
+        std::vector<mg::Value> data;
+        for(auto && [from,to]:edges){
+            mg::Map currentEdge{4};
+            currentEdge.Insert("from",mg::Value(asInt(from.nodeId)));
+            currentEdge.Insert("fromFile",mg::Value(asInt(from.fileRef.fileId)));
+            currentEdge.Insert("to",mg::Value(asInt(to.nodeId)));
+            currentEdge.Insert("toFile",mg::Value(asInt(to.fileRef.fileId)));
+            data.push_back(mg::Value(std::move(currentEdge)));
+        }
+        query.set("data",mg::Value(mg::List(std::move(data))));
+        return query.executeAndDiscard(mgClient);
     }
 
-    bool insertNode(NodeReference const & node){
+    bool insertNode(NodeReference const & node) const noexcept{
         return ParameterizedQuery(2)
             .line("MATCH (f:File) WHERE ID(f)=$fid")
             .setInt("fid",node.fileRef.fileId)
             .line("MERGE (n:Node {id:$nid})")
             .setInt("nid",node.nodeId)
             .line("MERGE (n)-[:stored]->(f)")
-            .executeAndDiscard(client);
+            .executeAndDiscard(mgClient);
     }
 
-    bool removeNode(NodeReference const & node) {
+    bool insertNodes(util::forward_range_of<NodeReference> auto && nodes) const noexcept {
+        ParameterizedQuery query(1);
+        query.line("UNWIND $data AS node");
+        query.line("MATCH (f:File) WHERE ID(f) = node.fileId");
+        query.line("MERGE (n:Node {id:node.id})");
+        query.line("MERGE (n)-[:stored]->(f)");
+        std::vector<mg::Value> data;
+        for(NodeReference && node: nodes){
+            mg::Map currentNode {2};
+            currentNode.Insert("id",mg::Value(asInt(node.nodeId)));
+            currentNode.Insert("fileId",mg::Value(asInt(node.fileRef.fileId)));
+            data.push_back(mg::Value(std::move(currentNode)));
+        }
+        query.set("data",mg::Value(mg::List(std::move(data))));
+        return query.executeAndDiscard(mgClient);
+    }
+
+    bool removeNode(NodeReference const & node) const noexcept {
         return ParameterizedQuery(1)
-            .line("MATCH (n:Node) {id:$id})")
+            .line("MATCH (n:Node {id:$id})")
             .setInt("id",node.nodeId)
             .line("DETACH DELETE n")
-            .executeAndDiscard(client);
+            .executeAndDiscard(mgClient);
+    }
+
+    bool removeEdge(NodeReference const & from, NodeReference const & to) const noexcept {
+        return ParameterizedQuery(2)
+            .line("MATCH (f:Node {id:$fromId})-[a:adj]->(t:Node {id:$toId})")
+            .setInt("fromId",from.nodeId)
+            .setInt("toId",to.nodeId)
+            .line("DETACH DELETE a")
+            .executeAndDiscard(mgClient);
+    }
+
+    bool containsNode(size_t nodeId) const noexcept {
+        if(ParameterizedQuery(1).line("MATCH (n:Node {id:$id})").setInt("id",nodeId).line("RETURN ID(n)").execute(mgClient)){
+                auto result =  mgClient->FetchAll();
+                return result.has_value() && result->size() > 0;
+        }
+        return false;
+    }
+
+    bool containsEdge(size_t from, size_t to) const noexcept {
+        if(
+            ParameterizedQuery(2)
+            .line("MATCH (:Node {id:$fid})-[r:adj]->(:Node {id:$tid})")
+            .line("RETURN ID(r)")
+            .setInt("fid",from)
+            .setInt("tid",to)
+            .execute(mgClient)
+        ){
+            auto result = mgClient->FetchAll();
+            return result.has_value() && result->size() > 0;
+        }
+        return false;
+    }
+
+    bool clearAll() const noexcept{
+        return Query("MATCH (n)").line("DETACH DELETE n").executeAndDiscard(mgClient);
     }
 
     ~MemgraphClient(){
-        client.reset(nullptr);
+        mgClient.reset(nullptr);
         mg::Client::Finalize();
     }
 };

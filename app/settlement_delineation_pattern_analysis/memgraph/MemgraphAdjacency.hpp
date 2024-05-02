@@ -41,7 +41,19 @@ public:
 private:
     std::unordered_map<size_t,N> keyToNodeMap;
     MemgraphClient client;
-    AdjacencyMap<N,Hash,Equal> adjMap;
+
+    static inline NodeReference createNodeReference(const N & node) noexcept {
+        return {node.key(),node.file()};
+    }
+
+    void storeInKeyNodeMap(const N & node) noexcept {
+        keyToNodeMap.try_emplace(node.key(),node);
+    }
+
+    void storeInKeyNodeMap( N && node) noexcept {
+        keyToNodeMap.try_emplace(node.key(),std::move(node));
+    }
+
 public:
     explicit MemgraphAdjacency(MemgraphClient && client):client(std::move(client)){}
 
@@ -66,19 +78,27 @@ public:
     bool addAdjacency(N && from, N && to) noexcept {
         if (hasAdjacency(from,to))
             return false;
-        if(client.insertEdge({from.key(),from.file()},{to.key(),to.file()})){
-            adjMap.addAdjacency(std::move(from),std::move(to));
+        if(client.insertEdge(createNodeReference(from),createNodeReference(to))){
+            storeInKeyNodeMap(std::move(from));
+            storeInKeyNodeMap(std::move(to));
             return true;
         }
+        return false;
     }
 
-    void addAdjacencies(util::forward_range_of<std::pair<N,N>> auto && edges) {
-
+    bool addAdjacencies(util::forward_range_of<std::pair<N,N>> auto && edges) {
+        auto edgeReferences = std::views::all(edges) | std::views::transform([](const auto & pair){return std::make_pair(createNodeReference(pair.first),createNodeReference(pair.second));});
+        if(client.insertEdges(edgeReferences)){
+            for(auto && [from,to]:edges) {
+                storeInKeyNodeMap(from);
+                storeInKeyNodeMap(to);
+            }
+            return true;
+        }
+        return false;
     }
 
     bool addNode(N & node) noexcept {
-        if(contains(node))
-            return false;
         N copy = node;
         return addNode(std::move(copy));
     }
@@ -87,42 +107,53 @@ public:
         if(contains(node)) {
             return false;
         }
-        if(client.insertNode({node.key(),node.file()})){
-            adjMap.addNode(std::move(node));
+        if(client.insertNode(createNodeReference(node))){
+            storeInKeyNodeMap(std::move(node));
             return true;
         }
         return false;
     }
 
-    bool addNodes(util::forward_range_of<N> auto && nodes) {
+    bool addNodes(util::forward_range_of<N> auto const& nodes) {
+        if(client.insertNodes(std::views::all(nodes)
+            | std::views::filter([this](const auto & node){return not keyToNodeMap.contains(node.key());})
+            | std::views::transform([](const auto & node){return createNodeReference(node);})))
+        {
+            std::ranges::for_each(nodes,[this](const auto & node){storeInKeyNodeMap(node);});
+            return true;
+        }
+        return false;
 
     }
 
-    void removeNode(const N & node)noexcept {
-
+    bool removeNode(const N & node)noexcept {
+        if(client.removeNode(createNodeReference(node))){
+            keyToNodeMap.erase(node.key());
+            return true;
+        }
+        return false;
     }
 
     bool removeNodes(util::forward_range_of<N> auto const & nodes) {
-        
+        return false;
     }
 
-    void removeAdjacency(const N & from, const N & to) noexcept {
-
+    bool removeAdjacency(const N & from, const N & to) noexcept {
+        return client.removeEdge(createNodeReference(from),createNodeReference(to));
     }
 
-    void removeAdjacencies(util::forward_range_of<std::pair<N,N>> auto const& edges){
-
+    bool removeAdjacencies(util::forward_range_of<std::pair<N,N>> auto const& edges){
+        return false;
     }
 
     bool contains(const N & node) const noexcept {
-        if(adjMap.contains(node))
+        if(keyToNodeMap.contains(node.key()))
             return true;
-        return false;
-        //TODO
+        return client.containsNode(node.key());
     }
 
     bool hasAdjacency(const N & from, const N & to) const noexcept {
-        return false;
+        return client.containsEdge(from.key(),to.key());
     }
 
     util::view_of<const N> auto adjacency(const N & node) const noexcept {
@@ -141,11 +172,9 @@ public:
         return this->client;
     }
 
-
-
     void clear()  {
-        this->keyToNodeMap.clear();
         //todo clear db but not all nodes
+        this->keyToNodeMap.clear();
     }
 };
 
