@@ -14,10 +14,7 @@ using json = nlohmann::json;
 class FilterConfigJsonReader{
 private:
     json config;
-    FilterConfigJsonReader(json jsonConfig):config(jsonConfig){}
-
-
-
+    FilterConfigJsonReader(json jsonConfig):config(std::move(jsonConfig)){}
 public:
     constexpr static const char * UNARY_FILTERS = "unary-filters";
     constexpr static const char * BINARY_FILTERS = "binary-filters";

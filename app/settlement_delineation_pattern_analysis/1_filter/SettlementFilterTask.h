@@ -36,7 +36,7 @@ public:
         for(auto && geometry: result) {
             fishnet::Feature<P> current {std::move(geometry)};
             current.addAttribute(*idField,polygonHasher(current.getGeometry()));
-            outputLayer.addFeature(current);
+            outputLayer.addFeature(std::move(current));
         }
         outputLayer.overwrite(output);
     }
