@@ -6,7 +6,7 @@ namespace fishnet::geometry {
 template<IPolygon P>
 class BoundingBoxPolygon {
 private:
-    const P polygon; //non-owning
+    const P polygon; 
     Rectangle<fishnet::math::DEFAULT_NUMERIC> boundingBox;
 public:
     BoundingBoxPolygon(const P & polygon):polygon(polygon),boundingBox(polygon.aaBB().getPoints()){}

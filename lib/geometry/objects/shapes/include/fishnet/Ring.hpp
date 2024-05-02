@@ -19,27 +19,27 @@ enum class PointLocation{
     INSIDE,OUTSIDE,BOUNDARY
 };
 
-
-
 template<fishnet::math::Number T>
 class Ring{
 private:
     std::vector<Segment<T>> segments;
 
     constexpr static inline std::vector<Segment<T>> toSegments(util::random_access_range_of<Vec2D<T>> auto const & points) noexcept {
-        std::vector<Segment<T>> s {};
-        if(points.size()==0) return s;
-        s.reserve(points.size());
+        std::vector<Segment<T>> segments {};
+        if(points.size()==0) 
+            return segments;
+        segments.reserve(points.size());
         for(size_t i = 0; i < points.size()-1 ; ++i){
-            if(points[i]==points[i+1]) continue;
-            s.emplace_back(Segment(points[i],points[i+1]));
+            if(points[i]==points[i+1])
+                 continue;
+            segments.emplace_back(points[i],points[i+1]);
         }
         auto const& first = points[0];
         auto const& last = points[points.size()-1];
         if(first != last){
-            s.emplace_back(Segment(last,first));
+            segments.emplace_back(last,first);
         }
-        return s;
+        return segments;
     }
 
     constexpr void makeValid() noexcept {

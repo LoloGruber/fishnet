@@ -22,7 +22,7 @@ public:
     
     /**
      * @brief Interface for EventQueue events.
-     * process(...) is executed whenever an element is pop from the EventQueue
+     * process(...) is executed whenever an element is polled from the EventQueue
      * getEventType() returns the type of Event (INSERT|REMOVE)
      * eventPoint() returns a numeric value for the Event to determine the order in the EventQueue
      */

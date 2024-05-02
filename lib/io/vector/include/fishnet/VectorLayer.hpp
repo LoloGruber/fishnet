@@ -215,7 +215,7 @@ public:
     }
 
     constexpr void addFeature(Feature<G> && feature) noexcept {
-        features.emplace_back(std::forward<Feature<G>>(feature));
+        features.push_back(std::forward<Feature<G>>(feature));
     }
 
     constexpr void addFeature(const Feature<G> & feature) noexcept {
