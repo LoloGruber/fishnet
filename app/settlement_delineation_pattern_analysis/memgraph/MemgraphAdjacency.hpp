@@ -1,6 +1,5 @@
 #pragma once
 #include <fishnet/AdjacencyContainer.hpp>
-#include <fishnet/AdjacencyMap.hpp>
 #include <unordered_map>
 #include <expected>
 #include <sstream>
@@ -23,7 +22,6 @@ using namespace fishnet::graph;
  */
 template<DatabaseNode N>
 class MemgraphAdjacency{
-
 public: 
     struct Equal{
         static bool operator()(const N & lhs, const N & rhs)  noexcept{
@@ -52,6 +50,10 @@ private:
 
     void storeInKeyNodeMap( N && node) noexcept {
         keyToNodeMap.try_emplace(node.key(),std::move(node));
+    }
+
+    void removeFromKeyNodeMap(const N & node) noexcept {
+        keyToNodeMap.erase(node.key());
     }
 
 public:
@@ -134,7 +136,13 @@ public:
         return false;
     }
 
-    bool removeNodes(util::forward_range_of<N> auto const & nodes) {
+    bool removeNodes(util::forward_range_of<N> auto && nodes) {
+        if(client.removeNodes(
+            std::views::all(nodes) | std::views::transform([](const auto & node){return createNodeReference(node);})
+        )){
+            std::ranges::for_each(nodes,[this](const auto & node){removeFromKeyNodeMap(node);});
+            return true;
+        }
         return false;
     }
 
@@ -142,8 +150,10 @@ public:
         return client.removeEdge(createNodeReference(from),createNodeReference(to));
     }
 
-    bool removeAdjacencies(util::forward_range_of<std::pair<N,N>> auto const& edges){
-        return false;
+    bool removeAdjacencies(util::forward_range_of<std::pair<N,N>> auto && edges){
+        return client.removeEdges(
+            std::views::all(edges) | std::views::transform([](const auto & pair){return std::make_pair(createNodeReference(pair.first),createNodeReference(pair.second));})
+        );
     }
 
     bool contains(const N & node) const noexcept {
@@ -157,15 +167,28 @@ public:
     }
 
     util::view_of<const N> auto adjacency(const N & node) const noexcept {
-        return std::views::empty<const N>;
+        std::vector<size_t> adjacentIds = client.adjacency(createNodeReference(node));
+        return std::views::all(keyToNodeMap) 
+            | std::views::filter([ids = std::move(adjacentIds)](const auto & keyValPair){return std::ranges::contains(ids,keyValPair.first);})
+            | std::views::transform([](const auto & keyValPair){return keyValPair.second;});
     }
 
     util::view_of<const N> auto nodes() const noexcept {
-        return std::views::empty<const N>;
+        return std::views::values(keyToNodeMap);
     }
 
+
     util::view_of<std::pair<const N, const N>> auto getAdjacencyPairs() const noexcept {
-        return std::views::empty<std::pair<const N,const N>>;
+        std::unordered_map<size_t,std::vector<size_t>> edgesMap = client.edges();
+        std::ranges::for_each(std::views::keys(keyToNodeMap),[&edgesMap](const size_t key){edgesMap.try_emplace(key);});
+        return std::views::all(keyToNodeMap)
+            | std::views::transform([edges=std::move(edgesMap),this](const auto & keyValPair){
+                const auto & [key,node] = keyValPair;
+                return std::views::transform(edges.at(key),[&node,this](const size_t neighbour){
+                        return std::make_pair(node,this->keyToNodeMap.at(neighbour));
+                });
+            })
+            | std::views::join;
     }
 
     const MemgraphClient & getDatabaseConnection() const noexcept {
@@ -173,7 +196,7 @@ public:
     }
 
     void clear()  {
-        //todo clear db but not all nodes
+        this->client.removeNodes(std::views::keys(keyToNodeMap) | std::views::transform([](const size_t key){return NodeReference(key);}));
         this->keyToNodeMap.clear();
     }
 };

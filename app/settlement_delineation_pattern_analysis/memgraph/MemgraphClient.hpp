@@ -13,7 +13,7 @@ struct FileReference{
 
 struct NodeReference{
     size_t nodeId;
-    FileReference fileRef;
+    FileReference fileRef = FileReference(-1);
 };
 
 
@@ -23,6 +23,10 @@ private:
 
     static int64_t asInt(size_t value) {
         return mg::Id::FromUint(value).AsInt();
+    }
+
+    static size_t asSizeT(int64_t value) {
+        return mg::Id::FromInt(value).AsUint();
     }
 public:
     class Query {
@@ -187,7 +191,7 @@ public:
     }
 
 
-    std::optional<FileReference> addFileReference(const std::string & path) const{
+    std::optional<FileReference> addFileReference(const std::string & path) const noexcept{
         ParameterizedQuery query;
         query.append("MERGE (f:File {path:$path})");
         query.set("path",mg::Value(path));
@@ -262,7 +266,7 @@ public:
         query.line("MERGE (n:Node {id:node.id})");
         query.line("MERGE (n)-[:stored]->(f)");
         std::vector<mg::Value> data;
-        for(NodeReference && node: nodes){
+        for(NodeReference const& node: nodes){
             mg::Map currentNode {2};
             currentNode.Insert("id",mg::Value(asInt(node.nodeId)));
             currentNode.Insert("fileId",mg::Value(asInt(node.fileRef.fileId)));
@@ -280,6 +284,21 @@ public:
             .executeAndDiscard(mgClient);
     }
 
+    bool removeNodes(util::forward_range_of<NodeReference> auto && nodes) const noexcept {
+        ParameterizedQuery query(1);
+        query.line("UNWIND $data as node");
+        query.line("MATCH (n:Node {id:node.id})");
+        query.line("DETACH DELETE n");
+        std::vector<mg::Value> data;
+        for(NodeReference const& node: nodes) {
+            mg::Map currentNode {1};
+            currentNode.Insert("id",mg::Value(asInt(node.nodeId)));
+            data.push_back(mg::Value(std::move(currentNode)));
+        }
+        query.set("data",mg::Value(mg::List(std::move(data))));
+        return query.executeAndDiscard(mgClient);
+    }
+
     bool removeEdge(NodeReference const & from, NodeReference const & to) const noexcept {
         return ParameterizedQuery(2)
             .line("MATCH (f:Node {id:$fromId})-[a:adj]->(t:Node {id:$toId})")
@@ -287,6 +306,22 @@ public:
             .setInt("toId",to.nodeId)
             .line("DETACH DELETE a")
             .executeAndDiscard(mgClient);
+    }
+
+    bool removeEdges(util::forward_range_of<std::pair<NodeReference,NodeReference>> auto && edges) const noexcept {
+        ParameterizedQuery query(1);
+        query.line("UNWIND $data as edge");
+        query.line("MATCH (:Node {id:edge.from})-[a:adj]->(:Node {id:edge.to})");
+        query.line("DETACH DELETE a");
+        std::vector<mg::Value> data;
+        for(const auto & [from,to]: edges) {
+            mg::Map currentEdge {2};
+            currentEdge.Insert("from",mg::Value(asInt(from.nodeId)));
+            currentEdge.Insert("to",mg::Value(asInt(to.nodeId)));
+            data.push_back(mg::Value(std::move(currentEdge)));
+        }
+        query.set("data",mg::Value(mg::List(std::move(data))));
+        return query.executeAndDiscard(mgClient);
     }
 
     bool containsNode(size_t nodeId) const noexcept {
@@ -310,6 +345,48 @@ public:
             return result.has_value() && result->size() > 0;
         }
         return false;
+    }
+
+    std::vector<size_t> adjacency(const NodeReference & node) const noexcept {
+        if(
+            ParameterizedQuery(1)
+            .line("MATCH (:Node {id:$id})-[:adj]->(x:Node)")
+            .setInt("id",node.nodeId)
+            .line("RETURN x.id")
+            .execute(mgClient)
+        ){
+            std::vector<size_t> output;
+            while(auto currentRow = mgClient->FetchOne()){
+                if(currentRow->front().type() == mg::Value::Type::Int){
+                    size_t nodeId = asSizeT(currentRow->front().ValueInt());
+                    output.push_back(nodeId);
+                }
+            }
+            return output;
+        }
+        std::cerr << "Could not execute query for \"adjacency(Node)\"" << std::endl;
+        return {};
+    }
+
+    std::unordered_map<size_t,std::vector<size_t>> edges() const noexcept {
+        if(
+            Query()
+            .line("MATCH (f:Node)-[:adj]->(t:Node)")
+            .line("RETURN f.id,t.id")
+            .execute(mgClient)
+        ){
+            std::unordered_map<size_t,std::vector<size_t>> output;
+            while(auto currentRow = mgClient->FetchOne()) {
+                size_t from = asSizeT(currentRow->at(0).ValueInt());
+                size_t to = asSizeT(currentRow->at(1).ValueInt());
+                if(not output.contains(from))
+                    output.try_emplace(from,std::vector<size_t>());
+                output.at(from).push_back(to);
+            }
+            return output;
+        }
+        std::cerr << "Could not execute query for \"edges()\"" << std::endl;
+        return {};
     }
 
     bool clearAll() const noexcept{
