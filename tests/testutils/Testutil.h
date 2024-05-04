@@ -262,13 +262,7 @@ void EXPECT_SIZE(R & container, size_t size) {
 
 template<std::ranges::range R>
 void EXPECT_SIZE(R && container, size_t size) {
-    // auto actual = 0;
-    // if constexpr(std::ranges::sized_range<R>){
-    //     actual = std::ranges::distance(container);
-    // }else{
-    //     actual = std::ranges::count_if(container,[](const auto & e){return true;});
-    // }
-    EXPECT_EQ(util::size(container),size);
+    EXPECT_EQ(util::size<decltype(container)>(container),size);
 }
 
 void EXPECT_EMPTY(std::ranges::range auto && container){
