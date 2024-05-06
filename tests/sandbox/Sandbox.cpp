@@ -94,6 +94,17 @@ void rangesCountIf(){
 }
 
 
+template<auto C, typename T>
+concept Satisfies = requires {
+    C.template operator()<T>();
+};
+
+#define CONCEPT(TheConcept) \
+  [] <typename T> () consteval { }
+
+
+template<typename R, auto C>
+concept range_over = std::ranges::range<R> && Satisfies<C,std::ranges::range_value_t<R>>;
 
 
 
@@ -103,6 +114,9 @@ int main(){
     //crtp();
     //rangesCountIf();
     mapBinarySearch();
+    std::vector<int> ints = {1,2,3};
+    static_assert(range_over<decltype(ints),CONCEPT(std::integral)>);
+    //static_assert(range_over<decltype(ints),[]<std::floating_point>{}>);
 
 
     std::cout << "Destroying Sandbox" << std::endl;
