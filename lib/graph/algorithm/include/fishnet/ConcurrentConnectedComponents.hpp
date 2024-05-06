@@ -7,13 +7,14 @@ template<typename N, util::HashFunction<N> Hash= std::hash<N>,NodeBiPredicate<N>
 class ConcurrentConnectedComponents: public ConnectedComponents<N,Hash,Equal>
 {
 private:
-    std::shared_ptr<BlockingQueue<std::pair<int,std::vector<N>>>> queue;
+    using QueuePtr = std::shared_ptr<fishnet::util::BlockingQueue<std::pair<int,std::vector<N>>>>;
+    QueuePtr queue;
 protected:
     void handleClose() override {
         this->queue->put(std::make_pair(this->index,this->components.back()));
     }
 public:
-    ConcurrentConnectedComponents(std::shared_ptr<BlockingQueue<std::pair<int,std::vector<N>>>> q):ConnectedComponents<N,Hash,Equal>(),queue(q){};
+    ConcurrentConnectedComponents(QueuePtr q):ConnectedComponents<N,Hash,Equal>(),queue(q){};
     ~ConcurrentConnectedComponents()=default;
 };
 }

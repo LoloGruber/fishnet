@@ -2,7 +2,7 @@
 #include "HashConcepts.hpp"
 #include "CantorPairing.hpp"
 
-namespace util {
+namespace fishnet::util {
 template<Mapable Key, Mapable SecondKey>
 class DualKey {
     private:
@@ -32,18 +32,18 @@ class DualKey {
 }
 namespace std {
     template<typename K,typename S>
-    struct hash<util::DualKey<K,S>>{
+    struct hash<fishnet::util::DualKey<K,S>>{
         constexpr static hash<K> keyHasher {};
         constexpr static hash<S> secondKeyHasher {};
-        size_t operator()(const util::DualKey<K,S> & dualKey) const noexcept {
+        size_t operator()(const fishnet::util::DualKey<K,S> & dualKey) const noexcept {
             size_t keyHash = keyHasher(dualKey.getKey());
             size_t secondKeyHash = secondKeyHasher(dualKey.getSecondKey());
-            return util::CantorPairing(keyHash,secondKeyHash);
+            return fishnet::util::CantorPairing(keyHash,secondKeyHash);
         }
     };
 }   
 
-namespace util {
+namespace fishnet::util {
 
 template<Mapable K1, Mapable K2, typename Value>
 using pair_map = std::unordered_map<DualKey<K1,K2>,Value>;

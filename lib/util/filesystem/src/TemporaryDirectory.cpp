@@ -1,7 +1,7 @@
 #include <fishnet/TemporaryDirectiory.h>
 #include <stdexcept>
 
-namespace util{
+namespace fishnet::util{
 TemporaryDirectory::TemporaryDirectory(const std::filesystem::path & directory):directory(directory){
         if (std::filesystem::exists(directory) && not std::filesystem::is_empty(directory)){
             throw std::invalid_argument("Directory already exists and is not empty");

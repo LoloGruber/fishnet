@@ -1,4 +1,5 @@
 #pragma once
+namespace fishnet::util{
 template<typename T>
 class Element
 {
@@ -35,3 +36,4 @@ public:
 
     ~Element() = default;
 };
+}

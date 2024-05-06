@@ -2,7 +2,7 @@
 #include <fishnet/AlternativeKeyMap.hpp>
 #include "Testutil.h"
 using namespace testutil;
-using namespace util;
+using namespace fishnet::util;
 
 class AlternativeKeyMapTest: public ::testing::Test {
 protected:

@@ -1,5 +1,6 @@
 #pragma once
 #include "BlockingQueue.hpp"
+namespace fishnet::util{
 template<typename T>
 class FiniteBlockingQueue : public BlockingQueue<T>
 {
@@ -27,4 +28,5 @@ public:
         this->waitOnNotEmpty.notify_one();
     }
 };
+}
 

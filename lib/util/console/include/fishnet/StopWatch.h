@@ -1,6 +1,7 @@
 #pragma once
 #include <chrono>
 #include <iostream>
+namespace fishnet::util{
 class StopWatch
 {
 private:
@@ -17,3 +18,4 @@ public:
     void reset();
     ~StopWatch();
 };
+}

@@ -2,13 +2,13 @@
 #include <unordered_map>
 #include <type_traits>
 #include "BidirectionalMap.hpp"
-namespace util {
+namespace fishnet::util {
 
 template<Mapable Key, Mapable AltKey,typename Value>
 class AlternativeKeyMap {
 private:
     std::unordered_map<Key,Value> map;
-    util::BidirectionalMap<Key,AltKey> keyMap;
+    fishnet::util::BidirectionalMap<Key,AltKey> keyMap;
 
 public:
     constexpr std::optional<AltKey> getAlternative(const Key & key) const noexcept {

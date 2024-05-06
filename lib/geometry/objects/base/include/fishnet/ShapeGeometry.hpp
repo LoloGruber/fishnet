@@ -15,8 +15,8 @@ concept LocationQueries = fishnet::math::Number<T> && requires(const S & shape, 
     {shape.isOutside(p)} -> std::same_as<bool>;
     {shape.intersects(s)} -> std::same_as<bool>;
     {shape.intersects(l)} -> std::same_as<bool>;
-    {shape.intersections(s)} -> util::forward_range_of<Vec2D<double>>;
-    {shape.intersections(l)} -> util::forward_range_of<Vec2D<double>>;
+    {shape.intersections(s)} -> fishnet::util::forward_range_of<Vec2D<double>>;
+    {shape.intersections(l)} -> fishnet::util::forward_range_of<Vec2D<double>>;
 };
 
 template<typename S, typename O>

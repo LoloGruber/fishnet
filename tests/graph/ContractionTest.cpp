@@ -56,7 +56,7 @@ TEST_F(ContractionTest, SingleWorker){
     MergePredicate Predicate;
     fishnet::graph::Weighted<fishnet::graph::UndirectedGraph<XYNode>,double,DistanceFunction> result;
     {
-        StopWatch watch {"Merging Using Connected Components"};
+        fishnet::util::StopWatch watch {"Merging Using Connected Components"};
         result = fishnet::graph::contract(g,MergePredicate(),MergeFunction());
     }
     for(auto & e: result.getEdges()){

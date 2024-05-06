@@ -79,7 +79,7 @@ auto connectedComponents(const G  & graph) {
 }
 
 template<Graph G>
-auto connectedComponents(const G & graph,std::shared_ptr<BlockingQueue<std::pair<int,std::vector<typename G::node_type>>>>  q, NodeBiPredicate<typename G::node_type> auto const& inRelation)  {
+auto connectedComponents(const G & graph,std::shared_ptr<fishnet::util::BlockingQueue<std::pair<int,std::vector<typename G::node_type>>>>  q, NodeBiPredicate<typename G::node_type> auto const& inRelation)  {
     using H = G::adj_container_type::hash_function;
     using E = G::adj_container_type::equality_predicate;
     auto concurrentConnectedComponents = ConcurrentConnectedComponents<typename G::node_type,H,E>(q);
@@ -87,7 +87,7 @@ auto connectedComponents(const G & graph,std::shared_ptr<BlockingQueue<std::pair
     return concurrentConnectedComponents;
 }
 template<Graph G>
-auto connectedComponents(const G & graph, std::shared_ptr<BlockingQueue<std::pair<int,std::vector<typename G::node_type>>>>  q)  {
+auto connectedComponents(const G & graph, std::shared_ptr<fishnet::util::BlockingQueue<std::pair<int,std::vector<typename G::node_type>>>>  q)  {
     return connectedComponents(graph,q,__impl::DefaultBiPredicate<typename G::node_type>());
 }
 

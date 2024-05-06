@@ -20,7 +20,7 @@ public:
     constexpr static const char * BINARY_FILTERS = "binary-filters";
 
     template<typename T>
-    static std::expected<util::Predicate_t<T>,std::string> fromUnaryType(UnaryFilterType type,json const & filterDesc) {
+    static std::expected<fishnet::util::Predicate_t<T>,std::string> fromUnaryType(UnaryFilterType type,json const & filterDesc) {
         switch(type){
             case UnaryFilterType::ApproxAreaFilter:
                  return ApproxAreaFilter::fromJson(filterDesc);
@@ -31,7 +31,7 @@ public:
     }
 
     template<typename T>
-    static std::expected<util::BiPredicate_t<T>,std::string> fromBinaryType(BinaryFilterType type, json const & filterDesc){
+    static std::expected<fishnet::util::BiPredicate_t<T>,std::string> fromBinaryType(BinaryFilterType type, json const & filterDesc){
         switch(type){
             case BinaryFilterType::InsidePolygonFilter:
                 return InsidePolygonFilter();

@@ -14,18 +14,18 @@ static void TODO() {
 }
 
 template<typename T>
-static bool contains(const  util::input_range_of<std::unique_ptr<T>> auto & collection, const std::unique_ptr<T> & element) {
+static bool contains(const  fishnet::util::input_range_of<std::unique_ptr<T>> auto & collection, const std::unique_ptr<T> & element) {
     return collection.end() != std::find_if(collection.begin(),collection.end(),[&element](const std::unique_ptr<T> & current){return *element == *current;});
 }
 
 
 template<typename T>
-static bool contains(const util::input_range_of<std::shared_ptr<T>> auto & collection, const std::shared_ptr<T> & element) {
+static bool contains(const fishnet::util::input_range_of<std::shared_ptr<T>> auto & collection, const std::shared_ptr<T> & element) {
     return collection.end() != std::find_if(collection.begin(),collection.end(),[&element](const std::shared_ptr<T> & current){return *element == *current;});
 }
 
 template<typename T, typename U> requires std::derived_from<U,T>
-static bool contains(const util::input_range_of<T> auto & collection, const U & element){
+static bool contains(const fishnet::util::input_range_of<T> auto & collection, const U & element){
     for(auto & e : collection) {
         if(dynamic_cast<const U&>(e) == element){
             return true;
@@ -35,7 +35,7 @@ static bool contains(const util::input_range_of<T> auto & collection, const U & 
 }
 
 template<typename T, typename U> requires std::derived_from<U,T>
-static bool contains(const  util::input_range_of<std::unique_ptr<T>> auto & collection, const std::unique_ptr<U> & element){
+static bool contains(const  fishnet::util::input_range_of<std::unique_ptr<T>> auto & collection, const std::unique_ptr<U> & element){
     for(auto & e : collection) {
         if(dynamic_cast< U&>(*e) == *element){
             return true;
@@ -45,12 +45,12 @@ static bool contains(const  util::input_range_of<std::unique_ptr<T>> auto & coll
 }
 
 template<typename T>
-static bool contains(const util::input_range_of<T> auto & collection, const T & element){
+static bool contains(const fishnet::util::input_range_of<T> auto & collection, const T & element){
     return collection.end() != std::ranges::find(collection,element);
 }
 
 template<typename T>
-static bool containsView(util::view_of<T> auto view, const T & element){
+static bool containsView(fishnet::util::view_of<T> auto view, const T & element){
     return view.end() != std::ranges::find(view,element);
 }
 
@@ -63,23 +63,23 @@ static bool containsAllView(std::ranges::view auto view, const std::ranges::inpu
 }
 
 // template<typename T>
-// static bool containsAll(const  util::input_range_of<std::unique_ptr<T>> auto & collection, const  util::input_range_of<std::unique_ptr<T>> auto & toBeContained) {
+// static bool containsAll(const  fishnet::util::input_range_of<std::unique_ptr<T>> auto & collection, const  fishnet::util::input_range_of<std::unique_ptr<T>> auto & toBeContained) {
 //     return std::all_of(toBeContained.begin(),toBeContained.end(),[&collection](const std::unique_ptr<T> & element){return contains<T>(collection,element);});
 // }
 
 // template<typename T>
-// static bool containsAll(const util::input_range_of<std::shared_ptr<T>> auto & collection, const util::input_range_of<std::shared_ptr<T>> auto & toBeContained) {
+// static bool containsAll(const fishnet::util::input_range_of<std::shared_ptr<T>> auto & collection, const fishnet::util::input_range_of<std::shared_ptr<T>> auto & toBeContained) {
 //     return std::all_of(toBeContained.begin(),toBeContained.end(),[&collection](const std::shared_ptr<T> & element){return contains<T>(collection,element);});
 // }
 
 
 // template<typename T, typename U> requires std::derived_from<U,T>
-// static bool containsAll(const util::input_range_of<T> auto & collection, const util::input_range_of<U> auto & toBeContained){
+// static bool containsAll(const fishnet::util::input_range_of<T> auto & collection, const fishnet::util::input_range_of<U> auto & toBeContained){
 //     return std::all_of(toBeContained.begin(),toBeContained.end(),[&collection](const U & element){return contains<T,U>(collection,element);});
 // }
 
 // template<typename T, typename U> requires std::derived_from<U,T>
-// static bool containsAll(const  util::input_range_of<std::unique_ptr<T>> auto & collection, const util::input_range_of<std::unique_ptr<U>> auto & toBeContained){
+// static bool containsAll(const  fishnet::util::input_range_of<std::unique_ptr<T>> auto & collection, const fishnet::util::input_range_of<std::unique_ptr<U>> auto & toBeContained){
 //     return std::all_of(toBeContained.begin(),toBeContained.end(),[&collection](const std::unique_ptr<U> & element){return contains<T,U>(collection,element);});
 // }
 
@@ -88,74 +88,74 @@ static bool containsAllView(std::ranges::view auto view, const std::ranges::inpu
 
 
 template<typename T>
-void EXPECT_CONTAINS( util::input_range_of<T> auto & collection, const T & element){
+void EXPECT_CONTAINS( fishnet::util::input_range_of<T> auto & collection, const T & element){
     EXPECT_NE(std::find(collection.begin(), collection.end(), element), collection.end()) << "Expected Element not contained in Collection";
 }
 
 template<typename T>
-void EXPECT_CONTAINS( util::input_range_of<T> auto && collection, const T & element){
+void EXPECT_CONTAINS( fishnet::util::input_range_of<T> auto && collection, const T & element){
     EXPECT_NE(std::find(collection.begin(), collection.end(), element), collection.end()) << "Expected Element not contained in Collection";
 }
 
 template<typename T>
-void EXPECT_NOT_CONTAINS( util::input_range_of<T> auto & collection, const T & element){
+void EXPECT_NOT_CONTAINS( fishnet::util::input_range_of<T> auto & collection, const T & element){
     EXPECT_EQ(std::find(collection.begin(), collection.end(), element), collection.end());
 }
 
 template<typename T>
-void EXPECT_NOT_CONTAINS( util::input_range_of<T> auto && collection, const T & element){
+void EXPECT_NOT_CONTAINS( fishnet::util::input_range_of<T> auto && collection, const T & element){
     EXPECT_EQ(std::find(collection.begin(), collection.end(), element), collection.end());
 }
 
 
 
 template<typename T> 
-void EXPECT_CONTAINS(const  util::input_range_of<std::unique_ptr<T>> auto & collection, const std::unique_ptr<T> & element){
+void EXPECT_CONTAINS(const  fishnet::util::input_range_of<std::unique_ptr<T>> auto & collection, const std::unique_ptr<T> & element){
     bool result = contains<T>(collection,element);
     EXPECT_TRUE(result);
 }
 
 template<typename T> 
-void EXPECT_NOT_CONTAINS(const  util::input_range_of<std::unique_ptr<T>> auto & collection, const std::unique_ptr<T> & element){
+void EXPECT_NOT_CONTAINS(const  fishnet::util::input_range_of<std::unique_ptr<T>> auto & collection, const std::unique_ptr<T> & element){
     bool result = contains<T>(collection,element);
     EXPECT_FALSE(result);
 }
 
 template<typename T>
-void EXPECT_CONTAINS(const util::input_range_of<std::shared_ptr<T>> auto & collection, const std::shared_ptr<T> & element){
+void EXPECT_CONTAINS(const fishnet::util::input_range_of<std::shared_ptr<T>> auto & collection, const std::shared_ptr<T> & element){
     bool result = contains<T>(collection,element);
     EXPECT_TRUE(result);
 }
 
 
 template<typename T>
-void EXPECT_NOT_CONTAINS(const util::input_range_of<std::shared_ptr<T>> auto & collection, const std::shared_ptr<T> & element){
+void EXPECT_NOT_CONTAINS(const fishnet::util::input_range_of<std::shared_ptr<T>> auto & collection, const std::shared_ptr<T> & element){
     bool result = contains<T>(collection,element);
     EXPECT_FALSE(result);
 }
 
 
 template<typename T, typename U> requires std::derived_from<U,T>
-void EXPECT_CONTAINS(const util::input_range_of<T> auto & collection, const U & element){
+void EXPECT_CONTAINS(const fishnet::util::input_range_of<T> auto & collection, const U & element){
     bool result = contains<T,U>(collection,element);
     EXPECT_TRUE(result);
 }
 
 
 template<typename T, typename U> requires std::derived_from<U,T>
-void EXPECT_NOT_CONTAINS(const util::input_range_of<T> auto & collection, const U & element){
+void EXPECT_NOT_CONTAINS(const fishnet::util::input_range_of<T> auto & collection, const U & element){
     bool result = contains<T,U>(collection,element);
     EXPECT_FALSE(result);
 }
 
 template<typename T, typename U> requires std::derived_from<U,T>
-void EXPECT_CONTAINS(const  util::input_range_of<std::unique_ptr<T>> auto & collection, const std::unique_ptr<U> & element){
+void EXPECT_CONTAINS(const  fishnet::util::input_range_of<std::unique_ptr<T>> auto & collection, const std::unique_ptr<U> & element){
     bool result =  contains<T,U>(collection,element);
     EXPECT_TRUE(result);
 }
 
 template<typename T, typename U> requires std::derived_from<U,T>
-void EXPECT_NOT_CONTAINS(const  util::input_range_of<std::unique_ptr<T>> auto & collection, const std::unique_ptr<U> & element){
+void EXPECT_NOT_CONTAINS(const  fishnet::util::input_range_of<std::unique_ptr<T>> auto & collection, const std::unique_ptr<U> & element){
     bool result =  contains<T,U>(collection,element);
     EXPECT_FALSE(result);
 }
@@ -178,8 +178,8 @@ concept supportsIOAppend = requires(const T & t, std::ostream & os){
 };
 
 void EXPECT_UNSORTED_RANGE_EQ(std::ranges::forward_range auto const & actual, std::ranges::forward_range auto const & expected) {
-    if(util::size(actual) != util::size(expected)){
-        FAIL() << "Ranges have a different size!"<<"\nExpecting: "<<util::size(expected)<<" but was: " << util::size(actual);
+    if(fishnet::util::size(actual) != fishnet::util::size(expected)){
+        FAIL() << "Ranges have a different size!"<<"\nExpecting: "<<fishnet::util::size(expected)<<" but was: " << fishnet::util::size(actual);
         return;
     }
     for(const auto & expectedElement : expected){
@@ -205,25 +205,25 @@ void EXPECT_RANGE_EQ(const std::ranges::input_range auto &  lhs, const std::rang
 }
 
 // template<typename T>
-// void EXPECT_CONTAINS_ALL(const  util::input_range_of<std::unique_ptr<T>> auto & collection, const  util::input_range_of<std::unique_ptr<T>> auto & toBeContained){
+// void EXPECT_CONTAINS_ALL(const  fishnet::util::input_range_of<std::unique_ptr<T>> auto & collection, const  fishnet::util::input_range_of<std::unique_ptr<T>> auto & toBeContained){
 //     bool result = containsAll<T>(collection,toBeContained);
 //     EXPECT_TRUE(result);
 // }
 
 // template<typename T>
-// void EXPECT_CONTAINS_ALL(const util::input_range_of<std::shared_ptr<T>> auto & collection, const util::input_range_of<std::shared_ptr<T>> auto & toBeContained){
+// void EXPECT_CONTAINS_ALL(const fishnet::util::input_range_of<std::shared_ptr<T>> auto & collection, const fishnet::util::input_range_of<std::shared_ptr<T>> auto & toBeContained){
 //     bool result = containsAll<T>(collection,toBeContained);
 //     EXPECT_TRUE(result);
 // }
 
 template<typename T, typename U> requires std::derived_from<U,T>
-void EXPECT_CONTAINS_ALL(const util::input_range_of<T> auto & collection, const util::input_range_of<U> auto & toBeContained){
+void EXPECT_CONTAINS_ALL(const fishnet::util::input_range_of<T> auto & collection, const fishnet::util::input_range_of<U> auto & toBeContained){
     bool result = containsAll<T,U>(collection,toBeContained);
     EXPECT_TRUE(result);
 }
 
 template<typename T, typename U> requires std::derived_from<U,T>
-void EXPECT_CONTAINS_ALL(const  util::input_range_of<std::unique_ptr<T>> auto & collection, const util::input_range_of<std::unique_ptr<U>> auto & toBeContained){
+void EXPECT_CONTAINS_ALL(const  fishnet::util::input_range_of<std::unique_ptr<T>> auto & collection, const fishnet::util::input_range_of<std::unique_ptr<U>> auto & toBeContained){
     bool result = containsAll<T,U>(collection,toBeContained);
     EXPECT_TRUE(result);
 }
@@ -240,7 +240,7 @@ void EXPECT_BAD_CAST( T & t){
 }
 
 template<typename T,typename U> requires std::derived_from<U,T>
-void EXPECT_REF_EQ(const  util::input_range_of<std::unique_ptr<T>> auto& expected, const util::input_range_of<std::unique_ptr<U>> auto & actual){
+void EXPECT_REF_EQ(const  fishnet::util::input_range_of<std::unique_ptr<T>> auto& expected, const fishnet::util::input_range_of<std::unique_ptr<U>> auto & actual){
     if(expected.size() != actual.size()){
         FAIL();
     }
@@ -262,7 +262,7 @@ void EXPECT_SIZE(R & container, size_t size) {
 
 template<std::ranges::range R>
 void EXPECT_SIZE(R && container, size_t size) {
-    EXPECT_EQ(util::size<decltype(container)>(container),size);
+    EXPECT_EQ(fishnet::util::size<decltype(container)>(container),size);
 }
 
 void EXPECT_EMPTY(std::ranges::range auto && container){

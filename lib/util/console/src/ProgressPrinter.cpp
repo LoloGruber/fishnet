@@ -5,7 +5,7 @@
 #include <iostream>
 #include <utility>
 #include <fishnet/ProgressPrinter.h>
-
+using namespace fishnet::util;
 bool ProgressPrinter::disable = false;
 
 void ProgressPrinter::visit() {

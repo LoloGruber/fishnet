@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include <fishnet/PathHelper.h>
-using namespace util;
+using namespace fishnet::util;
 TEST(PathHelperTest, getCurrentPath) {
     EXPECT_EQ(PathHelper::getCurrentPath(),std::filesystem::current_path());
 }

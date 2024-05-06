@@ -111,7 +111,7 @@ static void benchmarkConnectedComponentsMerge(std::ofstream & outputFile, const 
         bool operator()(const XYNode & n1, const XYNode & n2)const{return n1.distanceTo(n2) <= maxDistance;}
     };
     {
-        StopWatch w;
+        fishnet::util::StopWatch w;
         auto result = contract(source,MergePred(),MergeFunction(),u_int8_t(workers));
         outputFile << w.stop() <<";";
     }
@@ -131,7 +131,7 @@ static void benchmarkLegacy(std::ofstream & outputFile, const WG & source,double
     };
     std::function<bool(const XYNode &,const XYNode &)> pred = MergePred();
     {
-        StopWatch w;
+        fishnet::util::StopWatch w;
         legacyMerge(copy,pred);
         outputFile <<w.stop() <<";";
     }

@@ -3,8 +3,7 @@
 #include <memory>
 #include "HashConcepts.h"
 
-
-
+namespace fishnet::util{
 struct Referential{
     struct Equal
     {   
@@ -37,5 +36,6 @@ struct Referential{
         }
     };
 };
+}
 
 #endif

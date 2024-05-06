@@ -1,6 +1,6 @@
 #pragma once
 #include <filesystem>
-namespace util{
+namespace fishnet::util{
 class TemporaryDirectory{
 private:
     std::filesystem::path directory;

@@ -1,6 +1,7 @@
 #pragma once
 #include "SweepLine.hpp"
 #include "BoundingBoxPolygon.hpp"
+#include <fishnet/FunctionalConcepts.hpp>
 
 namespace fishnet::geometry {
 
@@ -21,7 +22,8 @@ struct PolygonNeighboursInsertEvent : public PolygonNeighbours<P>::DefaultInsert
 
 template<IPolygon P>
 struct PolygonNeighboursRemoveEvent: public PolygonNeighbours<P>::RemoveEvent {
-    PolygonNeighboursRemoveEvent(const BoundingBoxPolygon<P> & bbPptr):PolygonNeighbours<P>::RemoveEvent(bbPptr){}
+    util::BiPredicate_t<P> neighbouringPredicate;
+    PolygonNeighboursRemoveEvent(const BoundingBoxPolygon<P> & bbPptr,util::BiPredicate<P> auto neighbouringPredicate = util::TrueBiPredicate()):PolygonNeighbours<P>::RemoveEvent(bbPptr),neighbouringPredicate(neighbouringPredicate){}
     virtual fishnet::math::DEFAULT_NUMERIC eventPoint() const noexcept {
         return this->obj->getBoundingBox().bottom();
     }
@@ -67,5 +69,7 @@ static std::vector<std::pair<std::ranges::range_value_t<R>,std::ranges::range_va
     });
     return sweepLine.sweep(out);
 }
+
+
 
 }

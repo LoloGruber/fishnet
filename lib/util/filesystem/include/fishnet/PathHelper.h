@@ -2,7 +2,7 @@
 #include <filesystem>
 #include <string_view>
 
-namespace util {
+namespace fishnet::util {
 
 constexpr static const char * PROJECT_NAME = "fishnet";
 class PathHelper{

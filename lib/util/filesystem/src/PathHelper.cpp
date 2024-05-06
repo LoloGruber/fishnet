@@ -1,6 +1,6 @@
 #include <fishnet/PathHelper.h>
 
-namespace util {
+namespace fishnet::util {
 
 std::filesystem::path PathHelper::getCurrentPath() noexcept {
     return std::filesystem::current_path();

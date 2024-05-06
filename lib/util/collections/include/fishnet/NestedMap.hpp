@@ -2,7 +2,7 @@
 #include <unordered_map>
 #include <fishnet/HashConcepts.hpp>
 
-namespace util {
+namespace fishnet::util {
 
 template<Mapable OuterKey, Mapable InnerKey, typename Value>
 class NestedMap {

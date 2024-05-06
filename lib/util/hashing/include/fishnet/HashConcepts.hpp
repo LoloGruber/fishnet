@@ -1,6 +1,6 @@
 #pragma once
 #include <fishnet/FunctionalConcepts.hpp>
-namespace util{
+namespace fishnet::util{
 
 template<typename Key>
 concept Hashable = requires(Key a)

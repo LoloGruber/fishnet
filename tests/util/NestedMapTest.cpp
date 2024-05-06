@@ -3,7 +3,7 @@
 #include "Testutil.h"
 #include <fishnet/NestedMap.hpp>
 using namespace testutil;
-using namespace util;
+using namespace fishnet::util;
 
 class NestedMapTest: public ::testing::Test {
 protected:

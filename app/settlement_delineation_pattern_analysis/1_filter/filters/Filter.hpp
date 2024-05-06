@@ -19,27 +19,27 @@ enum class BinaryFilterType{
 
 namespace FILTERS{
 
-const static inline util::BidirectionalMap<std::string,UnaryFilterType> UNARY = {{
+const static inline fishnet::util::BidirectionalMap<std::string,UnaryFilterType> UNARY = {{
     {"ApproxAreaFilter",UnaryFilterType::ApproxAreaFilter},
     {"ProjectedAreaFilter",UnaryFilterType::ProjectedAreaFilter}
 }};
 
 
 
-const static inline util::BidirectionalMap<std::string,BinaryFilterType> BINARY = {
+const static inline fishnet::util::BidirectionalMap<std::string,BinaryFilterType> BINARY = {
     {"InsidePolygonFilter",BinaryFilterType::InsidePolygonFilter}
 };
 }
 
 
 template<typename F,typename T>
-concept UnaryFilter = util::Predicate<F,T> && requires(const nlohmann::json & json) {
+concept UnaryFilter = fishnet::util::Predicate<F,T> && requires(const nlohmann::json & json) {
     {F::type()} -> std::same_as<UnaryFilterType>;
     {F::fromJson(json)} -> std::same_as<std::expected<nlohmann::json,std::string>>;
 };
 
 template<typename F,typename T>
-concept BinaryFilter = util::BiPredicate<F,T> && requires(const nlohmann::json & json) {
+concept BinaryFilter = fishnet::util::BiPredicate<F,T> && requires(const nlohmann::json & json) {
     {F::type()} -> std::same_as<BinaryFilterType>;
     {F::fromJson(json)} -> std::same_as<std::expected<F,std::string>>;
 };

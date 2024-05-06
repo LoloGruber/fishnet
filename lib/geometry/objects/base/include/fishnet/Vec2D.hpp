@@ -173,7 +173,7 @@ namespace std{
         size_t operator()(const fishnet::geometry::Vec2D<T> & vector) const {
             size_t xHash = hasher(vector.x);
             size_t yHash = hasher(vector.y);
-            return util::CantorPairing(xHash,yHash);
+            return fishnet::util::CantorPairing(xHash,yHash);
         }
     };
 }

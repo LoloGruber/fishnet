@@ -3,7 +3,7 @@
 #include <concepts>
 #include <ranges>
 
-namespace util{
+namespace fishnet::util{
 
 template<typename F, typename T, typename R>
 concept UnaryFunction = std::convertible_to<F,std::function<R(const T &)>>;

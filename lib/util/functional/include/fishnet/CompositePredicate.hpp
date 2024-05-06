@@ -6,7 +6,7 @@
 #include <algorithm>
 #include "FunctionalConcepts.hpp"
 
-namespace util{
+namespace fishnet::util{
 
 /**
  * Base class for composite Predicates

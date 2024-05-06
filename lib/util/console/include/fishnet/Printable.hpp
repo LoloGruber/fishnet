@@ -1,13 +1,13 @@
 #pragma once
 #include <ostream>
-namespace util {
+namespace fishnet::util {
 template<typename T>
 concept Printable = requires(const T &obj){
     { obj.toString() } -> std::convertible_to<std::string>;
 };
 }
 
-constexpr std::ostream & operator << (std::ostream & os,util::Printable auto const & obj) noexcept{
+constexpr std::ostream & operator << (std::ostream & os,fishnet::util::Printable auto const & obj) noexcept{
     os << obj.toString();
     return os;
 }

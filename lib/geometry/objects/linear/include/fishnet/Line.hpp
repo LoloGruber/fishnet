@@ -147,7 +147,7 @@ namespace std{
             if (line.isVertical()) return hasher(line.p.x);
             size_t slopeHash = hasher(line.slope());
             size_t yInterceptHash = hasher(line.yIntercept().value());
-            return util::CantorPairing(slopeHash,yInterceptHash);
+            return fishnet::util::CantorPairing(slopeHash,yInterceptHash);
         }
     };
 }

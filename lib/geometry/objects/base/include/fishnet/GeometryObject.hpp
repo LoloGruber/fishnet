@@ -9,7 +9,7 @@
 namespace fishnet::geometry {
 
 template<typename G, typename T = typename G::numeric_type>
-concept GeometryObject = (std::convertible_to<G,Vec2D<T>> || LinearGeometry<G,T> || ShapeGeometry<G,T>) && util::Printable<G> && util::Hashable<G> && requires(const G & geometry){
+concept GeometryObject = (IPoint<G> || LinearGeometry<G,T> || ShapeGeometry<G,T>) && util::Printable<G> && util::Hashable<G> && requires(const G & geometry){
     {G::type} -> std::convertible_to<GeometryType>;
     typename G::numeric_type;
 };

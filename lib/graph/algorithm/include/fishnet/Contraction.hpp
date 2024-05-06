@@ -13,9 +13,9 @@ namespace fishnet::graph{
 
 namespace __impl {
 template<typename N>
-static std::vector<std::pair<int,N>> mergeWorker(std::shared_ptr<BlockingQueue<std::pair<int,std::vector<N>>>>  queue, NodeBiOperator<N> auto const& contractFunction){
+static std::vector<std::pair<int,N>> mergeWorker(std::shared_ptr<fishnet::util::BlockingQueue<std::pair<int,std::vector<N>>>>  queue, NodeBiOperator<N> auto const& contractFunction){
     std::vector<std::pair<int,N>> mergeResult;
-    Element<std::pair<int,std::vector<N>>> current = Element<std::pair<int,std::vector<N>>>::POISON_PILL;
+    auto current = fishnet::util::Element<std::pair<int,std::vector<N>>>::POISON_PILL;
     using namespace std::chrono_literals;
     do{
         current = queue->take();
@@ -36,9 +36,9 @@ static std::vector<std::pair<int,N>> mergeWorker(std::shared_ptr<BlockingQueue<s
 }
 
 template<typename N>
-static std::vector<std::pair<int,N>> mergeWorker(std::shared_ptr<BlockingQueue<std::pair<int,std::vector<N>>>>  queue, util::ReduceFunction<std::vector<N>> auto const& reduceFunction){
+static std::vector<std::pair<int,N>> mergeWorker(std::shared_ptr<fishnet::util::BlockingQueue<std::pair<int,std::vector<N>>>>  queue, util::ReduceFunction<std::vector<N>> auto const& reduceFunction){
     std::vector<std::pair<int,N>> mergeResult;
-    Element<std::pair<int,std::vector<N>>> current = Element<std::pair<int,std::vector<N>>>::POISON_PILL;
+    auto current = fishnet::util::Element<std::pair<int,std::vector<N>>>::POISON_PILL;
     using namespace std::chrono_literals;
     do{
         current = queue->take();
@@ -57,7 +57,7 @@ template<Graph G>
 G contract(const G & source, NodeBiPredicate<typename G::node_type> auto const& mergePredicate, NodeBiOperator<typename G::node_type> auto const& contractFunction, u_int8_t workers = 1){
     using N = G::node_type;
     if(workers == 0) workers =1;
-    auto queue = std::make_shared<BlockingQueue<std::pair<int,std::vector<N>>>>();
+    auto queue = std::make_shared<fishnet::util::BlockingQueue<std::pair<int,std::vector<N>>>>();
     std::stop_source interrupt;
     std::vector<std::future<std::vector<std::pair<int,N>>>> futures;
     futures.reserve(workers);
@@ -90,7 +90,7 @@ template<Graph G>
 G contract(const G & source, NodeBiPredicate<typename G::node_type> auto const& mergePredicate, util::ReduceFunction<std::vector<typename G::node_type>> auto const& reduceFunction, u_int8_t workers = 1){
     using N = G::node_type;
     if(workers == 0) workers =1;
-    auto queue = std::make_shared<BlockingQueue<std::pair<int,std::vector<N>>>>();
+    auto queue = std::make_shared<fishnet::util::BlockingQueue<std::pair<int,std::vector<N>>>>();
     std::stop_source interrupt;
     std::vector<std::future<std::vector<std::pair<int,N>>>> futures;
     futures.reserve(workers);

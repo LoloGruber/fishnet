@@ -9,10 +9,11 @@
 #include <math.h>
 #include <future>
 
-static_assert(util::BiPredicate<util::TrueBiPredicate,XYNode>);
-static_assert(fishnet::graph::NodeBiPredicate<util::TrueBiPredicate,XYNode>);
+static_assert(fishnet::util::BiPredicate<fishnet::util::TrueBiPredicate,XYNode>);
+static_assert(fishnet::graph::NodeBiPredicate<fishnet::util::TrueBiPredicate,XYNode>);
 
 using namespace fishnet::graph;
+using namespace fishnet::util;
 using namespace testutil;
 class ConnectedComponentsTest
 : public ::testing::Test{

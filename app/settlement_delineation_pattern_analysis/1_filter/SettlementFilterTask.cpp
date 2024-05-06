@@ -87,7 +87,7 @@ int main(int argc, char * argv[]){
     auto success = jsonReader->read(task);
     if(not success)
         std::cerr << success.error() << std::endl;
-    StopWatch filterWatch {task.getTaskName()};
+    util::StopWatch filterWatch {task.getTaskName()};
     task.run();
     return 0;
 }

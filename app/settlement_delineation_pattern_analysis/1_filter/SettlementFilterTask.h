@@ -18,8 +18,8 @@ template<fishnet::geometry::IPolygon P>
 class SettlementFilterTask {
 private:
     fishnet::Shapefile input;
-    util::AllOfPredicate<P> unaryCompositeFilter;
-    util::AllOfPredicate<P,P> binaryCompositeFilter;
+    fishnet::util::AllOfPredicate<P> unaryCompositeFilter;
+    fishnet::util::AllOfPredicate<P,P> binaryCompositeFilter;
     fishnet::Shapefile output;
 public:
     SettlementFilterTask(fishnet::Shapefile  input, fishnet::Shapefile  output):input(std::move(input)),output(std::move(output)){}
@@ -51,12 +51,12 @@ public:
         return *this;
     }
 
-    SettlementFilterTask & addPredicate(util::Predicate<P> auto && predicate) noexcept {
+    SettlementFilterTask & addPredicate(fishnet::util::Predicate<P> auto && predicate) noexcept {
         this->unaryCompositeFilter.add(predicate);
         return *this;
     }
 
-    SettlementFilterTask & addBiPredicate(util::BiPredicate<P,P> auto && predicate) noexcept {
+    SettlementFilterTask & addBiPredicate(fishnet::util::BiPredicate<P,P> auto && predicate) noexcept {
         this->binaryCompositeFilter.add(predicate);
         return *this;
     }

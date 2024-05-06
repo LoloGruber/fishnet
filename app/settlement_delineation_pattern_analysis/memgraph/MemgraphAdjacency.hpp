@@ -88,7 +88,7 @@ public:
         return false;
     }
 
-    bool addAdjacencies(util::forward_range_of<std::pair<N,N>> auto && edges) {
+    bool addAdjacencies(fishnet::util::forward_range_of<std::pair<N,N>> auto && edges) {
         auto edgeReferences = std::views::all(edges) | std::views::transform([](const auto & pair){return std::make_pair(createNodeReference(pair.first),createNodeReference(pair.second));});
         if(client.insertEdges(edgeReferences)){
             for(auto && [from,to]:edges) {
@@ -116,7 +116,7 @@ public:
         return false;
     }
 
-    bool addNodes(util::forward_range_of<N> auto const& nodes) {
+    bool addNodes(fishnet::util::forward_range_of<N> auto const& nodes) {
         if(client.insertNodes(std::views::all(nodes)
             | std::views::filter([this](const auto & node){return not keyToNodeMap.contains(node.key());})
             | std::views::transform([](const auto & node){return createNodeReference(node);})))
@@ -136,7 +136,7 @@ public:
         return false;
     }
 
-    bool removeNodes(util::forward_range_of<N> auto && nodes) {
+    bool removeNodes(fishnet::util::forward_range_of<N> auto && nodes) {
         if(client.removeNodes(
             std::views::all(nodes) | std::views::transform([](const auto & node){return createNodeReference(node);})
         )){
@@ -150,7 +150,7 @@ public:
         return client.removeEdge(createNodeReference(from),createNodeReference(to));
     }
 
-    bool removeAdjacencies(util::forward_range_of<std::pair<N,N>> auto && edges){
+    bool removeAdjacencies(fishnet::util::forward_range_of<std::pair<N,N>> auto && edges){
         return client.removeEdges(
             std::views::all(edges) | std::views::transform([](const auto & pair){return std::make_pair(createNodeReference(pair.first),createNodeReference(pair.second));})
         );
@@ -166,19 +166,19 @@ public:
         return client.containsEdge(from.key(),to.key());
     }
 
-    util::view_of<const N> auto adjacency(const N & node) const noexcept {
+    fishnet::util::view_of<const N> auto adjacency(const N & node) const noexcept {
         std::vector<size_t> adjacentIds = client.adjacency(createNodeReference(node));
         return std::views::all(keyToNodeMap) 
             | std::views::filter([ids = std::move(adjacentIds)](const auto & keyValPair){return std::ranges::contains(ids,keyValPair.first);})
             | std::views::transform([](const auto & keyValPair){return keyValPair.second;});
     }
 
-    util::view_of<const N> auto nodes() const noexcept {
+    fishnet::util::view_of<const N> auto nodes() const noexcept {
         return std::views::values(keyToNodeMap);
     }
 
 
-    util::view_of<std::pair<const N, const N>> auto getAdjacencyPairs() const noexcept {
+    fishnet::util::view_of<std::pair<const N, const N>> auto getAdjacencyPairs() const noexcept {
         std::unordered_map<size_t,std::vector<size_t>> edgesMap = client.edges();
         std::ranges::for_each(std::views::keys(keyToNodeMap),[&edgesMap](const size_t key){edgesMap.try_emplace(key);});
         return std::views::all(keyToNodeMap)

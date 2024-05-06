@@ -3,6 +3,7 @@
 #include <condition_variable>
 #include <queue>
 #include "Element.hpp"
+namespace fishnet::util{
 template<typename T>
 class BlockingQueue {
 protected:
@@ -55,3 +56,4 @@ public:
         return this->queue.size();
     }
 };
+}

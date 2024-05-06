@@ -2,7 +2,7 @@
 #include <unordered_map>
 #include <type_traits>
 #include <fishnet/HashConcepts.hpp>
-namespace util {
+namespace fishnet::util {
 
 template<Mapable FromType, Mapable ToType>
 class BidirectionalMap {

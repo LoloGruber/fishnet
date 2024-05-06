@@ -226,7 +226,7 @@ public:
         return insertEdge({from,fileRef},{to,fileRef});
     }
 
-    bool insertEdges(util::forward_range_of<std::pair<NodeReference,NodeReference>> auto && edges)const noexcept{
+    bool insertEdges(fishnet::util::forward_range_of<std::pair<NodeReference,NodeReference>> auto && edges)const noexcept{
         ParameterizedQuery query(1);
         query.line("UNWIND $data AS edge");
         query.line("MATCH (ff:File) WHERE ID(ff)=edge.fromFile");
@@ -259,7 +259,7 @@ public:
             .executeAndDiscard(mgClient);
     }
 
-    bool insertNodes(util::forward_range_of<NodeReference> auto && nodes) const noexcept {
+    bool insertNodes(fishnet::util::forward_range_of<NodeReference> auto && nodes) const noexcept {
         ParameterizedQuery query(1);
         query.line("UNWIND $data AS node");
         query.line("MATCH (f:File) WHERE ID(f) = node.fileId");
@@ -284,7 +284,7 @@ public:
             .executeAndDiscard(mgClient);
     }
 
-    bool removeNodes(util::forward_range_of<NodeReference> auto && nodes) const noexcept {
+    bool removeNodes(fishnet::util::forward_range_of<NodeReference> auto && nodes) const noexcept {
         ParameterizedQuery query(1);
         query.line("UNWIND $data as node");
         query.line("MATCH (n:Node {id:node.id})");
@@ -308,7 +308,7 @@ public:
             .executeAndDiscard(mgClient);
     }
 
-    bool removeEdges(util::forward_range_of<std::pair<NodeReference,NodeReference>> auto && edges) const noexcept {
+    bool removeEdges(fishnet::util::forward_range_of<std::pair<NodeReference,NodeReference>> auto && edges) const noexcept {
         ParameterizedQuery query(1);
         query.line("UNWIND $data as edge");
         query.line("MATCH (:Node {id:edge.from})-[a:adj]->(:Node {id:edge.to})");

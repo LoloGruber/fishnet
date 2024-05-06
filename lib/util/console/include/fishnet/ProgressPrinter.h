@@ -5,6 +5,7 @@
 #ifndef BACHELORARBEIT_PROGRESSPRINTER_H
 #define BACHELORARBEIT_PROGRESSPRINTER_H
 
+namespace fishnet::util {
 /**
  * Class to show the user the estimated progress of a iteration / pipeline step
  */
@@ -28,6 +29,7 @@ public:
 
     void visit();
 };
+}
 
 
 
