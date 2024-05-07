@@ -7,7 +7,7 @@
 #include <fishnet/AdjacencyMap.hpp>
 namespace fishnet::graph{
 
-template<class GraphImpl, Edge E, AdjacencyContainer<typename E::node_type> A = AdjacencyMap<typename E::node_type>>
+template<class GraphImpl, Edge E, AdjacencyContainer<typename E::node_type> A = AdjacencyMap<typename E::node_type,typename E::hash_function, typename E::equality_predicate>>
 class AbstractGraph {
 private:
     GraphImpl & impl() noexcept {
@@ -129,6 +129,10 @@ public:
 
     auto getInboundEdges(const N & node) const {
         return impl().getInboundEdges(node);
+    }
+
+    const A & getAdjacencyContainer() const  {
+        return impl().getAdjacencyContainer();
     }
 
     void clear(){

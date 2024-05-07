@@ -21,6 +21,8 @@ concept Edge = requires(const E & e, const E & o, const N & cNodeRef /*, N&& nod
     {e == o} -> std::convertible_to<bool>;
     {e.hash()} -> std::convertible_to<size_t>;
     typename E::node_type;
+    typename E::hash_function;
+    typename E::equality_predicate;
 };
 
 template<typename E, typename N= E::node_type, typename A=E::annotation_type, typename W=E::weight_function>
@@ -46,7 +48,8 @@ namespace __impl{
             static inline Hash hasher = Hash();
         public:
             using node_type = N;
-
+            using hash_function = Hash;
+            using equality_predicate = Equal;
             
             constexpr static bool isDirected(){
                 return Directed;

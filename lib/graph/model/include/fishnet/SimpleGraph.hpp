@@ -7,15 +7,18 @@
 
 namespace fishnet::graph::__impl {
 template<Edge E, AdjacencyContainer<typename E::node_type> AdjContainer>
-class SimpleGraph: public AbstractGraph<SimpleGraph<E,AdjContainer>,E> {
+class SimpleGraph: public AbstractGraph<SimpleGraph<E,AdjContainer>,E,AdjContainer> {
 private:
-    AdjContainer adj = AdjContainer();
+    AdjContainer adj;
     using Base = AbstractGraph<SimpleGraph<E,AdjContainer>,E,AdjContainer>;
     using N = Base::node_type;
 
 public:
 
-    SimpleGraph():Base(){};
+    SimpleGraph():Base(),adj(){};
+
+    SimpleGraph(AdjContainer && adjContainer):Base(),adj(std::move(adjContainer)){}
+
     SimpleGraph(util::forward_range_of<N> auto & nodes):Base(){
         addNodes(nodes);
     };
@@ -166,6 +169,10 @@ public:
 
     void clear(){
         adj.clear();
+    }
+
+    const AdjContainer & getAdjacencyContainer() const {
+        return adj;
     }
 
     ~SimpleGraph()=default;
