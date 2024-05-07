@@ -36,3 +36,18 @@ public:
         return *this << value;
     }
 };
+
+template<typename T, typename E>
+T & getExpectedOrThrowError(std::expected<T,E> & expected) {
+    if(not expected){
+        throw std::runtime_error(expected.error());
+    }
+    return expected.value();
+}
+
+template<typename T, typename E>
+void testExpectedOrThrowError(std::expected<T,E> & expected) {
+    if(not expected){
+        throw std::runtime_error(expected.error());
+    }
+}
