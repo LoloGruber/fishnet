@@ -55,6 +55,14 @@ using namespace fishnet;
 
 constexpr static const char * OUTPUT_SUFFIX = "_filtered.shp";
 
+template<typename T, typename E>
+T & getExpectedOrThrowError(std::expected<T,E> & expected) {
+    if(not expected){
+        throw std::runtime_error(expected.error());
+    }
+    return expected.value();
+}
+
 /**
  * 
  * @param argc
@@ -76,18 +84,12 @@ int main(int argc, char * argv[]){
         Shapefile output = Shapefile(outPath);
         return SettlementFilterTask<fishnet::geometry::Polygon<double>>::create(input, output);
     });
-    if(not taskExpected)
-        std::cerr << taskExpected.error() << std::endl;
-    auto & task = *taskExpected;
-    std::cout << task.getInput().getPath() << std::endl;
-    std::cout << task.getOutput().getPath() << std::endl;
-    auto jsonReader = FilterConfigJsonReader::createFromPath(std::filesystem::path(configFilename));
-    if(not jsonReader)
-        std::cerr << jsonReader.error() << std::endl;
-    auto success = jsonReader->read(task);
+    auto & task = getExpectedOrThrowError(taskExpected);
+    auto expJsonReader = FilterConfigJsonReader::createFromPath(std::filesystem::path(configFilename));
+    auto & jsonReader = getExpectedOrThrowError(expJsonReader);
+    auto success = jsonReader.read(task);
     if(not success)
         std::cerr << success.error() << std::endl;
-    util::StopWatch filterWatch {task.getTaskName()};
     task.run();
     return 0;
 }
