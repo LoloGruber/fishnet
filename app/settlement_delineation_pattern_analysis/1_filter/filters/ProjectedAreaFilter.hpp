@@ -3,6 +3,10 @@
 #include <fishnet/WGS84Ellipsoid.hpp>
 #include "Filter.hpp"
 
+/**
+ * @brief Filters polygons depending on their area in m² using projection to calculated the area in metric units
+ * @deprecated
+ */
 class ProjectedAreaFilter {
 private:
     double requiredSize; //  Area in [m²]
