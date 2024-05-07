@@ -8,7 +8,7 @@ template<typename A>
 concept Annotation = fishnet::math::Number<A>;
 
 template<typename N>
-concept Node = util::Hashable<N> && std::equality_comparable<N>;
+concept Node = std::equality_comparable<N>;
 
 template<typename F, typename N, typename A>
 concept WeightFunction= Node<N> && Annotation<A> && util::BiFunction<F,N,N,A>;
