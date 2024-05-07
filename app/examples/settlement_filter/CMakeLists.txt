@@ -1,0 +1,2 @@
+add_executable(settlementFilter SettlementFilter.cpp)
+target_link_libraries(settlementFilter io  geometry  util_console)
