@@ -33,7 +33,7 @@ public:
         auto inputLayer = fishnet::VectorLayer<P>::read(input);
         auto result = filter(inputLayer.getGeometries(), binaryCompositeFilter, unaryCompositeFilter);
         auto outputLayer = fishnet::VectorLayer<P>::empty(inputLayer.getSpatialReference());
-        auto idField = outputLayer.addSizeField("FISHNET_ID");
+        auto idField = outputLayer.addSizeField(Task::FISHNET_ID_FIELD);
         if(not idField){
             std::cerr << "Coult not create ID Field" << std::endl;
         }
