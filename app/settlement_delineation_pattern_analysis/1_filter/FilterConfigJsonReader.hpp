@@ -42,6 +42,7 @@ public:
     template<typename T>
     [[nodiscard]] std::expected<void,std::string> read(SettlementFilterTask<T> & task) const noexcept {
         try{
+            task.writeDescLine("\tUnary-Filters:");
             for(const auto & jsonFilter:  config.at(UNARY_FILTERS)){
                 std::string filterName;
                 jsonFilter.at("name").get_to(filterName);
@@ -54,7 +55,9 @@ public:
                     return std::unexpected(predicate.error());
                 }
                 task.addPredicate(predicate.value());
+                task.writeDescLine("\t\t"+jsonFilter.dump());
             }
+            task.writeDescLine("\tBinary-Filters:");
             for(const auto & jsonFilter : config.at(BINARY_FILTERS)) {
                 std::string filterName;
                 jsonFilter.at("name").get_to(filterName);
@@ -66,6 +69,7 @@ public:
                 if(not biPredicate)
                     return std::unexpected(biPredicate.error());
                 task.addBiPredicate(biPredicate.value());
+                task.writeDescLine("\t\t"+jsonFilter.dump());
             }
             return {};
         }catch(const json::exception & e){

@@ -13,18 +13,23 @@
 
 #include <nlohmann/json.hpp> // Copyright (c) 2013-2022 Niels Lohmann
 #include <sstream>
+#include "Task.hpp"
 
 template<fishnet::geometry::IPolygon P>
-class SettlementFilterTask {
+class SettlementFilterTask: public Task {
 private:
     fishnet::Shapefile input;
     fishnet::util::AllOfPredicate<P> unaryCompositeFilter;
     fishnet::util::AllOfPredicate<P,P> binaryCompositeFilter;
     fishnet::Shapefile output;
 public:
-    SettlementFilterTask(fishnet::Shapefile  input, fishnet::Shapefile  output):input(std::move(input)),output(std::move(output)){}
+    SettlementFilterTask(fishnet::Shapefile  input, fishnet::Shapefile  output):Task(),input(std::move(input)),output(std::move(output)){
+        Task::operator<<("Filter\n")
+        << "\tInput: "<<getInput().getPath().filename().string() <<"\n"
+        << "\tOutput:"<<getOutput().getPath().filename().string() << "\n";
+    }
 
-    void run() const noexcept {
+    void run() noexcept override{
         auto inputLayer = fishnet::VectorLayer<P>::read(input);
         auto result = filter(inputLayer.getGeometries(), binaryCompositeFilter, unaryCompositeFilter);
         auto outputLayer = fishnet::VectorLayer<P>::empty(inputLayer.getSpatialReference());
@@ -77,14 +82,6 @@ public:
 
     const fishnet::Shapefile & getOutput() const noexcept {
         return this->output;
-    }
-
-    std::string getTaskName() const noexcept {
-        std::stringstream builder;
-        builder << "Filter\n"
-            << "\tInput: "<<getInput().getPath().filename().string() <<"\n"
-            << "\tOutput:"<<getOutput().getPath().filename().string();
-        return builder.str();
     }
 
     using json = nlohmann::json;
