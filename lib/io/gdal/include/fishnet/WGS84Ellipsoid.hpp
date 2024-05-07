@@ -45,6 +45,12 @@ private:
         return pow(angle.sin(), 2);
     }
 
+    /**
+     * @brief Projection to metric coordiante system
+     * @deprecated 
+     * @param ring ring to be projected
+     * @return object fulfilling the IRing concept
+     */
     static auto projectToEckertIV(geometry::IRing auto const & ring) noexcept {
         OGRSpatialReference targetRef = OGRSpatialReference();
         targetRef.SetEckertIV(ring.centroid().x, 0, 0);
@@ -54,8 +60,6 @@ private:
         OCTDestroyCoordinateTransformation(transformation);
         return OGRGeometryAdapter::fromOGR(*ogrPolygonPointer).value();
     }
-
-
 
     static inline OGRSpatialReference initWGS84(){
         OGRSpatialReference wgs84 = OGRSpatialReference();
