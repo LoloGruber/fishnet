@@ -22,6 +22,10 @@ public:
     const FileReference & file() const noexcept {
         return fileRef;
     }
+
+    bool operator==(const SettlementPolygon<P> & other) const noexcept {
+        return this->key() == other.key();
+    }
 };
 
 static_assert(fishnet::geometry::IPolygon<SettlementPolygon<fishnet::geometry::Polygon<double>>>);
