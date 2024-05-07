@@ -135,92 +135,40 @@ TEST_F(VectorLayerTest, hasField) {
 }
 
 TEST_F(VectorLayerTest, removeField) {
-
+    std::string areaField = "area";
+    EXPECT_VALUE(pointLayer.addDoubleField(areaField));
+    EXPECT_TRUE(pointLayer.hasField(areaField));
+    EXPECT_NO_FATAL_FAILURE(pointLayer.removeField("not-existing"));
+    EXPECT_NO_FATAL_FAILURE(pointLayer.removeField(areaField));
+    EXPECT_FALSE(pointLayer.hasField(areaField));
 }
 
 TEST_F(VectorLayerTest, clearFields) {
-    
+    std::string field1 = "f1";
+    std::string field2 = "f2";
+    EXPECT_VALUE(pointLayer.addIntegerField(field1));
+    EXPECT_VALUE(pointLayer.addDoubleField(field2));
+    EXPECT_TRUE(pointLayer.hasField(field1));
+    EXPECT_TRUE(pointLayer.hasField(field2));
+    EXPECT_NO_FATAL_FAILURE(pointLayer.clearFields());
+    EXPECT_FALSE(pointLayer.hasField(field1));
+    EXPECT_FALSE(pointLayer.hasField(field2));
 }
 
-/*TEST_F(VectorLayerTest, addAttribute) {
-    pointLayer.addField<const char *>("name");
-    std::vector<size_t> ids;
-    for(const auto & [id,geometry]: pointLayer.enumerateGeometries()) {
-        if(geometry == p1){
-            pointLayer.addAttribute(id,"name","p1");
-        }
-        if(geometry == p2) {
-            pointLayer.addAttribute(id,"name","p2");
-        }
-        ids.push_back(id);
-    }
-    EXPECT_EQ(pointLayer.getAttribute<const char *>(ids[0],"name").value(),"p1");
-    EXPECT_EQ(pointLayer.getAttribute<const char *>(ids[1],"name").value(),"p2");
-    sampleLayer.addField<double>("area");
-    for(const auto & [id,geom] : sampleLayer.enumerateGeometries()){
-        EXPECT_TRUE(sampleLayer.addAttribute(id,"area",geom.area()));
-    }
-    for(const auto & [id,g] : sampleLayer.enumerateGeometries()){
-        EXPECT_EQ(sampleLayer.getAttribute<double>(id,"area"),g.area());
-    }
+TEST_F(VectorLayerTest, getField) {
+    std::string intField = "amount";
+    using Feature_t = typename decltype(pointLayer)::feature_type;
+    Feature_t pointFeature {Vec2DReal(4,2)};
+    auto amountField = pointLayer.addIntegerField(intField);
+    EXPECT_VALUE(amountField);
+    int value = 10;
+    pointFeature.addAttribute(amountField.value(),value);
+    EXPECT_EMPTY(pointLayer.getField<double>("other"));
+    EXPECT_EMPTY(pointLayer.getField<std::string>(intField));
+    auto fieldAfterGet = pointLayer.getField<int>(intField);
+    EXPECT_VALUE(fieldAfterGet);
+    EXPECT_EQ(pointFeature.getAttribute(fieldAfterGet.value()),value);
 }
-
-TEST_F(VectorLayerTest, getAttribute) {
-    pointLayer.addField<int>("pid");
-    int pid = 10;
-    std::vector<size_t> ids;
-    for(const auto & [id,p]:pointLayer.enumerateGeometries()){
-        pointLayer.addAttribute(id,"pid",pid);
-        ids.push_back(id);
-        pid++;
-    }
-    EXPECT_EMPTY(pointLayer.getAttribute<double>(ids[0],"pid"));
-    EXPECT_EQ(pointLayer.getAttribute<int>(ids[0],"pid").value(),10);
-    EXPECT_EMPTY(pointLayer.getAttribute<int>(123456789,"pid"));
-    EXPECT_EMPTY(pointLayer.getAttribute<int>(ids[0],"notexists"));
-    TODO(); // add tests for specific getters
-}
-
-TEST_F(VectorLayerTest, removeAttribute) {
-    pointLayer.addField<int>("pid");
-    int pid = 10;
-    std::vector<size_t> ids;
-    for(const auto & [id,p]:pointLayer.enumerateGeometries()){
-        pointLayer.addAttribute(id,"pid",pid);
-        ids.push_back(id);
-        pid++;
-    }
-    EXPECT_EQ(pointLayer.getAttribute<int>(ids[0],"pid").value(),10);
-    EXPECT_EQ(pointLayer.getAttribute<int>(ids[1],"pid").value(),11);
-    EXPECT_TRUE(pointLayer.removeAttribute(ids[0],"pid"));
-    EXPECT_EMPTY(pointLayer.getAttribute<int>(ids[0],"pid"));
-    EXPECT_EQ(pointLayer.getAttribute<int>(ids[1],"pid").value(),11);
-    EXPECT_FALSE(pointLayer.removeAttribute(ids[1],"notexists"));
-    EXPECT_FALSE(pointLayer.removeAttribute(123456789,"pid"));
-    EXPECT_EMPTY(pointLayer.getAttribute<int>(ids[0],"pid"));
-    EXPECT_EQ(pointLayer.getAttribute<int>(ids[1],"pid").value(),11);
-    pointLayer.removeGeometry(p2);
-    EXPECT_EMPTY(pointLayer.getAttribute<int>(ids[0],"pid"));
-    EXPECT_EMPTY(pointLayer.getAttribute<int>(ids[1],"pid"));
-}
-
-TEST_F(VectorLayerTest, removeAttributeString) {
-    pointLayer.addField<std::string>("str");
-    for(const auto & [id,g]:pointLayer.enumerateGeometries()){
-        EXPECT_TRUE(pointLayer.addAttribute(id,"str",std::to_string(Vec2DReal::type)));
-    }
-    std::vector<size_t> ids;
-    for(const auto & [id,g]:pointLayer.enumerateGeometries()) {
-        ids.push_back(id);
-        EXPECT_EQ(pointLayer.getAttribute<std::string>(id,"str"),std::to_string(Vec2DReal::type));
-    }
-    EXPECT_TRUE(pointLayer.removeAttribute(ids[0],"str"));
-    EXPECT_EMPTY(pointLayer.getAttribute<std::string>(ids[0],"str"));
-    EXPECT_EQ(pointLayer.getAttribute<std::string>(ids[1],"str"),std::to_string(Vec2DReal::type));
-    pointLayer.removeGeometry(p2);
-    EXPECT_EMPTY(pointLayer.getAttribute<std::string>(ids[0],"str"));
-    EXPECT_EMPTY(pointLayer.getAttribute<std::string>(ids[1],"str"));
-}*/
 
 TEST_F(VectorLayerTest, write) {
     util::TemporaryDirectory tmp {pathToSample.getPath().parent_path() / std::filesystem::path("tmp/")};

@@ -39,10 +39,20 @@ private:
     OGRSpatialReference spatialRef;
     std::vector<Feature<G>> features;
 
+    /**
+     * Fields are stored in a Variant, to be able to use a single container. 
+     * This implementation detail does not leak to outside users, but requires std::visit and Variant-Visitors within the code
+     */
     std::unordered_map<std::string,FieldDefinitionVariant> fields;
 
-    using error_type = std::string;
+    using error_type = std::string; // error type for std::expected
 
+    /**
+     * @brief Adaptor function the add fishnet fields to the layer from a OGRFieldDefinition
+     * 
+     * @param fieldDef pointer to the OGRFieldDefinition
+     * @param id field ID for the FieldDefinition
+     */
     void addOGRField(OGRFieldDefn * fieldDef,int id){
         std::string fieldName = fieldDef->GetNameRef();
         switch (fieldDef->GetType()){
@@ -63,6 +73,10 @@ private:
         }
     }
 
+    /**
+     * @brief Variant-Visitor to add attributes to features when reading a shapefile
+     * 
+     */
     struct AddAttributeVisitor{
         Feature<G> * feature;
         OGRFeature * ogrFeature;
@@ -83,6 +97,11 @@ private:
         }
     };
 
+    /**
+     * @brief Construct a new Vector Layer object
+     * 
+     * @param shapefile keeps track of file location of the shapefile, features will be read from said file
+     */
     explicit VectorLayer(const Shapefile & shapefile){
         GDALInitializer::init();
         if(not shapefile.exists())
@@ -110,29 +129,41 @@ private:
         GDALClose(ds);
     }
 
-    explicit VectorLayer(OGRSpatialReference  spatialReference):spatialRef(std::move(spatialReference)){
+    /**
+     * @brief Construct a new empty Vector Layer object
+     * 
+     * @param spatialReference spatial reference which is required to write a GIS-Shapefile to the disk
+     */
+    explicit VectorLayer(OGRSpatialReference spatialReference):spatialRef(std::move(spatialReference)){
         GDALInitializer::init();
     }
 
+    /**
+     * @brief Private member function to write the features to a file
+     * 
+     * @param destination location of the output
+     */
     constexpr void writeToDisk(const Shapefile & destination) const noexcept{
         GDALDriver * driver = GetGDALDriverManager()->GetDriverByName("ESRI Shapefile");
-        destination.remove();
+        destination.remove(); // delete already existing files, if present
         GDALDataset * outputDataset = driver->Create(destination.getPath().c_str(),0,0,0,GDT_Unknown,0);
         OGRLayer * outputLayer = outputDataset->CreateLayer(destination.getPath().c_str(),this->getSpatialReference().Clone(),GeometryTypeWKBAdapter::toWKB(G::type),0);
         for(const auto & [fieldName,fieldDefinition] :  fields) {
             OGRFieldType fieldType;
+            // get OGRFieldType from FieldDefinition<T> type -> T
             std::visit([&fieldType](auto && fieldVariant){
                 using T = typename  std::decay_t<decltype(fieldVariant)>::value_type;
                 fieldType = OGRFieldAdapter::fromTypeIndex(typeid(T));
             },fieldDefinition);
             auto fieldDefn = OGRFieldDefn(fieldName.c_str(),fieldType);
-            outputLayer->CreateField(&fieldDefn);
+            outputLayer->CreateField(&fieldDefn); // add OGRFieldDefinition to output layer
         }
         for(const auto & f : this->features){
             auto * feature = new OGRFeature(outputLayer->GetLayerDefn());
             feature->SetGeometry(OGRGeometryAdapter::toOGR(f.getGeometry()).get());
 
             for(const auto & [fieldName,fieldDefinition]: this->fields){
+                // visitor to set attributes for OGRFeature
                 std::visit([&fieldName,&f,feature]( auto && var){
                     auto optionalAttribute = f.getAttribute(var);
                     if(optionalAttribute)
@@ -142,19 +173,26 @@ private:
             }
             OGRErr success = outputLayer->CreateFeature(feature);
             if(success != 0){
-                std::cout << "Could not write Geometry: "+f.getGeometry().toString() << std::endl;
+                std::cerr << "Could not write Geometry: "+f.getGeometry().toString() << std::endl;
             }
         }
         outputLayer->SyncToDisk();
         GDALClose(outputDataset);
     }
 
+    /**
+     * @brief Helper function to remove certain features. 
+     * 
+     * @param predicate emits true for Features to be deleted
+     */
     constexpr void remove(util::Predicate<Feature<G>> auto && predicate)noexcept {
         const auto removed = std::ranges::remove_if(this->features,predicate);
         this->features.erase(removed.begin(),removed.end());
     }
 
 public: 
+    using geometry_type = G;
+    using feature_type = Feature<G>;
 
     static VectorLayer<G> empty(const OGRSpatialReference & spatialReference){
         return VectorLayer(spatialReference);
@@ -194,7 +232,7 @@ public:
         addFeature(Feature<G>(std::move(g)));
     }
 
-    constexpr void addAllGeometry(util::forward_range_of<G> auto const & geometries) noexcept {
+    constexpr void addAllGeometry(util::forward_range_of<G> auto && geometries) noexcept {
         std::ranges::for_each(geometries,[this](const auto & g){ addGeometry(g);});
     }
 
@@ -270,57 +308,37 @@ public:
         fields.clear();
     }
 
-/*    constexpr bool addAttribute(size_t geometryID, const std::string & fieldName, FieldType value){
-        auto expectedType = fields.getOrElse(fieldName,typeid(nullptr));
-        auto actualType = std::type_index(std::visit( [](auto&&x)->decltype(auto){ return typeid(x);}, value ));
-        if (expectedType != actualType){
-            return false;
-        }
-        if(not this->fields.contains(fieldName))
-             return false;
-        if(not this->attributes.containsOuterKey(geometryID))
-             return false;
-        return this->attributes.try_insert(geometryID,fields.getKey(fieldName).value(),value);
-    }
-
-    template<FieldValueType ResultType>
-    constexpr std::optional<ResultType> getAttribute(size_t geometryID, const std::string & fieldName) const noexcept {
-        if(not this->attributes.containsOuterKey(geometryID) || fieldName.empty() || not fields.getKey(fieldName))
-            return std::nullopt;
-        auto optVal =  this->attributes.get(geometryID,fields.getKey(fieldName).value());
-        if(not optVal){
+    template<FieldValueType T>
+    constexpr std::optional<FieldDefinition<T>> getField(const std::string & fieldName) const noexcept {
+        std::optional<FieldDefinition<T>> optFieldDef = std::nullopt;
+        if(not fields.contains(fieldName)) {
             return std::nullopt;
         }
-        try{
-            return std::get<ResultType>(optVal.value());
-        }catch(std::bad_variant_access const & ex){
-            return std::nullopt;
-        }
+        // test whether the FieldVariant with name == fieldName has the correct value_type
+        std::visit([&optFieldDef](auto && fieldVariant){
+            using U = typename  std::decay_t<decltype(fieldVariant)>::value_type;
+            if constexpr(std::same_as<T,U>){
+                optFieldDef = fieldVariant;
+            }
+        },fields.at(fieldName));
+        return optFieldDef;
     }
 
-    constexpr std::optional<double> getAttributeAsDouble(size_t geometryID, const std::string & fieldName) const noexcept {
-        return getAttribute<double>(geometryID,fieldName);
+    constexpr std::optional<FieldDefinition<double>> getDoubleField(const std::string  & fieldName) const noexcept {
+        return getField<double>(fieldName);
     }
 
-    constexpr std::optional<int> getAttributeAsInteger(size_t geometryID, const std::string & fieldName) const noexcept {
-        return getAttribute<int>(geometryID,fieldName);
+    constexpr std::optional<FieldDefinition<int>> getIntegerField(const std::string  & fieldName) const noexcept {
+        return getField<int>(fieldName);
     }
 
-    constexpr std::optional<std::string> getAttributeAsText(size_t geometryID, const std::string & fieldName) const noexcept {
-        return getAttribute<std::string>(geometryID,fieldName);
+    constexpr std::optional<FieldDefinition<size_t>> getSizeField(const std::string & fieldName) const noexcept  {
+        return getField<size_t>(fieldName);
     }
 
-    constexpr std::optional<size_t> getAttributeAsSizeType(size_t geometryID, const std::string & fieldName) const noexcept {
-        return getAttribute<size_t>(geometryID,fieldName);
+    constexpr std::optional<FieldDefinition<std::string>> getTestField(const std::string  & fieldName) const noexcept {
+        return getField<std::string>(fieldName);
     }
-
-
-    constexpr bool removeAttribute(size_t geometryID, const std::string & fieldName) {
-        if(not this->fields.contains(fieldName)) return false;
-        if(not this->attributes.contains(geometryID)) return false;
-        this->attributes.erase(geometryID,this->fields.getKey(fieldName).value());
-        return true;
-    }*/
 
     constexpr void write(const Shapefile & destination) const noexcept {
         if(destination.exists()){
