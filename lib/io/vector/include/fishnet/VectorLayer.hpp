@@ -63,7 +63,7 @@ private:
              fields.emplace(fieldName,FieldDefinition<int>(fieldName,id));
             break;
         case OFTInteger64:
-             fields.emplace(fieldName,FieldDefinition<long long>(fieldName,id));
+             fields.emplace(fieldName,FieldDefinition<size_t>(fieldName,id));
             break;
         case OFTString:
             fields.emplace(fieldName,FieldDefinition<std::string>(fieldName,id));
