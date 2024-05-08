@@ -44,6 +44,10 @@ public:
         init();
     }
 
+    Rectangle(ShapeGeometry auto const & ring):Ring<T>(ring.aaBB().getPoints()){
+        init();
+    }
+
     T left() const noexcept {
         return _left;
     }
@@ -77,6 +81,10 @@ public:
     }
 
 };
+
+//Deduction guide:
+template<ShapeGeometry S>
+Rectangle(const S &) -> Rectangle<typename S::numeric_type>;
 }
 namespace std{
     template<typename T>
