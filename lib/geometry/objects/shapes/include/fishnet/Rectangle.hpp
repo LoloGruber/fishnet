@@ -5,7 +5,7 @@ namespace fishnet::geometry {
 
 
 template<fishnet::math::Number T>
-class Rectangle:public SimplePolygon<T>{
+class Rectangle:public Ring<T>{
 private:
     T _left;
     T _right;
@@ -32,15 +32,15 @@ private:
     }
 
 public:
-    Rectangle(util::random_access_range_of<Vec2D<T>> auto const& points):SimplePolygon<T>(points){
+    Rectangle(util::random_access_range_of<Vec2D<T>> auto const& points):Ring<T>(points){
         init();
     }
 
-    Rectangle(util::random_access_range_of<Segment<T>> auto const& segments):SimplePolygon<T>(segments){
+    Rectangle(util::random_access_range_of<Segment<T>> auto const& segments):Ring<T>(segments){
         init();
     }
 
-    Rectangle(std::initializer_list<Vec2D<T>> && points):SimplePolygon<T>(std::move(points)){
+    Rectangle(std::initializer_list<Vec2D<T>> && points):Ring<T>(std::move(points)){
         init();
     }
 
@@ -81,9 +81,9 @@ public:
 namespace std{
     template<typename T>
     struct hash<fishnet::geometry::Rectangle<T>>{
-        constexpr static auto simplePolygonHasher = hash<fishnet::geometry::SimplePolygon<T>>{};
+        constexpr static auto simplePolygonHasher = hash<fishnet::geometry::Ring<T>>{};
         size_t operator()(const fishnet::geometry::Rectangle<T> & rectangle) const noexcept {
-            return simplePolygonHasher(static_cast<const fishnet::geometry::SimplePolygon<T> &>(rectangle));
+            return simplePolygonHasher(static_cast<const fishnet::geometry::Ring<T> &>(rectangle));
         }
     };
 }

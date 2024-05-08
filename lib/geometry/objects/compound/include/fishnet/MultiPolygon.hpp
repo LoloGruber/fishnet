@@ -7,7 +7,7 @@
 #include <fishnet/ShapeGeometry.hpp>
 #include <fishnet/InvalidGeometryException.hpp>
 #include <fishnet/Vec2D.hpp>
-#include <fishnet/SimplePolygon.hpp>
+#include <fishnet/Ring.hpp>
 #include <fishnet/PolygonFilter.hpp>
 
 namespace fishnet::geometry{
@@ -188,7 +188,7 @@ public:
             if(p.x < left)
                 left = p.x;
         }
-        return SimplePolygon<numeric_type>({{left,high},{right,high},{right,low},{left,low}});
+        return Ring<numeric_type>({{left,high},{right,high},{right,low},{left,low}});
     }
 
     template<IMultiPolygon M>

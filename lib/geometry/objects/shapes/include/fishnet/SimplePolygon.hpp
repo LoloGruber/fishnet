@@ -19,6 +19,9 @@ public:
 
     SimplePolygon(util::random_access_range_of<Segment<T>> auto const & segments):Ring<T>(segments) {}
 
+    constexpr util::view_of<Segment<T>> auto getSegments() = delete;
+
+    constexpr util::random_access_range_of<Vec2D<T>> auto getPoints() = delete;
 
     constexpr const Ring<T> & getBoundary() const noexcept {
         return static_cast<const Ring<T> &>(*this);
@@ -28,8 +31,8 @@ public:
         return std::ranges::empty_view<Ring<T>>();
     }
 
-    constexpr SimplePolygon<T> aaBB() const noexcept {
-        return SimplePolygon<T>(this->getBoundary().aaBB());
+    constexpr Ring<T> aaBB() const noexcept {
+        return this->getBoundary().aaBB();
     }
 
     template<fishnet::math::Number U>

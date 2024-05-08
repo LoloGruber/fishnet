@@ -162,7 +162,7 @@ TEST_F(MultiPolygonTest, intersections) {
 TEST_F(MultiPolygonTest, containsPolygon) {
     EXPECT_TRUE(multiPolygon.contains(box));
     EXPECT_TRUE(multiPolygon.contains(complex));
-    EXPECT_FALSE(multiPolygon.contains(complex.aaBB()));
+    EXPECT_FALSE(multiPolygon.contains(SimplePolygon(complex.aaBB().getPoints())));
 }
 
 TEST_F(MultiPolygonTest, isInHolePolygon) {
