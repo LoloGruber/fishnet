@@ -3,7 +3,7 @@
 #include "Testutil.h"
 
 using namespace testutil;
-
+using namespace fishnet::geometry;
 TEST(OGRAdapterTest, Point){
     auto ogrP = fishnet::OGRGeometryAdapter::OGRUniquePtr<OGRPoint>(new OGRPoint(2.5,-5));
     auto p = fishnet::OGRGeometryAdapter::fromOGR(*ogrP);

@@ -10,12 +10,6 @@
 #include <fishnet/SimplePolygon.hpp>
 #include <fishnet/MultiPolygon.hpp>
 
-using namespace fishnet::geometry;
-
-namespace fishnet::geometry::__impl{
-template<typename G>
-concept ISimplePolygon = fishnet::geometry::IRing<G> && fishnet::geometry::IPolygon<G>;
-}
 namespace fishnet {
 
 
@@ -24,38 +18,28 @@ public:
 template<typename T>
 using OGRUniquePtr = std::unique_ptr<T>;
 
-
-static Vec2D<fishnet::math::DEFAULT_NUMERIC> fromOGR(const OGRPoint & ogrPoint) noexcept {
-    return Vec2D(ogrPoint.getX(), ogrPoint.getY());
+static fishnet::geometry::Vec2D<fishnet::math::DEFAULT_NUMERIC> fromOGR(const OGRPoint & ogrPoint) noexcept {
+    return fishnet::geometry::Vec2D(ogrPoint.getX(), ogrPoint.getY());
 }
 
 template<fishnet::math::Number T>
-static OGRUniquePtr<OGRPoint> toOGR(const Vec2D<T> & point) noexcept {
+static OGRUniquePtr<OGRPoint> toOGR(const fishnet::geometry::Vec2D<T> & point) noexcept {
     return OGRUniquePtr<OGRPoint>(new OGRPoint(double(point.x),double(point.y)));
 }
 
-static std::optional<Ring<fishnet::math::DEFAULT_NUMERIC>> fromOGR(const OGRLinearRing& ogrRing) noexcept {
-    std::vector<Vec2D<fishnet::math::DEFAULT_NUMERIC>> pointsInOrder;
+static std::optional<fishnet::geometry::Ring<fishnet::math::DEFAULT_NUMERIC>> fromOGR(const OGRLinearRing& ogrRing) noexcept {
+    std::vector<fishnet::geometry::Vec2D<fishnet::math::DEFAULT_NUMERIC>> pointsInOrder;
     for(const auto & ogrPoint : ogrRing){
         pointsInOrder.push_back(fromOGR(ogrPoint));
     }
     try{
-        return Ring<fishnet::math::DEFAULT_NUMERIC>(pointsInOrder);
+        return fishnet::geometry::Ring<fishnet::math::DEFAULT_NUMERIC>(pointsInOrder);
     }catch(std::invalid_argument & exception){
         return std::nullopt;
     }
 }
 
-
-
-static OGRUniquePtr<OGRPolygon> toOGR(fishnet::geometry::__impl::ISimplePolygon auto const & polygon) noexcept {
-    OGRUniquePtr<OGRPolygon> ogrPoly {new OGRPolygon()};
-    ogrPoly->addRing(toOGR(polygon.getBoundary())->toCurve());
-    return ogrPoly;
-}
-
-
-static OGRUniquePtr<OGRLinearRing> toOGR(IRing auto const & ring ) noexcept {
+static OGRUniquePtr<OGRLinearRing> toOGR(fishnet::geometry::IRing auto const & ring ) noexcept {
     OGRUniquePtr<OGRLinearRing> ogrRing {new OGRLinearRing()};
     auto && points = ring.getPoints();
     for(const auto & p : points) {
@@ -66,24 +50,24 @@ static OGRUniquePtr<OGRLinearRing> toOGR(IRing auto const & ring ) noexcept {
     return ogrRing;
 }
 
-static std::optional<Polygon<fishnet::math::DEFAULT_NUMERIC>> fromOGR(const OGRPolygon & ogrPolygon) noexcept {
+static std::optional<fishnet::geometry::Polygon<fishnet::math::DEFAULT_NUMERIC>> fromOGR(const OGRPolygon & ogrPolygon) noexcept {
     try{
         auto ogrBoundary = ogrPolygon.getExteriorRing();
         auto fishnetBoundary = fromOGR(*ogrBoundary);
         if(not fishnetBoundary) return std::nullopt;
-        std::vector<Ring<fishnet::math::DEFAULT_NUMERIC>> holes;
+        std::vector<fishnet::geometry::Ring<fishnet::math::DEFAULT_NUMERIC>> holes;
         for(int i = 0; i < ogrPolygon.getNumInteriorRings(); i++){
             auto hole = fromOGR(*(ogrPolygon.getInteriorRing(i)));
             if(not hole) return std::nullopt;
             holes.push_back(hole.value());
         }
-        return Polygon<fishnet::math::DEFAULT_NUMERIC>(fishnetBoundary.value(),holes);
-    }catch(InvalidGeometryException & e){
+        return fishnet::geometry::Polygon<fishnet::math::DEFAULT_NUMERIC>(fishnetBoundary.value(),holes);
+    }catch(fishnet::geometry::InvalidGeometryException & e){
         return std::nullopt;
     }
 }
 
-static OGRUniquePtr<OGRPolygon> toOGR(IPolygon auto const & polygon) noexcept {
+static OGRUniquePtr<OGRPolygon> toOGR(fishnet::geometry::IPolygon auto const & polygon) noexcept {
     OGRUniquePtr<OGRPolygon> ogrPoly {new OGRPolygon()};
     ogrPoly->addRing(toOGR(polygon.getBoundary())->toCurve());
     for(const auto & ring : polygon.getHoles()) {
@@ -92,7 +76,7 @@ static OGRUniquePtr<OGRPolygon> toOGR(IPolygon auto const & polygon) noexcept {
     return ogrPoly;
 }
 
-static OGRUniquePtr<OGRMultiPolygon> toOGR(IMultiPolygon auto const & multiPolygon) noexcept {
+static OGRUniquePtr<OGRMultiPolygon> toOGR(fishnet::geometry::IMultiPolygon auto const & multiPolygon) noexcept {
     OGRUniquePtr<OGRMultiPolygon> ogrMulti {new OGRMultiPolygon()};
     for(const auto & polygon: multiPolygon.getPolygons()){
         ogrMulti->addGeometry(OGRGeometryFactory::forceToPolygon(toOGR(polygon).get()));
@@ -101,16 +85,16 @@ static OGRUniquePtr<OGRMultiPolygon> toOGR(IMultiPolygon auto const & multiPolyg
     // https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry maybe change direction of inner rings
 }
 
-template<GeometryType G>
+template<fishnet::geometry::GeometryType G>
 constexpr static fishnet::geometry::OptionalGeometryObject auto fromOGR(const OGRGeometry & ogrGeometry){
-    if constexpr(G == GeometryType::POLYGON){
+    if constexpr(G == fishnet::geometry::GeometryType::POLYGON){
         return fromOGR(*ogrGeometry.toPolygon());
-    } else if constexpr(G == GeometryType::POINT){
+    } else if constexpr(G == fishnet::geometry::GeometryType::POINT){
         return fromOGR(*ogrGeometry.toPoint());
-    } else if constexpr(G == GeometryType::RING){
+    } else if constexpr(G == fishnet::geometry::GeometryType::RING){
         return fromOGR(*ogrGeometry.toLinearRing());
     }else {
-        return std::optional<fishnet::geometry::MultiPolygon<Polygon<double>>>();
+        return std::optional<fishnet::geometry::MultiPolygon<fishnet::geometry::Polygon<double>>>();
     }
 }
 

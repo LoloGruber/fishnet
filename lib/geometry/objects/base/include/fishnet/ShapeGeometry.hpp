@@ -52,7 +52,7 @@ template<typename R>
 concept RingRange = std::ranges::range<R> && IRing<std::ranges::range_value_t<R>>;
 
 template<typename P, typename T = typename P::numeric_type>
-concept IPolygon = fishnet::math::Number<T> && __impl::LocationQueries<P> && requires (const P & polygon,const Vec2D<T> & p){
+concept IPolygon = fishnet::math::Number<T> && __impl::LocationQueries<P> && not IRing<P> && requires (const P & polygon,const Vec2D<T> & p){
     {polygon.getBoundary()} -> IRing<T>; 
     {polygon.getHoles()} -> RingRange;
     {polygon.getHoles()} -> std::ranges::viewable_range;

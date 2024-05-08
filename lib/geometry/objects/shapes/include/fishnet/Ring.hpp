@@ -120,7 +120,7 @@ public:
     }
 
     constexpr auto getHoles() const noexcept {
-        return std::views::empty<Ring<T>>();
+        return std::ranges::empty_view<Ring<T>>();
     }
 
     constexpr util::view_of<Segment<T>> auto getSegments() const noexcept{
