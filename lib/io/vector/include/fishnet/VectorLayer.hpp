@@ -198,6 +198,13 @@ public:
         return VectorLayer(spatialReference);
     }
 
+    template<GeometryObject T>
+    static VectorLayer<G> empty(const VectorLayer<T> & source) {
+        auto layer = empty(source.getSpatialReference());
+        source.copyFields(layer);
+        return layer;
+    }
+
     static VectorLayer<G> read(const Shapefile & shapefile) {
         if(not shapefile.exists())
             throw std::invalid_argument("Shapefile does not exists, could not read from File");
@@ -306,6 +313,13 @@ public:
 
     constexpr void clearFields() noexcept {
         fields.clear();
+    }
+
+    template<GeometryObject T>
+    constexpr void copyFields(VectorLayer<T> & other) const noexcept {
+        for(auto [fieldName,fieldVariant]:fields){
+            other.fields.try_emplace(fieldName,fieldVariant);
+        }
     }
 
     template<FieldValueType T>
