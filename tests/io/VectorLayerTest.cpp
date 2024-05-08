@@ -17,7 +17,7 @@ protected:
         pointLayer = VectorLayer<geometry::Vec2DReal>::empty(sampleLayer.getSpatialReference());
         pointLayer.addAllGeometry(points);
     }
-    Shapefile pathToSample {util::PathHelper::projectDirectory() / std::filesystem::path("data/output/small_dataset/Punjab_Small.shp")};
+    Shapefile pathToSample {util::PathHelper::projectDirectory() / std::filesystem::path("data/testing/Punjab_Small/Punjab_Small.shp")};
     VectorLayer<geometry::Polygon<double>> sampleLayer = VectorLayer<geometry::Polygon<double>>::read(pathToSample);
     VectorLayer<geometry::Vec2DReal> pointLayer = VectorLayer<geometry::Vec2DReal>::empty(sampleLayer.getSpatialReference());
     Vec2DReal p1 = {0.5,1};

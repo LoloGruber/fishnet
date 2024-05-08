@@ -4,7 +4,7 @@
 #include <fishnet/PathHelper.h>
 using namespace fishnet;
 
-static const std::filesystem::path example {util::PathHelper::projectDirectory() / std::filesystem::path("data/output/small_dataset/Punjab_Small.shp")};
+static const std::filesystem::path example {util::PathHelper::projectDirectory() / std::filesystem::path("data/testing/Punjab_Small/Punjab_Small.shp")};
 TEST(ShapefileTest, init){
     Shapefile shp {example};
     EXPECT_EQ(shp.getPath(),example);
