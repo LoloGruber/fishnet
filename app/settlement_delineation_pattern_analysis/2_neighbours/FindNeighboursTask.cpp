@@ -6,7 +6,8 @@ struct DistanceBiPredicate{
     double maxDistanceInMeters;
 
     bool operator()(fishnet::geometry::IPolygon auto const & lhs, fishnet::geometry::IPolygon auto const & rhs) const noexcept {
-        return lhs.distance(rhs) <= maxDistanceInMeters; // todo use WGS84 DISTANCE
+        auto [l,r] = fishnet::geometry::closestPoints(lhs,rhs);
+        return fishnet::WGS84Ellipsoid::distance(l,r) < maxDistanceInMeters;
     }
 };
 

@@ -75,15 +75,15 @@ public:
                 polygons.emplace_back(optId.value(),fileRef.value(),std::move(feature.getGeometry()));
             }
         }
-        std::cout << fishnet::util::size(polygons) << std::endl;
         double maxEdgeDistanceVar = maxEdgeDistance;
         auto boundingBoxPolygonWrapper = [maxEdgeDistanceVar](const SettlementPolygon<P> & settPolygon ){
             auto aaBB = fishnet::geometry::Rectangle<fishnet::math::DEFAULT_NUMERIC>(settPolygon.aaBB().getPoints());
             double distanceMetersTopLeftBotLeft = fishnet::WGS84Ellipsoid::distance(aaBB.left(),aaBB.top(),aaBB.left(),aaBB.bottom());
             double scale = maxEdgeDistanceVar / distanceMetersTopLeftBotLeft;
-            return BoundingBoxPolygon(settPolygon,aaBB.scale(scale));
+            return fishnet::geometry::BoundingBoxPolygon(settPolygon,aaBB.scale(scale));
         };
-        auto result = findNeighbouringPolygons(polygons,neighbouringPredicate,boundingBoxPolygonWrapper);
+        auto result = fishnet::geometry::findNeighbouringPolygons(polygons,neighbouringPredicate,boundingBoxPolygonWrapper);
+        graph.addNodes(polygons);
         graph.addEdges(result);
     }
 };
