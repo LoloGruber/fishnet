@@ -173,7 +173,7 @@ public:
         // check if in any hole and compute distance
         for(const auto & hole: getHoles()){
             if(hole.contains(other.getBoundary())){
-                return Ring<T>::minDistanceChecked(hole,other.getBoundary());
+                return shapeDistance(hole,other.getBoundary());
             }
         }
         // compute boundary distance otherwise

@@ -12,6 +12,7 @@
 #include <fishnet/Ray.hpp>
 #include <fishnet/ShapeGeometry.hpp>
 #include <fishnet/PolygonalRingVerification.hpp>
+#include <fishnet/PolygonDistance.hpp>
 
 namespace fishnet::geometry{
 
@@ -66,24 +67,24 @@ protected:
         return intersectionCounter%2 == 1 ? PointLocation::INSIDE : PointLocation::OUTSIDE;
     }
 
-    constexpr static inline fishnet::math::DEFAULT_FLOATING_POINT minDistanceChecked(IRing auto const & thisRing,IRing auto const & other ) noexcept{
-        fishnet::math::DEFAULT_FLOATING_POINT minDistance = std::numeric_limits<fishnet::math::DEFAULT_FLOATING_POINT>::max();
-        for(const auto & s : thisRing.getSegments()){
-            for(const auto & p : other.getPoints()){
-                if(s.distance(p) < minDistance){
-                    minDistance = s.distance(p);
-                }
-            }
-        }
-        for(const auto & s : other.getSegments()){
-            for(const auto & p: thisRing.getPoints()){
-                if(s.distance(p) < minDistance){
-                    minDistance = s.distance(p);
-                }
-            }
-        }
-        return minDistance;
-    }
+    // constexpr static inline fishnet::math::DEFAULT_FLOATING_POINT minDistanceChecked(IRing auto const & thisRing,IRing auto const & other ) noexcept{
+    //     fishnet::math::DEFAULT_FLOATING_POINT minDistance = std::numeric_limits<fishnet::math::DEFAULT_FLOATING_POINT>::max();
+    //     for(const auto & s : thisRing.getSegments()){
+    //         for(const auto & p : other.getPoints()){
+    //             if(s.distance(p) < minDistance){
+    //                 minDistance = s.distance(p);
+    //             }
+    //         }
+    //     }
+    //     for(const auto & s : other.getSegments()){
+    //         for(const auto & p: thisRing.getPoints()){
+    //             if(s.distance(p) < minDistance){
+    //                 minDistance = s.distance(p);
+    //             }
+    //         }
+    //     }
+    //     return minDistance;
+    // }
 
 public:
     using numeric_type = T;
@@ -112,6 +113,14 @@ public:
             return static_cast<Vec2D<U>>(p);
         });
         return Ring<U>(points);
+    }
+
+    constexpr const Ring<T> & getBoundary() const noexcept {
+        return *this;
+    }
+
+    constexpr auto getHoles() const noexcept {
+        return std::views::empty<Ring<T>>();
     }
 
     constexpr util::view_of<Segment<T>> auto getSegments() const noexcept{
@@ -303,9 +312,9 @@ public:
 
     template<fishnet::math::Number U>
     constexpr fishnet::math::DEFAULT_FLOATING_POINT distance(const Ring<U> & other) const noexcept {
-        //TODO move all (complex or quadratic) algorithms in "geometry_algo" with the option of implementing faster versions
-        if(this->contains(other) or other.contains(*this) or this->crosses(other)) return -1;
-        return minDistanceChecked(*this,other);
+        if(this->contains(other) or other.contains(*this) or this->crosses(other))
+             return -1;
+        return shapeDistance(*this,other);
 
     }
 
