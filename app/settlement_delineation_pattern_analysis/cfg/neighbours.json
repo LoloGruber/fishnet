@@ -1,6 +1,8 @@
 {
+    "memgraph-host":"localhost",
+    "memgraph-port":7687,
     "maxDistanceMeters":3000.0,
     "neighbouring-predicates":[
-        
+
     ]
 }
