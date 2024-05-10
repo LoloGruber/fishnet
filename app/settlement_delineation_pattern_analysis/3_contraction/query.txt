@@ -1,0 +1,5 @@
+CALL biconnected_components.get()
+YIELD bcc_id, node_from, node_to
+WITH bcc_id, node_from, node_to
+MATCH (node_from)-[relationship:adj]-(node_to)
+RETURN bcc_id, relationship, node_from, node_to;
