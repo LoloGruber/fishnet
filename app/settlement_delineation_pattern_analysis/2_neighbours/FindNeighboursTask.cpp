@@ -1,25 +1,32 @@
 #include "FindNeighboursTask.h"
 #include <fishnet/GISFactory.hpp>
 #include <fishnet/WGS84Ellipsoid.hpp>
+#include <CLI/CLI.hpp>
+#include "NeighboursConfigJsonReader.hpp"
 
-struct DistanceBiPredicate{
-    double maxDistanceInMeters;
 
-    bool operator()(fishnet::geometry::IPolygon auto const & lhs, fishnet::geometry::IPolygon auto const & rhs) const noexcept {
-        auto [l,r] = fishnet::geometry::closestPoints(lhs,rhs);
-        return fishnet::WGS84Ellipsoid::distance(l,r) < maxDistanceInMeters;
-    }
-};
 
-int main(int argc, char const *argv[])
-{   
-    DistanceBiPredicate distancePredicate {3000.0};
+int main(int argc, char const *argv[]){ 
+    CLI::App app {"NeighboursTask"};
+    std::vector<std::string> inputFilesnames;
+    std::string configFilename;
+    app.add_option("-i,--inputs",inputFilesnames,"Input Shapefiles for finding neighbours")->required()->each([](const std::string & str){
+        try{
+            auto file = fishnet::Shapefile(str);
+            if(not file.exists())
+                throw std::invalid_argument("File "+ file.getPath().string() + " does not exist");
+        }catch(std::invalid_argument & error){
+            throw CLI::ValidationError(error.what());
+        }
+    });
+    app.add_option("-c,--config",configFilename,"Path to neighbours.json configuration")->required()->check(CLI::ExistingFile);
+    CLI11_PARSE(app,argc,argv);
     FindNeighboursTask<fishnet::geometry::Polygon<double>> task;
-    auto expShp = fishnet::GISFactory::asShapefile("/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/1_filter/cwl/Punjab_Small_filtered.shp");
-    task.addShapefile(std::move(getExpectedOrThrowError(expShp)))
-        .addNeighbouringPredicate(distancePredicate)
-        .setMaxEdgeDistance(distancePredicate.maxDistanceInMeters)
-        .setMemgraphParams("localhost",7687);
+    for(auto && filename : inputFilesnames) {
+        task.addShapefile(fishnet::Shapefile(filename));
+    }
+    NeighboursConfigJsonReader reader {std::filesystem::path(configFilename)};
+    reader.parse(task);
     task.run();
     return 0;
 }

@@ -21,6 +21,9 @@ private:
     fishnet::util::AllOfPredicate<P,P> neighbouringPredicate;
     double maxEdgeDistance; // distance in [m]
 public:
+    FindNeighboursTask(){
+        this->writeDescLine("Find Neighbours Task:");
+    }
 
     FindNeighboursTask<P> & addShapefile(fishnet::Shapefile && shpFile) noexcept {
         inputs.push_back(std::move(shpFile));
@@ -55,9 +58,11 @@ public:
         testExpectedOrThrowError(expAdj);
         auto graph = fishnet::graph::GraphFactory::UndirectedGraph<SettlementPolygon<P>>(std::move(expAdj.value()));
         std::vector<SettlementPolygon<P>> polygons;
+        this->indentDescLine("Inputs: ");
         for(const auto & shp : inputs) {
+            this->indentDescLine("\t"+shp.getPath().string());
             auto layer = fishnet::VectorLayer<P>::read(shp);
-            auto fileRef = graph.getAdjacencyContainer().getDatabaseConnection().addFileReference(shp.getPath().string());
+            auto fileRef = graph.getAdjacencyContainer().getDatabaseConnection().addFileReference(shp.getPath().filename().string());
             if(not fileRef){
                 std::cerr << "Could not create file reference for shp file:\n"+shp.getPath().string() << std::endl;
                 return;
