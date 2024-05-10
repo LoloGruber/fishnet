@@ -18,7 +18,7 @@ inputs:
   filterConfig:
     type: File
     inputBinding:
-      position: 3
+      position: 2
       prefix: -c
     doc: "Path to configuration for the filters"
 
