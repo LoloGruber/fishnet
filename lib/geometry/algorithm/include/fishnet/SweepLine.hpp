@@ -12,10 +12,16 @@ namespace fishnet::geometry {
 enum class EventType{
    INSERT,REMOVE
 };
-
-
-
-
+/**
+ * @brief Generic Sweep Line template
+ * Stores a Sweep Line Status (SLS), keeping track of the current state of the sweep
+ * Stores an Event Queue for processing the events in the appropiate order
+ * 
+ * @tparam Input input type, stored in the SLS
+ * @tparam Output output type, return after the sweep in a vector
+ * @tparam SLSLess BiPredicate for sorting the SLS
+ * @tparam EventQueueGreater BiPredicate for sorting the event points
+ */
 template<typename Input, typename Output,util::BiPredicate<Input> SLSLess, util::BiPredicate<fishnet::math::DEFAULT_NUMERIC> EventQueueGreater = std::greater<fishnet::math::DEFAULT_NUMERIC>>
 class SweepLine{
 public: 
@@ -81,14 +87,22 @@ private:
     const static inline EventQueueGreater eventQueueGreater = EventQueueGreater {};
     const static inline SLSLess slsLess = SLSLess {};
 
+    /**
+     * @brief Comparator for eventPointer
+     * Dereferences events to compare the event points
+     */
     struct EventQueueGreaterPtr {
         bool operator()(const eventPointer & lhs, const eventPointer & rhs) const noexcept {
             if(lhs->eventPoint() == rhs->eventPoint())
-                return lhs->type() == EventType::INSERT ? false:true;
+                return lhs->type() == EventType::INSERT ? false:true; // insert events are processed after remove events
             return eventQueueGreater(rhs->eventPoint(), lhs->eventPoint());
         }
     };
 
+    /**
+     * @brief Dereferencing Comparator for Input Pointers, stored in the SLS
+     * 
+     */
     struct SLSOrdering {
         bool operator()(const Input * lhs, const Input * rhs) const noexcept {
             return slsLess(*lhs,*rhs);

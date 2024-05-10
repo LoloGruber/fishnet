@@ -7,6 +7,12 @@ namespace fishnet::geometry {
 
 namespace __impl {
 
+/**
+ * @brief Type for Polygon Neighbours Sweepline
+ * It stores the polygons as BoundingBoxPolygons in the SLS and sorts them from left to right
+ * The output is a vector of pairs of polygons of type P, with each pair indicating the adjacency of two polygons
+ * @tparam P 
+ */
 template<IPolygon P>
 using PolygonNeighbours = SweepLine<BoundingBoxPolygon<P>,std::pair<P,P>,HorizontalAABBOrdering<P>>;
 
@@ -16,13 +22,16 @@ struct PolygonNeighboursInsertEvent : public PolygonNeighbours<P>::DefaultInsert
     virtual fishnet::math::DEFAULT_NUMERIC eventPoint() const noexcept {
         return this->obj->getBoundingBox().top();
     }
-
-
 };
 
+/**
+ * @brief Remove Event for Polygon Neighbours Sweepline
+ * 
+ * @tparam P polygon type
+ */
 template<IPolygon P>
 struct PolygonNeighboursRemoveEvent: public PolygonNeighbours<P>::RemoveEvent {
-    util::BiPredicate_t<BoundingBoxPolygon<P>>  neighbouringPredicate;
+    util::BiPredicate_t<BoundingBoxPolygon<P>>  neighbouringPredicate; // BiPredicate deciding if two polygons are adjacent
     PolygonNeighboursRemoveEvent(const BoundingBoxPolygon<P> & bbPptr, util::BiPredicate<BoundingBoxPolygon<P>> auto const & neighbouringBiPredicate):PolygonNeighbours<P>::RemoveEvent(bbPptr),neighbouringPredicate(neighbouringBiPredicate){}
 
     virtual fishnet::math::DEFAULT_NUMERIC eventPoint() const noexcept {
@@ -33,7 +42,7 @@ struct PolygonNeighboursRemoveEvent: public PolygonNeighbours<P>::RemoveEvent {
         const auto & sls = sweepLine.getSLS();
         const auto & current = *this->obj;
 
-        bool skippedSameObject = false;
+        bool skippedSameObject = false; // skip same Polygon object, since it is returned as the lower_bound in the first iteration
         for(auto it = sls.lower_bound(this->obj); it != sls.begin() && it != sls.end(); --it){
             const auto & neighbour = *(*it);
             if(skippedSameObject && neighbouringPredicate(current,neighbour)){
@@ -49,6 +58,17 @@ struct PolygonNeighboursRemoveEvent: public PolygonNeighbours<P>::RemoveEvent {
         sweepLine.removeSLS(this->obj);
     }
 };
+
+/**
+ * @brief Generic findNeighbouringPolygons function, which returns a list of pairs indicating the adjacencies of two polygons
+ * 
+ * @tparam R range type
+ * @tparam P polygon type == value type of range
+ * @param polygons range of polygons
+ * @param neighbouringPredicate BiPredicate deciding whether two BoundingBoxPolygons are neighbours
+ * @param wrapper unary function which wraps polygons of type P into BoundingBoxPolygons required for the sweepline
+ * @return std::vector<std::pair<P,P>> list of pairs, indicating the neighbouring relationship of two polygons
+ */
 template<PolygonRange R, IPolygon P = std::ranges::range_value_t<R>>
 static std::vector<std::pair<P,P>> findNeighbouringPolygons(const R & polygons, util::BiPredicate<BoundingBoxPolygon<P>> auto const & neighbouringPredicate,util::UnaryFunction<P,BoundingBoxPolygon<P>> auto const & wrapper) {
     using SweepLine_t = typename __impl::PolygonNeighbours<P>;
@@ -57,18 +77,27 @@ static std::vector<std::pair<P,P>> findNeighbouringPolygons(const R & polygons, 
     std::vector<BoundingBoxPolygon<P>> boundingBoxPolygons;
     boundingBoxPolygons.reserve(util::size(polygons));
     std::ranges::for_each(polygons,[&boundingBoxPolygons,&wrapper](const auto & p){
-        boundingBoxPolygons.push_back(wrapper(p));
+        boundingBoxPolygons.push_back(wrapper(p)); // wrap each polygon in a BoundingBoxPolygon
     });
     std::ranges::for_each(boundingBoxPolygons,[&sweepLine,&neighbouringPredicate](const auto & bbPptr){
-        sweepLine.addEvent(std::make_unique<__impl::PolygonNeighboursInsertEvent<P>>(bbPptr));
-        sweepLine.addEvent(std::make_unique<__impl::PolygonNeighboursRemoveEvent<P>>(bbPptr,neighbouringPredicate));
+        sweepLine.addEvent(std::make_unique<__impl::PolygonNeighboursInsertEvent<P>>(bbPptr)); // add insert events to sweepline
+        sweepLine.addEvent(std::make_unique<__impl::PolygonNeighboursRemoveEvent<P>>(bbPptr,neighbouringPredicate)); // add remove events to sweepline
     });
     return sweepLine.sweep(output);
 }
 }
 
 
-
+/**
+ * @brief Finding neighbours of polygons using a sweepline, returns a list of pairs indicating the adjacencies of two polygons
+ * 
+ * @tparam R range type
+ * @tparam P polygon type == value type of range
+ * @param polygons range of polygons
+ * @param neighbouringPredicate BiPredicate deciding whether two Polygons of type P are neighbours
+ * @param wrapper unary function which wraps polygons of type P into BoundingBoxPolygons required for the sweepline
+ * @return std::vector<std::pair<P,P>> list of pairs, indicating the neighbouring relationship of two polygons
+ */
 template<PolygonRange R, IPolygon P = std::ranges::range_value_t<R>>
 static std::vector<std::pair<P,P>> findNeighbouringPolygons(const R & polygons, util::BiPredicate<P> auto const & neighbouringPredicate,util::UnaryFunction<P,BoundingBoxPolygon<P>> auto const & wrapper) {
     return __impl::findNeighbouringPolygons(polygons, [&neighbouringPredicate](const BoundingBoxPolygon<P> & current, const BoundingBoxPolygon<P> & neighbour){
@@ -76,21 +105,37 @@ static std::vector<std::pair<P,P>> findNeighbouringPolygons(const R & polygons, 
     },wrapper);
 }
 
-
+/**
+ * @brief Overload with wrapper into default BoundingBoxPolygons (no custom bounding box allowed)
+ * 
+ * @tparam R 
+ * @tparam P 
+ * @param polygons 
+ * @param neighbouringPredicate BiPredicate deciding whether two Polygons of type P are neighbours
+ * @return std::vector<std::pair<P,P>> list of pairs, indicating the neighbouring relationship of two polygons
+ */
 template<PolygonRange R, IPolygon P = std::ranges::range_value_t<R>>
 static std::vector<std::pair<P,P>> findNeighbouringPolygons(const R & polygons, util::BiPredicate<P> auto const & neighbouringPredicate) {
     return findNeighbouringPolygons(polygons,neighbouringPredicate,[](const P & p){return BoundingBoxPolygon(p);});
 }
 
+/**
+ * @brief Overload for finding neighbouring polygons with a custom buffer multiplier for the bounding boxes
+ * 
+ * @tparam R 
+ * @param polygons 
+ * @param bufferMultiplier 
+ * @return std::vector<std::pair<P,P>> list of pairs, indicating the neighbouring relationship of two polygons  
+ */
 template<PolygonRange R>
-static std::vector<std::pair<std::ranges::range_value_t<R>,std::ranges::range_value_t<R>>> nearestPolygonNeighbours(const R & polygons, fishnet::math::DEFAULT_NUMERIC bufferMultiplier) {
+static std::vector<std::pair<std::ranges::range_value_t<R>,std::ranges::range_value_t<R>>> findNeighbouringPolygons(const R & polygons, fishnet::math::DEFAULT_NUMERIC bufferMultiplier) {
     if (bufferMultiplier <= 1)
         throw std::invalid_argument("Buffer range multiplier has to be greater than 1");
     using P = std::ranges::range_value_t<R>;
 
     auto crossesOrContainedInBoundingBox = [](const BoundingBoxPolygon<P> & current,const BoundingBoxPolygon<P> & neighbour){
             return neighbour.getBoundingBox().crosses(current.getBoundingBox()) || neighbour.getBoundingBox().contains(current.getBoundingBox()) || current.getBoundingBox().contains(neighbour.getBoundingBox());
-    };
+    }; // polygons are in relation if (scaled) bounding boxes overlap
 
     auto scaledWrapper = [bufferMultiplier](const P & polygon) {
         auto aaBBRectangle = Rectangle<fishnet::math::DEFAULT_NUMERIC>(polygon.aaBB().getPoints());

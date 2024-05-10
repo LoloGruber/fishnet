@@ -5,8 +5,16 @@
 
 namespace fishnet::geometry{
 
+/**
+ * @brief Computation of line intersection
+ * @param l line object
+ * @param r line object
+ * @return std::optional<Vec2DReal>: empty optional if lines are parallel, otherwise the intersection of the lines l and r
+ * 
+ */
 constexpr static std::optional<Vec2DReal> inline linearIntersection(ILine auto  const& l, ILine auto  const & r) noexcept {
-    if (l.isParallel(r)) return std::nullopt;
+    if (l.isParallel(r)) 
+        return std::nullopt;
     auto dThis = Vec2DReal(l.direction());
     const auto & p = l.p;
     const auto & q = l.q;
@@ -17,6 +25,13 @@ constexpr static std::optional<Vec2DReal> inline linearIntersection(ILine auto  
     return std::optional(intersectionOfLines);
 }
 
+/**
+ * @brief Generic wrapper for intersections between linear features
+ * 
+ * @param lhs linear geometry
+ * @param rhs linear geometry
+ * @return std::optional<Vec2DReal>
+ */
 constexpr static std::optional<Vec2DReal> inline linearIntersection(LinearGeometry auto const& lhs, LinearGeometry auto const& rhs) noexcept {
     auto intersection =  linearIntersection(lhs.toLine(),rhs.toLine());
     if (intersection and lhs.contains(*intersection) and rhs.contains(*intersection)) return intersection;

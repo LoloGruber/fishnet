@@ -5,9 +5,22 @@ namespace fishnet::geometry {
 
 namespace __impl{
 
+/**
+ * @brief Type for Polygon Filter Sweepline
+ * It stores the polygons as BoundingBoxPolygons in the SLS and sorts them from left to right
+ * The output is a vector of polygons of type P, which are passing the filter.
+ * @tparam P polygon type
+ */
 template<IPolygon P>
 using PolygonFilter = SweepLine<BoundingBoxPolygon<P>,P,HorizontalAABBOrdering<P>>;
 
+/**
+ * @brief Insert event for Polygon Filter Sweepline
+ * 
+ * @tparam P polygon type
+ * @tparam BinaryFilter (P,P) -> bool
+ * @tparam Filter: (P) -> bool
+ */
 template<IPolygon P,util::BiPredicate<P> BinaryFilter, util::Predicate<P> Filter>
 class PolygonFilterInsertEvent:public PolygonFilter<P>::InsertEvent{
 private:
@@ -17,14 +30,20 @@ private:
 public:
     PolygonFilterInsertEvent(const BoundingBoxPolygon<P> & box,BinaryFilter  & binaryCondition, Filter  & condition):PolygonFilter<P>::InsertEvent(box),filter(condition),binaryFilter(binaryCondition){}
     
+    /**
+     * @brief processing of this event
+     * 
+     * @param sweepLine 
+     * @param output 
+     */
     virtual void process(PolygonFilter<P> & sweepLine, std::vector<P> & output)const{
         const auto & polygonUnderTest = this->obj->getPolygon();
         if(not filter(polygonUnderTest))
-            return;
+            return; // directly return if polygon does not pass filter
         sweepLine.addSLS(this->obj);
         const auto & sls = sweepLine.getSLS();
         for(auto it = sls.lower_bound(this->obj); it != sls.begin() && it != sls.end() /* && this->obj->getBoundingBox().left() <= (*it)->getBoundingBox().right() */; ){
-            --it;
+            --it; // skip same element, by first decrementing
             if( not binaryFilter((*it)->getPolygon(),polygonUnderTest))
                 return;
         }
@@ -32,8 +51,14 @@ public:
             if(not binaryFilter((*it)->getPolygon(),polygonUnderTest))
                 return;
         }
-        output.push_back(polygonUnderTest);
+        output.push_back(polygonUnderTest); // add to output if all filters were passed
     }
+
+    /**
+     * @brief EventPoint of Insert is the top of the bounding box (Sweepline goes from top to bottom)
+     * 
+     * @return fishnet::math::DEFAULT_NUMERIC 
+     */
     virtual fishnet::math::DEFAULT_NUMERIC eventPoint() const noexcept {
         return this->obj->getBoundingBox().top();
     }
@@ -42,14 +67,28 @@ public:
 template<IPolygon P>
 struct PolygonFilterRemoveEvent: public PolygonFilter<P>::DefaultRemoveEvent {
     PolygonFilterRemoveEvent(const BoundingBoxPolygon<P> & box):PolygonFilter<P>::DefaultRemoveEvent(box){}
+    /**
+     * @brief EventPoint of Insert is the bottom of the bounding box (Sweepline goes from top to bottom)
+     * 
+     * @return fishnet::math::DEFAULT_NUMERIC 
+     */
     virtual fishnet::math::DEFAULT_NUMERIC eventPoint() const noexcept {
         return this->obj->getBoundingBox().bottom();
     }
 };
 }
 
-
-
+/**
+ * @brief Filters a range of polygons and returns a list of all polygons that pass the filter(s)
+ * 
+ * @tparam R range type
+ * @tparam BinaryFilter BiPredicate type
+ * @tparam Filter Predicate type
+ * @param polygons range of polygons of type P
+ * @param binaryCondition 
+ * @param condition 
+ * @return std::vector<P>
+ */
 template<PolygonRange R,util::BiPredicate<std::ranges::range_value_t<R>> BinaryFilter, util::Predicate<std::ranges::range_value_t<R>> Filter = util::TruePredicate>
 static std::vector<std::ranges::range_value_t<R>> filter( const R & polygons, BinaryFilter binaryCondition, Filter condition = Filter()) noexcept {
     using P = std::ranges::range_value_t<R>;
@@ -67,6 +106,15 @@ static std::vector<std::ranges::range_value_t<R>> filter( const R & polygons, Bi
     return sweepLine.sweep(out);
 }
 
+/**
+ * @brief Polygon Filter overload with only a unary filter
+ * 
+ * @tparam R range type
+ * @tparam Filter Predicate type
+ * @param polygons range of Polygons of type P
+ * @param condition 
+ * @return std::vector<P>
+ */
 template<PolygonRange R, util::Predicate<std::ranges::range_value_t<R>> Filter>
 static std::vector<std::ranges::range_value_t<R>> filter(const R & polygons, Filter condition) noexcept {
     auto alwaysTrue = util::TrueBiPredicate();

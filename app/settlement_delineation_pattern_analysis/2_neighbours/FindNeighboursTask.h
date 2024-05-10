@@ -3,7 +3,7 @@
 #include <fishnet/Shapefile.hpp>
 #include <fishnet/ShapeGeometry.hpp>
 #include <fishnet/VectorLayer.hpp>
-#include <fishnet/PolygonNearestNeighbours.hpp>
+#include <fishnet/PolygonNeighbours.hpp>
 #include <fishnet/GraphFactory.hpp>
 #include <fishnet/CompositePredicate.hpp>
 #include <fishnet/Rectangle.hpp>
