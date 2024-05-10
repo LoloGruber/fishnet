@@ -8,18 +8,18 @@
 #include "ApproxAreaFilter.hpp"
 #include "ProjectedAreaFilter.hpp"
 #include "InsidePolygonFilter.hpp"
-#include "ConfigJsonReader.hpp"
+#include "JsonConfigReader.hpp"
 
 using json = nlohmann::json;
 
-class FilterConfigJsonReader:public ConfigJsonReader{
+class FilterConfigJsonReader:public BaseJsonConfigReader{
 public:
     constexpr static const char * UNARY_FILTERS = "unary-filters";
     constexpr static const char * BINARY_FILTERS = "binary-filters";
 
-    FilterConfigJsonReader(const std::string & jsonString):ConfigJsonReader(jsonString) {}
+    FilterConfigJsonReader(const std::string & jsonString):BaseJsonConfigReader(jsonString) {}
 
-    FilterConfigJsonReader(const std::filesystem::path & path):ConfigJsonReader(path) {}
+    FilterConfigJsonReader(const std::filesystem::path & path):BaseJsonConfigReader(path) {}
 
     template<GeometryObject GeometryType>
     static std::expected<fishnet::util::Predicate_t<GeometryType>,std::string> fromUnaryType(UnaryFilterType type,json const & filterDesc) {
@@ -73,3 +73,4 @@ public:
         }
     }
 };
+static_assert(JsonConfigReader<FilterConfigJsonReader,SettlementFilterTask<fishnet::geometry::Polygon<double>>>);
