@@ -207,7 +207,7 @@ public:
 
     static VectorLayer<G> read(const Shapefile & shapefile) {
         if(not shapefile.exists())
-            throw std::invalid_argument("Shapefile does not exists, could not read from File");
+            throw std::invalid_argument("Shapefile does not exists, could not read from File: \""+shapefile.getPath().string()+"\"");
         return VectorLayer(shapefile);
     }
 
