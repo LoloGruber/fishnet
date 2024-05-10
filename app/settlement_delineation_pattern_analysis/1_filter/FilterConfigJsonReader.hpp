@@ -8,19 +8,21 @@
 #include "ApproxAreaFilter.hpp"
 #include "ProjectedAreaFilter.hpp"
 #include "InsidePolygonFilter.hpp"
+#include "ConfigJsonReader.hpp"
 
 using json = nlohmann::json;
 
-class FilterConfigJsonReader{
-private:
-    json config;
-    FilterConfigJsonReader(json jsonConfig):config(std::move(jsonConfig)){}
+class FilterConfigJsonReader:public ConfigJsonReader{
 public:
     constexpr static const char * UNARY_FILTERS = "unary-filters";
     constexpr static const char * BINARY_FILTERS = "binary-filters";
 
-    template<typename T>
-    static std::expected<fishnet::util::Predicate_t<T>,std::string> fromUnaryType(UnaryFilterType type,json const & filterDesc) {
+    FilterConfigJsonReader(const std::string & jsonString):ConfigJsonReader(jsonString) {}
+
+    FilterConfigJsonReader(const std::filesystem::path & path):ConfigJsonReader(path) {}
+
+    template<GeometryObject GeometryType>
+    static std::expected<fishnet::util::Predicate_t<GeometryType>,std::string> fromUnaryType(UnaryFilterType type,json const & filterDesc) {
         switch(type){
             case UnaryFilterType::ApproxAreaFilter:
                  return ApproxAreaFilter::fromJson(filterDesc);
@@ -29,9 +31,8 @@ public:
         }
         return std::unexpected("Unexpected UnaryFilterType");
     }
-
-    template<typename T>
-    static std::expected<fishnet::util::BiPredicate_t<T>,std::string> fromBinaryType(BinaryFilterType type, json const & filterDesc){
+    template<GeometryObject GeometryType>
+    static std::expected<fishnet::util::BiPredicate_t<GeometryType>,std::string> fromBinaryType(BinaryFilterType type, json const & filterDesc){
         switch(type){
             case BinaryFilterType::InsidePolygonFilter:
                 return InsidePolygonFilter();
@@ -39,58 +40,36 @@ public:
         return std::unexpected("Unexpected BinaryFilterType");
     }
 
-    template<typename T>
-    [[nodiscard]] std::expected<void,std::string> read(SettlementFilterTask<T> & task) const noexcept {
-        try{
-            task.writeDescLine("\tUnary-Filters:");
-            for(const auto & jsonFilter:  config.at(UNARY_FILTERS)){
-                std::string filterName;
-                jsonFilter.at("name").get_to(filterName);
-                auto filterType = FILTERS::UNARY.get(filterName);
-                if(not filterType) {
-                    return std::unexpected("Filter name \""+filterName+"\" not supported");
-                }
-                auto predicate = fromUnaryType<T>(filterType.value(),jsonFilter);
-                if (not predicate){
-                    return std::unexpected(predicate.error());
-                }
-                task.addPredicate(predicate.value());
-                task.writeDescLine("\t\t"+jsonFilter.dump());
+    template<GeometryObject GeometryType>
+    void parse(SettlementFilterTask<GeometryType> & task) const noexcept {
+        task.writeDescLine("\tUnary-Filters:");
+        for(const auto & jsonFilter:  this->config.at(UNARY_FILTERS)){
+            std::string filterName;
+            jsonFilter.at("name").get_to(filterName);
+            auto filterType = FILTERS::UNARY.get(filterName);
+            if(not filterType) {
+                std::cerr << "Filter name \""+filterName+"\" not supported" << std::endl;
             }
-            task.writeDescLine("\tBinary-Filters:");
-            for(const auto & jsonFilter : config.at(BINARY_FILTERS)) {
-                std::string filterName;
-                jsonFilter.at("name").get_to(filterName);
-                auto filterType = FILTERS::BINARY.get(filterName);
-                if(not filterType) {
-                    return std::unexpected("Filter name \""+filterName+"\" not supported");
-                }
-                auto biPredicate = fromBinaryType<T>(filterType.value(),jsonFilter);
-                if(not biPredicate)
-                    return std::unexpected(biPredicate.error());
-                task.addBiPredicate(biPredicate.value());
-                task.writeDescLine("\t\t"+jsonFilter.dump());
+            auto predicate = fromUnaryType<GeometryType>(filterType.value(),jsonFilter);
+            if (not predicate){
+                std::cerr << predicate.error() << std::endl;
             }
-            return {};
-        }catch(const json::exception & e){
-            return std::unexpected(std::string("Could not parse attributes of filter config\n")+e.what());
+            task.addPredicate(predicate.value());
+            task.writeDescLine("\t\t"+jsonFilter.dump());
+        }
+        task.writeDescLine("\tBinary-Filters:");
+        for(const auto & jsonFilter : this->config.at(BINARY_FILTERS)) {
+            std::string filterName;
+            jsonFilter.at("name").get_to(filterName);
+            auto filterType = FILTERS::BINARY.get(filterName);
+            if(not filterType) {
+                std::cerr << "Filter name \""+filterName+"\" not supported" << std::endl;
+            }
+            auto biPredicate = fromBinaryType<GeometryType>(filterType.value(),jsonFilter);
+            if(not biPredicate)
+                std::cerr << biPredicate.error() << std::endl;
+            task.addBiPredicate(biPredicate.value());
+            task.writeDescLine("\t\t"+jsonFilter.dump());
         }
     }
-
-    static std::expected<FilterConfigJsonReader,std::string> createFromString(const std::string & jsonString) noexcept {
-        try{
-            return FilterConfigJsonReader(json::parse(jsonString));
-        }catch(const json::parse_error & e) {
-            return std::unexpected("Invalid json string:\n\""+jsonString+"\"");
-        }
-    }
-
-    static std::expected<FilterConfigJsonReader,std::string> createFromPath(const std::filesystem::path & pathToConfig) noexcept{
-        try{
-            return FilterConfigJsonReader(json::parse(std::ifstream(pathToConfig)));
-        }catch(const json::parse_error & e){
-            return std::unexpected("Coult not read json from file:\n\""+pathToConfig.string()+"\"");
-        }
-    }
-
 };

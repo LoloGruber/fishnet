@@ -77,11 +77,8 @@ int main(int argc, char * argv[]){
         return SettlementFilterTask<fishnet::geometry::Polygon<double>>::create(input, output);
     });
     auto & task = getExpectedOrThrowError(taskExpected);
-    auto expJsonReader = FilterConfigJsonReader::createFromPath(std::filesystem::path(configFilename));
-    auto & jsonReader = getExpectedOrThrowError(expJsonReader);
-    auto success = jsonReader.read(task);
-    if(not success)
-        std::cerr << success.error() << std::endl;
+    auto jsonReader = FilterConfigJsonReader(std::filesystem::path(configFilename));
+    jsonReader.parse(task);
     task.run();
     return 0;
 }
