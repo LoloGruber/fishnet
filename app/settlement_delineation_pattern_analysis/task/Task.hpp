@@ -35,6 +35,16 @@ public:
     Task & writeDesc (auto && value) noexcept  {
         return *this << value;
     }
+
+    Task & indentDesc(auto && value ) noexcept {
+        taskDesc << "\t" << value;
+        return *this;
+    }
+
+    Task & indentDescLine(std::string_view line) noexcept {
+        taskDesc << "\t" << line << std::endl;
+        return *this;
+    }
 };
 
 template<typename T, typename E>
