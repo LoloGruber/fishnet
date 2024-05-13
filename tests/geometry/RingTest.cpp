@@ -231,7 +231,7 @@ TEST_F(RingTest, containsRing){
 }
 
     #include <fishnet/ShapeGeometry.hpp>
-    static_assert(ShapeGeometry<Ring<double>>);
+    static_assert(Shape<Ring<double>>);
 
 TEST_F(RingTest, touchesRing){
     EXPECT_FALSE(ring->touches(Ring<int>(std::vector<Vec2D<int>>{{2,1},{4,1},{4,-1},{2,-1}})));

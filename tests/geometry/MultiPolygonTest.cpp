@@ -9,7 +9,7 @@ using namespace fishnet::geometry;
 using namespace fishnet::math;
 
 static_assert(IMultiPolygon<MultiPolygon<Polygon<double>>>);
-static_assert(ShapeGeometry<MultiPolygon<SimplePolygon<double>>>);
+static_assert(Shape<MultiPolygon<SimplePolygon<double>>>);
 class MultiPolygonTest : public ::testing::Test {
 protected:
     void SetUp() override {
