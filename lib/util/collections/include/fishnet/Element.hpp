@@ -1,5 +1,10 @@
 #pragma once
 namespace fishnet::util{
+/**
+ * @brief Helper Class, wrapping elements in the blocking queue.
+ * Additionally specifies a POISON_PILL, indicating that the queue will no longer be used
+ * @tparam T 
+ */
 template<typename T>
 class Element
 {
@@ -11,12 +16,11 @@ public:
 
     Element(T && element):e(std::move(element)){present = true;}
 
-
     operator bool() const {
         return this->present;
     }
 
-    const static inline Element POISON_PILL = Element();
+    const static inline Element POISON_PILL = Element(); // Element with present==false and no value
 
     T get() const {
         if(present) {
@@ -32,8 +36,5 @@ public:
     T operator*() const {
         return this->get();
     }
-
-
-    ~Element() = default;
 };
 }

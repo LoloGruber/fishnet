@@ -1,4 +1,3 @@
-
 add_library(util_console STATIC
         src/ProgressPrinter.cpp
         src/StopWatch.cpp

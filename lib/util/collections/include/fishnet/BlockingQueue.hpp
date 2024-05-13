@@ -4,6 +4,11 @@
 #include <queue>
 #include "Element.hpp"
 namespace fishnet::util{
+/**
+ * @brief Blocking queue implementation.
+ * Blocks when no elements are present and take() is called until further elements are added using put(...)
+ * @tparam T value type
+ */
 template<typename T>
 class BlockingQueue {
 protected:
@@ -14,7 +19,6 @@ protected:
     static inline  Element<T> POISON_PILL = Element<T>::POISON_PILL;
 public:
 
-
     void putPoisonPill() {
         this->put(POISON_PILL);
     }
@@ -22,8 +26,6 @@ public:
     Element<T> getPoisonPill(){
         return POISON_PILL;
     }
-
-
 
     virtual void put(Element<T> element){
         {

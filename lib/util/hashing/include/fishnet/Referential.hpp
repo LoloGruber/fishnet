@@ -1,7 +1,6 @@
-#ifndef REFERENTIAL_EQUAL_H
-#define REFERENTIAL_EQUAL_H
+#pragma once
 #include <memory>
-#include "HashConcepts.h"
+#include "HashConcepts.hpp"
 
 namespace fishnet::util{
 struct Referential{
@@ -37,5 +36,3 @@ struct Referential{
     };
 };
 }
-
-#endif

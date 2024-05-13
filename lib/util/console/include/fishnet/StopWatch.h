@@ -2,6 +2,10 @@
 #include <chrono>
 #include <iostream>
 namespace fishnet::util{
+/**
+ * @brief StopWatch class to track execution time of a task. Time can be tracked explicitly (.stop()) or using RAII (on destruction)
+ * 
+ */
 class StopWatch
 {
 private:

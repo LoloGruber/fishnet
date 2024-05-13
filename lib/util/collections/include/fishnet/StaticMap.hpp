@@ -5,6 +5,13 @@
 #include <algorithm>
 
 namespace fishnet::util {
+/**
+ * @brief Compile-time map for compile-time configurations
+ * 
+ * @tparam Key key type
+ * @tparam Value value type
+ * @tparam Size size of the map
+ */
 template<typename Key, typename Value,std::size_t Size> requires std::equality_comparable<Key>
 struct StaticMap {
     using value_type = std::pair<Key,Value>;
@@ -56,6 +63,5 @@ struct StaticMap {
     constexpr auto cend() const noexcept {
         return data.cend();
     }
-
 };
 }

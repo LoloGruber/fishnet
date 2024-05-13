@@ -4,6 +4,12 @@
 #include <fishnet/HashConcepts.hpp>
 namespace fishnet::util {
 
+/**
+ * @brief Bidirectional Map. Behaves like a regular map, but also implements fast reversed look-up in trade for memory
+ * 
+ * @tparam FromType from type 
+ * @tparam ToType to type
+ */
 template<Mapable FromType, Mapable ToType>
 class BidirectionalMap {
 private: 

@@ -1,5 +1,7 @@
 #include <fishnet/StopWatch.h>
+
 using namespace fishnet::util;
+
 StopWatch::StopWatch():task(""){
     this->start = std::chrono::high_resolution_clock::now();
 }

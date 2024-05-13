@@ -17,5 +17,4 @@ TemporaryDirectory::~TemporaryDirectory(){
     std::filesystem::remove_all(directory);
     std::filesystem::remove(directory);
 }
-
 }

@@ -4,6 +4,13 @@
 
 namespace fishnet::util {
 
+/**
+ * @brief Composite Map with the following mapping:
+ * OuterKey -> (InnerKey -> Value)
+ * @tparam OuterKey outer key type 
+ * @tparam InnerKey inner key type
+ * @tparam Value value type
+ */
 template<Mapable OuterKey, Mapable InnerKey, typename Value>
 class NestedMap {
 private:

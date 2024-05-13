@@ -4,6 +4,13 @@
 #include "BidirectionalMap.hpp"
 namespace fishnet::util {
 
+/**
+ * @brief Map that can use two different keys to value.
+ * Uses Bidirectional Map for mapping of primary and secondary keys
+ * @tparam Key primary key type
+ * @tparam AltKey secondary key type
+ * @tparam Value value type
+ */
 template<Mapable Key, Mapable AltKey,typename Value>
 class AlternativeKeyMap {
 private:
@@ -151,5 +158,4 @@ public:
         keyMap.clear();
     }
 };
-
 }

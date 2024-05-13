@@ -5,6 +5,10 @@
 namespace fishnet::util {
 
 constexpr static const char * PROJECT_NAME = "fishnet";
+/**
+ * @brief Static Helper class to get the current Path or find the projectDirectory
+ * 
+ */
 class PathHelper{
 public:
     static std::filesystem::path getCurrentPath() noexcept;

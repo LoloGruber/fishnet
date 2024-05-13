@@ -1,11 +1,9 @@
-//
-// Created by grube on 09.01.2022.
-//
-
 #include <iostream>
 #include <utility>
 #include <fishnet/ProgressPrinter.h>
+
 using namespace fishnet::util;
+
 bool ProgressPrinter::disable = false;
 
 void ProgressPrinter::visit() {

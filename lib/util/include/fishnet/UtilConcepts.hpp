@@ -3,4 +3,3 @@
 #include <fishnet/HashConcepts.hpp>
 #include <fishnet/FunctionalConcepts.hpp>
 #include <fishnet/Printable.hpp>
-

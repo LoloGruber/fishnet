@@ -42,9 +42,6 @@ struct UnorderedPairEqual{
     }
 };
 
-
-
-
 template<typename T, HashFunction<T> Hash = std::hash<T>, BiPredicate<T> Equal = std::equal_to<T>>
 using unordered_pair_set = std::unordered_set<std::pair<T,T>, UnorderedPairHash<T,Hash>, UnorderedPairEqual<T,Equal>>;
 

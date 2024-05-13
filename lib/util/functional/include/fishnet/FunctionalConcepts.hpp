@@ -62,7 +62,6 @@ struct FalseBiPredicate {
     }
 };
 
-
 class LimitPredicate {
 private:
     const size_t limit;

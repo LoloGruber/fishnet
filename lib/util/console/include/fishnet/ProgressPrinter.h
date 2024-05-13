@@ -1,10 +1,4 @@
-//
-// Created by grube on 09.01.2022.
-//
-
-#ifndef BACHELORARBEIT_PROGRESSPRINTER_H
-#define BACHELORARBEIT_PROGRESSPRINTER_H
-
+#pragma once
 namespace fishnet::util {
 /**
  * Class to show the user the estimated progress of a iteration / pipeline step
@@ -30,8 +24,3 @@ public:
     void visit();
 };
 }
-
-
-
-
-#endif //BACHELORARBEIT_PROGRESSPRINTER_H
