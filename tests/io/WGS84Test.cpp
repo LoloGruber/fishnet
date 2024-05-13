@@ -40,7 +40,7 @@ TEST(WGS84EllipsoidTest, TokioBerlinApprox){
 }
 
 TEST(WGS84EllipsoidTest, SquareKilometerArea){
-    auto layer = fishnet::VectorLayer<geometry::Polygon<double>>::read({util::PathHelper::projectDirectory() / std::filesystem::path("data/output/small_dataset/Punjab_Small.shp")});
+    auto layer = fishnet::VectorLayer<geometry::Polygon<double>>::read({util::PathHelper::projectDirectory() / std::filesystem::path("data/testing/Punjab_Small/Punjab_Small.shp")});
     geometry::Polygon<double> min = {Ring(std::vector<Vec2DReal>{{100.0,0.0},{100.0,100.0},{0.0,0.0}})};
     for(const auto & p : layer.getGeometries()){
         if(p.area() < min.area())
