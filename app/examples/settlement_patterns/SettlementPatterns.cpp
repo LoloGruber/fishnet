@@ -2,7 +2,16 @@
 // #include <ogr_core.h>
 // #include <gdal_priv.h>
 // #include "ogrsf_frmts.h"
-
+/**
+ * @file SettlementPatterns.cpp
+ * @author Lorenz Gruber
+ * @brief 
+ * @version 0.1
+ * @date 2022-05-13
+ * @deprecated
+ * @copyright Copyright (c) 2024
+ * 
+ */
 #include <filesystem>
 #include <iostream>
 #include <stdexcept>

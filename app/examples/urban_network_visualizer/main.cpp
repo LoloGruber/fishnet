@@ -1,6 +1,10 @@
 // //
 // // Created by grube on 08.09.2021.
 // //
+/**
+ * @brief 
+ * @deprecated
+ */
 // #include <gdal_priv.h>
 // #include "gdal.h"
 // #include "cpl_conv.h" // for CPLMalloc()
