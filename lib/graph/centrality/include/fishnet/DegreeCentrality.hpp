@@ -2,6 +2,10 @@
 #include <fishnet/Graph.hpp>
 #include <vector>
 namespace fishnet::graph {
+/**
+ * @brief Degree Centrality functor
+ * Returns a vector of pairs, with each pair storing the node and the degree centrality value
+ */
 struct DegreeCentrality{
     template<Graph G>
     std::vector<std::pair<typename G::node_type,size_t>> operator() (const G & graph) const{

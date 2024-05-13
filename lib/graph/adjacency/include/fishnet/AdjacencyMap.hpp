@@ -7,6 +7,14 @@
 #include <fishnet/PairSet.hpp>
 
 namespace fishnet::graph{
+/**
+ * @brief Implementation of an Adjacency Map.
+ * Implements AdjacencyContainer
+ * @tparam N node type
+ * @tparam Hash hasher type on N
+ * @tparam Equal comparator type on N
+ * @tparam NodeRange range type for adjacency list
+ */
 template<typename N, util::HashFunction<N> Hash=std::hash<N>, util::BiPredicate<N> Equal=std::equal_to<N>,typename NodeRange = std::vector<N>>
 class AdjacencyMap{
 private:
@@ -14,7 +22,7 @@ private:
     Map map= Map();
     const static inline Equal eq=Equal();
     const static inline Hash hash = Hash();
-    const static inline NodeRange EMPTY = NodeRange(); // returning views::empty<N> would not compile with gcc 11.3
+    const static inline NodeRange EMPTY = NodeRange(); // returning views::empty<N> would not compile with gcc 11.3 -> return view on empty node range
 public:
 
     using equality_predicate = Equal;
@@ -89,16 +97,6 @@ public:
     auto nodes() const noexcept {
         return std::views::keys(map);
     }
-
-    // auto getAdjacencyPairs() const noexcept {
-    //     std::vector<std::pair<N,N>> adjacencies;
-    //     for(const auto & [node,neighbours]: map){
-    //         for(const auto & neighbour : neighbours) {
-    //             adjacencies.emplace_back(std::make_pair(node,neighbour));
-    //         }
-    //     }
-    //     return adjacencies;
-    // }
 
     auto getAdjacencyPairs() const noexcept {
         return std::views::all(map) 

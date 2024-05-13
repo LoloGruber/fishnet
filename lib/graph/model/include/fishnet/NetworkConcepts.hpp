@@ -1,5 +1,4 @@
-#ifndef NETWORK_CONCEPTS_H
-#define NETWORK_CONCEPTS_H
+#pragma once
 #include <fishnet/UtilConcepts.hpp>
 #include <fishnet/NumericConcepts.hpp>
 namespace fishnet::graph{
@@ -20,4 +19,3 @@ template<typename F, typename N>
 concept NodeBiOperator = Node<N> && util::BiOperator<F,N>;
 
 }
-#endif

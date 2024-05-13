@@ -1,5 +1,4 @@
-#ifndef Breadth_First_Search_Algorithms_H
-#define Breadth_First_Search_Algorithms_H
+#pragma once
 #include <concepts>
 #include <vector>
 #include <array>
@@ -15,14 +14,20 @@
 #include "ConcurrentConnectedComponents.hpp"
 #include "SearchResult.hpp"
 #include "SearchPath.hpp"
-
 #include "DefaultBiPredicate.hpp"
 
+namespace fishnet::graph::__impl{
 
-namespace fishnet::graph{
-
-
-namespace __impl{
+/**
+ * @brief Generic breadth-first search implementation starting from a node
+ * 
+ * @tparam G graph type
+ * @tparam SearchResultImpl search result type (using CRTP)
+ * @param g graph
+ * @param searchResult mutable reference to search result
+ * @param start start node
+ * @param predicate BiPredicate to require additional criteria for two nodes to be in relation
+ */
 template<Graph G, class SearchResultImpl>
 static void bfs(const G  & g, SearchResult<SearchResultImpl> & searchResult, const  typename G::node_type  & start,NodeBiPredicate<typename G::node_type> auto const& predicate) {
     using N = G::node_type;
@@ -39,19 +44,23 @@ static void bfs(const G  & g, SearchResult<SearchResultImpl> & searchResult, con
                     q.push(neighbour);
                 }
         }
-
         searchResult.close(current);
     }
 }
 
-
-
-
-
-template<Graph G,class SearchResultImpl, NodeBiPredicate<typename G::node_type> Predicate = DefaultBiPredicate<typename G::node_type>>
+/**
+ * @brief Generic breadth-first search implementation, traversing the entire graph
+ * 
+ * @tparam G graph type
+ * @tparam SearchResultImpl search result type (using CRTP)
+ * @param g graph
+ * @param searchResult mutable reference to search result
+ * @param predicate BiPredicate to require additional criteria for two nodes to be in relation
+ */
+template<Graph G,class SearchResultImpl>
 static void bfs_all(const Graph auto & g, SearchResult<SearchResultImpl> & searchResult,NodeBiPredicate<typename G::node_type> auto const& predicate){
     auto nodes = g.getNodes();
-    for(auto n : nodes){
+    for(auto const& n : nodes){
         if (searchResult.stop()){
             return;
         }
@@ -62,8 +71,16 @@ static void bfs_all(const Graph auto & g, SearchResult<SearchResultImpl> & searc
 }
 }
 
-namespace BFS {
+namespace fishnet::graph::BFS {
 
+/**
+ * @brief Compute connected components of the graph
+ * 
+ * @tparam G graph type
+ * @param graph graph
+ * @param inRelation BiPredicate indicating whether two nodes are in relation
+ * @return ConnectedComponents search result
+ */
 template<Graph G>
 auto connectedComponents(const  G  & graph, NodeBiPredicate<typename G::node_type> auto const& inRelation)  {
     using H = G::adj_container_type::hash_function;
@@ -73,26 +90,60 @@ auto connectedComponents(const  G  & graph, NodeBiPredicate<typename G::node_typ
     return connectedComponents;
 }
 
+/**
+ * @brief Compute connected components of the graph\
+ * Uses  DefaultBiPredicate which is always true, when two nodes share an edge
+ * @tparam G graph type
+ * @param graph graph
+ * @return ConnectedComponents search result
+ */
 template<Graph G>
 auto connectedComponents(const G  & graph) {
     return connectedComponents(graph,__impl::DefaultBiPredicate<typename G::node_type>());
 }
 
+/**
+ * @brief Compute connected components of the graph concurrently
+ * 
+ * @tparam G graph type
+ * @param graph graph
+ * @param queue shared pointer to blocking queue, storing pairs of component-ids and vectors of nodes
+ * @param inRelation BiPredicate indicating whether two nodes are in relation
+ * @return ConcurrentConnectedComponents search result 
+ */
 template<Graph G>
-auto connectedComponents(const G & graph,std::shared_ptr<fishnet::util::BlockingQueue<std::pair<int,std::vector<typename G::node_type>>>>  q, NodeBiPredicate<typename G::node_type> auto const& inRelation)  {
+auto connectedComponents(const G & graph,std::shared_ptr<fishnet::util::BlockingQueue<std::pair<int,std::vector<typename G::node_type>>>>  queue, NodeBiPredicate<typename G::node_type> auto const& inRelation)  {
     using H = G::adj_container_type::hash_function;
     using E = G::adj_container_type::equality_predicate;
-    auto concurrentConnectedComponents = ConcurrentConnectedComponents<typename G::node_type,H,E>(q);
+    auto concurrentConnectedComponents = ConcurrentConnectedComponents<typename G::node_type,H,E>(queue);
     __impl::bfs_all<G>(graph,concurrentConnectedComponents,inRelation);
     return concurrentConnectedComponents;
 }
+
+/**
+ * @brief Compute connected components of the graph concurrently
+ * 
+ * @tparam G graph type
+ * @param graph graph
+ * @param queue shared pointer to blocking queue, storing pairs of component-ids and vectors of nodes
+ * @return ConcurrentConnectedComponents search result  
+ */
 template<Graph G>
-auto connectedComponents(const G & graph, std::shared_ptr<fishnet::util::BlockingQueue<std::pair<int,std::vector<typename G::node_type>>>>  q)  {
-    return connectedComponents(graph,q,__impl::DefaultBiPredicate<typename G::node_type>());
+auto connectedComponents(const G & graph, std::shared_ptr<fishnet::util::BlockingQueue<std::pair<int,std::vector<typename G::node_type>>>>  queue)  {
+    return connectedComponents(graph,queue,__impl::DefaultBiPredicate<typename G::node_type>());
 }
 
+/**
+ * @brief Find breadth-first search between between start and goal node
+ * 
+ * @tparam G graph type
+ * @param graph graph
+ * @param start start node
+ * @param goal target node
+ * @return util::input_range_of<typename G::edge_type>  vector of edges from start to target
+ */
 template<Graph G>
-auto findPath(const G & graph, const typename G::node_type & start, const typename G::node_type & goal) {
+util::input_range_of<typename G::edge_type> auto findPath(const G & graph, const typename G::node_type & start, const typename G::node_type & goal) {
     using H = G::adj_container_type::hash_function;
     using E = G::adj_container_type::equality_predicate;
     using N = G::node_type;
@@ -110,7 +161,3 @@ auto findPath(const G & graph, const typename G::node_type & start, const typena
     return edges;
 }
 }
-}
-
-
-#endif

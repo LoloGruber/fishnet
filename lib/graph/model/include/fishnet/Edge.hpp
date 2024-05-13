@@ -1,16 +1,15 @@
-#ifndef Graph_Edge_H
-#define Graph_Edge_H
+#pragma once
 #include "NetworkConcepts.hpp"
 #include <concepts>
 
 namespace fishnet::graph{
 
 /**
- * Minimal Interface of an Edge
- *      - construct with two nodes
- *      - get endpoints
- *      - compare if equal to other edge
-*/
+ * @brief Interface for an Edge
+ * 
+ * @tparam E edge implementation type
+ * @tparam N node type
+ */
 template<typename E, typename N=E::node_type>
 concept Edge = requires(const E & e, const E & o, const N & cNodeRef /*, N&& nodeRval*/){
     {E(cNodeRef,cNodeRef)};
@@ -25,6 +24,14 @@ concept Edge = requires(const E & e, const E & o, const N & cNodeRef /*, N&& nod
     typename E::equality_predicate;
 };
 
+/**
+ * @brief Interface for a weighted Edge
+ * 
+ * @tparam E unweighted edge implementation type
+ * @tparam N node type
+ * @tparam A annotation type
+ * @tparam W weight function type
+ */
 template<typename E, typename N= E::node_type, typename A=E::annotation_type, typename W=E::weight_function>
 concept WeightedEdge = Edge<E,N> && WeightFunction<W,N,A> && requires (const E & e, const N & cNodeRef, const A & constARef, A&& ARval ){
     {E(cNodeRef,cNodeRef,constARef)};
@@ -34,11 +41,17 @@ concept WeightedEdge = Edge<E,N> && WeightFunction<W,N,A> && requires (const E &
     typename E::annotation_type;
     typename E::weight_function;
 };
+}
 
-
-namespace __impl{
-    using namespace graph;
-
+namespace fishnet::graph::__impl{
+    /**
+     * @brief Default edge implementation
+     * 
+     * @tparam N node type
+     * @tparam Directed bool deciding if edge is directed
+     * @tparam Hash hasher on node type
+     * @tparam Equal comparator on node type
+     */
     template<Node N,bool Directed, util::HashFunction<N> Hash = std::hash<N>, NodeBiPredicate<N> Equal = std::equal_to<N>> 
     class BaseEdge {
         protected:
@@ -67,19 +80,19 @@ namespace __impl{
                 return to;
             }
 
-            bool operator==(  const BaseEdge<N,false,Hash,Equal> & other)const{
+            bool operator==( const BaseEdge<N,false,Hash,Equal> & other)const{
                 if constexpr(not Directed){
                     return (eq(from, other.getFrom()) and eq(to,other.getTo())) or
                     (eq(from, other.getTo()) and eq(to, other.getFrom()));
                 }
-                return false;
+                return false; // directed edge != undirected edge
             }
 
             bool operator==(const BaseEdge<N,true,Hash,Equal> & other) const {
                 if constexpr(Directed){
                     return eq(from,other.getFrom()) && eq(to, other.getTo());
                 }
-                return false;
+                return false; // directed edge != undirected edge
             }
 
             size_t inline hash()const{
@@ -93,16 +106,18 @@ namespace __impl{
                 }
             }
     };
-
-
-
-    
+    /**
+     * @brief Weighted edge decorator, inheriting from edge type
+     * 
+     * @tparam E edge type
+     * @tparam A annotation type
+     * @tparam W weight function type
+     */
     template<Edge E,Annotation A,WeightFunction<typename E::node_type,A> W>
         class WeightedEdgeDecorator: public E{
         private:
             A weight;
             using N=typename E::node_type;
-
         public:
             using annotation_type=A;
             using weight_function=W;
@@ -116,6 +131,7 @@ namespace __impl{
             WeightedEdgeDecorator(const N & from, const N & to, A &&weight): E(from,to),weight(std::move(weight)){};
 
             WeightedEdgeDecorator( E && edge ):WeightedEdgeDecorator(edge.getFrom(),edge.getTo()){}
+
             WeightedEdgeDecorator(const E & edge ):WeightedEdgeDecorator(edge.getFrom(),edge.getTo()){}
 
             void setWeight(const A & weight){
@@ -140,6 +156,8 @@ namespace __impl{
     };
 }
 
+namespace fishnet::graph{
+
 template<Node N, util::HashFunction<N> Hash = std::hash<N>, NodeBiPredicate<N> Equal = std::equal_to<N>>
 using UndirectedEdge = __impl::BaseEdge<N,false,Hash,Equal>;
 
@@ -148,11 +166,7 @@ using DirectedEdge = __impl::BaseEdge<N,true,Hash,Equal>;
 
 template<Edge E, Annotation A , WeightFunction<typename E::node_type,A> W>
 using WeightEdge = __impl::WeightedEdgeDecorator<E,A,W>;
-
-
 }
-
-
 
 namespace std{
     using namespace fishnet::graph;
@@ -163,8 +177,3 @@ namespace std{
         }
     };
 };
-#endif
-
-
-
-

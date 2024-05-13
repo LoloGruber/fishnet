@@ -1,9 +1,14 @@
-#ifndef ConnectedComponents_H
-#define ConnectedComponents_H
+#pragma once
 #include "SearchResult.hpp"
 #include <unordered_map>
 namespace fishnet::graph{
 
+/**
+ * @brief Search Result for Connected Components.
+ * @tparam N node type
+ * @tparam Hash hasher type on nodes
+ * @tparam Equal comparator type on nodes
+ */
 template<typename N,util::HashFunction<N> Hash=std::hash<N>, NodeBiPredicate<N> Equal = std::equal_to<N>>
 class ConnectedComponents: public SearchResult<ConnectedComponents<N,Hash,Equal>,N,Hash,Equal>
 {
@@ -24,9 +29,9 @@ public:
         this->components = std::vector<std::vector<N>>();
     }
 
-
-    void onOpen(const N & node)  {
-        if(openClosedCounter == 0) {
+    void onOpen(const N & node) noexcept {
+        // if openClosedCounter == 0, the BFS search from single vertex is finished, revealing the complete connected component
+        if(openClosedCounter == 0) { 
             this->components.push_back(std::vector<N>());
         }
         this->openClosedCounter++;
@@ -34,30 +39,33 @@ public:
     }
 
 
-    void onEdge(const N & from, const N & to){
+    void onEdge(const N & from, const N & to) noexcept{
         return;
     }
 
-
-    void onClose(const N & node) {
+    void onClose(const N & node) noexcept {
         this->openClosedCounter--;
-
+        // if openClosedCounter <= 0, the BFS search from single vertex is finished, revealing the complete connected component
         if(this->openClosedCounter <= 0) {
-            handleClose();
+            handleClose(); // utilized by concurrent implementation, to fill the queue with components incrementally
             this->index++;
         }
     }
 
-    bool stop() const  {
+    bool stop() const  noexcept{
         return false;
     }
 
-
-    std::vector<std::vector<N>> get() const {
+    std::vector<std::vector<N>> get() const noexcept{
         return this->components;
     }
 
-    std::unordered_map<N,int,Hash,Equal> asMap() const {
+    /**
+     * @brief Get connected components as a Map: Node -> component-id
+     * 
+     * @return std::unordered_map<N,int,Hash,Equal> storing for each node the component id as a value
+     */
+    std::unordered_map<N,int,Hash,Equal> asMap() const noexcept {
         std::unordered_map<N,int,Hash,Equal> map;
         for(size_t component_number=0; component_number < components.size(); component_number++) {
             for(auto & node : components[component_number]) {
@@ -66,22 +74,6 @@ public:
         }
         return map;
     }
-
-    
-
-
-
-
     ~ConnectedComponents() = default;
 };
-
-
-
-
-
-
 }
-
-
-
-#endif

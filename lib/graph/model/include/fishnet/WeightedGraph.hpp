@@ -7,14 +7,26 @@
 #include <unordered_map>
 
 namespace fishnet::graph{
-
+/**
+ * @brief Interface for a weighted graph
+ * 
+ * @tparam GraphImpl weighted graph implementation type
+ * @tparam E edge type required to be a Weighted Edge
+ * @tparam N node type
+ */
 template<typename GraphImpl, typename E= GraphImpl::edge_type, typename N= E::node_type>
 concept WeightedGraph = Node<N> && WeightedEdge<E> && Graph<GraphImpl,E,N>;
+}
 
-namespace __impl {
-    using namespace graph;
-
-    template<class G,Annotation A, WeightFunction<typename G::node_type,A> W> //requires Graph<G<typename G::edge_type,typename G::node_type>,typename G::edge_type,typename G::node_type>
+namespace fishnet::graph::__impl {
+    /**
+     * @brief Weighted graph decorator
+     * 
+     * @tparam G graph type
+     * @tparam A annotation type
+     * @tparam W weight function type
+     */
+    template<class G,Annotation A, WeightFunction<typename G::node_type,A> W>
     class WeightedGraphDecorator: public GraphDecorator<WeightedGraphDecorator<G,A,W>,G,WeightEdge<typename G::edge_type,A,W>>{
         private:
             using E = G::edge_type;
@@ -22,11 +34,11 @@ namespace __impl {
             using N = G::node_type;
             using WeightMap = std::unordered_map<E,A>;
             using Base = GraphDecorator<WeightedGraphDecorator<G,A,W>,G,WE>;
-            WeightMap weightMap;
+            WeightMap weightMap; // weights are stored in a map from edge to annotation, allowing heterogenous weights retrieved by the weight function or by the user
         public:
             using edge_type=WE;
             using adj_container_type = G::adj_container_type;
-            static_assert(! WeightedEdge<E, typename E::node_type, A,W>);
+            static_assert(! WeightedEdge<E, typename E::node_type, A,W>); // underlying edge type must not be weighted
         private:
             inline WE toWeightedEdge(const E & e)const{
                 if (weightMap.contains(e)){
@@ -37,13 +49,14 @@ namespace __impl {
 
             std::vector<WE> toWeightedEdges(util::forward_range_of<E> auto && edges)const {
                 std::vector<WE> weighted;
-                std::ranges::transform(edges,std::back_inserter(weighted),
-                [this](const E & e){return toWeightedEdge(e);});
+                std::ranges::transform(edges,std::back_inserter(weighted),[this](const E & e){return toWeightedEdge(e);});
                 return weighted;
             }
 
         public:
             WeightedGraphDecorator():Base(){}
+
+            WeightedGraphDecorator(adj_container_type && adjContainer):Base(std::move(adjContainer)){}
 
             WeightedGraphDecorator(util::forward_range_of<N> auto & nodes):Base(nodes){};
 
@@ -68,10 +81,6 @@ namespace __impl {
                 return Base::addEdge(from,to);
             }
 
-            // bool addEdge(const E & e){
-            //     return Base::addEdge(e);
-            // }
-
             bool addEdge( N & from,  N & to, const A & annotation){
                 auto e = E(from,to);
                 if (Base::addEdge(e)) {
@@ -95,8 +104,8 @@ namespace __impl {
             }
 
             bool containsEdge(const WE & edge)const{
-                auto unweight = edge.unweighted();
-                return Base::containsEdge(unweight) && toWeightedEdge(unweight).getWeight() == edge.getWeight();
+                auto unweighted = edge.unweighted();
+                return Base::containsEdge(unweighted) && toWeightedEdge(unweighted).getWeight() == edge.getWeight();
             }
 
             bool containsEdge(const N & from, const N & to){
@@ -135,12 +144,12 @@ namespace __impl {
              * Remove edge if weights are equal or if no weight is stored
             */
             void removeEdge(const WE & e){
-                auto unweight = e.unweighted();
-                if(not weightMap.contains(unweight) && WE(unweight).getWeight()==e.getWeight()){
-                    Base::removeEdge(unweight);
-                }else if(weightMap.contains(unweight) && weightMap.at(unweight) == e.getWeight()) {
-                    weightMap.erase(unweight);
-                    Base::removeEdge(unweight);
+                auto unweighted = e.unweighted();
+                if(not weightMap.contains(unweighted) && WE(unweighted).getWeight()==e.getWeight()){
+                    Base::removeEdge(unweighted);
+                }else if(weightMap.contains(unweighted) && weightMap.at(unweighted) == e.getWeight()) {
+                    weightMap.erase(unweighted);
+                    Base::removeEdge(unweighted);
                 }
             }
 
@@ -162,7 +171,14 @@ namespace __impl {
             }
     };
 }
+namespace fishnet::graph{
+/**
+ * @brief Weighted Graph Decorator type 
+ * 
+ * @tparam G graph type
+ * @tparam A annotation type
+ * @tparam W weight function type
+ */
 template<Graph G,Annotation A, WeightFunction<typename G::node_type,A> W>
 using Weighted = __impl::WeightedGraphDecorator<G,A,W>;
-
 }

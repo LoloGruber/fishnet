@@ -1,12 +1,17 @@
-#ifndef Graph_Graph_H
-#define Graph_Graph_H
+#pragma once
 #include "Edge.hpp"
 #include "NetworkConcepts.hpp"
 #include <fishnet/CollectionConcepts.hpp>
 #include <fishnet/AdjacencyContainer.hpp>
 #include <fishnet/AdjacencyMap.hpp>
 namespace fishnet::graph{
-
+/**
+ * @brief Abstract Graph Implementing using CRTP
+ * 
+ * @tparam GraphImpl graph implementation type
+ * @tparam E edge type
+ * @tparam AdjacencyMap<typename E::node_type,typename E::hash_function, typename E::equality_predicate> adjacency container type, default: AdjacencyMap
+ */
 template<class GraphImpl, Edge E, AdjacencyContainer<typename E::node_type> A = AdjacencyMap<typename E::node_type,typename E::hash_function, typename E::equality_predicate>>
 class AbstractGraph {
 private:
@@ -77,7 +82,7 @@ public:
         return impl().addEdge(edge);
     }
 
-    void addEdges(util::forward_range_of<std::pair<N,N>> auto  & edges){
+    void addEdges(util::forward_range_of<std::pair<N,N>> auto & edges){
         impl().addEdges(edges);
     }
 
@@ -142,4 +147,3 @@ public:
     virtual ~AbstractGraph() = default;   
 };
 }
-#endif

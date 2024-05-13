@@ -3,16 +3,23 @@
 #include "AbstractGraph.hpp"
 #include <fishnet/CollectionConcepts.hpp>
 namespace fishnet::graph{
+/**
+ * @brief Abstract Graph Decorator using CRTP
+ * 
+ * @tparam DecoratorImpl graph decorator implementation type
+ * @tparam G graph type
+ * @tparam G::edge_type edge type of graph
+ */
 template<class DecoratorImpl, class G, Edge E = typename G::edge_type>
 class GraphDecorator : public AbstractGraph<DecoratorImpl, E, typename G::adj_container_type>
 {                                                          
-    // static_assert(std::derived_from<GraphDecorator<DecoratorImpl,G>,AbstractGraph<GraphDecorator<DecoratorImpl,G>,typename G::edge_type,typename G::adj_container_type>>);
 protected:
     using Base = AbstractGraph<DecoratorImpl,E,typename G::adj_container_type>;
     G g;
     using N = G::node_type;
     GraphDecorator():Base(){}
-    GraphDecorator(G && source):g(source){};
+    GraphDecorator(G && source):g(std::move(source)){};
+    GraphDecorator(typename G::adj_container_type && adjContainer):g(std::move(adjContainer)){}
     GraphDecorator(util::forward_range_of<N> auto& nodes):g(nodes){};
     GraphDecorator(util::forward_range_of<N> auto && nodes):g(nodes){};
 public:
@@ -123,7 +130,5 @@ public:
     }
 
     virtual ~GraphDecorator() = default;   
-
 };
-
 }

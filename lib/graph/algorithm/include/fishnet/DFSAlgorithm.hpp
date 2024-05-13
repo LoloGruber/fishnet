@@ -9,10 +9,17 @@
 #include "SearchPath.hpp"
 #include "DefaultBiPredicate.hpp"
 
-namespace fishnet::graph{
-namespace DFS{
-
-namespace fishnet::graph::__impl{
+namespace fishnet::graph::__impl {
+/**
+ * @brief Generic depth-first search implementation
+ * 
+ * @tparam G graph type
+ * @tparam SearchResultImpl search result type
+ * @param g graph
+ * @param searchResult mutable reference to the search result
+ * @param start start node
+ * @param predicate BiPredicate to require additional criteria for two nodes to be in relation
+ */
 template<Graph G,class SearchResultImpl>
 static void dfs(const G & g,SearchResult<SearchResultImpl> & searchResult, const typename G::node_type & start,  NodeBiPredicate<typename G::node_type>  auto const& predicate)  {
     using N = G::node_type;
@@ -34,10 +41,19 @@ static void dfs(const G & g,SearchResult<SearchResultImpl> & searchResult, const
         }
 
     }
-
 }
 }
 
+namespace fishnet::graph::DFS{
+/**
+ * @brief Find path between start and goal using depth-first search
+ * 
+ * @tparam G graph type
+ * @param g graph
+ * @param start start node
+ * @param goal target node
+ * @return util::input_range_of<typename G::edge_type> range of edges leading from start to goal
+ */
 template<Graph G>
 static util::input_range_of<typename G::edge_type> auto findPath(const G & g,const typename G::node_type & start, const typename G::node_type & goal) {
     using N = typename G::node_type;
@@ -56,8 +72,6 @@ static util::input_range_of<typename G::edge_type> auto findPath(const G & g,con
         edges.emplace_back(g.makeEdge(nodes[i],nodes[i+1]));
     }
     return edges;
-}
-
 }
 }
 

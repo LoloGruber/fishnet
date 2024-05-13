@@ -1,10 +1,17 @@
-#ifndef SearchResult_H
-#define SearchResult_H
+#pragma once
 #include <unordered_map>
 #include "NodeStatus.hpp"
 #include <fishnet/NetworkConcepts.hpp>
 #include <fishnet/HashConcepts.hpp>
 namespace fishnet::graph{
+/**
+ * @brief CRTP Abstraction of Search Results
+ * 
+ * @tparam ResultImpl implementing search result type
+ * @tparam N node type
+ * @tparam Hash hasher type on nodes
+ * @tparam Equal comparator type on nodes
+ */
 template<class ResultImpl, typename N = ResultImpl::node_type,util::HashFunction<N> Hash=std::hash<N>, NodeBiPredicate<N> Equal = std::equal_to<N>>
 class SearchResult
 {
@@ -34,12 +41,14 @@ public:
     }
 
     NodeStatus getStatusOfNode(const N & node) const {
-        if (this->nodeStatus.contains(node)) return this->nodeStatus.at(node);
+        if (this->nodeStatus.contains(node))
+             return this->nodeStatus.at(node);
         return NodeStatus::UNKNOWN;
     }
 
     void open(const N & node){
-        if(this->isOpen(node)) return;
+        if(this->isOpen(node)) 
+            return;
         if (this->nodeStatus.contains(node)) {
             this->nodeStatus[node] = NodeStatus::OPEN;
         }
@@ -50,7 +59,8 @@ public:
     }
 
     void close(const N & node) {
-        if(this->isClosed(node)) return;
+        if(this->isClosed(node)) 
+            return;
         if (this->nodeStatus.contains(node)){
             this->nodeStatus[node] = NodeStatus::CLOSED;
         } else {
@@ -70,12 +80,6 @@ public:
     bool isUnknown(const N & node) const {
         return this->getStatusOfNode(node) == NodeStatus::UNKNOWN;
     }
-
-
-
     virtual ~SearchResult() = default;
 };
 }
-
-
-#endif

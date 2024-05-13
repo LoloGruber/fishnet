@@ -1,10 +1,16 @@
-#ifndef SEARCH_PATH_H
-#define SEARCH_PATH_H
+#pragma once
 #include "SearchResult.hpp"
 #include <optional>
 #include <algorithm>
 #include <fishnet/Edge.hpp>
 namespace fishnet::graph{
+/**
+ * @brief Search Path implementation
+ * 
+ * @tparam E edge type
+ * @tparam std::hash<typename E::node_type> hasher on node type of the edge type
+ * @tparam std::equal_to<typename E::node_type> comparator on node type of the edge type
+ */
 template<Edge E,util::HashFunction<typename E::node_type> Hash = std::hash<typename E::node_type>,NodeBiPredicate<typename E::node_type> Equal = std::equal_to<typename E::node_type>>
 class SearchPath : public SearchResult<SearchPath<E,Hash,Equal>,typename E::node_type,Hash,Equal>
 {
@@ -49,14 +55,6 @@ public:
         std::reverse(nodes.begin(),nodes.end());
         return std::optional<std::vector<N>>{nodes};
     }
-
-
-
     ~SearchPath() = default;
 };
-
-
 }
-
-
-#endif

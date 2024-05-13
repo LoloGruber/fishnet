@@ -1,7 +1,6 @@
 #pragma once
 namespace fishnet::graph{
-enum class NodeStatus
-{
+enum class NodeStatus{
 UNKNOWN,OPEN,CLOSED
 };
 }

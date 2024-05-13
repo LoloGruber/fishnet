@@ -6,13 +6,18 @@
 #include "Edge.hpp"
 
 namespace fishnet::graph::__impl {
+/**
+ * @brief Default graph implementation
+ * 
+ * @tparam E edge type
+ * @tparam AdjContainer adjacency container type
+ */
 template<Edge E, AdjacencyContainer<typename E::node_type> AdjContainer>
 class SimpleGraph: public AbstractGraph<SimpleGraph<E,AdjContainer>,E,AdjContainer> {
 private:
     AdjContainer adj;
     using Base = AbstractGraph<SimpleGraph<E,AdjContainer>,E,AdjContainer>;
     using N = Base::node_type;
-
 public:
 
     SimpleGraph():Base(),adj(){};
@@ -65,7 +70,7 @@ public:
         if (not containsEdge(from,to)) {
             adj.addAdjacency(from,to);
             if constexpr(not E::isDirected()){
-                adj.addAdjacency(to,from);  
+                adj.addAdjacency(to,from); // add reversed edge as well if graph is undirected
             }
             return true;
         }
@@ -76,7 +81,7 @@ public:
         if (not containsEdge(from,to)){
             adj.addAdjacency(from,to);
             if constexpr(not E::isDirected()){
-                adj.addAdjacency(to,from);
+                adj.addAdjacency(to,from); // add reversed edge as well if graph is undirected
             }
             return true;
         }
@@ -85,7 +90,7 @@ public:
 
     void addEdges(util::forward_range_of<std::pair<N,N>> auto  & edges){
         if constexpr(not E::isDirected()){
-            std::vector<std::pair<N,N>> reversed;
+            std::vector<std::pair<N,N>> reversed; // add reversed edge as well if graph is undirected
             std::ranges::transform(edges,std::back_inserter(reversed),[]( auto & pair){return std::pair(pair.second,pair.first);});
             adj.addAdjacencies(std::move(reversed));
         }
@@ -103,8 +108,10 @@ public:
     }
 
     bool containsEdge(const N & from, const N & to) const noexcept {
-        if constexpr(E::isDirected()) return adj.hasAdjacency(from,to);
-        else return adj.hasAdjacency(from,to) && adj.hasAdjacency(to,from);
+        if constexpr(E::isDirected())
+             return adj.hasAdjacency(from,to);
+        else 
+            return adj.hasAdjacency(from,to) && adj.hasAdjacency(to,from);
     }
 
     bool containsEdge(const E & edge) const noexcept {
@@ -142,7 +149,6 @@ public:
     auto getReachableFrom(const N & node) const noexcept {
         if constexpr(E::isDirected()){
             auto isReachableFrom = [&](const N & from) {return containsEdge(from,node);};
-            // return getNodes();
             return getNodes() | std::views::filter(isReachableFrom);
         }else {
             return getNeighbours(node);
@@ -175,7 +181,6 @@ public:
         return adj;
     }
 
-    ~SimpleGraph()=default;
-
+    virtual ~SimpleGraph()=default;
 };
 }
