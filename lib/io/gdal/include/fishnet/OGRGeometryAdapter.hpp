@@ -85,8 +85,9 @@ static OGRUniquePtr<OGRMultiPolygon> toOGR(fishnet::geometry::IMultiPolygon auto
     // https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry maybe change direction of inner rings
 }
 
+
 template<fishnet::geometry::GeometryType G>
-constexpr static fishnet::geometry::OptionalGeometryObject auto fromOGR(const OGRGeometry & ogrGeometry){
+constexpr static auto fromOGR(const OGRGeometry & ogrGeometry){
     if constexpr(G == fishnet::geometry::GeometryType::POLYGON){
         return fromOGR(*ogrGeometry.toPolygon());
     } else if constexpr(G == fishnet::geometry::GeometryType::POINT){
