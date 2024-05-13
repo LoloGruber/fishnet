@@ -5,6 +5,7 @@
 #include <fishnet/PathHelper.h>
 #include "Testutil.h"
 using namespace fishnet;
+using namespace fishnet::geometry;
 
 TEST(WGS84EllipsoidTest, flattening) {
     double flatteningExpected = 0.00335281066474748;

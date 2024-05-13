@@ -10,11 +10,11 @@ int main(int argc, char * argv[]) {
     const auto input = VectorLayer<fishnet::geometry::Polygon<double>>::read(source);
     const int splits = 4;
     
-    auto rectangleView = input.getGeometries() | std::views::transform([](const auto & shape){return Rectangle(shape);});
-    double top = std::ranges::max(rectangleView | std::views::transform(&Rectangle<double>::top));
-    double right = std::ranges::max(rectangleView | std::views::transform(&Rectangle<double>::right));
-    double left = std::ranges::min(rectangleView | std::views::transform(&Rectangle<double>::left));
-    double bottom = std::ranges::min(rectangleView | std::views::transform(&Rectangle<double>::bottom));
+    auto rectangleView = input.getGeometries() | std::views::transform([](const auto & shape){return geometry::Rectangle(shape);});
+    double top = std::ranges::max(rectangleView | std::views::transform(&geometry::Rectangle<double>::top));
+    double right = std::ranges::max(rectangleView | std::views::transform(&geometry::Rectangle<double>::right));
+    double left = std::ranges::min(rectangleView | std::views::transform(&geometry::Rectangle<double>::left));
+    double bottom = std::ranges::min(rectangleView | std::views::transform(&geometry::Rectangle<double>::bottom));
     double deltaX = right-left;
     double deltaY = top-bottom;
     std::vector<VectorLayer<fishnet::geometry::Polygon<double>>> outputDatasets;

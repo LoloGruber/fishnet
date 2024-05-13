@@ -8,7 +8,7 @@
 
 using namespace testutil;
 using namespace fishnet;
-
+using namespace fishnet::geometry;
 
 class VectorLayerTest: public ::testing::Test {
 protected:
