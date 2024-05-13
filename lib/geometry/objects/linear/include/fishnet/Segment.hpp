@@ -1,11 +1,14 @@
 #pragma once
 #include <optional>
-
 #include <fishnet/Vec2D.hpp>
 #include "Line.hpp"
 
-
 namespace fishnet::geometry{
+/**
+ * @brief Implementation of a segment
+ * 
+ * @tparam T numeric type used for computations
+ */
 template<fishnet::math::Number T = fishnet::math::DEFAULT_NUMERIC>
 class Segment{
 private:
@@ -74,13 +77,6 @@ public:
         return intersect(*this,other);
     }
 
-    // template<fishnet::math::Number U>
-    // constexpr bool intersects(const Segment<U> & other) const noexcept {
-    //     [[likely]] if(this->isValid() && other.isValid()) return intersect(*this,other);
-    //     if(this->isValid()) return this->contains(other.p());
-    //     return other.contains(this->_p);
-    // }
-
     /**
      * @brief Two Segments have an Overlay if the are contained on the same line: 
      *  -> the Segments must be parallel and at least share on point.
@@ -122,28 +118,31 @@ public:
     }
 
     constexpr bool contains(IPoint auto const & point)const noexcept{
-        using namespace fishnet::math;
-        if (not isValid()) return _p==point;
+        using FLOAT_TYPE = fishnet::math::DEFAULT_FLOATING_POINT;
+        auto EPSILON = fishnet::math::EPSILON;
+        if (not isValid()) // 0-length segment
+            return _p==point; 
         auto dir = direction();
-        if(dir.x == 0){
-            DEFAULT_FLOATING_POINT lambdaY = DEFAULT_FLOATING_POINT(point.y - _p.y) / DEFAULT_FLOATING_POINT(dir.y);
+        if(dir.x == 0){ // vertical segment
+            FLOAT_TYPE lambdaY = FLOAT_TYPE(point.y - _p.y) / FLOAT_TYPE(dir.y); // lambda has to be between in the range [0,1] and the x-Coordinates have to be approx. equal
             return lambdaY >= 0.0-EPSILON and lambdaY <= 1.0 + EPSILON and fabs(_p.x - point.x) < EPSILON;
         }
-        if(dir.y == 0){
-            DEFAULT_FLOATING_POINT lambdaX = DEFAULT_FLOATING_POINT(point.x - _p.x) / DEFAULT_FLOATING_POINT(dir.x);
+        if(dir.y == 0){ // horizontal segment
+            FLOAT_TYPE lambdaX = FLOAT_TYPE(point.x - _p.x) / FLOAT_TYPE(dir.x); // lambda has to be between in the range [0,1] and the y-Coordinates have to be approx. equal
             return lambdaX >= 0.0 - EPSILON and lambdaX <= 1.0 + EPSILON and fabs(_p.y - point.y) < EPSILON;
         }
-        DEFAULT_FLOATING_POINT lambdaX = DEFAULT_FLOATING_POINT(point.x - _p.x) / DEFAULT_FLOATING_POINT(dir.x);
-        DEFAULT_FLOATING_POINT lambdaY = DEFAULT_FLOATING_POINT(point.y - _p.y) / DEFAULT_FLOATING_POINT(dir.y);
-        return fabs(lambdaX - lambdaY) < EPSILON and lambdaX >= 0.0 - EPSILON and lambdaY <= 1.0 + EPSILON; // both lambdas have to be equal by definition, so checking one is sufficient
+        FLOAT_TYPE lambdaX = FLOAT_TYPE(point.x - _p.x) / FLOAT_TYPE(dir.x);
+        FLOAT_TYPE lambdaY = FLOAT_TYPE(point.y - _p.y) / FLOAT_TYPE(dir.y);
+        return fabs(lambdaX - lambdaY) < EPSILON and lambdaX >= 0.0 - EPSILON and lambdaY <= 1.0 + EPSILON; // both lambdas have to be equal by definition, so checking one for the range [0,1] is sufficient 
     }
 
     constexpr fishnet::math::DEFAULT_FLOATING_POINT distance(IPoint auto const & point) const noexcept {
         auto orthogonalDirection = this->direction().orthogonal();
         auto orthogonalLine = Line(point, point + orthogonalDirection);
         auto intersection = this->intersection(orthogonalLine);
-        if(intersection) return point.distance(*intersection);
-        return std::min(_p.distance(point), _q.distance(point));
+        if(intersection) 
+            return point.distance(*intersection); // intersection on the segment of orthogonal line between segment and point
+        return std::min(_p.distance(point), _q.distance(point)); // return closest endpoint of segment to the point otherwise
     }
 
     constexpr auto intersection(LinearGeometry auto const& other)const noexcept {

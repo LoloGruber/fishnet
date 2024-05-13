@@ -6,6 +6,11 @@
 #include <fishnet/LinearIntersection.hpp>
 
 namespace fishnet::geometry{
+/**
+ * @brief Implementation of a line
+ * 
+ * @tparam T numeric type used for computations
+ */
 template<fishnet::math::Number T = fishnet::math::DEFAULT_NUMERIC>
 class Line{
 public:
@@ -15,10 +20,22 @@ public:
     constexpr static Line<T> X_AXIS = Line<T>(T(0),T(0));
     constexpr static Line<T> Y_AXIS = Line<T>(Vec2D<T>(0,0),Vec2D<T>(0,1));
 
+    /**
+     * @brief Vertical line factory 
+     * 
+     * @param x x-axis intersection of the vertical line
+     * @return constexpr Line<T> 
+     */
     constexpr static Line<T> verticalLine(T x) noexcept {
         return Line<T>(Vec2D<T>(x,0),Vec2D<T>(x,1));
     }
 
+    /**
+     * @brief Horizontal line factory
+     * 
+     * @param y y-axis intersection of the horizontal line
+     * @return constexpr Line<T> 
+     */
     constexpr static Line<T> horizontalLine(T y) noexcept {
         return Line<T>(0,y);
     }
@@ -26,22 +43,58 @@ public:
     using numeric_type =  T;
     constexpr static GeometryType type = GeometryType::LINE;
 
+    /**
+     * @brief Constructor for a line formed by two points
+     * 
+     */
     constexpr Line(Vec2D<T> p , Vec2D<T> q):p(p),q(q){
         if (p == q) 
             throw std::invalid_argument("Coinciding Points cannot define a Line");
     }
 
+    /**
+     * @brief Constructor for a line with heterogenous numeric types
+     * Construct new line by converting to the default numeric type
+     * @tparam U numeric type != T
+     * @tparam typename enable_if -> only allow this constructor if T is the numeric type:
+     * @tparam std::is_same_v<T,fishnet::math::DEFAULT_NUMERIC>> 
+     */
     template<fishnet::math::Number U, typename = std::enable_if_t<!std::is_same_v<U,T> && std::is_same_v<T,fishnet::math::DEFAULT_NUMERIC>>>
     constexpr Line(Vec2D<T> p, Vec2D<U> q):Line(p,static_cast<Vec2D<T>>(q)){}
 
+    /**
+     * @brief Constructor for a line with heterogenous numeric types
+     * Construct new line by converting to the default numeric type
+     * @tparam U numeric type != T
+     * @tparam typename enable_if -> only allow this constructor if T is the numeric type:
+     * @tparam std::is_same_v<T,fishnet::math::DEFAULT_NUMERIC>> 
+     */
     template<fishnet::math::Number U, typename = std::enable_if_t<!std::is_same_v<U,T> && std::is_same_v<T,fishnet::math::DEFAULT_NUMERIC>>>
     constexpr Line(Vec2D<U> p , Vec2D<T> q):Line(static_cast<Vec2D<T>>(p),q){}
 
+    /**
+     * @brief Constructor of line using slope and y intercept
+     * 
+     */
     constexpr Line(T slope, T yIntercept):p(Vec2D<T>(0,yIntercept)),q(Vec2D<T>(1,slope+yIntercept)){}
 
+    /**
+     * @brief Constructor of line using slope and y intercept with heterogenous type
+     * 
+     * @tparam U numeric type != T
+     * @tparam typename enable_if -> only allow this constructor if T is the numeric type:
+     * @tparam std::is_same_v<T,fishnet::math::DEFAULT_NUMERIC>>
+     */
     template<fishnet::math::Number U, typename = std::enable_if_t<!std::is_same_v<U,T> && std::is_same_v<T,fishnet::math::DEFAULT_NUMERIC>>>
     constexpr Line(T slope, U yIntercept):Line(slope,fishnet::math::DEFAULT_NUMERIC(yIntercept)){}
 
+    /**
+     * @brief Constructor of line using slope and y intercept with heterogenous type
+     * 
+     * @tparam U numeric type != T
+     * @tparam typename enable_if -> only allow this constructor if T is the numeric type:
+     * @tparam std::is_same_v<T,fishnet::math::DEFAULT_NUMERIC>>
+     */
     template<fishnet::math::Number U, typename = std::enable_if_t<!std::is_same_v<U,T> && std::is_same_v<T,fishnet::math::DEFAULT_NUMERIC>>>
     constexpr Line(U slope, T yIntercept):Line(fishnet::math::DEFAULT_NUMERIC(slope),yIntercept){}
 
@@ -66,23 +119,23 @@ public:
     }
 
     constexpr fishnet::math::DEFAULT_FLOATING_POINT slope() const noexcept{
-        using namespace fishnet::math;
-        [[unlikely]] if (direction().x == 0) return std::numeric_limits<fishnet::math::DEFAULT_FLOATING_POINT>::max();
-        return DEFAULT_FLOATING_POINT(direction().y) / DEFAULT_FLOATING_POINT(direction().x);
+        [[unlikely]] if (direction().x == 0) 
+            return std::numeric_limits<fishnet::math::DEFAULT_FLOATING_POINT>::max();
+        return fishnet::math::DEFAULT_FLOATING_POINT(direction().y) / fishnet::math::DEFAULT_FLOATING_POINT(direction().x);
     }
 
     constexpr bool contains(IPoint auto const & point) const noexcept{
-        using namespace fishnet::math;
+        using FLOAT_TYPE = fishnet::math::DEFAULT_FLOATING_POINT;
         auto dir = direction();
-        if(dir.x == 0) {
+        if(dir.x == 0) { // line is vertical
             return point.x == p.x; //or q.x
         }
-        if(dir.y == 0){
+        if(dir.y == 0){ // line is horizontal
             return point.y == p.y;
         }
-        DEFAULT_FLOATING_POINT lX = DEFAULT_FLOATING_POINT(point.x - p.x) / DEFAULT_FLOATING_POINT(dir.x);
-        DEFAULT_FLOATING_POINT lY = DEFAULT_FLOATING_POINT(point.y - p.y) / DEFAULT_FLOATING_POINT(dir.y);
-        return fabs(lX-lY) < EPSILON;
+        FLOAT_TYPE lX = FLOAT_TYPE(point.x - this->p.x) / FLOAT_TYPE(dir.x);
+        FLOAT_TYPE lY = FLOAT_TYPE(point.y - this->p.y) / FLOAT_TYPE(dir.y);
+        return fabs(lX-lY) < fishnet::math::EPSILON;
     }
 
     constexpr bool isLeft(IPoint auto const & point) const noexcept {
@@ -104,7 +157,7 @@ public:
     template<fishnet::math::Number U>
     constexpr bool operator==(const Line<U> & other) const noexcept {
         if(this->isParallel(other)){
-            [[unlikely]] if (isVertical()){ //other must also be vertical since both are vertical
+            [[unlikely]] if (isVertical()){ //other must also be vertical since both are parallel
                 return this->p.x == other.p.x;
             }
             return fabs(yIntercept().value() - other.yIntercept().value()) < fishnet::math::EPSILON;
@@ -113,12 +166,6 @@ public:
     }
 
     constexpr std::optional<Vec2DReal> intersection(LinearGeometry auto const& other) const noexcept {
-        // if(isParallel(other)) return std::nullopt;
-        // auto dThis = direction();
-        // double denominator = (p.x - q.x) * (other.p.y - other.q.y) - (p.y - q.y) *(other.p.x - other.q.x);
-        // double lambda = ((p.x - other.p.x) * (other.p.y - other.q.y) - (p.y - other.p.y) * (other.p.x - other.q.x)) /denominator;
-        // auto intersectionOfLines =  p + (dThis * lambda);
-        // return std::optional(intersectionOfLines);
         return linearIntersection(*this,other);
     }
 

@@ -12,6 +12,11 @@
 
 namespace fishnet::geometry{
 
+/**
+ * @brief Implementation of a Multi-Polygon
+ * 
+ * @tparam P polygon type stored within the multi-polygon
+ */
 template<IPolygon P>
 class MultiPolygon{
 private:
@@ -21,6 +26,12 @@ private:
         return std::ranges::any_of(polygons,predicate);
     }
 
+    /**
+     * @brief Helper function which adds polygons if possible, otherwise an error is returned
+     * 
+     * @param polygon 
+     * @return std::nullopt if no error, otherwise optional<string> explaining the error 
+     */
     constexpr std::optional<std::string> tryAddGetCauseOnError(const P & polygon) noexcept {
         for(const auto & p : polygons){
             if(p == polygon)
@@ -46,14 +57,20 @@ public:
     using polygon_type = P;
     constexpr static GeometryType type = GeometryType::MULTIPOLYGON;
 
-
+    /**
+     * @brief Construct a new Multi Polygon object
+     * 
+     * @param polygonsRange 
+     * @param checked if true, no checks are applied, potentially speeding up the construction
+     */
     MultiPolygon(util::input_range_of<P> auto const & polygonsRange,bool checked =false){
         if (checked){
             this->polygons = std::vector<P>(std::ranges::begin(polygonsRange),std::ranges::end(polygonsRange));
         }else{
-            if(util::size(polygonsRange) < 10)
+            if(util::size(polygonsRange) < 10) // use brute force for small multi-polygons (< 10 polygons)
                 std::ranges::for_each(polygonsRange,[this](const P & p){addOrThrow(p);});
             else {
+                // use sweep-line for large multi-polygons, filter out invalid entries
                 this->polygons = filter(polygonsRange,[](const P & lhs, const P & rhs){
                     return lhs == rhs || lhs.crosses(rhs) || lhs.contains(rhs) || rhs.contains(lhs);
                 });
@@ -68,6 +85,14 @@ public:
         addOrThrow(otherPolygon);
     }
 
+    /**
+     * @brief VarArg constructor of a new Multi Polygon object
+     * 
+     * @tparam Args 
+     * @param current 
+     * @param next 
+     * @param remaining 
+     */
     template<typename... Args>
     MultiPolygon(const P & current, const P & next, Args... remaining):MultiPolygon(next,remaining...){
         addOrThrow(current);
@@ -77,6 +102,14 @@ public:
         return std::views::all(polygons);
     }
 
+    /**
+     * @brief Add Polygon to the multi-polygon
+     * 
+     * @tparam checked if true, all checks are skipped, speeding up the method
+     * @param polygon 
+     * @return true = success
+     * @return false = error
+     */
     template<bool checked=false>
     constexpr bool addPolygon(const P & polygon) noexcept {
         if constexpr(checked){
@@ -101,6 +134,11 @@ public:
         return std::accumulate(std::ranges::begin(viewOnPolygonArea),std::ranges::end(viewOnPolygonArea),0.0);
     } 
 
+    /**
+     * @brief Computes centroid point of multi-polygon, by weighting the centroid point of each polygon with its area
+     * 
+     * @return centroid point
+     */
     constexpr Vec2DReal centroid() const noexcept {
         Vec2DReal accumulatedWeightedCentroid {0.0,0.0};
         fishnet::math::DEFAULT_FLOATING_POINT totalArea = this->area();
@@ -130,8 +168,8 @@ public:
         return std::ranges::all_of(polygons,[&point](const P & p){return p.isOutside(point);});
     }
 
-    constexpr bool intersects(LinearGeometry auto const & linearGeoemtry) const noexcept {
-        return anyOf([&linearGeoemtry](const P & p){return p.intersects(linearGeoemtry);});
+    constexpr bool intersects(LinearGeometry auto const & linearFeature) const noexcept {
+        return anyOf([&linearFeature](const P & p){return p.intersects(linearFeature);});
     }
 
     constexpr util::forward_range_of<Vec2DReal> auto intersections(LinearGeometry auto const & linearGeometry) const noexcept {

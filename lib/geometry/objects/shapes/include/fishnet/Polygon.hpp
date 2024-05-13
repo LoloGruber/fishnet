@@ -6,12 +6,22 @@
 
 
 namespace fishnet::geometry {
-
+/**
+ * @brief Polygon implementation
+ * A Polygon consist of a boundary (IRing) and zero or more holes (IRing)
+ * @tparam T numeric_type used for computations
+ */
 template<fishnet::math::Number T>
 class Polygon : public SimplePolygon<T>{
 private:
     std::vector<Ring<T>> holes;
 
+    /**
+     * @brief Helper method to adapt point location queries to holes
+     * Points within a hole are considered outside of the polygon
+     * @param point 
+     * @return PointLocation of the point (INSIDE | BOUNDARY | OUTSIDE) 
+     */
     constexpr PointLocation polygonPointLocation(IPoint auto const & point) const noexcept {
         PointLocation ofBoundary = this->getPointLocation(point);
         if (ofBoundary != PointLocation::INSIDE) {
@@ -33,6 +43,13 @@ private:
 public:
     using numeric_type = T;
     constexpr static GeometryType type = GeometryType::POLYGON;
+
+    /**
+     * @brief Construct a new Polygon object using boundary and holes
+     * 
+     * @param boundary 
+     * @param holes 
+     */
     Polygon(const Ring<T> & boundary, const std::vector<Ring<T>> & holes = {}):SimplePolygon<T>(boundary),holes(holes){
         if (std::ranges::any_of(holes, [&boundary](const auto & hole){return not boundary.contains(hole);}))
             throw InvalidGeometryException("Hole not contained within Boundary of Polygon");
@@ -70,6 +87,11 @@ public:
         return static_cast<const SimplePolygon<T> & >(*this);
     }
 
+    /**
+     * @brief Calculate the area of the polygon
+     * Subtract accumulated area of holes from the area contained within the boundary
+     * @return constexpr fishnet::math::DEFAULT_FLOATING_POINT 
+     */
     constexpr fishnet::math::DEFAULT_FLOATING_POINT area() const noexcept {
         fishnet::math::DEFAULT_FLOATING_POINT area = this->getBoundary().area();
         for(const auto & hole : holes) {
@@ -78,6 +100,11 @@ public:
         return area;
     }
 
+    /**
+     * @brief Calculate weighted centroid of the polygon
+     * https://en.wikipedia.org/wiki/Centroid
+     * @return constexpr Vec2DReal 
+     */
     constexpr Vec2DReal centroid() const noexcept {
         auto totalAreaIncludingHoles = this->getBoundary().area();
         auto accCentroid = this->getBoundary().centroid() * totalAreaIncludingHoles;
@@ -86,18 +113,7 @@ public:
             accCentroid = accCentroid + hole.centroid() * -hole.area();
             accArea -= hole.area();
         }
-        return accCentroid / accArea; //https://en.wikipedia.org/wiki/Centroid  -> weighted centroid by decomposition
-
-        std::vector<Vec2D<T>> allPoints;
-        std::ranges::copy(this->getBoundary().getPoints(),std::back_inserter(allPoints));
-        for(const auto & ring : holes){
-            std::ranges::copy(ring.getPoints(), std::back_inserter(allPoints));
-        }
-        Vec2DReal sum {0,0};
-        for(const auto & p : allPoints){
-            sum = sum + p;
-        }
-        return sum / fishnet::math::DEFAULT_FLOATING_POINT(allPoints.size()); //TODO https://en.wikipedia.org/wiki/Centroid
+        return accCentroid / accArea; // -> weighted centroid by decomposition
     }
 
     constexpr bool inline contains(IPoint auto const & point) const noexcept {
@@ -143,15 +159,19 @@ public:
     }
 
     constexpr bool contains(IPolygon auto const & other) const noexcept {
-        if(*this == other) return true;
-        if(isInHole(other)) return false; // inside of hole
+        if(*this == other) 
+            return true;
+        if(isInHole(other)) 
+            return false; // inside of hole
         return this->getBoundary().contains(other.getBoundary()) && std::ranges::none_of(this->getHoles(),[&other](const auto & hole){
-            return hole.crosses(other.getBoundary()) || other.getBoundary().contains(hole);
+            // the boundary of the other polygon must not be intersected by any hole and the other polygon is not allowed to contain any hole 
+            return hole.crosses(other.getBoundary()) || other.getBoundary().contains(hole); 
         });
     }
 
     constexpr bool crosses(IPolygon auto const & other) const noexcept {
-        if(isInHole(other)) return false;
+        if(isInHole(other)) 
+            return false;
         return this->getBoundary().crosses(other.getBoundary()) || std::ranges::any_of(this->getHoles(),[&other](const auto & hole){
             return hole.crosses(other.getBoundary());
         });
@@ -162,7 +182,7 @@ public:
             return false;
         return this->getBoundary().touches(other.getBoundary()) || std::ranges::any_of(this->getHoles(), [&other](const auto & hole){
             return hole.contains(other.getBoundary()) && std::ranges::any_of(other.getBoundary().getPoints(),[&hole](const auto & p){
-                return hole.isOnBoundary(p);
+                return hole.isOnBoundary(p); // hole fully contains other polygon and touches it at least at one point
             });
         });
     }
@@ -178,7 +198,6 @@ public:
         }
         // compute boundary distance otherwise
         return this->getBoundary().distance(other.getBoundary());
-
     }
 
     constexpr bool operator==(IPolygon auto const & other) const noexcept {
@@ -202,7 +221,7 @@ public:
 
 }; 
 static_assert(IPolygon<Polygon<double>>);
-static_assert(ShapeGeometry<Polygon<double>>);
+static_assert(Shape<Polygon<double>>);
 
 //Deduction guides
 template<math::Number T>

@@ -4,7 +4,11 @@
 #include "Ring.hpp"
 
 namespace fishnet::geometry {
-
+/**
+ * @brief Simple polygon implementation with no holes
+ * 
+ * @tparam T numeric type used for computations
+ */
 template<fishnet::math::Number T>
 class SimplePolygon : public Ring<T>{
 public:
@@ -46,7 +50,7 @@ public:
 
 };
 static_assert(IPolygon<SimplePolygon<double>>);
-static_assert(ShapeGeometry<SimplePolygon<double>>);
+static_assert(Shape<SimplePolygon<double>>);
 
 //Deduction guides
 template<math::Number T>

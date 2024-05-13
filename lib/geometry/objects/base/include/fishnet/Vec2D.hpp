@@ -9,7 +9,9 @@
 namespace fishnet::geometry{
 
 /**
- * Util class for geometric computations in the two-dimensional space
+ * @brief Implementation of a two-dimensional vector
+ * 
+ * @tparam T numeric type used for computations
  */
 template<fishnet::math::Number T=fishnet::math::DEFAULT_NUMERIC>
 class Vec2D {
@@ -20,40 +22,71 @@ public:
     using numeric_type = T;
     constexpr static GeometryType type = GeometryType::POINT;
 
+    /**
+     * @brief Helper factory method to construct the correct type of vector depending on the numeric types
+     * 
+     * @tparam U numeric type for x
+     * @tparam V numeric type for y
+     * @param x 
+     * @param y 
+     * @return vector of a common numeric type that avoid narrowing conversions
+     */
     template<fishnet::math::Number U, fishnet::math::Number V>
     constexpr static auto construct(U x, V y) noexcept{
         if constexpr(std::is_same_v<U,V>){
             return Vec2D<U>(x,y);
         }
         if constexpr(std::integral<U> && std::integral<V>){
-            if constexpr(sizeof(U) > sizeof(V)){
+            if constexpr(sizeof(U) > sizeof(V)){ // use bigger integral type (U=long, V=int -> Vec2D<long>) 
                 return Vec2D<U>(x,y);
             }else{
                 return Vec2D<V>(x,y);
             }
         }else {
-            return Vec2D<fishnet::math::DEFAULT_NUMERIC>(x,y);
+            return Vec2D<fishnet::math::DEFAULT_NUMERIC>(x,y); // use default numeric type in any other case
         }
     }
 
     constexpr Vec2D(T x, T  y):x(x),y(y){
-        if (fishnet::math::isZero(x)) this->x= 0.0;
-        if (fishnet::math::isZero(y)) this->y= 0.0;
+        if (fishnet::math::isZero(x)) // utilize helper function to round floating point values very close to zero.
+             this->x= 0.0;
+        if (fishnet::math::isZero(y))
+             this->y= 0.0;
     }
 
+    /**
+     * @brief Constructor for heterogenous types
+     * Converts to the default numeric type
+     * @tparam U numeric type of x
+     * @tparam R numeric type of y
+     * @tparam typename _ enable if -> only allow if T is the default numeric type and if either U or R is not the same type as T to prevent ambiguities
+     * @tparam std::is_same_v<T,fishnet::math::DEFAULT_NUMERIC>> 
+     */
     template<fishnet::math::Number U, fishnet::math::Number R, typename = std::enable_if_t<(!std::is_same_v<U,T> || ! std::is_same_v<R,T>)&& std::is_same_v<T,fishnet::math::DEFAULT_NUMERIC>>>
     constexpr Vec2D(U x, R y):Vec2D(static_cast<T>(x),static_cast<T>(y)){}
 
-    // template<fishnet::math::Number U, typename = std::enable_if_t<!std::is_same_v<U,T> && std::is_same_v<T,double>>>
-    // constexpr Vec2D(U x, T y):Vec2D(static_cast<T>(x),y){}
-
+    /**
+     * @brief Default construction to (0,0)
+     * 
+     */
     constexpr Vec2D():x(0),y(0){}
 
+    /**
+     * @brief Cast operator from Vec2D<T> to Vec2D<U>
+     * 
+     * @tparam U numeric type of resulting vector
+     * @return Vec2D<U> 
+     */
     template<fishnet::math::Number U>
     constexpr operator Vec2D<U> () const noexcept{
         return Vec2D<U>(static_cast<U>(x),static_cast<U>(y));
     }
 
+    /**
+     * @brief Negation operator
+     * e.g.: -Vec(2,1) => Vec(-2,-1)
+     * @return constexpr Vec2D<T> 
+     */
     constexpr Vec2D<T> operator - () const {
         return Vec2D<T>(-x,-y);
     }
@@ -75,7 +108,8 @@ public:
 
     template<fishnet::math::Number U>
     constexpr auto operator/(U scalar) const noexcept{
-        if(scalar==0) scalar=1;
+        if(scalar==0) 
+            scalar=1; // prevent division by zero, return the same Vec2D instead
         return construct(x/scalar,y/scalar);
     }
 
@@ -122,7 +156,7 @@ public:
     }
 
     /**
-     * Computes the angle (counterclockwise) for the direction vector with reference to the reference vector, starting rotation on x-axis
+     * Computes the angle (counterclockwise) for the direction vector with reference at reference point, starting rotation on x-axis
      * @param reference for the angle
      * @return
      */
@@ -147,21 +181,32 @@ public:
     }
 
 };
+/**
+ * @brief Reversed multiplication operator, allowing commutative behavior:
+ * e.g.: Vec2D(1,1) * 2 == 2 * Vec2D(1,1)
+ * @tparam T numeric type of the Vec2D
+ * @tparam U numeric type of scalar
+ * @param scalar 
+ * @param vector 
+ * @return returns the result with swapped order, utilizing the implementation within Vec2D
+ */
 template<fishnet::math::Number T, fishnet::math::Number U>
 constexpr auto operator*(U scalar,Vec2D<T> vector)  noexcept{
     return vector * scalar;
 }
 
-
-
+/**
+ * @brief Comparator for lexigraphically-ordering of Vec2D objects
+ * Compares first the x-Coordinate and then the y-Coordinate
+ */
 struct LexicographicOrder{
     template<fishnet::math::Number T,fishnet::math::Number U>
     constexpr bool operator()(const Vec2D<T> & lhs, const Vec2D<U> & rhs)const noexcept {
-        if(fishnet::math::areEqual(lhs.x,rhs.x)) return lhs.y < rhs.y;
+        if(fishnet::math::areEqual(lhs.x,rhs.x))
+             return lhs.y < rhs.y;
         return lhs.x < rhs.x;
     }
 };
-
 using Vec2DStd = Vec2D<fishnet::math::DEFAULT_NUMERIC>;
 using Vec2DReal =Vec2D<fishnet::math::DEFAULT_FLOATING_POINT>;
 }
@@ -173,7 +218,7 @@ namespace std{
         size_t operator()(const fishnet::geometry::Vec2D<T> & vector) const {
             size_t xHash = hasher(vector.x);
             size_t yHash = hasher(vector.y);
-            return fishnet::util::CantorPairing(xHash,yHash);
+            return fishnet::util::CantorPairing(xHash,yHash); // utilize cantor pairing to keep hashes unique: hash(Vec2D(2,1)) != hash(Vec2D(1,2))
         }
     };
 }

@@ -80,7 +80,6 @@ public:
         }
     };
 
-
     using eventPointer = std::unique_ptr<IEvent>;
 
 private:
@@ -111,7 +110,6 @@ private:
 
 public:
     using SLS = std::set<const Input *,SLSOrdering>;
-
     using EventQ = std::priority_queue<eventPointer,std::vector<eventPointer>,EventQueueGreaterPtr>;
 private:
     SLS sls;
@@ -171,14 +169,7 @@ public:
         }
         this->sls.clear();
         return output;
-}
-
+    }
 };
-
-
-
-
-
-
 }
 

@@ -3,7 +3,11 @@
 #include <iostream>
 namespace fishnet::geometry {
 
-
+/**
+ * @brief Implementation of a rectangle
+ * Stores top,right,bottom and left point of the rectangle
+ * @tparam T numeric type used for computations
+ */
 template<fishnet::math::Number T>
 class Rectangle:public Ring<T>{
 private:
@@ -44,7 +48,7 @@ public:
         init();
     }
 
-    Rectangle(ShapeGeometry auto const & ring):Ring<T>(ring.aaBB().getPoints()){
+    Rectangle(Shape auto const & ring):Ring<T>(ring.aaBB().getPoints()){
         init();
     }
 
@@ -83,7 +87,7 @@ public:
 };
 
 //Deduction guide:
-template<ShapeGeometry S>
+template<Shape S>
 Rectangle(const S &) -> Rectangle<typename S::numeric_type>;
 }
 namespace std{

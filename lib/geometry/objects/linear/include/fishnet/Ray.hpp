@@ -3,14 +3,21 @@
 #include "Line.hpp"
 
 namespace fishnet::geometry{
+
+/**
+ * @brief Implementation of a ray
+ * A ray consist of an origin and the direction of the ray
+ * @tparam T numeric type used for computations
+ */
 template<fishnet::math::Number T>
 class Ray{
 private:
-    const Vec2D<T> originPoint;
+    const Vec2D<T> originPoint; 
     const Vec2D<T> directionVector;
 public: 
     using numeric_type = T;
     constexpr static GeometryType type = GeometryType::RAY;
+
     constexpr static Ray<T> up(Vec2D<T> origin) noexcept {
         return Ray<T>(origin, Vec2D<T>(0,1));
     }
@@ -28,7 +35,8 @@ public:
     }
 
     constexpr Ray(Vec2D<T> origin, Vec2D<T> direction): originPoint(origin), directionVector(direction){
-        [[unlikely]] if (direction == Vec2D(0,0)) throw std::invalid_argument("Zero Vector not valid for the direction of a Ray");
+        [[unlikely]] if (direction == Vec2D(0,0))
+             throw std::invalid_argument("Zero Vector not valid for the direction of a Ray");
     }
 
     template<fishnet::math::Number U, typename = std::enable_if_t<!std::is_same_v<U,T> && std::is_same_v<T,fishnet::math::DEFAULT_NUMERIC>>>
@@ -66,17 +74,18 @@ public:
     }
 
     constexpr bool contains(IPoint auto const & point) const noexcept{
-        using namespace fishnet::math;
-        if(point==originPoint) return true;
-        if(directionVector.x == 0){
+        using FLOAT_TYPE = fishnet::math::DEFAULT_FLOATING_POINT;
+        if(point==originPoint) 
+            return true;
+        if(directionVector.x == 0){ // vertical ray -> point is on ray if its on the origin or above/below depending on the direction vector
             return point.x == originPoint.x and (directionVector.y > 0 ? point.y > originPoint.y : point.y < originPoint.y);
         }
-        if(directionVector.y == 0){
+        if(directionVector.y == 0){ // horizontal ray -> point is on ray if its on the origin or left/right depending on the direction vector
             return point.y == originPoint.y and (directionVector.x > 0 ? point.x > originPoint.x : point.x < originPoint.x);
         }
-        DEFAULT_FLOATING_POINT lX = DEFAULT_FLOATING_POINT(point.x - originPoint.x) / DEFAULT_FLOATING_POINT(directionVector.x);
-        DEFAULT_FLOATING_POINT lY = DEFAULT_FLOATING_POINT(point.y - originPoint.y) / DEFAULT_FLOATING_POINT(directionVector.y);
-        return areEqual(lX,lY) and (lX > 0);
+        FLOAT_TYPE lX = FLOAT_TYPE(point.x - originPoint.x) / FLOAT_TYPE(directionVector.x);
+        FLOAT_TYPE lY = FLOAT_TYPE(point.y - originPoint.y) / FLOAT_TYPE(directionVector.y);
+        return fishnet::math::areEqual(lX,lY) and (lX > 0); // lambda values have to equal and positive to be on the correct side of the direction vector
     }
 
     template<fishnet::math::Number U> 

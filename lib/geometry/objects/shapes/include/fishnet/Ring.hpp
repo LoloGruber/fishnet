@@ -20,11 +20,22 @@ enum class PointLocation{
     INSIDE,OUTSIDE,BOUNDARY
 };
 
+/**
+ * @brief Implementation of a ring
+ * 
+ * @tparam T numeric type used for computations
+ */
 template<fishnet::math::Number T>
 class Ring{
 private:
     std::vector<Segment<T>> segments;
 
+    /**
+     * @brief Helper function to create a list of segment from a list of points
+     * 
+     * @param points range of points
+     * @return list of segments formed by the sequence of points
+     */
     constexpr static inline std::vector<Segment<T>> toSegments(util::random_access_range_of<Vec2D<T>> auto const & points) noexcept {
         std::vector<Segment<T>> segments {};
         if(points.size()==0) 
@@ -32,7 +43,7 @@ private:
         segments.reserve(points.size());
         for(size_t i = 0; i < points.size()-1 ; ++i){
             if(points[i]==points[i+1])
-                 continue;
+                 continue; // skip 0-length segments
             segments.emplace_back(points[i],points[i+1]);
         }
         auto const& first = points[0];
@@ -43,6 +54,10 @@ private:
         return segments;
     }
 
+    /**
+     * @brief Helper method to flip the segments accordingly, such that:
+     * Endpoint q() of the current segment == Endpoint p() of the next segment
+     */
     constexpr void makeValid() noexcept {
         for(size_t i =0; i < segments.size(); ++i){
             if(segments[i].q() != segments[(i+1)%segments.size()].p()){
@@ -53,38 +68,29 @@ private:
     }
 protected:
 
+    /**
+     * @brief Get the location of a point with regard to the ring (INSIDE | OUTSIDE | BOUNDARY)
+     * Uses the Ray-Casting algorithm:
+     * https://en.wikipedia.org/wiki/Point_in_polygon
+     * @param point 
+     * @return constexpr PointLocation 
+     */
     constexpr PointLocation getPointLocation(IPoint auto const & point) const noexcept {
         u_int16_t intersectionCounter = 0;
         Ray<T> horizontalRay = Ray<T>::right(point);
         for(const auto & segment: segments){
-            if(point==segment.p() or point==segment.q() or segment.contains(point)) return PointLocation::BOUNDARY;
+            if(point==segment.p() or point==segment.q() or segment.contains(point)) //point is part of any segment on the boundary
+                 return PointLocation::BOUNDARY;
             std::optional<Vec2DReal> interOpt = segment.intersection(horizontalRay);
-            if (not interOpt) continue;
-            Vec2DReal const & inter = interOpt.value();
-            if (inter == segment.lowerEndpoint()) continue; //prevent counting a vertex twice -> count only upperEndpooints
+            if (not interOpt) 
+                continue; // no intersection, go to next segment
+            const Vec2DReal & inter = interOpt.value();
+            if (inter == segment.lowerEndpoint()) 
+                continue; //prevent counting a vertex twice -> count only upperEndpoints
             ++intersectionCounter; 
         }
         return intersectionCounter%2 == 1 ? PointLocation::INSIDE : PointLocation::OUTSIDE;
     }
-
-    // constexpr static inline fishnet::math::DEFAULT_FLOATING_POINT minDistanceChecked(IRing auto const & thisRing,IRing auto const & other ) noexcept{
-    //     fishnet::math::DEFAULT_FLOATING_POINT minDistance = std::numeric_limits<fishnet::math::DEFAULT_FLOATING_POINT>::max();
-    //     for(const auto & s : thisRing.getSegments()){
-    //         for(const auto & p : other.getPoints()){
-    //             if(s.distance(p) < minDistance){
-    //                 minDistance = s.distance(p);
-    //             }
-    //         }
-    //     }
-    //     for(const auto & s : other.getSegments()){
-    //         for(const auto & p: thisRing.getPoints()){
-    //             if(s.distance(p) < minDistance){
-    //                 minDistance = s.distance(p);
-    //             }
-    //         }
-    //     }
-    //     return minDistance;
-    // }
 
 public:
     using numeric_type = T;
@@ -132,6 +138,11 @@ public:
             | std::views::transform([](const auto & s){return s.p();});
     }
 
+    /**
+     * @brief Calculate the area of the ring
+     * Uses Shoelace formula: https://en.wikipedia.org/wiki/Shoelace_formula
+     * @return area of the ring in the same units as the segments/points
+     */
     constexpr fishnet::math::DEFAULT_FLOATING_POINT area() const noexcept {
         fishnet::math::DEFAULT_FLOATING_POINT area = 0;
         auto const& points = this->getPoints();
@@ -141,7 +152,11 @@ public:
         return 0.5 * fabs(area);
     }
 
-    //https://en.wikipedia.org/wiki/Centroid of finite set of points
+    /**
+     * @brief Calculate centroid point of the ring
+     * https://en.wikipedia.org/wiki/Centroid 
+     * @return constexpr Vec2DReal 
+     */
     constexpr Vec2DReal centroid() const noexcept {
         Vec2DReal sum {0,0};
         for(const auto & s : segments){
@@ -150,6 +165,11 @@ public:
         return sum / (fishnet::math::DEFAULT_FLOATING_POINT)segments.size();
     }
 
+    /**
+     * @brief Computes the axis-aligned bounding box of the ring
+     * Calculated be computing the extreme points in every direction and forming a rectangle
+     * @return Ring representing the aaBB
+     */
     constexpr Ring<T> aaBB() const noexcept {
         T high = this->segments.at(0).p().y;
         T low = high;
@@ -185,8 +205,28 @@ public:
         return getPointLocation(point) == PointLocation::OUTSIDE;
     }
 
+    /**
+     * @brief test whether a linear feature intersects the ring
+     * Check every intersection of the linear feature with the segments of the ring:
+     * If the endpoints of the intersected segment are on opposite sides of the linear feature -> TRUE
+     * If intersection point is vertex of the ring:
+     *      s1.p()-----------s1.q() == intersection point == s2.p()----------s2.q()
+     *      -> Test if s1.p() and s2.() are on the same side of the linear feature, if not it must be a intersection -> TRUE
+     * Additional checks depending on type linear feature:
+     * - L == ISegment:
+     *      skip if intersection is endpoint of both the segment of the boundary and the linear feature 
+     *      otherwise test if any of the endpoints of the linear feature are outside of the ring -> TRUE 
+     * - L == IRing:
+     *      skip if intersection is the origin of the ray
+     *  
+     * @tparam L linear feature type
+     * @param linearFeature 
+     * @return true 
+     * @return false 
+     */
     template<LinearGeometry L>
     constexpr bool intersects( const L & linearFeature) const noexcept {
+        // Helper lambda to check whether two points are on the same side of the linearFeature (or on the line)
         auto onSameSide = [linearFeature](const Vec2D<T> & lhs, const Vec2D<T> & rhs) {
             auto line = linearFeature.toLine();
             if(line.contains(rhs) || line.contains(lhs)){
@@ -194,24 +234,26 @@ public:
             }
             return line.isLeft(lhs) == line.isLeft(rhs);
         }; 
-        // todo clean up mess
         for(size_t i = 0; i < segments.size(); ++i){
             auto current = segments[i];
             auto inter = current.intersection(linearFeature);
-            if constexpr(std::same_as<L,Segment<typename L::numeric_type>>){
+            if constexpr(ISegment<L>){
                 if(inter && (linearFeature.isEndpoint(inter.value()) && current.isEndpoint(inter.value())))
                      continue;
                 if(inter && (linearFeature.isEndpoint(inter.value())) && (isOutside(linearFeature.p()) || isOutside(linearFeature.q())))
                     return true;
             }
-            if constexpr(std::same_as<L,Ray<typename L::numeric_type>>){
-                if(inter && inter.value() == linearFeature.origin()) continue;
+            if constexpr(IRay<L>){
+                if(inter && inter.value() == linearFeature.origin())
+                     continue;
             }
-            if(inter && current.isEndpoint(inter.value())) { // is vertex of ring
+            if(inter && current.isEndpoint(inter.value())) { // intersection is vertex of ring
                 if(current.p() == inter.value()){
-                    if(not onSameSide(current.q(),segments[(i-1)%segments.size()].p())) return true;
-                }else{
-                    if(not onSameSide(current.p(),segments[(i+1)%segments.size()].q())) return true;
+                    if(not onSameSide(current.q(),segments[(i-1)%segments.size()].p()))
+                        return true;
+                }else{ // inter.value() == current.q()
+                    if(not onSameSide(current.p(),segments[(i+1)%segments.size()].q())) 
+                        return true;
                 }
             }else if(inter){
                 if(not onSameSide(current.p(),current.q())) return true;
@@ -232,24 +274,34 @@ public:
         return intersectionSet;
     }
 
+    /**
+     * @brief Test whether a segment is fully contained inside the boundary of the ring
+     * Collect all intersections of the segment with the boundary segments, test if all middle points in-between the intersection points on the segment are contained in the ring
+     * @param segment 
+     * @return true 
+     * @return false 
+     */
     constexpr bool contains(ISegment auto const & segment) const noexcept {
-        [[unlikely]] if(not segment.isValid()) return contains(segment.p());
+        [[unlikely]] if(not segment.isValid())
+             return contains(segment.p()); // or segment.q()
         std::vector<Vec2DReal> splittingPoints;
         splittingPoints.push_back(segment.p());
         for(const auto & s : segments){
-            [[unlikely]] if (s.containsSegment(segment)) return true;
+            [[unlikely]] if (s.containsSegment(segment))
+                 return true;
             auto inter = s.intersection(segment);
-            if(inter and not s.isEndpoint(*inter) and not segment.isEndpoint(*inter)){
-                splittingPoints.push_back(*inter);
+            if(inter and not s.isEndpoint(inter.value()) and not segment.isEndpoint(inter.value())){ // splitting points are must not be vertices of the ring or endpoint of the segment
+                splittingPoints.push_back(inter.value());
             }
         }
-        splittingPoints.push_back(segment.q());
+        splittingPoints.push_back(segment.q()); // insert at least on splitting point, q() beeing the opposite endpoint of the segment
         std::ranges::sort(splittingPoints,[segment](const Vec2DReal & a, const Vec2DReal & b ){
-            return segment.p().distance(a) < segment.p().distance(b);
+            return segment.p().distance(a) < segment.p().distance(b); // sort endpoints according to distance from p()
         });
         for(size_t i = 0; i < splittingPoints.size()-1; i++){
             auto middlePointOfPartialSegment = splittingPoints[i] + (splittingPoints[i+1]-splittingPoints[i]) * 0.5;
-            if(not contains(middlePointOfPartialSegment)) return false;
+            if(not contains(middlePointOfPartialSegment)) 
+                return false;
         }   
         return true;
     }
@@ -257,7 +309,8 @@ public:
 
     template<fishnet::math::Number U>
     constexpr bool operator==(const Ring<U> & other) const noexcept {
-        if(this->segments.size() != other.getSegments().size()) return false;
+        if(this->segments.size() != other.getSegments().size())
+             return false;
         size_t size = segments.size();
         // Find common segment to start comparision
         Segment<T> const & start = this->segments.front();
@@ -269,12 +322,14 @@ public:
                 break;
             }
         }
-        if(indexOfStart == -1) return false;
+        if(indexOfStart == -1) 
+            return false; // no common segment found -> not equal
 
         auto nextIndex = [size,indexOfStart](size_t index){return (indexOfStart+index) % size;};
         bool allMatch = true;
         for(size_t i = 0; i < this->segments.size(); ++i){
-            if(this->segments[i] != segmentViewOther[nextIndex(i)]) allMatch = false;
+            if(this->segments[i] != segmentViewOther[nextIndex(i)])
+                 allMatch = false;
         }
         if(allMatch) return true;
         // Opposite direction
@@ -329,7 +384,7 @@ public:
         return oss.str();
     }
 };
-static_assert(ShapeGeometry<Ring<double>>);
+static_assert(Shape<Ring<double>>);
 
 //Deduction guides
 template<std::ranges::random_access_range R>

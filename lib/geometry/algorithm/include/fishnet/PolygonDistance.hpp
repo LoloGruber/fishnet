@@ -79,8 +79,8 @@ struct DefaultDistanceFunction{
  * @param rhs 
  * @return std::pair<Vec2DReal,Vec2DReal> 
  */
-template<ShapeGeometry Shape, ShapeGeometry OtherShape>
-static std::pair<Vec2DReal,Vec2DReal> closestPoints(const Shape & lhs, const OtherShape & rhs) noexcept {
+template<Shape ShapeType, Shape OtherShapeType>
+static std::pair<Vec2DReal,Vec2DReal> closestPoints(const ShapeType & lhs, const OtherShapeType & rhs) noexcept {
     return __impl::closestPointsBruteForce(lhs.getBoundary(),rhs.getBoundary());
 }
 
@@ -92,7 +92,7 @@ static std::pair<Vec2DReal,Vec2DReal> closestPoints(const Shape & lhs, const Oth
  * @param distanceFunction custom distance function. Allows computation in other units (e.g. meters instead of angular units)
  * @return fishnet::math::DEFAULT_FLOATING_POINT 
  */
-static fishnet::math::DEFAULT_FLOATING_POINT shapeDistance(ShapeGeometry auto const & lhs, ShapeGeometry auto const & rhs,util::BiFunction<Vec2DReal,Vec2DReal,fishnet::math::DEFAULT_FLOATING_POINT> auto const & distanceFunction) noexcept {
+static fishnet::math::DEFAULT_FLOATING_POINT shapeDistance(Shape auto const & lhs, Shape auto const & rhs,util::BiFunction<Vec2DReal,Vec2DReal,fishnet::math::DEFAULT_FLOATING_POINT> auto const & distanceFunction) noexcept {
     const auto & [l,r] = closestPoints(lhs,rhs);
     return distanceFunction(l,r);
 }
@@ -104,7 +104,7 @@ static fishnet::math::DEFAULT_FLOATING_POINT shapeDistance(ShapeGeometry auto co
  * @param rhs 
  * @return fishnet::math::DEFAULT_FLOATING_POINT 
  */
-static fishnet::math::DEFAULT_FLOATING_POINT shapeDistance(ShapeGeometry auto const & lhs, ShapeGeometry auto const & rhs) noexcept {
+static fishnet::math::DEFAULT_FLOATING_POINT shapeDistance(Shape auto const & lhs, Shape auto const & rhs) noexcept {
     return shapeDistance(lhs,rhs,__impl::DefaultDistanceFunction());
 }
 }
