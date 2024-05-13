@@ -5,7 +5,10 @@
 #include <ostream>
 
 namespace fishnet::math{
-
+/**
+ * @brief Degrees implementation of Angle
+ * 
+ */
 class Degrees final: public __impl::AbstractAngle<Degrees>{
 protected:
     double normalizedAngle(const double newAngle) const;
@@ -27,9 +30,7 @@ public:
         os << deg.angle << "°";
         return os;
     }
-
 };
-
 }
 
 namespace std {

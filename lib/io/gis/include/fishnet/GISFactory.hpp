@@ -1,19 +1,22 @@
-//
-// Created by lolo on 18.04.24.
-//
 #pragma once
+#include <expected>
+#include <optional>
+
 #include "Shapefile.hpp"
 #include "GISFile.hpp"
 #include "GeoTiff.hpp"
 #include "GISConverter.hpp"
 
-#include <expected>
-#include <optional>
-
 namespace fishnet {
 
 class GISFactory {
 public:
+    /**
+     * @brief Tries to construct ShapeFile handle from path.
+     * If path does not point to .shp file, the function tries to convert it to a shapefile
+     * @param path path to the file
+     * @return std::expected<Shapefile,std::string>: Containing a shapefile on success or the error as a string
+     */
     static std::expected<Shapefile,std::string> asShapefile(const std::filesystem::path& path){
         auto fileType = getType(path);
         if (not fileType)
@@ -27,7 +30,6 @@ public:
                 else return Shapefile(path.parent_path() /path.stem().replace_extension(".shp"));
         }
         return std::unexpected("Unknown Error");
-
     }
 
     static std::optional<GISFileType> getType(const std::filesystem::path & path) {

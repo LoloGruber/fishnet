@@ -33,7 +33,5 @@ namespace fishnet::math{
         if constexpr(std::integral<T> && std::floating_point<U>) return isZero(U(lhs)-rhs);
         if constexpr(std::integral<U> && std::floating_point<T>) return isZero(T(rhs)-lhs);
         if constexpr(std::floating_point<T> && std::floating_point<U>) return isZero(lhs-rhs);
-        
     }
-
 }

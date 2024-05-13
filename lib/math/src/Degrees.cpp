@@ -1,6 +1,5 @@
-#include <fishnet/Degrees.hpp>
-
 #include <cmath>
+#include <fishnet/Degrees.hpp>
 #include <fishnet/Normalize.hpp>
 namespace fishnet::math{
 

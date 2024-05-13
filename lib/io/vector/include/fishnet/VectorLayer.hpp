@@ -28,7 +28,7 @@
 namespace fishnet {
 
 /**
- * Stores the geometries, wrapped in features (which hold the field values)
+ * @brief Stores the geometries, wrapped in features (which hold the field values / attributes)
  * Keeps track of the fields available for the features
  * Stores a SpatialReference
  * @tparam G
@@ -194,17 +194,36 @@ public:
     using geometry_type = G;
     using feature_type = Feature<G>;
 
+    /**
+     * @brief Factory to construct empty vector layer 
+     * 
+     * @param spatialReference reference system for the geometries
+     * @return empty VectorLayer<G> instance
+     */
     static VectorLayer<G> empty(const OGRSpatialReference & spatialReference){
         return VectorLayer(spatialReference);
     }
 
-    template<GeometryObject T>
+    /**
+     * @brief Factory to construct empty vector layer with initalized fields
+     * 
+     * @tparam T geometry type
+     * @param source vector layer to copy the fields from
+     * @return empty VectorLayer<G> instance with fields
+     */
+    template<geometry::GeometryObject T>
     static VectorLayer<G> empty(const VectorLayer<T> & source) {
         auto layer = empty(source.getSpatialReference());
         source.copyFields(layer);
         return layer;
     }
 
+    /**
+     * @brief Factory to construct vector layer by reading shapefile
+     * 
+     * @param shapefile data source
+     * @return VectorLayer<G> instance with features extracted from the shape file
+     */
     static VectorLayer<G> read(const Shapefile & shapefile) {
         if(not shapefile.exists())
             throw std::invalid_argument("Shapefile does not exists, could not read from File: \""+shapefile.getPath().string()+"\"");
@@ -315,7 +334,7 @@ public:
         fields.clear();
     }
 
-    template<GeometryObject T>
+    template<geometry::GeometryObject T>
     constexpr void copyFields(VectorLayer<T> & other) const noexcept {
         for(auto [fieldName,fieldVariant]:fields){
             other.fields.try_emplace(fieldName,fieldVariant);
@@ -365,6 +384,5 @@ public:
     constexpr void overwrite(const Shapefile & destination) const noexcept {
         this->writeToDisk(destination);
     }
-
 };
 }

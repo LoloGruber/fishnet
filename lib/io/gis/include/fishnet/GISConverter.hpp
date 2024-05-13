@@ -12,6 +12,14 @@
 namespace fishnet{
 class GISConverter {
 public:
+    /**
+     * @brief Tries to convert a GeoTiff to Shp file
+     * 
+     * @param geoTiff source geoTiff file
+     * @param maskZero see: GDALPolygonize(...) 
+     * @param showProgress show progress in console
+     * @return std::expected<Shapefile,std::string>: Shapefile on success, otherwise string explaining the error
+     */
     static std::expected<Shapefile,std::string> convert(const GeoTiff & geoTiff,bool maskZero = true, bool showProgress=true) noexcept{
         GDALDataset *src = (GDALDataset *) GDALOpen(geoTiff.getPath().c_str(), GA_ReadOnly);
         if(src == nullptr)

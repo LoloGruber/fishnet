@@ -1,31 +1,14 @@
 #pragma once
-
 #include <string>
-#include <utility>
+#include <variant>
 #include "FieldType.hpp"
-#include <typeindex>
 #include <fishnet/GeometryObject.hpp>
+
+// Forward-Declaration needed for testing
 template<fishnet::FieldValueType T>
 class FieldDefinitionTestFactory;
 
-
-
-
 namespace fishnet {
-
-template<FieldValueType T>
-class FieldDefinition;
-
-namespace __impl {
-template<typename Variant>
-struct FieldDefinitionTypes;
-
-template<typename... Types>
-struct FieldDefinitionTypes<std::variant<Types...>> {
-    using type = std::variant<FieldDefinition<Types>...>;
-};
-}
-using FieldDefinitionVariant = fishnet::__impl::FieldDefinitionTypes<FieldType>::type;
 
 class FieldCounter{
 private:
@@ -38,8 +21,9 @@ public:
 };
 
 /**
- * Defines an Interface for FieldDefinitions, which can be used as an parametet
- * @tparam T has to satisfy the FieldValueType Concept
+ * @brief Defines an Interface for FieldDefinitions, which can be used as generic parameter
+ * 
+ * @tparam T field value type
  */
 template<class T>
 concept IFieldDefinition = FieldValueType<typename T::value_type> && std::equality_comparable<T> && requires(const T & fieldDef){
@@ -48,15 +32,19 @@ concept IFieldDefinition = FieldValueType<typename T::value_type> && std::equali
     {fieldDef.getFieldID()} -> std::integral;
 };
 
-
+/**
+ * @brief Field definition implementation.
+ * Defines name, id and data type of a field
+ * @note constructors are private, only accessible by friends
+ * @tparam T field value type
+ */
 template<FieldValueType T>
 class FieldDefinition {
 private:
     friend class FieldDefinitionTestFactory<T>;
 
     template<geometry::GeometryObject G>
-    friend class VectorLayer;
-
+    friend class VectorLayer; 
 
     std::string fieldName;
     int fieldID;
@@ -80,5 +68,18 @@ public:
         return this->fieldID == other.getFieldID();
     }
 };
+}
 
+namespace fishnet::__impl {
+template<typename Variant>
+struct FieldDefinitionTypes;
+
+template<typename... Types>
+struct FieldDefinitionTypes<std::variant<Types...>> {
+    using type = std::variant<FieldDefinition<Types>...>; // Construct FieldDefinitionVariant from FieldValueVariant
+};
+}
+
+namespace fishnet{
+using FieldDefinitionVariant = fishnet::__impl::FieldDefinitionTypes<FieldType>::type;
 }

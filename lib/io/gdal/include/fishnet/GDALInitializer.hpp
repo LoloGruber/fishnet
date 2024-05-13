@@ -1,14 +1,13 @@
-//
-// Created by lolo on 3/26/24.
-//
-
-#ifndef FISHNET_PROJECT_GDALINITIALIZER_HPP
-#define FISHNET_PROJECT_GDALINITIALIZER_HPP
+#pragma once
 #include <gdal/gdal.h>
 #include <gdal/gdal_priv.h>
 
 namespace fishnet {
 
+/**
+ * @brief Singleton to initialize GDAL
+ * 
+ */
 class GDALInitializer {
     private:
         static inline bool initialized = false;
@@ -20,7 +19,5 @@ class GDALInitializer {
             GDALAllRegister();
             // further initialization if necessary
         }
-    };
+};
 }
-
-#endif //FISHNET_PROJECT_GDALINITIALIZER_HPP

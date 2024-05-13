@@ -7,7 +7,7 @@ concept Number = std::integral<T> || std::floating_point<T>;
 
 using DEFAULT_FLOATING_POINT = double;
 using DEFAULT_NUMERIC = double;
-using DEFAULT_INTERGRAL = int;
+using DEFAULT_INTEGRAL = int;
 }
 
 

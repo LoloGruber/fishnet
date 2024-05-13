@@ -7,7 +7,10 @@
 #include <ostream>
 #include "GISFile.hpp"
 namespace fishnet{
-
+/**
+ * @brief  Shapefile handle implementation
+ * 
+ */
 class Shapefile: public AbstractGISFile{
 private:
 
@@ -68,4 +71,3 @@ public:
 };
 static_assert(GISFile<Shapefile>);
 }
-

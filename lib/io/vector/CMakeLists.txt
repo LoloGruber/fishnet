@@ -1,4 +1,4 @@
-find_package(GDAL  REQUIRED)
+find_package(GDAL REQUIRED)
 
 add_library(io_vector INTERFACE)
 

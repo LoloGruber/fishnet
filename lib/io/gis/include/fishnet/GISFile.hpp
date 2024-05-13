@@ -34,6 +34,11 @@ public:
     virtual ~AbstractGISFile() = default;
 };
 
+/**
+ * @brief Interface for GISFile types.
+ * Implementation have to inherit from AbstractGISFile and have to printable to the console.
+ * @tparam File GIS file implementation type
+ */
 template<typename File>
 concept GISFile = std::derived_from<File,AbstractGISFile> && util::Printable<File> && requires (const File & constF, File & file, std::filesystem::path p){
     {file.move(p)}-> std::same_as<File &>;
@@ -41,5 +46,4 @@ concept GISFile = std::derived_from<File,AbstractGISFile> && util::Printable<Fil
     {File(p)};
     {File::type()} -> std::same_as<GISFileType>;
 };
-
 }

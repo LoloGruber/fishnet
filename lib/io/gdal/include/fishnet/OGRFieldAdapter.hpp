@@ -6,7 +6,10 @@
 #include <fishnet/FieldType.hpp>
 #include <fishnet/FieldDefinition.hpp>
 namespace fishnet{
-
+/**
+ * @brief Static Adaptor class for OGRFields
+ * 
+ */
 class OGRFieldAdapter{
 public:
     static OGRFieldType fromTypeIndex(const std::type_index & type) noexcept {

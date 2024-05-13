@@ -46,7 +46,6 @@ Radians Radians::atan(double tangent){
 Radians Radians::atan2(double y, double x){
     return Radians(std::atan2(y,x));
 }
-
 }
 
 

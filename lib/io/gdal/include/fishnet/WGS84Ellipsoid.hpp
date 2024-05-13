@@ -1,6 +1,3 @@
-//
-// Created by grube on 10.01.2022.
-//
 #pragma once
 #include <math.h>
 #include <fishnet/Constants.hpp>
@@ -21,18 +18,16 @@
 namespace fishnet {
 
 /**
- * Util class for geographic computations
+ * @brief Utility class for computing distances and areas in metric units for GIS data using the WGS84 Spatial Reference System
+ * 
  */
-
-using namespace math;
 class WGS84Ellipsoid {
-
 private:
     static double cos2(double angle) {
         return pow(cos((math::PI / 180) * angle), 2);
     }
 
-    static double cos2(Degrees angle){
+    static double cos2(math::Degrees angle){
         return pow(angle.cos(), 2);
     }
 
@@ -40,8 +35,7 @@ private:
         return pow(sin((math::PI / 180) * angle), 2);
     }
 
-
-    static double sin2(Degrees angle){
+    static double sin2(math::Degrees angle){
         return pow(angle.sin(), 2);
     }
 
@@ -83,12 +77,12 @@ public:
      * @return distance between A and B in meters
      */
     static double distance(double lambdaA, double phiA, double lambdaB, double phiB, bool exact = true) {
-        Degrees F = Degrees((phiA + phiB) / 2);
-        Degrees G = Degrees((phiA - phiB) / 2);
-        Degrees l = Degrees((lambdaA - lambdaB) / 2);
+        math::Degrees F = math::Degrees((phiA + phiB) / 2);
+        math::Degrees G = math::Degrees((phiA - phiB) / 2);
+        math::Degrees l = math::Degrees((lambdaA - lambdaB) / 2);
         double S = sin2(G) * cos2(l) + cos2(F) * sin2(l);
         double C = cos2(G) * cos2(l) + sin2(F) * sin2(l);
-        Radians w = Radians::atan(sqrt(S / C));
+        math::Radians w = math::Radians::atan(sqrt(S / C));
         double distance = 2 * w.getAngleValue() * radiusInMeter;
         if (not exact) {
             return distance;
@@ -102,6 +96,14 @@ public:
         }
     }
 
+    /**
+     * @brief Compute the distance between two points in metric units
+     * 
+     * @param p point (long,lat)
+     * @param q point (long,lat)
+     * @param exact applies additional correction for the distances
+     * @return distance between p and q in meters
+     */
     static double distance(geometry::IPoint auto const & p, geometry::IPoint auto const & q,bool exact = true)noexcept{
         return distance(p.x, p.y, q.x, q.y, exact);
     }
@@ -109,6 +111,7 @@ public:
     /**
      * Calculate the area of a Polygon in m² by projection
      * @param polygon source polygon
+     * @deprecated
      * @return area in m²
      */
     static double area(geometry::IPolygon auto const & polygon)noexcept{
@@ -125,5 +128,4 @@ public:
         return area(polygon.getBoundary());
     }
 };
-
 }

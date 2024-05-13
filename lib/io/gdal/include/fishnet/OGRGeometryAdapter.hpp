@@ -11,8 +11,10 @@
 #include <fishnet/MultiPolygon.hpp>
 
 namespace fishnet {
-
-
+/**
+ * @brief Static geometry adaptor: fishnet::Geometry <-> OGRGeometry
+ * 
+ */
 class OGRGeometryAdapter{
 public: 
 template<typename T>

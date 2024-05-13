@@ -7,8 +7,14 @@
 namespace fishnet::math{
 
 /**
- * Normalizes any value into the range: [0,upperBound)
-*/
+ * @brief Normalizes any value into the range: [0,upperBound)
+ * 
+ * @tparam ValueType numeric type of the value to normalize
+ * @tparam BoundType numeric type of the bound
+ * @param value value to normalize
+ * @param upperBound upper bound
+ * @return normalized value in the range [0,upperBound) 
+ */
 template<Number ValueType, Number BoundType>
 static auto normalize(const ValueType value, BoundType upperBound){
     [[unlikely]] if (upperBound <= 0){
@@ -29,6 +35,14 @@ static auto normalize(const ValueType value, BoundType upperBound){
     }
 };
 
+/**
+ * @brief Normalizes value in the range [lowerBound,upperBound)
+ * 
+ * @param value value to normalize
+ * @param lowerBound 
+ * @param upperBound 
+ * @return normalized value in the range [lowerBound,upperBound)
+ */
 static auto normalize(Number auto value, Number auto lowerBound, Number auto upperBound){
     [[unlikely]] if  (lowerBound >= upperBound){
         throw new std::invalid_argument("upperBound has to be greater than lowerBound");

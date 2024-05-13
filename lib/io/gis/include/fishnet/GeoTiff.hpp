@@ -1,8 +1,10 @@
 #pragma once
 #include "GISFile.hpp"
 namespace fishnet {
-
-
+/**
+ * @brief GeoTiff handle implementation
+ * 
+ */
 class GeoTiff:public AbstractGISFile{
 public:
     GeoTiff(std::filesystem::path path):AbstractGISFile(path){}

@@ -4,10 +4,12 @@
 #include <stdexcept>
 #include <functional>
 
-namespace fishnet::math{
-
-
-namespace __impl{
+namespace fishnet::math::__impl{
+/**
+ * @brief Abstract Angle using CRTP
+ * 
+ * @tparam AngleImpl angle implementation type
+ */
 template<typename AngleImpl>
 class AbstractAngle{
 private:
@@ -27,7 +29,8 @@ protected:
     }
 
     void setAngle(const double newAngle){
-        [[unlikely]] if (std::isnan(newAngle)) throw std::invalid_argument("NaN cannot be converted to angle!");
+        [[unlikely]] if (std::isnan(newAngle)) 
+            throw std::invalid_argument("NaN cannot be converted to angle!");
         this->angle = normalizedAngle(newAngle);
     }
 
@@ -99,6 +102,8 @@ public:
     } 
 };
 }
+namespace fishnet::math{
+// Forward declaration
 class Radians;
 class Degrees;
 }

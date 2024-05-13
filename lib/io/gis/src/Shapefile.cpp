@@ -16,16 +16,34 @@ std::vector<fs::path> Shapefile::getAssociatedFiles() const{
     return associates;
 }
 
+/**
+ * @brief Constructs a new Shapefile handle as follows:
+ * /path/to/file.shp->changeFilename("test") -> /path/to/test.shp
+ * @param filename 
+ * @return Shapefile 
+ */
 Shapefile Shapefile::changeFilename(const std::string & filename) const noexcept {
     if (not filename.ends_with(".shp"))
         return this->pathToFile.parent_path() / std::filesystem::path(filename+".shp");
     return this->pathToFile.parent_path() / std::filesystem::path(filename);
 }
 
+/**
+ * @brief Constructs a new Shapefile handle as follows:
+ * /path/to/file.shp->appendToFilename("1") -> /path/to/file1.shp
+ * @param filename 
+ * @return Shapefile 
+ */
 Shapefile Shapefile::appendToFilename(const std::string & postfix) const noexcept {
     return changeFilename(this->pathToFile.stem().string() + postfix);
 }
 
+/**
+ * @brief Constructs a new Shapefile handle as follows:
+ * /path/to/file.shp->incrementFileVersion() -> /path/to/file_1.shp
+ * /path/to/file_1.shp->incrementFileVersion() -> /path/to/file_2.shp
+ * @return Shapefile 
+ */
 Shapefile Shapefile::incrementFileVersion() const noexcept {
     std::regex endsWithVersionRegex {"_(\\d+)$"};
     const std::string & currentFilename = this->pathToFile.stem().string();

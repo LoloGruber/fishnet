@@ -1,19 +1,26 @@
 #pragma once
+#include <optional>
 #include <fishnet/GeometryObject.hpp>
 #include "FieldType.hpp"
 #include "FieldDefinition.hpp"
-
-#include <optional>
 
 namespace fishnet {
 
 template<typename From, typename To>
 concept convertible_without_loss = requires(From f){To{f};};
 
+/**
+ * @brief Feature implementation storing a geometry and associated attributes
+ * 
+ * @tparam G geometry type
+ */
 template<geometry::GeometryObject G>
 class Feature {
 private:
-
+    /**
+     * @brief Helper class to store an attribute for a field 
+     * 
+     */
     class FieldValue {
     private:
         FieldType value;
@@ -68,7 +75,6 @@ public:
         attributes.emplace_back(static_cast<typename FieldDef::value_type>(value), fieldDefinition.getFieldID());
         return true;
     }
-
 
     constexpr bool hasAttribute(const IFieldDefinition auto & fieldDefinition) const noexcept {
         return std::ranges::any_of(attributes,[&fieldDefinition](const auto & fieldValue){

@@ -7,7 +7,10 @@
 #include <functional>
 
 namespace fishnet::math{
-
+/**
+ * @brief Radians implementation of Angle
+ * 
+ */
 class Radians final: public __impl::AbstractAngle<Radians>{
 protected:
     double normalizedAngle(const double newAngle) const;
