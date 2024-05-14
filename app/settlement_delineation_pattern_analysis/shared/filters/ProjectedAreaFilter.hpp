@@ -21,12 +21,12 @@ public:
         return UnaryFilterType::ProjectedAreaFilter;
     }
 
-    static std::expected<ProjectedAreaFilter,std::string> fromJson(json const & filterDesc) {
+    static std::optional<ProjectedAreaFilter> fromJson(json const & filterDesc) {
         try{
             auto area = filterDesc.at("requiredArea");
             return ProjectedAreaFilter(area.template get<double>());
         }catch(  const json::exception & e){
-            return std::unexpected(e.what());
+            return std::nullopt;
         }
     }
 };

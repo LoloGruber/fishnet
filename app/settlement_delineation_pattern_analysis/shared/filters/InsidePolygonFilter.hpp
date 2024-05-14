@@ -18,7 +18,7 @@ public:
         return BinaryFilterType::InsidePolygonFilter;
     }
 
-    static std::expected<InsidePolygonFilter,std::string> fromJson(const nlohmann::json & json) {
+    static std::optional<InsidePolygonFilter> fromJson(const nlohmann::json & json) {
         return InsidePolygonFilter();
     }
     

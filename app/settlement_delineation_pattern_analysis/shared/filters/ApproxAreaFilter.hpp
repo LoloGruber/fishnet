@@ -8,6 +8,7 @@
 #include <cmath>
 #include <optional>
 #include <nlohmann/json.hpp>
+#include <magic_enum.hpp>
 
 using json = nlohmann::json;
 
@@ -29,12 +30,19 @@ public:
         return UnaryFilterType::ApproxAreaFilter;
     }
 
-    static std::expected<ApproxAreaFilter,std::string> fromJson(json const & filterDesc) {
+    constexpr json toJson() const noexcept {
+        json output;
+        output["name"] = magic_enum::enum_name(type());
+        output["requiredArea"]=requiredArea;
+        return output;
+    }
+
+    static std::optional<ApproxAreaFilter> fromJson(json const & filterDesc) {
         try{
             auto area = filterDesc.at("requiredArea");
             return ApproxAreaFilter(area.template get<double>());
         }catch(  const json::exception & e){
-            return std::unexpected(e.what());
+            return std::nullopt;
         }
     }
 };
