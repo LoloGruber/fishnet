@@ -11,17 +11,16 @@
 #include "MemgraphAdjacency.hpp"
 #include "SettlementPolygon.hpp"
 #include "Task.hpp"
+#include "FindNeighboursConfig.hpp"
 
 
 template<fishnet::geometry::IPolygon P>
 class FindNeighboursTask : public Task{
 private:
     std::vector<fishnet::Shapefile> inputs;
-    mg::Client::Params memgraphParams;
-    fishnet::util::AllOfPredicate<P,P> neighbouringPredicate;
-    double maxEdgeDistance; // distance in [m]
+    FindNeighboursConfig<P> config;
 public:
-    FindNeighboursTask(){
+    FindNeighboursTask(FindNeighboursConfig<P> && config):config(std::move(config)){
         this->writeDescLine("Find Neighbours Task:");
     }
 
@@ -32,17 +31,27 @@ public:
 
     template<fishnet::util::BiPredicate<P> NeighbourBiPredicate>
     FindNeighboursTask<P> & addNeighbouringPredicate(NeighbourBiPredicate && predicate) noexcept {
-        neighbouringPredicate.add(std::forward<NeighbourBiPredicate>(predicate));
+        config.neighbouringPredicates.push_back(std::forward<NeighbourBiPredicate>(predicate));
         return *this;
     }
 
     FindNeighboursTask<P> & setMaxEdgeDistance(double distanceInMeters) noexcept {
-        maxEdgeDistance = distanceInMeters;
+        config.maxEdgeDistance = distanceInMeters;
         return *this;
     }
 
     FindNeighboursTask<P> & setMemgraphParams(mg::Client::Params && params) noexcept {
-        memgraphParams = std::move(params);
+        config.memgraphParams = std::move(params);
+        return *this;
+    }
+
+    FindNeighboursTask<P> & setConfig(FindNeighboursConfig<P> && neighboursConfig) noexcept  {
+        this->config = std::move(neighboursConfig);
+        return *this;
+    }
+
+    FindNeighboursTask<P> & setConfig(const FindNeighboursConfig<P> & neighboursConfig ) noexcept {
+        this->config = neighboursConfig;
         return *this;
     }
 
@@ -54,13 +63,17 @@ public:
     }
 
     void run() noexcept override{
-        auto expAdj = MemgraphAdjacency<SettlementPolygon<P>>::create(memgraphParams);
+        fishnet::util::AllOfPredicate<P,P> neighbouringPredicate;
+        std::ranges::for_each(config.neighbouringPredicates,[&neighbouringPredicate](const auto & predicate){neighbouringPredicate.add(predicate);});
+        auto expAdj = MemgraphAdjacency<SettlementPolygon<P>>::create(config.params);
         testExpectedOrThrowError(expAdj);
         auto graph = fishnet::graph::GraphFactory::UndirectedGraph<SettlementPolygon<P>>(std::move(expAdj.value()));
         std::vector<SettlementPolygon<P>> polygons;
-        this->indentDescLine("Inputs: ");
+        this->writeDescLine("-Config:");
+        this->indentDescLine(config.jsonDescription.dump());
+        this->writeDescLine("-Inputs: ");
         for(const auto & shp : inputs) {
-            this->indentDescLine("\t"+shp.getPath().string());
+            this->indentDescLine(shp.getPath().filename().string());
             auto layer = fishnet::VectorLayer<P>::read(shp);
             auto fileRef = graph.getAdjacencyContainer().getDatabaseConnection().addFileReference(shp.getPath().filename().string());
             if(not fileRef){
@@ -80,7 +93,8 @@ public:
                 polygons.emplace_back(optId.value(),fileRef.value(),std::move(feature.getGeometry()));
             }
         }
-        double maxEdgeDistanceVar = maxEdgeDistance;
+
+        double maxEdgeDistanceVar = config.maxEdgeDistance;
         auto boundingBoxPolygonWrapper = [maxEdgeDistanceVar](const SettlementPolygon<P> & settPolygon ){
             auto aaBB = fishnet::geometry::Rectangle<fishnet::math::DEFAULT_NUMERIC>(settPolygon.aaBB().getPoints());
             double distanceMetersTopLeftBotLeft = fishnet::WGS84Ellipsoid::distance(aaBB.left(),aaBB.top(),aaBB.left(),aaBB.bottom());

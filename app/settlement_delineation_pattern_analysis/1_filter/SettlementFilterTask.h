@@ -14,6 +14,7 @@
 #include <nlohmann/json.hpp> // Copyright (c) 2013-2022 Niels Lohmann
 #include <sstream>
 #include "Task.hpp"
+#include "FilterConfig.hpp"
 
 template<fishnet::geometry::IPolygon P>
 class SettlementFilterTask: public Task {
@@ -21,21 +22,25 @@ private:
     fishnet::Shapefile input;
     fishnet::util::AllOfPredicate<P> unaryCompositeFilter;
     fishnet::util::AllOfPredicate<P,P> binaryCompositeFilter;
+    FilterConfig<P> config;
     fishnet::Shapefile output;
 public:
     SettlementFilterTask(fishnet::Shapefile  input, fishnet::Shapefile  output):Task(),input(std::move(input)),output(std::move(output)){
-        Task::operator<<("Filter\n")
-        << "\tInput: "<<getInput().getPath().filename().string() <<"\n"
-        << "\tOutput:"<<getOutput().getPath().filename().string() << "\n";
+        Task::operator<<("FilterTask\n")
+        << "-Input:\t\t"<<getInput().getPath().filename().string() <<"\n"
+        << "-Output:\t"<<getOutput().getPath().filename().string() << "\n";
     }
 
     void run() noexcept override{
+        std::ranges::for_each(config.unaryPredicates,[this](const auto & filter){unaryCompositeFilter.add(filter);});
+        std::ranges::for_each(config.binaryPredicates,[this](const auto & binaryFilter){binaryCompositeFilter.add(binaryFilter);});
+        this->writeDescLine("-Config:\t"+config.jsonDescription.dump());
         auto inputLayer = fishnet::VectorLayer<P>::read(input);
         auto result = filter(inputLayer.getGeometries(), binaryCompositeFilter, unaryCompositeFilter);
         auto outputLayer = fishnet::VectorLayer<P>::empty(inputLayer.getSpatialReference());
         auto idField = outputLayer.addSizeField(Task::FISHNET_ID_FIELD);
         if(not idField){
-            std::cerr << "Coult not create ID Field" << std::endl;
+            std::cerr << "Could not create ID Field" << std::endl;
         }
         auto polygonHasher = std::hash<P>();
         for(auto && geometry: result) {
@@ -66,6 +71,16 @@ public:
         return *this;
     }
 
+    SettlementFilterTask & setConfig(FilterConfig<P> && filterConfig) noexcept {
+        this->config = std::move(filterConfig);
+        return *this;
+    }
+
+    SettlementFilterTask & setConfig(const FilterConfig<P> & filterConfig ) noexcept {
+        this->config = filterConfig;
+        return *this;
+    }
+
     SettlementFilterTask & setOutput(fishnet::Shapefile && outputFile) noexcept {
         this->output = std::move(outputFile);
         return *this;
@@ -84,7 +99,9 @@ public:
         return this->output;
     }
 
-    using json = nlohmann::json;
+    const FilterConfig<P> & getConfig() const noexcept {
+        return this->config;
+    }
 
     static SettlementFilterTask<P> create(fishnet::Shapefile input, fishnet::Shapefile output) noexcept{
         return SettlementFilterTask(input, output);

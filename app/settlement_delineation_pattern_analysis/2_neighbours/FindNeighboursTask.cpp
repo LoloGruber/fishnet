@@ -2,11 +2,11 @@
 #include <fishnet/GISFactory.hpp>
 #include <fishnet/WGS84Ellipsoid.hpp>
 #include <CLI/CLI.hpp>
-#include "NeighboursConfigJsonReader.hpp"
 
 
 
 int main(int argc, char const *argv[]){ 
+    using GeometryType = fishnet::geometry::Polygon<double>;
     CLI::App app {"NeighboursTask"};
     std::vector<std::string> inputFilesnames;
     std::string configFilename;
@@ -21,12 +21,10 @@ int main(int argc, char const *argv[]){
     });
     app.add_option("-c,--config",configFilename,"Path to neighbours.json configuration")->required()->check(CLI::ExistingFile);
     CLI11_PARSE(app,argc,argv);
-    FindNeighboursTask<fishnet::geometry::Polygon<double>> task;
+    FindNeighboursTask<GeometryType> task {FindNeighboursConfig<GeometryType>(json::parse(std::ifstream(configFilename)))};
     for(auto && filename : inputFilesnames) {
         task.addShapefile(fishnet::Shapefile(filename));
     }
-    NeighboursConfigJsonReader reader {std::filesystem::path(configFilename)};
-    reader.parse(task);
     task.run();
     return 0;
 }

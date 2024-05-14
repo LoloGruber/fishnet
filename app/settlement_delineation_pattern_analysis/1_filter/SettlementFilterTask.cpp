@@ -7,11 +7,11 @@
 #include <fishnet/StopWatch.h>
 #include <fishnet/GISFactory.hpp>
 #include <fishnet/StopWatch.h>
-#include <nlohmann/json.hpp>
+#include <nlohmann/json.hpp> //MIT License Copyright (c) 2013-2022 Niels Lohmann
 #include <fstream>
 #include <CLI/CLI.hpp>
 
-#include "FilterConfigJsonReader.hpp"
+#include "FilterConfig.hpp"
 /**
  * MIT License Copyright (c) 2013-2022 Niels Lohmann
 
@@ -62,6 +62,7 @@ constexpr static const char * OUTPUT_SUFFIX = "_filtered.shp";
  * @return
  */
 int main(int argc, char * argv[]){
+    using PolygonType = fishnet::geometry::Polygon<double>;
     CLI::App app{"FilterTask"};
     std::string inputFilename = "/home/lolo/Documents/fishnet/data/output/small_dataset/Punjab_Small.shp";
     std::string configFilename = "/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/1_filter/config/filter.json";
@@ -74,11 +75,10 @@ int main(int argc, char * argv[]){
     auto taskExpected = inputShapefile.transform([&outputDirectory](const auto & input){
         std::filesystem::path outPath = std::filesystem::path(outputDirectory) / std::filesystem::path(input.getPath().stem().string() + OUTPUT_SUFFIX);
         Shapefile output = Shapefile(outPath);
-        return SettlementFilterTask<fishnet::geometry::Polygon<double>>::create(input, output);
+        return SettlementFilterTask<PolygonType>::create(input, output);
     });
     auto & task = getExpectedOrThrowError(taskExpected);
-    auto jsonReader = FilterConfigJsonReader(std::filesystem::path(configFilename));
-    jsonReader.parse(task);
+    task.setConfig(FilterConfig<PolygonType>(json::parse(std::ifstream(configFilename))));
     task.run();
     return 0;
 }
