@@ -17,6 +17,9 @@ concept UnaryOperator = UnaryFunction<F,T,T>;
 template<typename F, typename T>
 concept BiOperator = BiFunction<F,T,T,T>;
 
+template<typename T>
+using BiOperator_t = std::function<T(const T &, const T &)>;
+
 template<typename F, typename T>
 concept Predicate = UnaryFunction<F,T,bool>;
 
@@ -37,6 +40,9 @@ concept Consumer = UnaryFunction<F,T,void>;
 
 template<typename F, typename R>
 concept ReduceFunction = std::ranges::forward_range<R> && UnaryFunction<F,R,std::ranges::range_value_t<R>>;
+
+template<typename R>
+using ReduceFunction_t = std::function<typename std::ranges::range_value_t<R>(const R &)>;
 
 struct TruePredicate{
     bool inline operator()(const auto & t)const noexcept {
