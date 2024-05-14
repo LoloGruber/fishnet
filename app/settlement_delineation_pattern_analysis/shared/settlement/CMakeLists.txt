@@ -1,0 +1,3 @@
+add_library(settlementLib INTERFACE)
+target_include_directories(settlementLib INTERFACE ${CMAKE_CURRENT_LIST_DIR})
+target_link_libraries(settlementLib INTERFACE Fishnet::Fishnet memgraphAdapter)
