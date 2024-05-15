@@ -52,7 +52,7 @@ public:
     }
 
     bool addNodes(util::forward_range_of<N> auto && nodes) {
-        return std::ranges::fold_left(nodes,false,[this](bool prev, auto && n){return addNode(n) & prev;});
+        return std::ranges::fold_left(nodes,false,[this](bool prev, auto n){return addNode(n) & prev;});
     }
 
     void inline removeNode(const N& node){
