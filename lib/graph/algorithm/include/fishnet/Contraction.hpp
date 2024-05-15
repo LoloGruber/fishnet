@@ -113,14 +113,23 @@ static std::vector<std::pair<int,N>> mergeWorker(QueuePtr<N> queue, util::Reduce
  * @param result map from component id to output graph node type (int -> Target::node_type)
  */
 template<Graph SourceGraphType, Graph TargetGraphType>
-static inline void constructFromComponentsMap(const SourceGraphType & source, TargetGraphType & output, auto && componentsMap,  std::unordered_map<int,typename TargetGraphType::node_type> && result) noexcept {
-    output.addNodes(source.getNodes() | std::views::filter([&source](const auto & node){return util::size(source.getNeighbours(node))==0 && util::size(source.getReachableFrom(node))==0;})); // add disconnected nodes
-    auto edges = source.getEdges();
-    output.addEdges(std::views::all(edges) 
-        | std::views::filter([&componentsMap](const auto & edge){return componentsMap.at(edge.getFrom()) != componentsMap.at(edge.getTo());}) // get all edges that are not contracted
-        | std::views::transform([&result,&componentsMap,&output](const auto & edge){
-            return output.makeEdge(result.at(componentsMap.at(edge.getFrom())), result.at(componentsMap.at(edge.getTo()))); // contr
-        }));
+static inline void constructFromComponentsMap(const SourceGraphType & source, TargetGraphType & output, auto && componentsMap,  std::unordered_map<int,typename TargetGraphType::node_type> && result, auto const & mapper) noexcept {
+    std::vector<typename TargetGraphType::node_type> disconnectedNodes;
+    for(const auto & node: source.getNodes()){
+        if(util::size(source.getNeighbours(node))==0 && util::size(source.getReachableFrom(node))==0){
+            disconnectedNodes.emplace_back(mapper(node));
+        }
+    }
+    output.addNodes(disconnectedNodes);
+    std::vector<typename TargetGraphType::edge_type> edges;
+    for(const auto & edge: source.getEdges()){
+        if(componentsMap.at(edge.getFrom()) != componentsMap.at(edge.getTo())){
+            edges.push_back(
+                output.makeEdge(result.at(componentsMap.at(edge.getFrom())), result.at(componentsMap.at(edge.getTo())))
+            );
+        }
+    }
+    output.addEdges(edges);
 }
 }
 
@@ -141,7 +150,7 @@ namespace fishnet::graph{
  * @return TargetGraphType resulting graph after contracting edges and merging nodes using the target graph node type
  */
 template<Graph SourceGraphType, Graph TargetGraphType>
-TargetGraphType contract(const SourceGraphType & source, util::BiPredicate<typename SourceGraphType::node_type> auto const & contractBiPredicate,util::BiFunction<typename SourceGraphType::node_type,typename SourceGraphType::node_type,typename TargetGraphType::node_type> auto const & mergeFunction,
+void contract(const SourceGraphType & source, util::BiPredicate<typename SourceGraphType::node_type> auto const & contractBiPredicate,util::BiFunction<typename SourceGraphType::node_type,typename SourceGraphType::node_type,typename TargetGraphType::node_type> auto const & mergeFunction,
  util::UnaryFunction<typename SourceGraphType::node_type,typename TargetGraphType::node_type> auto const & mapper, TargetGraphType & output,  u_int8_t workers = 1)
 {
     using N = SourceGraphType::node_type;
@@ -163,8 +172,7 @@ TargetGraphType contract(const SourceGraphType & source, util::BiPredicate<typen
             result.try_emplace(merged.first,merged.second);
         }
     }
-    __impl::constructFromComponentsMap(source,output,std::move(componentsMap),std::move(result));
-    return output;
+    __impl::constructFromComponentsMap(source,output,componentsMap,std::move(result),mapper);
 }
 
 /**
@@ -181,7 +189,7 @@ TargetGraphType contract(const SourceGraphType & source, util::BiPredicate<typen
  * @return TargetGraphType resulting graph after contracting edges and merging nodes using the target graph node type
  */
 template<Graph SourceGraphType, Graph TargetGraphType>
-TargetGraphType contract(const SourceGraphType & source, util::BiPredicate<typename SourceGraphType::node_type> auto const & contractBiPredicate,
+void contract( const SourceGraphType & source, util::BiPredicate<typename SourceGraphType::node_type> auto const & contractBiPredicate,
     util::ReduceFunction<std::vector<typename SourceGraphType::node_type>,typename TargetGraphType::node_type> auto const & reduceFunction, TargetGraphType & output,  u_int8_t workers = 1)
 {
     using N = SourceGraphType::node_type;
@@ -203,8 +211,8 @@ TargetGraphType contract(const SourceGraphType & source, util::BiPredicate<typen
             result.try_emplace(merged.first,merged.second);
         }
     }
-    __impl::constructFromComponentsMap(source,output,std::move(componentsMap),std::move(result));
-    return output;
+    auto mapper = [&reduceFunction](const N & node){return reduceFunction(std::vector<N>({node}));};
+    __impl::constructFromComponentsMap(source,output,std::move(componentsMap),std::move(result),mapper);
 }
 
 /**
@@ -220,7 +228,8 @@ TargetGraphType contract(const SourceGraphType & source, util::BiPredicate<typen
 template<Graph G> requires std::is_constructible_v<G>
 G contract(const G & source, NodeBiPredicate<typename G::node_type> auto const& contractBiPredicate, NodeBiOperator<typename G::node_type> auto const& mergeFunction, u_int8_t workers = 1){
     G result;
-    return contract(source,contractBiPredicate,mergeFunction,util::Identity(),result,workers);
+    contract(source,contractBiPredicate,mergeFunction,util::Identity(),result,workers);
+    return result;
 }
 
 /**
@@ -236,6 +245,7 @@ G contract(const G & source, NodeBiPredicate<typename G::node_type> auto const& 
 template<Graph G> requires std::is_constructible_v<G>
 G contract(const G & source, NodeBiPredicate<typename G::node_type> auto const& contractBiPredicate, util::ReduceFunction<std::vector<typename G::node_type>> auto const& reduceFunction, u_int8_t workers = 1){
     G result;
-    return contract(source,contractBiPredicate,reduceFunction,result,workers);
+    contract(source,contractBiPredicate,reduceFunction,result,workers);
+    return result;
 }   
 }
