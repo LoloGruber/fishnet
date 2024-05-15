@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include "Testutil.h"
 #include "MemgraphAdjacency.hpp"
+#include <fishnet/GraphFactory.hpp>
 using namespace testutil;
 using namespace fishnet::graph;
 
@@ -260,3 +261,15 @@ TEST_F(MemgraphTest, clear) {
     EXPECT_EMPTY(mgAdj->getAdjacencyPairs());
 }
 
+TEST_F(MemgraphTest, undirectedGraph){
+    u_int16_t port = 7687;
+    std::string hostname = "localhost";
+    std::expected<MemgraphAdjacency<ExampleNode>,std::string> mgAdj = MemgraphAdjacency<ExampleNode>::create(hostname,port);
+    auto g = fishnet::graph::GraphFactory::UndirectedGraph<ExampleNode>(std::move(mgAdj.value()));
+    ExampleNode n1 {1,fileRef};
+    ExampleNode n2 {2,fileRef};
+    g.addEdge(n1,n2);
+    auto s = fishnet::util::size(g.getNeighbours(n1));
+    EXPECT_EQ(s,1);
+
+}
