@@ -1,3 +1,0 @@
-add_library(mergeFunctionLib INTERFACE)
-target_include_directories(mergeFunctionLib INTERFACE ${CMAKE_CURRENT_LIST_DIR})
-target_link_libraries(mergeFunctionLib INTERFACE settlementLib)
