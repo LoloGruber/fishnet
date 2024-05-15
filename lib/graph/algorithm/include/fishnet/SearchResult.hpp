@@ -21,7 +21,7 @@ public:
     using node_type = N;
 
     SearchResult(){
-        nodeStatus = std::unordered_map<N,NodeStatus>();
+        nodeStatus = std::unordered_map<N,NodeStatus,Hash,Equal>();
     };
 
     void onOpen(const N & node){

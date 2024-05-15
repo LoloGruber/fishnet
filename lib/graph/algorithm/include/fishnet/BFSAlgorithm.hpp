@@ -22,14 +22,13 @@ namespace fishnet::graph::__impl{
  * @brief Generic breadth-first search implementation starting from a node
  * 
  * @tparam G graph type
- * @tparam SearchResultImpl search result type (using CRTP)
  * @param g graph
  * @param searchResult mutable reference to search result
  * @param start start node
  * @param predicate BiPredicate to require additional criteria for two nodes to be in relation
  */
-template<Graph G, class SearchResultImpl>
-static void bfs(const G  & g, SearchResult<SearchResultImpl> & searchResult, const  typename G::node_type  & start,NodeBiPredicate<typename G::node_type> auto const& predicate) {
+template<Graph G>
+static void bfs(const G  & g, auto & searchResult, const  typename G::node_type  & start,NodeBiPredicate<typename G::node_type> auto const& predicate) {
     using N = G::node_type;
     std::queue<N> q;
     q.push(start);
@@ -37,7 +36,7 @@ static void bfs(const G  & g, SearchResult<SearchResultImpl> & searchResult, con
         N current = q.front();
         q.pop();
         searchResult.open(current);
-        for(auto & neighbour : g.getNeighbours(current)){
+        for(auto const& neighbour : g.getNeighbours(current)){
                 if (searchResult.isUnknown(neighbour) and predicate(current,neighbour) ) {
                     searchResult.open(neighbour);
                     searchResult.onEdge(current,neighbour);
@@ -52,13 +51,12 @@ static void bfs(const G  & g, SearchResult<SearchResultImpl> & searchResult, con
  * @brief Generic breadth-first search implementation, traversing the entire graph
  * 
  * @tparam G graph type
- * @tparam SearchResultImpl search result type (using CRTP)
  * @param g graph
  * @param searchResult mutable reference to search result
  * @param predicate BiPredicate to require additional criteria for two nodes to be in relation
  */
-template<Graph G,class SearchResultImpl>
-static void bfs_all(const Graph auto & g, SearchResult<SearchResultImpl> & searchResult,NodeBiPredicate<typename G::node_type> auto const& predicate){
+template<Graph G>
+static void bfs_all(const Graph auto & g, auto& searchResult,NodeBiPredicate<typename G::node_type> auto const& predicate){
     auto nodes = g.getNodes();
     for(auto const& n : nodes){
         if (searchResult.stop()){
