@@ -262,7 +262,7 @@ void EXPECT_SIZE(R & container, size_t size) {
 
 template<std::ranges::range R>
 void EXPECT_SIZE(R && container, size_t size) {
-    EXPECT_EQ(fishnet::util::size<decltype(container)>(container),size);
+    EXPECT_EQ(fishnet::util::size(container),size);
 }
 
 void EXPECT_EMPTY(std::ranges::range auto && container){
