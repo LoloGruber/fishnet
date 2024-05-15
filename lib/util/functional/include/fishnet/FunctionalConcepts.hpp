@@ -38,11 +38,11 @@ concept Producer = std::convertible_to<F,std::function<T()>>;
 template<typename F, typename T>
 concept Consumer = UnaryFunction<F,T,void>;
 
-template<typename F, typename R>
-concept ReduceFunction = std::ranges::forward_range<R> && UnaryFunction<F,R,std::ranges::range_value_t<R>>;
+template<typename F, typename RangeType, typename ResultType = std::ranges::range_value_t<RangeType>>
+concept ReduceFunction = std::ranges::forward_range<RangeType> && UnaryFunction<F,RangeType,ResultType>;
 
-template<typename R>
-using ReduceFunction_t = std::function<typename std::ranges::range_value_t<R>(const R &)>;
+template<typename RangeType, typename ResultType = std::ranges::range_value_t<RangeType>>
+using ReduceFunction_t = std::function<ResultType(const RangeType &)>;
 
 struct TruePredicate{
     bool inline operator()(const auto & t)const noexcept {
@@ -65,6 +65,13 @@ struct TrueBiPredicate{
 struct FalseBiPredicate {
     bool inline operator()(const auto & lhs, const auto & rhs) const noexcept {
         return false;
+    }
+};
+
+struct Identity{
+    template<typename T>
+    T inline operator()(const T & t)const noexcept {
+        return t;
     }
 };
 
