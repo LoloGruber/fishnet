@@ -73,6 +73,10 @@ namespace fishnet::graph::__impl {
                 return false;
             } 
 
+            void addEdges(util::forward_range_of<WE> auto && edges) {
+                std::ranges::for_each(edges,[this]( auto && edge){this->addEdge(edge);});
+            }
+
             bool addEdge( N & from,  N & to){
                 return Base::addEdge(from,to);
             }
