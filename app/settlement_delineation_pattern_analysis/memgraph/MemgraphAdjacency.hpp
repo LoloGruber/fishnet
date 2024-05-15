@@ -199,6 +199,10 @@ public:
         this->client.removeNodes(std::views::keys(keyToNodeMap) | std::views::transform([](const size_t key){return NodeReference(key);}));
         this->keyToNodeMap.clear();
     }
+
+    bool load(fishnet::util::forward_range_of<N> auto && nodes) noexcept {
+        return addNodes(nodes);
+    }
 };
 
 
