@@ -3,7 +3,7 @@
 
 namespace fishnet::util{
 /**
- * @brief Creates an empty temporary directory, which is clean up on destruction (-> RAII)
+ * @brief Creates an empty temporary directory, which is cleaned up on destruction (-> RAII)
  * 
  */
 class TemporaryDirectory{
