@@ -121,6 +121,7 @@ static inline void constructFromComponentsMap(const SourceGraphType & source, Ta
         }
     }
     output.addNodes(disconnectedNodes);
+    output.addNodes(std::views::values(result)); // ensure that all nodes are added, even disconnected nodes after the merge
     std::vector<typename TargetGraphType::edge_type> edges;
     for(const auto & edge: source.getEdges()){
         if(componentsMap.at(edge.getFrom()) != componentsMap.at(edge.getTo())){
@@ -131,6 +132,40 @@ static inline void constructFromComponentsMap(const SourceGraphType & source, Ta
     }
     output.addEdges(edges);
 }
+
+
+/**
+ * @brief Helper Function to apply the merged components in place to the output graph (required for Graph Databases)
+ * 
+ * @tparam SourceGraphType source graph type
+ * @tparam TargetGraphType output graph type
+ * @param source mutable reference to source graph
+ * @param output mutable reference to output graph
+ * @param componentsMap map from source graph node type to component id (Source::node_type -> int)
+ * @param result map from component id to output graph node type (int -> Target::node_type)
+ */
+template<Graph SourceGraphType, Graph TargetGraphType>
+static inline void constructFromComponentsMapInPlace(SourceGraphType & source, TargetGraphType & output, auto && componentsMap,  std::unordered_map<int,typename TargetGraphType::node_type> && result, auto const & mapper) noexcept {
+    std::vector<typename TargetGraphType::node_type> disconnectedNodes;
+    for(const auto & node: source.getNodes()){
+        if(util::size(source.getNeighbours(node))==0 && util::size(source.getReachableFrom(node))==0){
+            disconnectedNodes.emplace_back(mapper(node));
+        }
+    }
+    std::vector<typename TargetGraphType::edge_type> edges;
+    for(const auto & edge: source.getEdges()){
+        if(componentsMap.at(edge.getFrom()) != componentsMap.at(edge.getTo())){
+            edges.push_back(
+                output.makeEdge(result.at(componentsMap.at(edge.getFrom())), result.at(componentsMap.at(edge.getTo())))
+            );
+        }
+    }
+    source.clear();
+    output.addNodes(disconnectedNodes);
+    output.addNodes(std::views::values(result)); // ensure that all nodes are added, even disconnected nodes after the merge
+    output.addEdges(edges);
+}
+
 }
 
 namespace fishnet::graph{
@@ -213,6 +248,85 @@ void contract( const SourceGraphType & source, util::BiPredicate<typename Source
     }
     auto mapper = [&reduceFunction](const N & node){return reduceFunction(std::vector<N>({node}));};
     __impl::constructFromComponentsMap(source,output,std::move(componentsMap),std::move(result),mapper);
+}
+
+/**
+ * @brief Generic in place contraction implementation. Edges between nodes fulfilling the contractBiPredicate get contracted. 
+ * The incident nodes get merge by reducing a vector of nodes from the source graph to a single node of the target graph
+ * 
+ * @tparam SourceGraphType source graph type
+ * @tparam TargetGraphType target graph type
+ * @param source mutable reference to source graph, gets cleared during the contraction
+ * @param contractBiPredicate specifies when an edge between two nodes from source graph shall be contracted
+ * @param reduceFunction specifies how a vector of nodes from the source graph get combined to a single node of the target graph
+ * @param output mutable reference to the target graph
+ * @param workers amount of concurrent works
+ * @return TargetGraphType resulting graph after contracting edges and merging nodes using the target graph node type
+ */
+template<Graph SourceGraphType, Graph TargetGraphType>
+void contractInPlace( SourceGraphType & source, util::BiPredicate<typename SourceGraphType::node_type> auto const & contractBiPredicate,
+    util::ReduceFunction<std::vector<typename SourceGraphType::node_type>,typename TargetGraphType::node_type> auto const & reduceFunction, TargetGraphType & output,  u_int8_t workers = 1)
+{
+    using N = SourceGraphType::node_type;
+    using R = TargetGraphType::node_type;
+    if(workers == 0) 
+        workers = 1;
+    auto queue = std::make_shared<__impl::QueueType<N>>();
+    std::vector<std::future<std::vector<std::pair<int,R>>>> futures;
+    futures.reserve(workers);
+    for(int i = 0; i < workers; i++){
+        futures.emplace_back(std::async(std::launch::async,[queue,&reduceFunction](){return __impl::mergeWorker<N,R>(queue,reduceFunction);}));
+    }
+    auto componentsMap = BFS::connectedComponents(source,queue,contractBiPredicate).asMap();
+    std::unordered_map<int,R> result;
+    queue->putPoisonPill();
+    result.reserve(componentsMap.size());
+    for(auto & f: futures){
+        for(auto & merged: f.get() ){
+            result.try_emplace(merged.first,merged.second);
+        }
+    }
+    auto mapper = [&reduceFunction](const N & node){return reduceFunction(std::vector<N>({node}));};
+    __impl::constructFromComponentsMapInPlace(source,output,std::move(componentsMap),std::move(result),mapper);
+}
+
+/**
+ * @brief Generic in place contraction implementation. Edges between nodes fulfilling the contractBiPredicate get contracted. 
+ * The incident nodes get merge by reducing a vector of nodes from the source graph to a single node of the target graph
+ * 
+ * @tparam SourceGraphType source graph type
+ * @tparam TargetGraphType target graph type
+ * @param graph mutable reference to graph to be contracted
+ * @param contractBiPredicate specifies when an edge between two nodes from source graph shall be contracted
+ * @param reduceFunction specifies how a vector of nodes from the source graph get combined to a single node of the target graph
+ * @param workers amount of concurrent works
+ * @return TargetGraphType resulting graph after contracting edges and merging nodes using the target graph node type
+ */
+template<Graph SourceGraphType>
+void contractInPlace( SourceGraphType & graph, util::BiPredicate<typename SourceGraphType::node_type> auto const & contractBiPredicate,
+    util::ReduceFunction<std::vector<typename SourceGraphType::node_type>,typename SourceGraphType::node_type> auto const & reduceFunction, u_int8_t workers = 1)
+{
+    using N = SourceGraphType::node_type;
+    using R = SourceGraphType::node_type;
+    if(workers == 0) 
+        workers = 1;
+    auto queue = std::make_shared<__impl::QueueType<N>>();
+    std::vector<std::future<std::vector<std::pair<int,R>>>> futures;
+    futures.reserve(workers);
+    for(int i = 0; i < workers; i++){
+        futures.emplace_back(std::async(std::launch::async,[queue,&reduceFunction](){return __impl::mergeWorker<N,R>(queue,reduceFunction);}));
+    }
+    auto componentsMap = BFS::connectedComponents(graph,queue,contractBiPredicate).asMap();
+    std::unordered_map<int,R> result;
+    queue->putPoisonPill();
+    result.reserve(componentsMap.size());
+    for(auto & f: futures){
+        for(auto & merged: f.get() ){
+            result.try_emplace(merged.first,merged.second);
+        }
+    }
+    auto mapper = [&reduceFunction](const N & node){return reduceFunction(std::vector<N>({node}));};
+    __impl::constructFromComponentsMapInPlace(graph,graph,std::move(componentsMap),std::move(result),mapper);
 }
 
 /**
