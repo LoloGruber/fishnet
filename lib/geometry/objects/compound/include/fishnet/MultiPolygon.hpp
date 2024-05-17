@@ -63,7 +63,7 @@ public:
      * @param polygonsRange 
      * @param checked if true, no checks are applied, potentially speeding up the construction
      */
-    MultiPolygon(util::input_range_of<P> auto const & polygonsRange,bool checked =false){
+    MultiPolygon(util::input_range_of<P> auto  && polygonsRange,bool checked =false){
         if (checked){
             this->polygons = std::vector<P>(std::ranges::begin(polygonsRange),std::ranges::end(polygonsRange));
         }else{
@@ -72,7 +72,7 @@ public:
             else {
                 // use sweep-line for large multi-polygons, filter out invalid entries
                 this->polygons = filter(polygonsRange,[](const P & lhs, const P & rhs){
-                    return lhs == rhs || lhs.crosses(rhs) || lhs.contains(rhs) || rhs.contains(lhs);
+                    return not( lhs == rhs || lhs.crosses(rhs) || lhs.contains(rhs) || rhs.contains(lhs));
                 });
             }
         }
