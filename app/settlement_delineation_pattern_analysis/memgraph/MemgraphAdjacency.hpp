@@ -116,7 +116,7 @@ public:
         return false;
     }
 
-    bool addNodes(fishnet::util::forward_range_of<N> auto const& nodes) {
+    bool addNodes(fishnet::util::forward_range_of<N> auto && nodes) {
         if(client.insertNodes(std::views::all(nodes)
             | std::views::filter([this](const auto & node){return not keyToNodeMap.contains(node.key());})
             | std::views::transform([](const auto & node){return createNodeReference(node);})))
@@ -180,12 +180,13 @@ public:
 
     fishnet::util::view_of<std::pair<const N, const N>> auto getAdjacencyPairs() const noexcept {
         std::unordered_map<size_t,std::vector<size_t>> edgesMap = client.edges();
-        std::ranges::for_each(std::views::keys(keyToNodeMap),[&edgesMap](const size_t key){edgesMap.try_emplace(key);});
+        std::ranges::for_each(std::views::keys(keyToNodeMap),[&edgesMap](const size_t key){edgesMap.try_emplace(key);}); // add disconnected nodes
         return std::views::all(keyToNodeMap)
             | std::views::transform([edges=std::move(edgesMap),this](const auto & keyValPair){
                 const auto & [key,node] = keyValPair;
-                return std::views::transform(edges.at(key),[&node,this](const size_t neighbour){
-                        return std::make_pair(node,this->keyToNodeMap.at(neighbour));
+                auto && neighboursPresentInKeyMap = std::views::filter(edges.at(key),[this](size_t neighbour){return this->keyToNodeMap.contains(neighbour);});
+                return std::views::transform(neighboursPresentInKeyMap,[&node,this](const size_t neighbour){
+                            return std::make_pair(node,this->keyToNodeMap.at(neighbour));
                 });
             })
             | std::views::join;
@@ -201,7 +202,7 @@ public:
     }
 
     bool load(fishnet::util::forward_range_of<N> auto && nodes) noexcept {
-        return addNodes(nodes);
+        return addNodes(nodes | std::views::filter([this](const N & node){return this->contains(node);})); // load only nodes also present in the Database
     }
 };
 
