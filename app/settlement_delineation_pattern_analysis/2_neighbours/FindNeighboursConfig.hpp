@@ -1,25 +1,10 @@
 #pragma once
-#include <fishnet/ShapeGeometry.hpp>
-#include <fishnet/WGS84Ellipsoid.hpp>
-#include <fishnet/PolygonDistance.hpp>
-#include <fishnet/StaticMap.hpp>
 #include <nlohmann/json.hpp> //MIT License Copyright (c) 2013-2022 Niels Lohmann
 #include <magic_enum.hpp> //Copyright (c) 2019 - 2024 Daniil Goncharov
-
 #include "TaskConfig.hpp"
-#include "DistanceBiPredicate.hpp"
-
+#include "NeighbourPredicateJsonReader.hpp"
 
 using json = nlohmann::json;
-
-template<typename T>
-std::optional<fishnet::util::BiPredicate_t<T>> fromNeighbouringPredicateType(NeighbouringPredicateType type,const json & predicateDesc) {
-    // switch(type){
-    //     case NeighbouringPredicateType::ExamplePredicate:
-    //         std::cerr << "Not implemented yet" << std::endl;
-    // }
-    return std::nullopt;
-}
 
 template<typename GeometryType>
 struct FindNeighboursConfig: public MemgraphTaskConfig{
