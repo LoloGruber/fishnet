@@ -1,0 +1,21 @@
+{
+    "shpFiles":[{
+        "class": "File",
+        "path": "/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/cwl/workingDir/Punjab_Small_filtered.shp",
+        "secondaryFiles": [
+            {"class": "File", "path": "/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/cwl/workingDir/Punjab_Small_filtered.shx"},
+            {"class": "File", "path": "/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/cwl/workingDir/Punjab_Small_filtered.dbf"},
+            {"class": "File", "path": "/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/cwl/workingDir/Punjab_Small_filtered.prj"}
+        ]
+    }],
+    "config":{
+        "class":"File",
+        "path": "/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/cfg/contract.json"
+    },
+    "outputDir": {
+        "class": "Directory",
+        "path": "/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/cwl/workingDir/"
+    }, 
+    "outputStem": "Punjab_Small_merged",
+    "taskID":1 
+}
