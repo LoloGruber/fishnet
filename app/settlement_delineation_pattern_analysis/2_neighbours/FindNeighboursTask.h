@@ -72,7 +72,7 @@ public:
         this->writeDescLine("-Config:");
         this->indentDescLine(config.jsonDescription.dump());
         this->writeDescLine("-Inputs: ");
-        if(inputs.size() <= 1)
+        if(inputs.size() < 1)
             std::cerr << "No input file provided" << std::endl;
         for(const auto & shp : inputs) {
             this->indentDescLine(shp.getPath().filename().string());
