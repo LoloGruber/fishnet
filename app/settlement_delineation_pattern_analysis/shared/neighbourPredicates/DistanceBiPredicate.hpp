@@ -1,3 +1,4 @@
+#pragma once
 #include <fishnet/ShapeGeometry.hpp>
 #include <fishnet/WGS84Ellipsoid.hpp>
 #include "NeighbourPredicateType.hpp"
