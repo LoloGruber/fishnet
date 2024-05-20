@@ -87,6 +87,22 @@ static OGRUniquePtr<OGRMultiPolygon> toOGR(fishnet::geometry::IMultiPolygon auto
     // https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry maybe change direction of inner rings
 }
 
+static std::optional<fishnet::geometry::MultiPolygon<fishnet::geometry::Polygon<fishnet::math::DEFAULT_NUMERIC>>> fromOGR(const OGRMultiPolygon & multiPolygon) noexcept {
+    try{
+        
+        std::vector<fishnet::geometry::Polygon<fishnet::math::DEFAULT_NUMERIC>> polygons;
+        for(auto ogrPolygonPtr : multiPolygon) {
+            auto polygon = fromOGR(*ogrPolygonPtr);
+            if (not polygon)
+                return std::nullopt;
+            polygons.push_back(polygon.value());
+        }
+        return fishnet::geometry::MultiPolygon<fishnet::geometry::Polygon<double>>(polygons);
+    }catch(fishnet::geometry::InvalidGeometryException & ex) {
+        return std::nullopt;
+    }
+}
+
 
 template<fishnet::geometry::GeometryType G>
 constexpr static auto fromOGR(const OGRGeometry & ogrGeometry){
@@ -96,6 +112,8 @@ constexpr static auto fromOGR(const OGRGeometry & ogrGeometry){
         return fromOGR(*ogrGeometry.toPoint());
     } else if constexpr(G == fishnet::geometry::GeometryType::RING){
         return fromOGR(*ogrGeometry.toLinearRing());
+    }else if constexpr(G == fishnet::geometry::GeometryType::MULTIPOLYGON){
+        return fromOGR(*ogrGeometry.toMultiPolygon());
     }else {
         return std::optional<fishnet::geometry::MultiPolygon<fishnet::geometry::Polygon<double>>>();
     }

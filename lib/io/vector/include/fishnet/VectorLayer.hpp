@@ -114,6 +114,18 @@ private:
         }
         for(const auto & ogrFeature: layer){
             auto geo = ogrFeature->GetGeometryRef();
+            if constexpr(G::type == fishnet::geometry::GeometryType::MULTIPOLYGON){
+                if(geo && wkbFlatten(geo->getGeometryType() == GeometryTypeWKBAdapter::toWKB(G::polygon_type::type))) {
+                    auto converted = OGRGeometryAdapter::fromOGR<G::polygon_type::type>(*geo);
+                    if (not converted) 
+                        continue;
+                    Feature<G> f {{converted.value()}};
+                    for(const auto & [_,fieldDefinition]: this->fields){
+                        std::visit(AddAttributeVisitor(&f,ogrFeature.get()),fieldDefinition);
+                    }
+                    addFeature(std::move(f));
+                }                
+            }
             if(geo && wkbFlatten(geo->getGeometryType() == GeometryTypeWKBAdapter::toWKB(G::type))) {
                 auto converted = OGRGeometryAdapter::fromOGR<G::type>(*geo);
                 if (not converted) 
