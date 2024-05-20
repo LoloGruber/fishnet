@@ -1,11 +1,9 @@
-//
-// Created by lolo on 18.04.24.
-//
 #pragma once
 #include "Shapefile.hpp"
 #include "GeoTiff.hpp"
 #include <gdal/gdal.h>
 #include <gdal_alg.h>
+#include <gdal/ogr_core.h>
 #include <gdal/gdal_priv.h>
 #include <fishnet/TemporaryDirectiory.h>
 
