@@ -20,22 +20,25 @@
 template<fishnet::geometry::IPolygon P>
 class SettlementFilterTask: public Task {
 private:
+    FilterConfig<P> config;
     fishnet::Shapefile input;
     fishnet::util::AllOfPredicate<P> unaryCompositeFilter;
     fishnet::util::AllOfPredicate<P,P> binaryCompositeFilter;
-    FilterConfig<P> config;
     fishnet::Shapefile output;
 public:
-    SettlementFilterTask(fishnet::Shapefile  input, fishnet::Shapefile  output):Task(),input(std::move(input)),output(std::move(output)){
-        Task::operator<<("FilterTask\n")
-        << "-Input:\t\t"<<getInput().getPath().filename().string() <<"\n"
-        << "-Output:\t"<<getOutput().getPath().filename().string() << "\n";
+    SettlementFilterTask(FilterConfig<P> && config,fishnet::Shapefile  input, fishnet::Shapefile  output):Task(),config(std::move(config)),input(std::move(input)),output(std::move(output)){
+        this->writeDescLine("FilterTask")
+        .writeDescLine("-Config:")
+        .indentDescLine(this->config.jsonDescription.dump())
+        .writeDescLine("-Input:")
+        .indentDescLine(input.getPath().filename().string())
+        .writeDescLine("-Output:")
+        .indentDescLine(output.getPath().filename().string());
     }
 
     void run() override{
         std::ranges::for_each(config.unaryPredicates,[this](const auto & filter){unaryCompositeFilter.add(filter);});
         std::ranges::for_each(config.binaryPredicates,[this](const auto & binaryFilter){binaryCompositeFilter.add(binaryFilter);});
-        this->writeDescLine("-Config:\t"+config.jsonDescription.dump());
         auto inputLayer = fishnet::VectorLayer<P>::read(input);
         auto result = filter(inputLayer.getGeometries(), binaryCompositeFilter, unaryCompositeFilter);
         auto outputLayer = fishnet::VectorLayer<P>::empty(inputLayer.getSpatialReference());
@@ -102,10 +105,6 @@ public:
 
     const FilterConfig<P> & getConfig() const noexcept {
         return this->config;
-    }
-
-    static SettlementFilterTask<P> create(fishnet::Shapefile input, fishnet::Shapefile output) noexcept{
-        return SettlementFilterTask(input, output);
     }
 };
 

@@ -26,13 +26,13 @@ int main(int argc, char * argv[]){
     app.add_option("-o,--output", outputDirectory, "Output directory path")->check(CLI::ExistingDirectory);
     CLI11_PARSE(app,argc,argv);
     auto inputShapefile = GISFactory::asShapefile(inputFilename);
-    auto taskExpected = inputShapefile.transform([&outputDirectory](const auto & input){
+    auto config = FilterConfig<PolygonType>(json::parse(std::ifstream(configFilename)));
+    auto taskExpected = inputShapefile.transform([&outputDirectory, &config](const auto & input){
         std::filesystem::path outPath = std::filesystem::path(outputDirectory) / std::filesystem::path(input.getPath().stem().string() + OUTPUT_SUFFIX);
         Shapefile output = Shapefile(outPath);
-        return SettlementFilterTask<PolygonType>::create(input, output);
+        return SettlementFilterTask<PolygonType>(std::move(config),input, output);
     });
     auto & task = getExpectedOrThrowError(taskExpected);
-    task.setConfig(FilterConfig<PolygonType>(json::parse(std::ifstream(configFilename))));
     task.run();
     return 0;
 }

@@ -40,7 +40,7 @@ public:
     ContractionTask(ContractionConfig<P> && config,fishnet::Shapefile output):config(std::move(config)),output(std::move(output)){
         this->writeDescLine("Contraction Task:")
         .writeDescLine("-Config:")
-        .indentDescLine(config.jsonDescription.dump());
+        .indentDescLine(this->config.jsonDescription.dump());
     }
 
     ContractionTask<P> & addInput(fishnet::Shapefile && shpFile) noexcept {
@@ -93,6 +93,8 @@ public:
         testExpectedOrThrowError(memgraphAdjSrc);
         testExpectedOrThrowError(memgraphAdjRes);
         auto settlements = readInputs(memgraphAdjSrc.value(),ref);
+        this->writeDescLine("-Output:");
+        this->indentDescLine(output.getPath().filename().string());
         auto outputFileRef = memgraphAdjSrc->getDatabaseConnection().addFileReference(output.getPath().filename().string());
         if(not outputFileRef)
             throw std::runtime_error( "Could not create file reference for output in Database: "+output.getPath().string());

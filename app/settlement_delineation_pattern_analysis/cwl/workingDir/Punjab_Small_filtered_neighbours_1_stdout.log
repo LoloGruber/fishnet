@@ -3,4 +3,4 @@ Find Neighbours Task:
 	{"maxDistanceMeters":3000.0,"memgraph-host":"localhost","memgraph-port":7687,"neighbouring-predicates":[]}
 -Inputs: 
 	Punjab_Small_filtered.shp
-Time elapsed: 141.06ms
+Time elapsed: 137.005ms
