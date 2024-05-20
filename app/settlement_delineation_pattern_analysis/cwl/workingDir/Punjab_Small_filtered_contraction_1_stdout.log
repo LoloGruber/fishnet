@@ -1,4 +1,7 @@
-"/tmp/z8zg7pxu/stg5ee11f78-fd5c-4345-b53b-2549b5f73592/workingDir/Punjab_Small_merged.shp"
+"/tmp/_hv9bpmc/stg2317366d-e7ba-4fad-9fcf-f791d9efd9fc/workingDir/Punjab_Small_merged.shp"
 Contraction Task:
+-Config:
+	null
+-Inputs:
 	Punjab_Small_filtered.shp
-Time elapsed: 131.279ms
+Time elapsed: 153.68ms
