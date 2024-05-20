@@ -3,7 +3,6 @@
 #include <fstream>
 #include <CLI/CLI.hpp>
 
-
 int main(int argc, char * argv[]){
     using GeometryType = fishnet::geometry::MultiPolygon<fishnet::geometry::Polygon<double>>;
     CLI::App app {"AnalysisTask"};

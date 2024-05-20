@@ -3,15 +3,15 @@
 #include "MemgraphAdjacency.hpp"
 
 /**
- * @brief Wrapper Object, which fulfills the requirements of a Polygon and for a Node stored in the Memgraph DB
+ * @brief Settlement Object, which fulfills the requirements of a Polygon and for a Node stored in the Memgraph DB.
  * 
- * @tparam S specific polygon type (e.g. Polygon<double>)
+ * @tparam S specific shape type (e.g. Polygon<double>)
  */
 template<fishnet::geometry::Shape S>
 class SettlementPolygon:public S{
 private:
     size_t id; // unique id of the settlement
-    FileReference fileRef; // file, which stores the polygon
+    FileReference fileRef; // file, which stores the shape
 public:
     template<typename... Args>
     SettlementPolygon(size_t id, FileReference fileRef, Args&&... args):S(std::forward<Args>(args)...),id(id),fileRef(std::move(fileRef)){}

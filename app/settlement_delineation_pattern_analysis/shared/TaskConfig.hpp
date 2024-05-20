@@ -4,6 +4,10 @@
 
 using json = nlohmann::json;
 
+/**
+ * @brief Common super class for all task configurations.
+ * Stores the json used for configuration
+ */
 struct TaskConfig{
     json jsonDescription;
 
@@ -12,6 +16,10 @@ struct TaskConfig{
     TaskConfig()=default;
 };
 
+/**
+ * @brief Common super class for all task needing a memgraph connection
+ * Parses the required memgraph parameters from the json
+ */
 struct MemgraphTaskConfig : public TaskConfig{
     constexpr static const char * MEMGRAPH_PORT_KEY = "memgraph-port";
     constexpr static const char * MEMGRAPH_HOSTNAME_KEY = "memgraph-host";

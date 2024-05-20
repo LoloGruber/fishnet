@@ -4,13 +4,15 @@
 #include "Filter.hpp"
 #include <nlohmann/json.hpp>
 
-using namespace fishnet::geometry;
-
+/**
+ * @brief Binary Filter, testing if the other polygons contain another or are inside a hole
+ * 
+ */
 class InsidePolygonFilter{
 private:
-    static inline ContainedOrInHoleFilter filter{};
+    static inline fishnet::geometry::ContainedOrInHoleFilter filter{};
 public:
-    static inline bool operator()(IPolygon auto const & lhs, IPolygon auto const & rhs ) noexcept {
+    static inline bool operator()(fishnet::geometry::IPolygon auto const & lhs, fishnet::geometry::IPolygon auto const & rhs ) noexcept {
         return filter(lhs,rhs);
     }
 

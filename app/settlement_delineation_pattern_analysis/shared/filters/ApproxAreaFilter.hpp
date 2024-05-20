@@ -12,6 +12,10 @@
 
 using json = nlohmann::json;
 
+/**
+ * @brief Filter that approximates the area in m² and checks if it is equal or greater than the required area
+ * 
+ */
 class ApproxAreaFilter{
 private:
     double requiredArea; // Area in [m²]
@@ -21,8 +25,8 @@ public:
     bool operator() (const fishnet::geometry::IPolygon auto & p) const noexcept {
         double areaInLongLat = p.area();
         auto anySegment = *std::ranges::begin(p.getBoundary().getSegments());
-        double squaredFactor = pow(fishnet::WGS84Ellipsoid::distance(anySegment.p(),anySegment.q()),2)/pow(anySegment.length(),2);
-        double approxArea = areaInLongLat * squaredFactor;
+        double squaredFactor = pow(fishnet::WGS84Ellipsoid::distance(anySegment.p(),anySegment.q()),2)/pow(anySegment.length(),2); // estimates a factor to convert from lon,lat to m² for the polygon in question
+        double approxArea = areaInLongLat * squaredFactor; 
         return approxArea >= requiredArea;
     }
 

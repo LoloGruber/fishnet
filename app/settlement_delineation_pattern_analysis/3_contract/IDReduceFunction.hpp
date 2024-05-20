@@ -3,6 +3,11 @@
 #include <fishnet/Polygon.hpp>
 #include "SettlementPolygon.hpp"
 
+/**
+ * @brief Reduce function Functor that merges a set of settlements polygons into a single settlement multi-polygon.
+ * The resulting settlement has the accumulated id of all merged settlements
+ * 
+ */
 struct IDReduceFunction{
     FileReference outputFileRef;
     

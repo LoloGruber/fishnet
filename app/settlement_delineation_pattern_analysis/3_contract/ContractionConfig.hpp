@@ -6,6 +6,11 @@
 #include "TaskConfig.hpp"
 #include "NeighbourPredicateJsonReader.hpp"
 
+/**
+ * @brief Contraction configuration parser
+ * 
+ * @tparam GeometryType 
+ */
 template<typename GeometryType>
 struct ContractionConfig:public MemgraphTaskConfig{
     constexpr static const char * CONTRACTION_PREDICATES_KEY = "contraction-predicates";

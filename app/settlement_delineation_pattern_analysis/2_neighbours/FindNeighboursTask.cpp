@@ -1,16 +1,13 @@
 #include "FindNeighboursTask.h"
-#include <fishnet/GISFactory.hpp>
-#include <fishnet/WGS84Ellipsoid.hpp>
-#include <CLI/CLI.hpp>
-
-
+#include <fishnet/Shapefile.hpp>
+#include <CLI/CLI.hpp> //CLI11 2.2 Copyright (c) 2017-2024 University of Cincinnati, developed by Henry Schreiner under NSF AWARD 1414736. All rights reserved.
 
 int main(int argc, char const *argv[]){ 
     using GeometryType = fishnet::geometry::Polygon<double>;
     CLI::App app {"NeighboursTask"};
     std::vector<std::string> inputFilenames;
     std::string configFilename;
-    app.add_option("-i,--inputs",inputFilenames,"Input Shapefiles for finding neighbours")->required()->each([](const std::string & str){
+    app.add_option("-i,--inputs",inputFilenames,"Input Shapefiles storing the settlements")->required()->each([](const std::string & str){
         try{
             auto file = fishnet::Shapefile(str);
             if(not file.exists())

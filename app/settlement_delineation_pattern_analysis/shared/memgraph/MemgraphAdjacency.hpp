@@ -6,8 +6,11 @@
 #include <mgclient.hpp>
 #include "MemgraphClient.hpp"
 
-
-
+/**
+ * @brief Concept for nodes to be stored in the memgraph database
+ * Each node requires a key() (e.g. FishnetID) and a file reference to the file the node is stored in
+ * @tparam N node type
+ */
 template<typename N>
 concept DatabaseNode = requires(const N & node) {
     {node.key()} -> std::same_as<size_t>;
@@ -179,17 +182,18 @@ public:
 
 
     fishnet::util::view_of<std::pair<const N, const N>> auto getAdjacencyPairs() const noexcept {
-        std::unordered_map<size_t,std::vector<size_t>> edgesMap = client.edges();
+        std::unordered_map<size_t,std::vector<size_t>> edgesMap = client.edges(); // adjacency map: node_id -> List<node_id>
         std::ranges::for_each(std::views::keys(keyToNodeMap),[&edgesMap](const size_t key){edgesMap.try_emplace(key);}); // add disconnected nodes
         return std::views::all(keyToNodeMap)
             | std::views::transform([edges=std::move(edgesMap),this](const auto & keyValPair){
                 const auto & [key,node] = keyValPair;
+                // view holding all neighbours in the adjacency list, which are part of this (sub)graph
                 auto && neighboursPresentInKeyMap = std::views::filter(edges.at(key),[this](size_t neighbour){return this->keyToNodeMap.contains(neighbour);});
                 return std::views::transform(neighboursPresentInKeyMap,[&node,this](const size_t neighbour){
                             return std::make_pair(node,this->keyToNodeMap.at(neighbour));
                 });
             })
-            | std::views::join;
+            | std::views::join; //flatten view
     }
 
     const MemgraphClient & getDatabaseConnection() const noexcept {

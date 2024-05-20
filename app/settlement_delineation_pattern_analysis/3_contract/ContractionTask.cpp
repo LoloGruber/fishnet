@@ -1,9 +1,7 @@
 #include "ContractionTask.h"
 #include <fishnet/Polygon.hpp>
-#include "DistanceBiPredicate.hpp"
-#include <CLI/CLI.hpp>
-
-
+#include <fishnet/Shapefile.hpp>
+#include <CLI/CLI.hpp> //CLI11 2.2 Copyright (c) 2017-2024 University of Cincinnati, developed by Henry Schreiner under NSF AWARD 1414736. All rights reserved.
 
 int main(int argc, const char * argv[]){
     using GeometryType = fishnet::geometry::Polygon<double>;

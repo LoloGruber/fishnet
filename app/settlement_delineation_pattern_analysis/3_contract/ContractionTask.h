@@ -12,6 +12,12 @@
 #include "Task.hpp"
 #include "IDReduceFunction.hpp"
 
+/**
+ * @brief Implementation of the contraction task. 
+ * The graph of all settlements stored in the input files (and part of specified connected components) are first loaded from the database.
+ * Edges between settlements fulfilling the composite contraction predicate are contracted, and the adjacent settlements merged into a single entity (e.g. a Multi-Polygon containing all settlements)
+ * @tparam P polygon type of the settlements
+ */
 template<fishnet::geometry::IPolygon P>
 class ContractionTask:public Task{
 private:
@@ -19,8 +25,17 @@ private:
     ContractionConfig<P> config;
     fishnet::Shapefile output;
 public:
+    /**
+     * @brief geometry type of the result (defines reduce function output type)
+     */
     using ResultGeometryType = fishnet::geometry::MultiPolygon<P>;
-    using SourceNodeType = SettlementPolygon<P>;
+    /**
+     * @brief settlement type before the contraction
+     */
+    using SourceNodeType = SettlementPolygon<P>; 
+    /**
+     * @brief settlement type after the contraction
+     */
     using ResultNodeType = SettlementPolygon<ResultGeometryType>;
     ContractionTask(ContractionConfig<P> && config,fishnet::Shapefile output):config(std::move(config)),output(std::move(output)){
         this->writeDescLine("Contraction Task:")
@@ -33,6 +48,14 @@ public:
         return *this;
     }
 
+    /**
+     * @brief Helper function to read the settlements from the shape files and load their relationships from the memgraph database.
+     * Additionally sets the out parameter spatialRef, to the spatial reference system used in the inputs 
+     * @param adj IN_OUT memgraph adjacency instance, loads the settlement relationships
+     * @param spatialRef IN_OUT spatial reference used for the ouput shapefile, set according to input spatial reference
+     * @throws runtime_error when the file reference for the inputs could not be loaded or the id of a settlement could not be read
+     * @return fishnet::util::forward_range_of<SettlementPolygon<P>> list of settlements
+     */
     fishnet::util::forward_range_of<SettlementPolygon<P>> auto readInputs( MemgraphAdjacency<SourceNodeType> & adj, OGRSpatialReference & spatialRef) {
         std::vector<SettlementPolygon<P>> polygons;
         this->writeDescLine("-Inputs:");
@@ -61,29 +84,31 @@ public:
     }
 
     void run() override {
-        if(inputs.size() < 1){
+        if(inputs.empty()){
             throw std::runtime_error( "No input file provided");
         }
         auto memgraphAdjSrc = MemgraphAdjacency<SourceNodeType>::create(config.params);
         auto memgraphAdjRes = MemgraphAdjacency<ResultNodeType>::create(config.params);
-        OGRSpatialReference ref;
+        OGRSpatialReference ref; // set by readInputs function, used as spatial reference for output layer
         testExpectedOrThrowError(memgraphAdjSrc);
         testExpectedOrThrowError(memgraphAdjRes);
         auto settlements = readInputs(memgraphAdjSrc.value(),ref);
         auto outputFileRef = memgraphAdjSrc->getDatabaseConnection().addFileReference(output.getPath().filename().string());
         if(not outputFileRef)
-            throw std::runtime_error( "Could not create file reference in Database for: "+output.getPath().string());
+            throw std::runtime_error( "Could not create file reference for output in Database: "+output.getPath().string());
         auto sourceGraph = fishnet::graph::GraphFactory::UndirectedGraph<SourceNodeType>(std::move(memgraphAdjSrc.value()));
         auto resultGraph = fishnet::graph::GraphFactory::UndirectedGraph<ResultNodeType>(std::move(memgraphAdjRes.value()));
+        /*Reduce function used to merge a connected component of nodes (SourceNodeType), solely connected via to-be-contracted edges, into a single node of the ResultNodeType*/
         auto reduceFunction = IDReduceFunction(outputFileRef.value());
         auto contractionPredicate = fishnet::util::AllOfPredicate<SourceNodeType,SourceNodeType>();
+        /* Load all contraction predicates into a single composite contraction predicate */
         std::ranges::for_each(config.contractBiPredicates,[&contractionPredicate](const auto & predicate){contractionPredicate.add(
             [&predicate](const SourceNodeType & lhs, const SourceNodeType & rhs){return predicate(static_cast<P>(lhs),static_cast<P>(rhs));});
         });
+        /* Contract the graph according to the composite contraction predicate. Done in place, to remove old adjacencies from the database as well to allow the reuse of ids, while remaining consistency*/
         fishnet::graph::contractInPlace(sourceGraph,contractionPredicate,reduceFunction,resultGraph,config.workers);
-        sourceGraph.clear();
         auto outputLayer = fishnet::VectorLayer<ResultGeometryType>::empty(ref);
-        auto idFieldExp = outputLayer.addSizeField(Task::FISHNET_ID_FIELD);
+        auto idFieldExp = outputLayer.addSizeField(Task::FISHNET_ID_FIELD); // add id field to output as well
         if(not idFieldExp)
             throw std::runtime_error(idFieldExp.error());
         const auto & idField = idFieldExp.value();

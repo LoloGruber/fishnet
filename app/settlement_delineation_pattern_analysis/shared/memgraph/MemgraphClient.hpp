@@ -7,10 +7,18 @@
 #include <filesystem>
 #include <fishnet/CollectionConcepts.hpp>
 
+/**
+ * @brief File reference have a unique id for each file
+ * 
+ */
 struct FileReference{
     int64_t fileId;
 };
 
+/**
+ * @brief Nodes are stored with their unique ID and a reference to the file they are stored in
+ * 
+ */
 struct NodeReference{
     size_t nodeId;
     FileReference fileRef = FileReference(-1);
@@ -29,6 +37,10 @@ private:
         return mg::Id::FromInt(value).AsUint();
     }
 public:
+    /**
+     * @brief Helper class for building queries
+     * 
+     */
     class Query {
         protected:
             std::stringstream query;
@@ -72,7 +84,10 @@ public:
             }
     };
 
-
+    /**
+     * @brief Helper class for building parameterized queries
+     * 
+     */
     class ParameterizedQuery{
         private:
             mg::Map params;
@@ -163,6 +178,12 @@ public:
         this->mgClient = std::move(other.mgClient);
     }
 
+    /**
+     * @brief Factory Method to create a Memgraph client from Memgraph parameters
+     * 
+     * @param params parameters for the database connection (e.g hostname, port,...)
+     * @return std::expected<MemgraphClient,std::string>: Containing the MemgraphClient on success or a string explaining the error
+     */
     static std::expected<MemgraphClient,std::string> create(const mg::Client::Params & params ) {
         auto clientPtr = mg::Client::Connect(params);
         if(not clientPtr){
@@ -176,6 +197,13 @@ public:
         return std::expected<MemgraphClient,std::string>(std::move(clientPtr));
     }
 
+    /**
+     * @brief Factory Method to create a Memgraph client from hostname and port
+     * 
+     * @param hostname (e.g. localhost)
+     * @param port (e.g. 7687)
+     * @return std::expected<MemgraphClient,std::string>: Containing the MemgraphClient on success or a string explaining the error
+     */
     static std::expected<MemgraphClient ,std::string> create(std::string hostname, uint16_t port) {
         mg::Client::Params params;
         params.host = hostname;
@@ -190,7 +218,12 @@ public:
             && Query("CREATE CONSTRAINT ON (f:File) ASSERT exists(f.path)").executeAndDiscard(mgClient);
     }
 
-
+    /**
+     * @brief Adds a file reference to the database.
+     * The node in the database stores the path to the file and has an unique ID
+     * @param path path to file
+     * @return std::optional<FileReference> containing the unique ID of the file if successful 
+     */
     std::optional<FileReference> addFileReference(const std::string & path) const noexcept{
         ParameterizedQuery query;
         query.append("MERGE (f:File {path:$path})");

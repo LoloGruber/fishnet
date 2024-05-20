@@ -1,8 +1,8 @@
 #pragma once
 #include <expected>
 #include <fishnet/FunctionalConcepts.hpp>
-#include <nlohmann/json.hpp>
-#include "magic_enum.hpp"
+#include <nlohmann/json.hpp> // Copyright (c) 2013-2022 Niels Lohmann
+#include <magic_enum.hpp> //Copyright (c) 2019 - 2024 Daniil Goncharov
 #include "Filter.hpp"
 #include "ApproxAreaFilter.hpp"
 #include "ProjectedAreaFilter.hpp"
@@ -11,6 +11,7 @@
 
 using json = nlohmann::json;
 
+//TODO move function into filter library
 template<typename GeometryType>
 static std::optional<fishnet::util::Predicate_t<GeometryType>> fromUnaryType(UnaryFilterType type,json const & filterDesc) {
     switch(type){
@@ -21,6 +22,7 @@ static std::optional<fishnet::util::Predicate_t<GeometryType>> fromUnaryType(Una
     }
     return std::nullopt;
 }
+//TODO move function into filter library
 template<typename GeometryType>
 static std::optional<fishnet::util::BiPredicate_t<GeometryType>> fromBinaryType(BinaryFilterType type, json const & filterDesc){
     switch(type){
@@ -30,6 +32,11 @@ static std::optional<fishnet::util::BiPredicate_t<GeometryType>> fromBinaryType(
     return std::nullopt;
 }
 
+/**
+ * @brief Filter Configuration Parser
+ * 
+ * @tparam T geometry type
+ */
 template<typename T>
 struct FilterConfig:public TaskConfig{
     constexpr static const char * UNARY_FILTERS = "unary-filters";

@@ -1,4 +1,5 @@
 #pragma once
+#include <vector>
 #include <nlohmann/json.hpp> //MIT License Copyright (c) 2013-2022 Niels Lohmann
 #include <magic_enum.hpp> //Copyright (c) 2019 - 2024 Daniil Goncharov
 #include "TaskConfig.hpp"
@@ -6,6 +7,11 @@
 
 using json = nlohmann::json;
 
+/**
+ * @brief Neighbours Config Parser
+ * 
+ * @tparam GeometryType type of the settlement geometry (e.g. Polygon)
+ */
 template<typename GeometryType>
 struct FindNeighboursConfig: public MemgraphTaskConfig{
     constexpr static const char * MAX_DISTANCE_KEY = "maxDistanceMeters";

@@ -4,6 +4,12 @@
 #include <ostream>
 #include <iostream>
 
+/**
+ * @brief Common super class for all tasks
+ * -User can specify a description of the task
+ * -Execution time is tracked 
+ * -RAII type -> description and execution time is printed on destruction
+ */
 class Task {
 private:
     std::stringstream taskDesc;
@@ -47,6 +53,15 @@ public:
     }
 };
 
+
+/**
+ * @brief Helper functions to deal with std::expected types and unwraps them if possible or throws error
+ * @throws runtime_error if not value is present
+ * @tparam T value type
+ * @tparam E error type
+ * @param expected expected containing either a value or an error
+ * @return T& reference to the contained value
+ */
 template<typename T, typename E>
 T & getExpectedOrThrowError(std::expected<T,E> & expected) {
     if(not expected){
@@ -55,6 +70,14 @@ T & getExpectedOrThrowError(std::expected<T,E> & expected) {
     return expected.value();
 }
 
+/**
+ * @brief Helper functions to deal with std::expected types and unwraps them if possible or throws error
+ * @throws runtime_error if not value is present
+ * @tparam T value type
+ * @tparam E error type
+ * @param expected expected containing either a value or an error
+ * @return T  contained value
+ */
 template<typename T, typename E>
 T  getExpectedOrThrowError(std::expected<T,E> && expected) {
     if(not expected){
@@ -63,6 +86,13 @@ T  getExpectedOrThrowError(std::expected<T,E> && expected) {
     return expected.value();
 }
 
+/**
+ * @brief Helper function to ensure a value is present in the expected (otherwise throws error)
+ * @throws runtime_error if not value is present
+ * @tparam T value type
+ * @tparam E error type
+ * @param expected expected containing either a value or an error
+ */
 template<typename T, typename E>
 void testExpectedOrThrowError(std::expected<T,E> & expected) {
     if(not expected){

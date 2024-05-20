@@ -1,21 +1,22 @@
-//
-// Created by lolo on 09.04.24.
-//
 #pragma once
-
 #include <fishnet/VectorLayer.hpp>
 #include <fishnet/Feature.hpp>
 #include <fishnet/Shapefile.hpp>
 #include <fishnet/CompositePredicate.hpp>
-
 #include <fishnet/GeometryObject.hpp>
 #include <fishnet/PolygonFilter.hpp>
 
-#include <nlohmann/json.hpp> // Copyright (c) 2013-2022 Niels Lohmann
 #include <sstream>
+
 #include "Task.hpp"
 #include "FilterConfig.hpp"
 
+/**
+ * @brief Implementation of the filter step of the workflow.
+ * Use composite unary and binary filters to test the settlements stored in the input shapefile.
+ * Stores the settlements, passing the filter, in the output shapefile with a unique FishnetID
+ * @tparam P polygon type 
+ */
 template<fishnet::geometry::IPolygon P>
 class SettlementFilterTask: public Task {
 private:
@@ -31,7 +32,7 @@ public:
         << "-Output:\t"<<getOutput().getPath().filename().string() << "\n";
     }
 
-    void run() noexcept override{
+    void run() override{
         std::ranges::for_each(config.unaryPredicates,[this](const auto & filter){unaryCompositeFilter.add(filter);});
         std::ranges::for_each(config.binaryPredicates,[this](const auto & binaryFilter){binaryCompositeFilter.add(binaryFilter);});
         this->writeDescLine("-Config:\t"+config.jsonDescription.dump());
@@ -40,7 +41,7 @@ public:
         auto outputLayer = fishnet::VectorLayer<P>::empty(inputLayer.getSpatialReference());
         auto idField = outputLayer.addSizeField(Task::FISHNET_ID_FIELD);
         if(not idField){
-            std::cerr << "Could not create ID Field" << std::endl;
+            throw std::runtime_error("Could not create ID Field");
         }
         auto polygonHasher = std::hash<P>();
         for(auto && geometry: result) {
