@@ -106,6 +106,10 @@ public:
         return this->geometry;
     }
 
+    constexpr auto getGeometry() noexcept {
+        return this->geometry;
+    }
+
     constexpr bool operator==(const Feature<G> & feature) const noexcept {
         return this->geometry == feature.getGeometry() &&
                std::ranges::is_permutation(this->attributes, feature.attributes);
