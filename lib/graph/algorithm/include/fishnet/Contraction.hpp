@@ -252,7 +252,7 @@ void contract( const SourceGraphType & source, util::BiPredicate<typename Source
 
 /**
  * @brief Generic in place contraction implementation. Edges between nodes fulfilling the contractBiPredicate get contracted. 
- * The incident nodes get merge by reducing a vector of nodes from the source graph to a single node of the target graph
+ * The incident nodes get merged by reducing a vector of nodes from the source graph to a single node of the target graph
  * 
  * @tparam SourceGraphType source graph type
  * @tparam TargetGraphType target graph type
@@ -292,7 +292,7 @@ void contractInPlace( SourceGraphType & source, util::BiPredicate<typename Sourc
 
 /**
  * @brief Generic in place contraction implementation. Edges between nodes fulfilling the contractBiPredicate get contracted. 
- * The incident nodes get merge by reducing a vector of nodes from the source graph to a single node of the target graph
+ * The incident nodes get merged by reducing a vector of nodes from the source graph to a single node of the target graph
  * 
  * @tparam SourceGraphType source graph type
  * @tparam TargetGraphType target graph type
