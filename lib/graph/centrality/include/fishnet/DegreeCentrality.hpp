@@ -11,8 +11,8 @@ struct DegreeCentrality{
     std::vector<std::pair<typename G::node_type,size_t>> operator() (const G & graph) const{
         std::vector<std::pair<typename G::node_type,size_t>> result;
         auto nodes = graph.getNodes();
-        result.reserve(nodes.size()); //TODO adapt for ranges that do not suppert .size()
-        std::transform(nodes.begin(),nodes.end(),std::back_inserter(result),[&graph]( const auto &  node){return std::make_pair(node,graph.getNeighbours(node).size());}); 
+        result.reserve(fishnet::util::size(nodes));
+        std::transform(nodes.begin(),nodes.end(),std::back_inserter(result),[&graph]( const auto &  node){return std::make_pair(node,fishnet::util::size(graph.getNeighbours(node)));}); 
         return result;
     }
 };
