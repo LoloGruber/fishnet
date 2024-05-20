@@ -23,7 +23,9 @@ public:
     using SourceNodeType = SettlementPolygon<P>;
     using ResultNodeType = SettlementPolygon<ResultGeometryType>;
     ContractionTask(ContractionConfig<P> && config,fishnet::Shapefile output):config(std::move(config)),output(std::move(output)){
-        this->writeDescLine("Contraction Task:");
+        this->writeDescLine("Contraction Task:")
+        .writeDescLine("-Config:")
+        .indentDescLine(config.jsonDescription.dump());
     }
 
     ContractionTask<P> & addInput(fishnet::Shapefile && shpFile) noexcept {
@@ -33,6 +35,7 @@ public:
 
     fishnet::util::forward_range_of<SettlementPolygon<P>> auto readInputs( MemgraphAdjacency<SourceNodeType> & adj, OGRSpatialReference & spatialRef) {
         std::vector<SettlementPolygon<P>> polygons;
+        this->writeDescLine("-Inputs:");
         for(const auto & shp : inputs) {
             this->indentDescLine(shp.getPath().filename().string());
             auto layer = fishnet::VectorLayer<P>::read(shp);
@@ -51,8 +54,7 @@ public:
                     throw std::runtime_error("No id exists for feature with geometry:\n"+ feature.getGeometry().toString());
                 }
                 polygons.emplace_back(optId.value(),fileRef.value(),std::move(feature.getGeometry()));
-            }
-        
+            }   
         }
         adj.load(polygons);
         return polygons;

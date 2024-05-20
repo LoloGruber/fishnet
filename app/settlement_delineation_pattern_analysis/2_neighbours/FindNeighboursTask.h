@@ -35,33 +35,6 @@ public:
         return *this;
     }
 
-    FindNeighboursTask<P> & setMaxEdgeDistance(double distanceInMeters) noexcept {
-        config.maxEdgeDistance = distanceInMeters;
-        return *this;
-    }
-
-    FindNeighboursTask<P> & setMemgraphParams(mg::Client::Params && params) noexcept {
-        config.memgraphParams = std::move(params);
-        return *this;
-    }
-
-    FindNeighboursTask<P> & setConfig(FindNeighboursConfig<P> && neighboursConfig) noexcept  {
-        this->config = std::move(neighboursConfig);
-        return *this;
-    }
-
-    FindNeighboursTask<P> & setConfig(const FindNeighboursConfig<P> & neighboursConfig ) noexcept {
-        this->config = neighboursConfig;
-        return *this;
-    }
-
-    FindNeighboursTask<P> & setMemgraphParams(std::string const & hostname, uint16_t port) noexcept {
-        mg::Client::Params params;
-        params.host = hostname;
-        params.port = port;
-        return setMemgraphParams(std::move(params));
-    }
-
     void run() noexcept override{
         fishnet::util::AllOfPredicate<P,P> neighbouringPredicate;
         std::ranges::for_each(config.neighbouringPredicates,[&neighbouringPredicate](const auto & predicate){neighbouringPredicate.add(predicate);});
