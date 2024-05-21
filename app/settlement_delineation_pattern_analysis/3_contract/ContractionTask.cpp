@@ -32,7 +32,6 @@ int main(int argc, const char * argv[]){
     for(auto && input : inputFilenames) {
         task.addInput({input});
     }
-    config.workers = 1;
     task.run();
     return 0;
 }
