@@ -5,4 +5,4 @@ FilterTask
 	Punjab_Small.shp
 -Output:
 	Punjab_Small_filtered.shp
-Time elapsed: 9.61392ms
+Time elapsed: 9.23706ms
