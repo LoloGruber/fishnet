@@ -169,7 +169,7 @@ public:
     };
 
     explicit MemgraphClient(std::unique_ptr<mg::Client> && clientPtr):mgClient(std::move(clientPtr)){
-        if(not createConstraints()) {
+        if(not createConstraints() || not createIndexes()) {
             throw std::runtime_error("Could not create constraints. Check the database connection");
         }
     }
@@ -216,6 +216,13 @@ public:
         return Query("CREATE CONSTRAINT ON (n:Node) ASSERT n.id IS UNIQUE").executeAndDiscard(mgClient)
             && Query("CREATE CONSTRAINT ON (f:File) ASSERT f.id IS UNIQUE").executeAndDiscard(mgClient)
             && Query("CREATE CONSTRAINT ON (f:File) ASSERT exists(f.path)").executeAndDiscard(mgClient);
+    }
+
+    bool createIndexes() const noexcept {
+        return Query("CREATE INDEX ON :Node(id)").executeAndDiscard(mgClient)
+            && Query("CREATE INDEX ON :File").executeAndDiscard(mgClient)
+            && Query("CREATE EDGE INDEX ON :stored").executeAndDiscard(mgClient)
+            && Query("CREATE EDGE INDEX ON :adj").executeAndDiscard(mgClient);
     }
 
     /**
