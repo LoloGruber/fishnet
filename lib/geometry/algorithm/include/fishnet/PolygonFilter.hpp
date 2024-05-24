@@ -68,7 +68,7 @@ template<IPolygon P>
 struct PolygonFilterRemoveEvent: public PolygonFilter<P>::DefaultRemoveEvent {
     PolygonFilterRemoveEvent(const BoundingBoxPolygon<P> & box):PolygonFilter<P>::DefaultRemoveEvent(box){}
     /**
-     * @brief EventPoint of Insert is the bottom of the bounding box (Sweepline goes from top to bottom)
+     * @brief EventPoint of Removal is the bottom of the bounding box (Sweepline goes from top to bottom)
      * 
      * @return fishnet::math::DEFAULT_NUMERIC 
      */
