@@ -1,8 +1,0 @@
-Contraction Task:
--Config:
-	{"contraction-predicates":[{"distance":500.0,"name":"DistanceBiPredicate"}],"memgraph-host":"localhost","memgraph-port":7687,"merge-workers":1}
--Inputs:
-	Punjab_Small_filtered.shp
--Output:
-	Punjab_Small_merged.shp
-Time elapsed: 133.418ms

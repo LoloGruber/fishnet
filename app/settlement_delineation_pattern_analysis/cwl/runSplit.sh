@@ -16,3 +16,5 @@ cwltool ../filter.cwl /home/lolo/Documents/fishnet/app/settlement_delineation_pa
 cwltool ../filter.cwl /home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/cwl/jobs/split/Punjab_0_3.json
 cwltool ../filter.cwl /home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/cwl/jobs/split/Punjab_3_0.json
 cwltool ../filter.cwl /home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/cwl/jobs/split/Punjab_3_2.json
+cwltool ../neighbours.cwl /home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/cwl/jobs/split/neighboursJob.json
+cwltool ../contract.cwl /home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/cwl/jobs/split/contractionJob.json

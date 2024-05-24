@@ -1,6 +1,0 @@
-Find Neighbours Task:
--Config:
-	{"maxDistanceMeters":3000.0,"memgraph-host":"localhost","memgraph-port":7687,"neighbouring-predicates":[]}
--Inputs: 
-	Punjab_Small_filtered.shp
-Time elapsed: 132.914ms

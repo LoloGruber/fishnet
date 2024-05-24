@@ -13,7 +13,7 @@ def createShpFile(path:str):
     shpFile = {}
     shpFile["class"] = "File"
     shpFile["path"] = path
-    shpFile["secondaryFiles"]= [secondaryFiles] 
+    shpFile["secondaryFiles"]= secondaryFiles
     return shpFile
 
 def createConfigFile(path:str):
@@ -22,11 +22,11 @@ def createConfigFile(path:str):
     configFile["path"] = path
     return configFile
 
-def writeJobFilter(pathToShp, pathToConfig,pathToJobDir script):
-    jobPath = os.join(pathToJobDir,pathToShp.split("/")[-1][:-4]+".json")
+def writeJobFilter(pathToShp, pathToConfig,pathToJobDir, script):
+    jobPath = join(pathToJobDir,pathToShp.split("/")[-1][:-4]+".json")
     job = {}
     job["shpFile"] = createShpFile(pathToShp)
-    job["filterConfig"] = createConfigFile(pathToConfig)
+    job["filterConfig"] = createConfigFile(join(pathToConfig,"filter.json"))
     writeJobToPath(job,jobPath)
     script.append(f"cwltool ../filter.cwl {jobPath}")
 
@@ -43,27 +43,27 @@ def main():
     filterCfg = "/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/cfg/"
     pathToFiles = "/home/lolo/Documents/fishnet/data/testing/Punjab_Split"
     jobDir = "/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/cwl/jobs/split/"
+    workingDir = "/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/cwl/workingDir/"
     allshpFiles = [f for f in listdir(pathToFiles) if isfile(join(pathToFiles, f)) and f.endswith(".shp")]
     neighboursJob = {}
     contractionJob = {}
     neighboursJob["config"] = createConfigFile("/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/cfg/neighbours.json")
-    contractionJob["config"] = createConfigFile("/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/cwl/jobs/contractionExample.json")
+    contractionJob["config"] = createConfigFile("/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/cfg/contract.json")
     inputs = []
     for f in allshpFiles:
-        createFilterJob(join(pathToFiles, f),filterCfg,jobDir,script)
-        inputs.append(createShpFile(f[:4]+"_filtered.shp"))
+        writeJobFilter(join(pathToFiles, f),filterCfg,jobDir,script)
+        filteredFile = join(workingDir,f[:-4] + "_filtered.shp")
+        inputs.append(createShpFile(filteredFile))
     neighboursJob["shpFiles"] = inputs
     contractionJob["shpFiles"] = inputs
-    contractionJob["output"] = inputs
-    writeJobToPath(os.join(pathToFiles,))
-
-    with open("/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/cwl/jobs/split/neighbours.json","w") as f:
-        json.dump(neighboursJob,f)
-        script.append(f"cwltool ../neighbours.cwl {f}")
-
-
-
-
+    contractionJob["outputDir"] = {"class": "Directory","path":workingDir}
+    contractionJob["outputStem"] = "Punjab_Split_Contracted"
+    neighboursJobPath = "/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/cwl/jobs/split/neighboursJob.json"
+    contractionJobPath = "/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/cwl/jobs/split/contractionJob.json"
+    writeJobToPath(neighboursJob,neighboursJobPath)
+    script.append(f"cwltool ../neighbours.cwl {neighboursJobPath}")
+    writeJobToPath(contractionJob,contractionJobPath)
+    script.append(f"cwltool ../contract.cwl {contractionJobPath}")
     completeScript = ""
     for line in script:
         completeScript += line +"\n"
