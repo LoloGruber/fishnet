@@ -59,6 +59,9 @@ struct VerticalAABBOrdering{
 template<IPolygon P>
 struct HorizontalAABBOrdering {
     bool operator()(const BoundingBoxPolygon<P> & lhs, const BoundingBoxPolygon<P> & rhs) const noexcept {
+        if(lhs.getBoundingBox().left() == rhs.getBoundingBox().left()){
+            return lhs.getBoundingBox().right() < rhs.getBoundingBox().right();
+        }
         return lhs.getBoundingBox().left() < rhs.getBoundingBox().left();
     }
 };
