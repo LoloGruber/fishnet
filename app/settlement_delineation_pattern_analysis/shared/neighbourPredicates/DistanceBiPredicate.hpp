@@ -13,7 +13,7 @@ struct DistanceBiPredicate{
 
     bool operator()(fishnet::geometry::Shape auto const & lhs, fishnet::geometry::Shape auto const & rhs) const noexcept {
         auto [l,r] = fishnet::geometry::closestPoints(lhs,rhs);
-        return fishnet::WGS84Ellipsoid::distance(l,r) <= maxDistanceInMeters;
+        return l == r || fishnet::WGS84Ellipsoid::distance(l,r) <= maxDistanceInMeters;
     }
 
     static NeighbouringPredicateType type() {
