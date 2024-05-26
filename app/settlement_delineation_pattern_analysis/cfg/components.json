@@ -1,0 +1,4 @@
+{
+    "memgraph-host":"localhost",
+    "memgraph-port":7687
+}
