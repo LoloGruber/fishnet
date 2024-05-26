@@ -36,13 +36,13 @@ public:
     }
 
     template<typename... Args>
-    bool addNode(N & node, Args... args){
+    bool addNode(const N & node, Args... args){
         return g.addNode(node,args...);
     }
 
     template<typename... Args>
     bool addNode(N && node, Args... args){
-        return g.addNode(node,args...);
+        return g.addNode(std::move(node),args...);
     }
 
     bool addNodes(util::forward_range_of<N> auto & nodes){
@@ -61,23 +61,23 @@ public:
         g.removeNode(node);
     }
 
-    bool addEdge(N & from, N & to){
+    bool addEdge(const N & from, const N & to){
         return g.addEdge(from,to);
     }
 
     bool addEdge(N && from, N && to){
-        return g.addEdge(from,to);
+        return g.addEdge(std::move(from),std::move(to));
     }
 
     bool addEdge(const E & edge){
         return g.addEdge(edge);
     }
 
-    void addEdges(util::forward_range_of<std::pair<N,N>> auto const & edges){
+    void addEdges(util::forward_range_of<std::pair<N,N>> auto && edges){
         g.addEdges(edges);
     }
 
-    void addEdges(util::forward_range_of<E> auto const & edges) {
+    void addEdges(util::forward_range_of<E> auto  && edges) {
         g.addEdges(edges);
     }
 

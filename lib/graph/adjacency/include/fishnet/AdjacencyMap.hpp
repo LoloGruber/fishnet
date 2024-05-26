@@ -27,7 +27,7 @@ public:
 
     using equality_predicate = Equal;
     using hash_function = Hash;
-    void addAdjacency(N & from, N & to){
+    void addAdjacency(const N & from, const N & to){
         map.try_emplace(from,NodeRange());
         map.try_emplace(to,NodeRange());
         map[from].push_back(to);
@@ -35,20 +35,21 @@ public:
 
     void addAdjacency(N && from, N && to){
         map.try_emplace(to,NodeRange());
-        map.try_emplace(from,NodeRange());
-        map[from].emplace_back(to);
+        auto [fromIt,success] = map.try_emplace(from,NodeRange());
+        if(success)
+            fromIt->emplace_back(std::move(to));
     }
 
     void addAdjacencies(util::forward_range_of<std::pair<N,N>> auto && pairs){
         std::ranges::for_each(pairs,[this](auto & pair){addAdjacency(pair.first,pair.second);});
     }
 
-    bool inline addNode(N & node){
+    bool inline addNode(const N & node){
         return map.try_emplace(node,NodeRange()).second;
     }
 
     bool inline addNode(N && node){
-        return map.try_emplace(node,NodeRange()).second;
+        return map.try_emplace(std::move(node),NodeRange()).second;
     }
 
     bool addNodes(util::forward_range_of<N> auto && nodes) {

@@ -33,8 +33,7 @@ public:
     using edge_type =  E;
     using adj_container_type = A;
 
-
-    bool addNode(N & node){
+    bool addNode(const N & node){
         return impl().addNode(node);
     }
 
@@ -42,23 +41,19 @@ public:
         return impl().addNode(node);
     }
 
-    bool addNodes(util::forward_range_of<N> auto & nodes){
-        return std::ranges::all_of(nodes,[this](N & node){return addNode(node);});
-    }
-
     bool addNodes(util::forward_range_of<N> auto && nodes){
         return std::ranges::all_of(nodes,[this](N && node){return addNode(node);});
     }
 
     template<typename... Args>
-    bool addNode(N & node, Args... args){
+    bool addNode(const N & node, Args... args){
         bool hasChanged = addNode(node);
         return hasChanged && addNode(args...);
     }
 
     template<typename... Args>
     bool addNode(N && node, Args... args){
-        bool hasChanged = addNode(node);
+        bool hasChanged = addNode(std::move(node));
         return hasChanged && addNode(args...);
     }
 
@@ -70,12 +65,12 @@ public:
         impl().removeNode(node);
     }
 
-    bool addEdge(N & from, N & to){
+    bool addEdge(const N & from,const N & to){
         return impl().addEdge(from,to);
     }
 
     bool addEdge(N&& from, N && to){
-        return impl().addEdge(from,to);
+        return impl().addEdge(std::move(from),std::move(to));
     }
 
     bool addEdge(const E & edge){

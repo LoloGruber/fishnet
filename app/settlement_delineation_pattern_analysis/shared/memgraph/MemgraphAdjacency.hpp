@@ -74,7 +74,7 @@ public:
         return create(params);
     }
 
-    bool addAdjacency(N & from, N & to) noexcept {
+    bool addAdjacency(const N & from, const N & to) noexcept {
         N copyFrom  = from;
         N copyTo = to;
         return addAdjacency(std::move(copyFrom),std::move(copyTo));
@@ -103,7 +103,7 @@ public:
         return false;
     }
 
-    bool addNode(N & node) noexcept {
+    bool addNode(const N & node) noexcept {
         N copy = node;
         return addNode(std::move(copy));
     }

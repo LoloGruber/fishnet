@@ -24,15 +24,11 @@ public:
 
     SimpleGraph(AdjContainer && adjContainer):Base(),adj(std::move(adjContainer)){}
 
-    SimpleGraph(util::forward_range_of<N> auto & nodes):Base(){
-        addNodes(nodes);
-    };
-
     SimpleGraph(util::forward_range_of<N> auto && nodes):Base(){
         addNodes(nodes);
     };
 
-    bool addNode( N & node){
+    bool addNode(const N & node){
         return adj.addNode(node);
     }
 
@@ -41,7 +37,7 @@ public:
     }
 
     template<typename... Args>
-    bool addNode(N & node, Args... args){
+    bool addNode(const N & node, Args... args){
         return Base::addNode(node,args...);
     }
 
@@ -66,7 +62,7 @@ public:
         adj.removeNode(node);
     }
 
-    bool addEdge(N & from, N & to){
+    bool addEdge(const N & from, const N & to){
         if (not containsEdge(from,to)) {
             adj.addAdjacency(from,to);
             if constexpr(not E::isDirected()){
@@ -88,7 +84,7 @@ public:
         return false;
     }
 
-    void addEdges(util::forward_range_of<std::pair<N,N>> auto  & edges){
+    void addEdges(util::forward_range_of<std::pair<N,N>> auto && edges){
         if constexpr(not E::isDirected()){
             std::vector<std::pair<N,N>> reversed; // add reversed edge as well if graph is undirected
             std::ranges::transform(edges,std::back_inserter(reversed),[]( auto & pair){return std::pair(pair.second,pair.first);});
@@ -97,7 +93,7 @@ public:
         adj.addAdjacencies(edges);
     }
 
-    void addEdges(util::forward_range_of<E> auto const & edges) {
+    void addEdges(util::forward_range_of<E> auto && edges) {
         Base::addEdges(edges);
     }
 

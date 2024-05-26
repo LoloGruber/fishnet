@@ -77,7 +77,7 @@ namespace fishnet::graph::__impl {
                 std::ranges::for_each(edges,[this]( auto && edge){this->addEdge(edge);});
             }
 
-            bool addEdge( N & from,  N & to){
+            bool addEdge( const N & from, const N & to){
                 return Base::addEdge(from,to);
             }
 
@@ -85,7 +85,7 @@ namespace fishnet::graph::__impl {
                 return Base::addEdge(from,to);
             }
 
-            bool addEdge( N & from,  N & to, const A & annotation){
+            bool addEdge( const N & from,  const N & to, const A & annotation){
                 auto e = E(from,to);
                 if (Base::addEdge(e)) {
                     if(not weightMap.try_emplace(e,annotation).second){
