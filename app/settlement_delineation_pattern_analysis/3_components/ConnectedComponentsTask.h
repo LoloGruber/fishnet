@@ -20,7 +20,7 @@ public:
         graph.addNodes(nodesList);
         for(auto && [node,neigbours]:adjMap){ 
             for(auto neighbour: neigbours){ // use by value since datatype is very cheap to copy
-                // graph.addEdge(node,neighbour); //
+                graph.addEdge(node,neighbour); //
             }
         }
 
