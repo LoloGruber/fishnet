@@ -53,4 +53,8 @@ constexpr size_t size(std::ranges::range auto && range) noexcept{
         return std::ranges::count_if(range, [](const auto & e){return true;});
     }
 }
+
+constexpr inline bool isEmpty(std::ranges::range auto && range) noexcept {
+    return size(range) == 0;
+}
 }
