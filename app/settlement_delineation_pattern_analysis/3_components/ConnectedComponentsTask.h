@@ -1,4 +1,5 @@
 #include <fishnet/GraphFactory.hpp>
+#include <fishnet/BFSAlgorithm.hpp>
 #include "MemgraphClient.hpp"
 #include "Task.hpp"
 #include "ConnectedComponentsConfig.hpp"
@@ -23,6 +24,10 @@ public:
                 graph.addEdge(node,neighbour); //
             }
         }
+        auto components = fishnet::graph::BFS::connectedComponents(graph).get();
+        auto componentIds = memgraphConnection.createComponents(components);
+        
+
 
     }
 };

@@ -1,4 +1,10 @@
 {
     "memgraph-host":"localhost",
-    "memgraph-port":7687
+    "memgraph-port":7687,
+    "contraction-config-path":"",
+    "contraction-output-directory":"",
+    "contraction-output-stem":"",
+    "analysis-config-path":"",
+    "analysis-output-directory":"",
+    "analysis-output-stem":""
 }
