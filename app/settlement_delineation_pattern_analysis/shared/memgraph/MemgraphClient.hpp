@@ -8,6 +8,8 @@
 #include <filesystem>
 #include <fishnet/CollectionConcepts.hpp>
 
+
+using NodeIdType = size_t;
 /**
  * @brief File reference have a unique id for each file
  * 
@@ -21,8 +23,17 @@ struct FileReference{
  * 
  */
 struct NodeReference{
-    size_t nodeId;
+    NodeIdType nodeId;
     FileReference fileRef = FileReference(-1);
+};
+
+
+/**
+ * @brief Component reference get a unique id on insert, can be used for deletion
+ * 
+ */
+struct ComponentReference{
+    int64_t componentId;
 };
 
 
@@ -34,7 +45,7 @@ private:
         return mg::Id::FromUint(value).AsInt();
     }
 
-    static size_t asSizeT(int64_t value) {
+    static NodeIdType asNodeIdType(int64_t value) {
         return mg::Id::FromInt(value).AsUint();
     }
 public:
@@ -272,7 +283,7 @@ public:
             .executeAndDiscard(mgConnection);
     }
 
-    bool insertEdge(size_t from, size_t to,FileReference const & fileRef) const noexcept {
+    bool insertEdge(NodeIdType from, NodeIdType to,FileReference const & fileRef) const noexcept {
         return insertEdge({from,fileRef},{to,fileRef});
     }
 
@@ -374,6 +385,65 @@ public:
         return query.executeAndDiscard(mgConnection);
     }
 
+    std::optional<ComponentReference> createComponent(fishnet::util::forward_range_of<NodeIdType> auto && nodesOfComponent) const noexcept {
+        std::vector<mg::Value> data;
+        if(fishnet::util::isEmpty(nodesOfComponent))
+            return std::nullopt;
+        data.reserve(fishnet::util::size(nodesOfComponent));
+        std::ranges::transform(nodesOfComponent,std::back_inserter(data),[](NodeIdType nodeId){
+            return mg::Value(asInt(nodeId));
+        });
+        if( ParameterizedQuery(1)
+            .line("CREATE")
+            .line("WITH $data as nodes")
+            .line("UNWIND nodes as nodeId")
+            .line("MATCH (n) WHERE n.id = nodeId")
+            .line("MERGE (n)-[:part_of]->(c)")
+            .line("RETURN ID(c)")
+            .execute(mgConnection)
+        ){
+            auto queryResult = mgConnection->FetchAll();
+            if(queryResult && queryResult->front().front().type() == mg::Value::Type::Int) {
+                return ComponentReference(queryResult->front().front().ValueInt());
+            }
+        }
+        return std::nullopt;
+    }
+
+    std::vector<ComponentReference> createComponents(const std::vector<std::vector<NodeIdType>> & components) const noexcept {
+        ParameterizedQuery query {1};
+        query.line("WITH $data as components");
+        query.line("UNWIND range(0,size(components)-1) as index");
+        query.line("CREATE (c:Component)");
+        query.line("WITH components[index] as nodes,c");
+        query.line("UNWIND nodes as nodeId");
+        query.line("MATCH (n) WHERE n.id = nodeId");
+        query.line("MERGE (n)-[:part_of]->(c)");
+        query.line("RETURN DISTINCT ID(c)");
+        std::vector<mg::Value> data;
+        data.reserve(components.size());
+        for(const auto & component: components) {
+            std::vector<mg::Value> current;
+            current.reserve(component.size());
+            std::ranges::transform(component,std::back_inserter(current),[](NodeIdType nodeId){
+                return mg::Value(asInt(nodeId));
+            });
+            data.push_back(mg::Value(mg::List(std::move(current))));
+        }
+        query.set("data",mg::Value(mg::List(std::move(data))));
+        if(query.execute(mgConnection)) {
+            std::vector<ComponentReference> result;
+            while(auto currentRow = mgConnection->FetchOne()) {
+                if(currentRow->front().type() == mg::Value::Type::Int){
+                    result.emplace_back(currentRow->front().ValueInt());
+                }
+            }
+            return result;
+        }
+        std::cerr << "Could not create Component indexes in database" << std::endl;
+        return {};
+    }
+
     bool containsNode(size_t nodeId) const noexcept {
         if(ParameterizedQuery(1).line("MATCH (n:Node {id:$id})").setInt("id",nodeId).line("RETURN ID(n)").execute(mgConnection)){
                 auto result =  mgConnection->FetchAll();
@@ -397,7 +467,7 @@ public:
         return false;
     }
 
-    std::vector<size_t> adjacency(const NodeReference & node) const noexcept {
+    std::vector<NodeIdType> adjacency(const NodeReference & node) const noexcept {
         if(
             ParameterizedQuery(1)
             .line("MATCH (:Node {id:$id})-[:adj]->(x:Node)")
@@ -405,10 +475,10 @@ public:
             .line("RETURN x.id")
             .execute(mgConnection)
         ){
-            std::vector<size_t> output;
+            std::vector<NodeIdType> output;
             while(auto currentRow = mgConnection->FetchOne()){
                 if(currentRow->front().type() == mg::Value::Type::Int){
-                    size_t nodeId = asSizeT(currentRow->front().ValueInt());
+                    NodeIdType nodeId = asNodeIdType(currentRow->front().ValueInt());
                     output.push_back(nodeId);
                 }
             }
@@ -418,19 +488,19 @@ public:
         return {};
     }
 
-    std::unordered_map<size_t,std::vector<size_t>> edges() const noexcept {
+    std::unordered_map<NodeIdType,std::vector<NodeIdType>> edges() const noexcept {
         if(
             Query()
             .line("MATCH (f:Node)-[:adj]->(t:Node)")
             .line("RETURN f.id,t.id")
             .execute(mgConnection)
         ){
-            std::unordered_map<size_t,std::vector<size_t>> output;
+            std::unordered_map<NodeIdType,std::vector<NodeIdType>> output;
             while(auto currentRow = mgConnection->FetchOne()) {
-                size_t from = asSizeT(currentRow->at(0).ValueInt());
-                size_t to = asSizeT(currentRow->at(1).ValueInt());
+                NodeIdType from = asNodeIdType(currentRow->at(0).ValueInt());
+                NodeIdType to = asNodeIdType(currentRow->at(1).ValueInt());
                 if(not output.contains(from))
-                    output.try_emplace(from,std::vector<size_t>());
+                    output.try_emplace(from,std::vector<NodeIdType>());
                 output.at(from).push_back(to);
             }
             return output;
@@ -439,20 +509,43 @@ public:
         return {};
     }
 
-    std::vector<size_t> nodes() const noexcept {
+    std::vector<NodeIdType> nodes() const noexcept {
         if(Query()
             .line("MATCH (n:Node)")
             .line("RETURN n.id")
             .debug()
             .execute(mgConnection)
         ){
-            std::vector<size_t> output;
+            std::vector<NodeIdType> output;
             while(auto currentRow = mgConnection->FetchOne()) {
-                output.push_back(asSizeT(currentRow->at(0).ValueInt()));
+                output.push_back(asNodeIdType(currentRow->at(0).ValueInt()));
             }
             return output;
         }
         std::cerr << "Could not execute query for \"nodes()\"" << std::endl;
+        return {};
+    }
+
+    std::vector<NodeIdType> nodesOfComponents(fishnet::util::forward_range_of<ComponentReference> auto && componentIds) const noexcept {
+        std::vector<mg::Value> data;
+        std::ranges::transform(componentIds,std::back_inserter(data),[](ComponentReference componentRef){
+            return mg::Value(componentRef.componentId);
+        });
+        if(ParameterizedQuery(1)
+            .line("WITH $data as components")
+            .line("UNWIND components as component_id")
+            .line("MATCH (c:Component) WHERE ID(c)=component_id")
+            .line("MATCH (n:Node)-[:part_of]->(c)")
+            .line("RETURN n")
+            .execute(mgConnection)
+        ){
+            std::vector<NodeIdType> result;
+            while(auto currentRow = mgConnection->FetchOne()) {
+                result.push_back(asNodeIdType(currentRow->at(0).ValueInt()));
+            }
+            return result;
+        }
+        std::cerr << "Could not execute query for \"nodesOfComponents()\"" << std::endl;
         return {};
     }
 
