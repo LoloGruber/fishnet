@@ -5,8 +5,9 @@
 using namespace fishnet::graph;
 
 struct XYNodeOnlyXHash{
+    static inline std::hash<double> hasher{};
     size_t operator()(const XYNode & n)const{
-        return n.getX();
+        return hasher(n.getX());
     }
 };
 
