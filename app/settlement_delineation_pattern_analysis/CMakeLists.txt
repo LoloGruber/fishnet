@@ -1,4 +1,5 @@
-set(WORKFLOW_NAME "SettlementDelineationPatternAnalysis")
+set(WORKFLOW_NAME "SettlementDelineation")
+set(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/lib)
 add_subdirectory(shared)
 add_subdirectory(1_filter)
 add_subdirectory(2_neighbours)

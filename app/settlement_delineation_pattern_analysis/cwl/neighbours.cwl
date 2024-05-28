@@ -1,6 +1,6 @@
 cwlVersion: v1.2
 class: CommandLineTool
-baseCommand: [/home/lolo/Documents/fishnet/build/app/settlement_delineation_pattern_analysis/2_neighbours/SettlementDelineationPatternAnalysisNeighbours]
+baseCommand: [SettlementDelineationNeighbours]
 requirements:
     InlineJavascriptRequirement: {}
 inputs:
