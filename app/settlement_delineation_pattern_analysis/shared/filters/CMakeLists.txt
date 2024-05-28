@@ -1,4 +1,4 @@
-set(filterLib workflowFilters)
+set(filterLib filtersLib)
 add_library(${filterLib} INTERFACE 
 
 )
