@@ -17,11 +17,6 @@ inputs:
     taskID:
         type: int?
         doc: "Optional task id to distinguish log files"
-    outputDir:
-        type: Directory
-        inputBinding:
-            prefix: --outputDir 
-        doc: "Output directory storing the analyzed settlements"
     outputStem:
         type: string
         inputBinding:
@@ -38,5 +33,5 @@ outputs:
         outputBinding:
             glob: $(inputs.outputStem).*
         doc: "Filtered output file"
-stdout: $(inputs.shpFile.nameroot)_analysis$(inputs.taskID==null?"":"_"+inputs.taskID)_stdout.log
-stderr: $(inputs.shpFile.nameroot)_analysis$(inputs.taskID==null?"":"_"+inputs.taskID)_stderr.log
+stdout: $(inputs.outputStem)$(inputs.taskID==null?"":"_"+inputs.taskID)_stdout.log
+stderr: $(inputs.outputStem)$(inputs.taskID==null?"":"_"+inputs.taskID)_stderr.log

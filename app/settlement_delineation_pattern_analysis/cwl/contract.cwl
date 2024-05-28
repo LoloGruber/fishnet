@@ -17,15 +17,12 @@ inputs:
     taskID:
         type: int?
         doc: "Optional task id to distinguish log files"
-    outputDir:
-        type: Directory
-        inputBinding:
-            prefix: --outputDir 
-        doc: "Output filename storing the merged polygons"
     outputStem:
         type: string
         inputBinding:
+            position: 2
             prefix: --outputStem 
+        doc: "Output filename storing the merged polygons"
         
 outputs:
     standardOut:
@@ -35,7 +32,7 @@ outputs:
     outFile:
         type: File[]
         outputBinding:
-            glob: $(inputs.outputStem).*
-        doc: "Filtered output file"
-stdout: $(inputs.shpFiles[0].nameroot)_contraction$(inputs.taskID==null?"":"_"+inputs.taskID)_stdout.log
-stderr: $(inputs.shpFiles[0].nameroot)_contraction$(inputs.taskID==null?"":"_"+inputs.taskID)_stderr.log
+            glob: "$(inputs.outputStem).*"
+        doc: "Merged output file"
+stdout: $(inputs.outputStem)$(inputs.taskID==null?"":"_"+inputs.taskID)_stdout.log
+stderr: $(inputs.outputStem)$(inputs.taskID==null?"":"_"+inputs.taskID)_stderr.log

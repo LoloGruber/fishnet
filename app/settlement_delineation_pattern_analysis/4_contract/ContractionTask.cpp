@@ -21,7 +21,7 @@ int main(int argc, const char * argv[]){
     });
     app.add_option("-c,--config",configFilename,"Path to contract.json configuration")->required()->check(CLI::ExistingFile);
     app.add_option("--outputStem",outputStem,"Output file path, storing the merged polygons after performing the contraction on all inputs")->required();
-    app.add_option("--outputDir",outputDirectory,"Output directory, created file at this directory with the filename ${outputStem}.shp")->required()->check(CLI::ExistingDirectory);
+    app.add_option("--outputDir",outputDirectory,"Output directory, created file at this directory with the filename ${outputStem}.shp")->check(CLI::ExistingDirectory);
     CLI11_PARSE(app,argc,argv);
     if(inputFilenames.size() < 1)
         throw std::runtime_error("No input files provided");
