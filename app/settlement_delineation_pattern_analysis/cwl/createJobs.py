@@ -56,7 +56,6 @@ def main():
         inputs.append(createShpFile(filteredFile))
     neighboursJob["shpFiles"] = inputs
     contractionJob["shpFiles"] = inputs
-    contractionJob["outputDir"] = {"class": "Directory","path":workingDir}
     contractionJob["outputStem"] = "Punjab_Split_Contracted"
     neighboursJobPath = "/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/cwl/jobs/split/neighboursJob.json"
     contractionJobPath = "/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/cwl/jobs/split/contractionJob.json"
