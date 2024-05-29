@@ -74,7 +74,7 @@ public:
         testExpectedOrThrowError(memgraphAdjExp);
         OGRSpatialReference outputRef; // used for the ouput shapefile
         auto settlements = readInput(memgraphAdjExp.value(),outputRef);
-        memgraphAdjExp->load(settlements); //load settlement relationships
+        memgraphAdjExp->loadNodes(settlements); //load settlement relationships
         auto graph = fishnet::graph::GraphFactory::UndirectedGraph<NodeType>(std::move(memgraphAdjExp.value()));
         std::unordered_map<size_t,fishnet::Feature<ShapeType>> centralityMeasureResults; // result map, which stores: Fishnet_ID -> <Feature of the settlement stored in output>
         std::ranges::for_each(settlements,[&centralityMeasureResults](auto && settlement){

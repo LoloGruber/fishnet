@@ -513,7 +513,6 @@ public:
         if(Query()
             .line("MATCH (n:Node)")
             .line("RETURN n.id")
-            .debug()
             .execute(mgConnection)
         ){
             std::vector<NodeIdType> output;

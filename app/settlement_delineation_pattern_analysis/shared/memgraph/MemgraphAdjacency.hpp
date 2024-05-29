@@ -1,6 +1,7 @@
 #pragma once
 #include <fishnet/AdjacencyContainer.hpp>
 #include <unordered_map>
+#include <unordered_set>
 #include <expected>
 #include <sstream>
 #include <mgclient.hpp>
@@ -205,8 +206,25 @@ public:
         this->keyToNodeMap.clear();
     }
 
-    bool load(fishnet::util::forward_range_of<N> auto && nodes) noexcept {
-        return addNodes(nodes | std::views::filter([this](const N & node){return this->contains(node);})); // load only nodes also present in the Database
+    template<fishnet::util::forward_range_of<ComponentReference> ComponentRange = std::vector<ComponentReference>>
+    bool loadNodes(fishnet::util::forward_range_of<N> auto && nodes, ComponentRange && componentIds = {}){
+        std::unordered_set<NodeIdType> nodeIdSet;
+        if(fishnet::util::isEmpty(componentIds)){
+            auto allNodeIds = client.nodes();
+            nodeIdSet.insert(std::ranges::begin(allNodeIds),std::ranges::end(allNodeIds));
+        }else {
+            auto nodeIds = client.nodesOfComponents(componentIds);
+            std::unordered_set<NodeIdType> nodeIdSet {std::ranges::begin(nodeIds),std::ranges::end(nodeIds)};
+        }
+        if(nodeIdSet.empty())
+            return false;
+        auto filteredViewOfNodes = nodes | std::views::filter([&nodeIdSet](const auto & node){
+            return nodeIdSet.contains(node.key());
+        });
+        std::ranges::for_each(filteredViewOfNodes,[this](const auto & node){
+            this->keyToNodeMap.try_emplace(node.key(),node);
+        });
+        return true;
     }
 };
 
