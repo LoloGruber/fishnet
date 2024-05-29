@@ -4,5 +4,6 @@ graph_model
 graph_algo
 graph_centrality
 graph_adjacency
+util
 )
 target_include_directories(graph INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)

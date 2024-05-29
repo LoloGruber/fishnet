@@ -34,10 +34,14 @@ public:
         return graph::__impl::SimpleGraph<DirectedEdge<N,Hash,Equal>,AdjacencyContainer_t>(std::move(adjContainer));
     }
 
-
     template<Node N>
     static auto DAG(AdjacencyContainer<N> auto && adjContainer){
         return DirectedAcyclicGraph(DirectedGraph<N>(std::move(adjContainer)));
+    }
+
+    template<Node N, util::HashFunction<N> Hash = std::hash<N>,NodeBiPredicate<N> Equal = std::equal_to<N>>
+    static auto DAG(){
+        return DirectedAcyclicGraph(DirectedGraph<N,Hash,Equal>());
     }
 };
 }
