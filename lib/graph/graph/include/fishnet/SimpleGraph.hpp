@@ -1,9 +1,9 @@
 #pragma once
-#include "NetworkConcepts.hpp"
-#include "AbstractGraph.hpp"
+#include <fishnet/NetworkConcepts.hpp>
+#include <fishnet/AbstractGraph.hpp>
 #include <fishnet/AdjacencyContainer.hpp>
 #include <fishnet/AdjacencyMap.hpp>
-#include "Edge.hpp"
+#include <fishnet/Edge.hpp>
 
 namespace fishnet::graph::__impl {
 /**

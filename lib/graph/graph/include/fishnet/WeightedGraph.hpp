@@ -1,9 +1,5 @@
 #pragma once
-#include "Graph.hpp"
-#include "Edge.hpp"
-#include "SimpleGraph.hpp"
-#include "NetworkConcepts.hpp"
-#include "GraphDecorator.hpp"
+#include <fishnet/GraphDecorator.hpp>
 #include <unordered_map>
 
 namespace fishnet::graph{

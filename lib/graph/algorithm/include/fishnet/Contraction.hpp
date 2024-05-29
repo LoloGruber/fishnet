@@ -5,7 +5,7 @@
 #include <numeric>
 #include <type_traits>
 
-#include <fishnet/Graph.hpp>
+#include <fishnet/GraphModel.hpp>
 #include <fishnet/NetworkConcepts.hpp>
 
 #include <fishnet/CollectionConcepts.hpp>

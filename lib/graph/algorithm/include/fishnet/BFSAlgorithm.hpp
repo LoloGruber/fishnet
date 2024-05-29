@@ -7,7 +7,7 @@
 #include <type_traits>
 #include <algorithm>
 #include <fishnet/BlockingQueue.hpp>
-#include <fishnet/Graph.hpp>
+#include <fishnet/GraphModel.hpp>
 #include <fishnet/NetworkConcepts.hpp>
 
 #include "ConnectedComponents.hpp"

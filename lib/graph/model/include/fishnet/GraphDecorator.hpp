@@ -1,6 +1,6 @@
 #pragma once
-#include "Graph.hpp"
-#include "AbstractGraph.hpp"
+#include <fishnet/GraphModel.hpp>
+#include <fishnet/AbstractGraph.hpp>
 #include <fishnet/CollectionConcepts.hpp>
 namespace fishnet::graph{
 /**
