@@ -46,7 +46,8 @@ public:
     }
 
     std::optional<std::vector<N>> get() const{
-        if(not found) return std::nullopt;
+        if(not found) 
+            return std::nullopt;
         std::vector<N> nodes;
         nodes.push_back(goal);
         while(this->predecessor.contains(nodes.back())) {

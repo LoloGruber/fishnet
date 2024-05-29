@@ -52,7 +52,7 @@ protected:
 };
 
 TEST_F(SearchPathTest, ComplexPath){
-    auto path = BFS::findPath(g,n1,n6);
+    auto path = BFS::getPath(g,n1,n6);
     std::vector<UGraph::edge_type> expected;
     expected.push_back(g.makeEdge(n1,n2));
     expected.push_back(g.makeEdge(n2,n4));
@@ -61,12 +61,12 @@ TEST_F(SearchPathTest, ComplexPath){
 }
 
 TEST_F(SearchPathTest, NoPath) {
-    auto path = BFS::findPath(g,n6,n8);
+    auto path = BFS::getPath(g,n6,n8);
     EXPECT_EQ(path.size(),0);
 }
 
 TEST_F(SearchPathTest, SimplePath) {
-    auto path = BFS::findPath(g,n8,n9);
+    auto path = BFS::getPath(g,n8,n9);
     std::vector<typename UndirectedGraph<DataIDNode<std::string>>::edge_type> expected;
     expected.push_back(g.makeEdge(n9,n8)); //undirected graph => (n8,n9) == (n9,n8)
     EXPECT_EQ(expected,path);
@@ -74,36 +74,36 @@ TEST_F(SearchPathTest, SimplePath) {
 
 
 TEST_F(SearchPathTest, DirectedSimplePath){
-    auto actual = BFS::findPath(dg,n1,n2);
+    auto actual = BFS::getPath(dg,n1,n2);
     std::vector<typename DirectedGraph<DataIDNode<std::string>>::edge_type> expected;
     expected.push_back(dg.makeEdge(n1,n2));
     EXPECT_EQ(expected,actual);
 }
 
 TEST_F(SearchPathTest, DirectedSimplePathReversed){
-    auto actual = BFS::findPath(dg,n2,n1);
+    auto actual = BFS::getPath(dg,n2,n1);
     std::vector<typename DirectedGraph<DataIDNode<std::string>>::edge_type> expected;
     expected.push_back(dg.makeEdge(n2,n1));
     EXPECT_EQ(expected,actual);
 }
 
 TEST_F(SearchPathTest, NoPathInvalidSource){
-    auto path = BFS::findPath(dg,n8,n7); //Source invalid
+    auto path = BFS::getPath(dg,n8,n7); //Source invalid
     EXPECT_TRUE(path.empty());
 }
 
 TEST_F(SearchPathTest, NoPathInvalidGoal){
-    auto path = BFS::findPath(dg,n1,n9); //Goal invalid
+    auto path = BFS::getPath(dg,n1,n9); //Goal invalid
     EXPECT_TRUE(path.empty());
 }
 
 TEST_F(SearchPathTest, NoPathDirectedDueToOrientation){
-    auto path = BFS::findPath(dg,n7,n6);
+    auto path = BFS::getPath(dg,n7,n6);
     EXPECT_TRUE(path.empty());
 }
 
 TEST_F(SearchPathTest, DirectedComplexPath) {
-    auto actual = BFS::findPath(dg,n1,n3);
+    auto actual = BFS::getPath(dg,n1,n3);
     typename std::vector<DGraph::edge_type> expected;
     expected.push_back(dg.makeEdge(n1,n2));    
     expected.push_back(dg.makeEdge(n2,n4));
@@ -112,14 +112,14 @@ TEST_F(SearchPathTest, DirectedComplexPath) {
 }
 
 TEST_F(SearchPathTest, DFSSimpleUndirected){
-    auto path = DFS::findPath(g,n8,n9);
+    auto path = DFS::getPath(g,n8,n9);
     std::vector<UGraph::edge_type> expected;
     expected.push_back(g.makeEdge(n8,n9));
     EXPECT_EQ(expected,path);
 }
 
 TEST_F(SearchPathTest, DFSComplexPath){
-    auto path = DFS::findPath(g,n1,n6);
+    auto path = DFS::getPath(g,n1,n6);
     std::vector<UGraph::edge_type> expected;
     expected.push_back(g.makeEdge(n1,n2));
     expected.push_back(g.makeEdge(n2,n4));

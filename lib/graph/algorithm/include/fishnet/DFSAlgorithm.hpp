@@ -55,7 +55,7 @@ namespace fishnet::graph::DFS{
  * @return util::input_range_of<typename G::edge_type> range of edges leading from start to goal
  */
 template<Graph G>
-static util::input_range_of<typename G::edge_type> auto findPath(const G & g,const typename G::node_type & start, const typename G::node_type & goal) {
+static util::input_range_of<typename G::edge_type> auto getPath(const G & g,const typename G::node_type & start, const typename G::node_type & goal) {
     using N = typename G::node_type;
     using E = typename G::edge_type;
     using H = G::adj_container_type::hash_function;

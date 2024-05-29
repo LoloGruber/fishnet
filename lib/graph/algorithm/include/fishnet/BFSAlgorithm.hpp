@@ -141,13 +141,28 @@ auto connectedComponents(const G & graph, std::shared_ptr<fishnet::util::Blockin
  * @return util::input_range_of<typename G::edge_type>  vector of edges from start to target
  */
 template<Graph G>
-util::input_range_of<typename G::edge_type> auto findPath(const G & graph, const typename G::node_type & start, const typename G::node_type & goal) {
+auto findPath(const G & graph, const typename G::node_type & start, const typename G::node_type & goal) {
     using H = G::adj_container_type::hash_function;
     using E = G::adj_container_type::equality_predicate;
     using N = G::node_type;
     auto p = SearchPath<typename G::edge_type,H,E>(goal);
      __impl::bfs(graph,p,start,__impl::DefaultBiPredicate<N>());
-    std::optional<std::vector<N>> nodesOpt = p.get();
+    return p;
+}
+
+/**
+ * @brief Find breadth-first search between between start and goal node
+ * 
+ * @tparam G graph type
+ * @param graph graph
+ * @param start start node
+ * @param goal target node
+ * @return util::input_range_of<typename G::edge_type>  vector of edges from start to target
+ */
+template<Graph G>
+util::input_range_of<typename G::edge_type> auto getPath(const G & graph, const typename G::node_type & start, const typename G::node_type & goal) {
+    using N = G::node_type;
+    std::optional<std::vector<N>> nodesOpt = findPath(graph,start,goal).get();
     if (not nodesOpt){
         return std::vector<typename G::edge_type>();
     }
