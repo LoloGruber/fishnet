@@ -1,3 +1,4 @@
+#include <sstream>
 #include "ContractionTask.h"
 #include <fishnet/Polygon.hpp>
 #include <fishnet/Shapefile.hpp>
@@ -7,6 +8,7 @@ int main(int argc, const char * argv[]){
     using GeometryType = fishnet::geometry::Polygon<double>;
     CLI::App app {"ContractionTask"};
     std::vector<std::string> inputFilenames;
+    std::vector<ComponentReference> components;
     std::string configFilename;
     std::string outputStem;
     std::string outputDirectory;
@@ -21,6 +23,14 @@ int main(int argc, const char * argv[]){
     });
     app.add_option("-c,--config",configFilename,"Path to contract.json configuration")->required()->check(CLI::ExistingFile);
     app.add_option("--outputStem",outputStem,"Output file path, storing the merged polygons after performing the contraction on all inputs")->required();
+    app.add_option("--components",components,"Component ids of connected components to contract")->each([](const std::string & str){
+        std::stringstream stringStream {str};
+        ComponentReference compRef;
+        decltype(compRef.componentId) id = 0;
+        if(not stringStream >> id){
+            throw CLI::ValidationError("Could not parse \""+str+"\" to a component id");
+        }
+    });
     app.add_option("--outputDir",outputDirectory,"Output directory, created file at this directory with the filename ${outputStem}.shp")->check(CLI::ExistingDirectory);
     CLI11_PARSE(app,argc,argv);
     if(inputFilenames.size() < 1)
@@ -28,7 +38,7 @@ int main(int argc, const char * argv[]){
     ContractionConfig<GeometryType> config {json::parse(std::ifstream(configFilename))};
     auto outputPath = std::filesystem::path(outputDirectory) / std::filesystem::path(outputStem+".shp");
     fishnet::Shapefile output {outputPath};
-    ContractionTask<GeometryType> task {std::move(config),output};
+    ContractionTask<GeometryType> task {std::move(config),std::move(components),output};
     for(auto && input : inputFilenames) {
         task.addInput({input});
     }

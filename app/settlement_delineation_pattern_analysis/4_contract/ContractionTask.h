@@ -22,6 +22,7 @@ template<fishnet::geometry::IPolygon P>
 class ContractionTask:public Task{
 private:
     std::vector<fishnet::Shapefile> inputs;
+    std::vector<ComponentReference> components;
     ContractionConfig<P> config;
     fishnet::Shapefile output;
 public:
@@ -37,7 +38,7 @@ public:
      * @brief settlement type after the contraction
      */
     using ResultNodeType = SettlementPolygon<ResultGeometryType>;
-    ContractionTask(ContractionConfig<P> && config,fishnet::Shapefile output):config(std::move(config)),output(std::move(output)){
+    ContractionTask(ContractionConfig<P> && config,std::vector<ComponentReference> && components,fishnet::Shapefile output):components(std::move(components)),config(std::move(config)),output(std::move(output)){
         this->writeDescLine("Contraction Task:")
         .writeDescLine("-Config:")
         .indentDescLine(this->config.jsonDescription.dump());
@@ -79,7 +80,7 @@ public:
                 polygons.emplace_back(optId.value(),fileRef.value(),std::move(feature.getGeometry()));
             }   
         }
-        adj.load(polygons);
+        adj.loadNodes(polygons,components);
         return polygons;
     }
 

@@ -14,6 +14,11 @@ inputs:
         inputBinding:
             prefix: -c
         doc: "Path to configuration for contraction task"
+    components:
+        type: int[]?
+        inputBinding:
+            prefix: --components
+        doc: "List of connected components to be processed by this job"
     taskID:
         type: int?
         doc: "Optional task id to distinguish log files"
