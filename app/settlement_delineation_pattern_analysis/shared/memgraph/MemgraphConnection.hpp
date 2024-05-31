@@ -224,7 +224,6 @@ class ParameterizedQuery{
             mg::Map mgParams {params.size()};
             for(auto && [key,mgValue]:params){
                 mgParams.Insert(key,std::move(mgValue));
-                std::cout << key << std::endl;
             }
             return connection->Execute(query.str(),mgParams.AsConstMap());
         }
