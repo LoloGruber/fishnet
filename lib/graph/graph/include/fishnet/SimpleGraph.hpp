@@ -24,6 +24,20 @@ public:
 
     SimpleGraph(AdjContainer && adjContainer):Base(),adj(std::move(adjContainer)){}
 
+    SimpleGraph(SimpleGraph && other):adj(std::move(other.adj)){}
+
+    SimpleGraph(const SimpleGraph & other):adj(other.adj){}
+
+    SimpleGraph & operator=(SimpleGraph && other)noexcept{
+        this->adj = std::move(other.adj);
+        return *this;
+    }
+
+    SimpleGraph & operator=(const SimpleGraph & other)noexcept{
+        this->adj = other.adj;
+        return *this;
+    }
+
     SimpleGraph(util::forward_range_of<N> auto && nodes):Base(){
         addNodes(nodes);
     };
