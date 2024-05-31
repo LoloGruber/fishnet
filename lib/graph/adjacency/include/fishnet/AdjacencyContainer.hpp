@@ -26,9 +26,9 @@ concept AdjacencyContainer= requires (C & container, const C & constContainer, N
     {container.clear()};
     {constContainer.contains(constNodeRef)} -> std::convertible_to<bool>;
     {constContainer.hasAdjacency(constNodeRef,constNodeRef)} -> std::convertible_to<bool>;
-    {constContainer.adjacency(constNodeRef)} -> util::view_of<const N>;
-    {constContainer.nodes()} -> util::view_of<const N>;
-    {constContainer.getAdjacencyPairs()} -> util::view_of<std::pair<const N,const N>>;
+    {constContainer.adjacency(constNodeRef)} -> util::forward_range_of<const N>;
+    {constContainer.nodes()} -> util::forward_range_of<const N>;
+    {constContainer.getAdjacencyPairs()} -> util::input_range_of<std::pair<const N,const N>>;
     typename C::hash_function;
     typename C::equality_predicate;
 } ;
