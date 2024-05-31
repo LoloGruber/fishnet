@@ -64,15 +64,7 @@ public:
     explicit MemgraphAdjacency(MemgraphClient && client):client(std::move(client)){}
 
     static std::expected<MemgraphAdjacency<N>,std::string> create(const mg::Client::Params & params ) {
-        return MemgraphClient::create(params).transform([](auto && client){return MemgraphAdjacency<N>(std::move(client));});
-    }
-
-    static std::expected<MemgraphAdjacency<N>,std::string> create(std::string hostname, uint16_t port) {
-        mg::Client::Params params;
-        params.host = hostname;
-        params.port = port;
-        params.use_ssl = false;
-        return create(params);
+        return MemgraphConnection::create(params).transform([](auto && connection){return MemgraphAdjacency<N>(MemgraphClient(std::move(connection)));});
     }
 
     bool addAdjacency(const N & from, const N & to) noexcept {

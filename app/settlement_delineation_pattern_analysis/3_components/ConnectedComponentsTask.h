@@ -13,7 +13,7 @@ public:
     }
 
     void run() override {
-        auto ExpMemgraphConnection = MemgraphClient::create(config.params);
+        auto ExpMemgraphConnection = MemgraphConnection::create(config.params).transform([](auto && connection){return MemgraphClient(std::move(connection));});
         const auto & memgraphConnection = getExpectedOrThrowError(ExpMemgraphConnection);
         auto nodesList = memgraphConnection.nodes();
         auto adjMap = memgraphConnection.edges();

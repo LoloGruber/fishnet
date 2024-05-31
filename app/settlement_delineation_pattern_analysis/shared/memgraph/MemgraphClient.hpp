@@ -1,4 +1,5 @@
 #pragma once
+#include "MemgraphConnection.hpp"
 #include <iostream>
 #include <unordered_map>
 #include <memory>
@@ -39,7 +40,7 @@ struct ComponentReference{
 
 class MemgraphClient{
 private:
-    std::unique_ptr<mg::Client> mgConnection;
+    MemgraphConnection mgConnection;
 
     static int64_t asInt(size_t value) {
         return mg::Id::FromUint(value).AsInt();
@@ -49,189 +50,17 @@ private:
         return mg::Id::FromInt(value).AsUint();
     }
 public:
-    /**
-     * @brief Helper class for building queries
-     * 
-     */
-    class Query {
-        protected:
-            std::stringstream query;
-        public:
-            template<typename T>
-            Query(T && value){
-                append(std::forward<T>(value));
-            }
-
-            Query()=default;
-
-            template<typename T>
-            Query & append(T && value){
-                query << std::forward<T>(value);
-                return *this;
-            }
-
-            template<typename T>
-            Query & line(T && value) {
-                query << std::forward<T>(value) << std::endl;
-                return *this;
-            }
-
-            Query & operator <<(auto && value) {
-                return append(value);
-            }
-
-            Query & debug() noexcept {
-                std::cout << query.str() << std::endl;
-                return *this;
-            }
-
-            std::stringstream & getQuery() {
-                return query;
-            }
-
-            bool execute(const std::unique_ptr<mg::Client> & clientPtr) {
-                return clientPtr->Execute(query.str());
-            }
-
-            bool executeAndDiscard(const std::unique_ptr<mg::Client> & clientPtr) {
-                bool success = clientPtr->Execute(query.str());
-                if(success)
-                    clientPtr->DiscardAll();
-                return success;
-            }
-    };
-
-    /**
-     * @brief Helper class for building parameterized queries
-     * 
-     */
-    class ParameterizedQuery{
-        private:
-            mg::Map params;
-            std::stringstream query;
-            static inline int defaultCapacity = 5;
-        public:
-            ParameterizedQuery(int paramCapacity):params(paramCapacity){}
-            ParameterizedQuery():params(defaultCapacity){}
-
-            // ParameterizedQuery(const ParameterizedQuery & other) {
-            //     this->params = other.params;
-            //     this->query = std::stringstream(other.query.str());
-            // }
-
-            template<typename T>
-            ParameterizedQuery(T && value):params(defaultCapacity){
-                this->append(std::forward<T>(value));
-            }
-
-            template<typename T>
-            ParameterizedQuery(int capacity,T && value):params(capacity){
-                append(std::forward<T>(value));
-            }
-
-            template<typename T>
-            ParameterizedQuery & append(T && value){
-                this->query << std::forward<T>(value);
-                return *this;
-            }
-
-            template<typename T>
-            ParameterizedQuery & line(T && value) {
-                this->query << std::forward<T>(value) << std::endl;
-                return *this;
-            }
-
-            ParameterizedQuery & operator <<(auto && value) {
-                return append(value);
-            }
-
-            ParameterizedQuery & set(const std::string_view key, mg::Value && value) {
-                params.Insert(key,value);
-                return *this;
-            }
-
-            ParameterizedQuery & setInt(const std::string_view key, int64_t value){
-                params.Insert(key,mg::Value(value));
-                return *this;
-            }
-
-            ParameterizedQuery & setInt(const std::string_view key, size_t value){
-                params.Insert(key,mg::Value(mg::Id::FromUint(value).AsInt()));
-                return *this;
-            }
-
-            const mg::Map & getParameters() const noexcept {
-                return params;
-            }
-
-            std::stringstream & getQuery() {
-                return query;
-            }
-
-            ParameterizedQuery & debug() noexcept {
-                std::cout << query.str() << std::endl;
-                return *this;
-            }
-
-            bool execute(const std::unique_ptr<mg::Client> & clientPtr) {
-                return clientPtr->Execute(query.str(),params.AsConstMap());
-            }
-
-            bool executeAndDiscard(const std::unique_ptr<mg::Client> & clientPtr) {
-                bool success = clientPtr->Execute(query.str(),params.AsConstMap());
-                if(success)
-                    clientPtr->DiscardAll();
-                return success;
-            }
-    };
-
-    explicit MemgraphClient(std::unique_ptr<mg::Client> && clientPtr):mgConnection(std::move(clientPtr)){
+    explicit MemgraphClient(MemgraphConnection && clientPtr):mgConnection(std::move(clientPtr)){
         if(not createConstraints() || not createIndexes()) {
             throw std::runtime_error("Could not create constraints. Check the database connection");
         }
     }
 
-    MemgraphClient(MemgraphClient && other) {
-        this->mgConnection = std::move(other.mgConnection);
-    }
 
     const std::unique_ptr<mg::Client> & getConnection() const noexcept  {
-        return this->mgConnection;
+        return this->mgConnection.get();
     }
 
-    /**
-     * @brief Factory Method to create a Memgraph client from Memgraph parameters
-     * 
-     * @param params parameters for the database connection (e.g hostname, port,...)
-     * @return std::expected<MemgraphClient,std::string>: Containing the MemgraphClient on success or a string explaining the error
-     */
-    static std::expected<MemgraphClient,std::string> create(const mg::Client::Params & params ) {
-        auto clientPtr = mg::Client::Connect(params);
-        if(not clientPtr){
-            std::stringstream connectionError;
-            connectionError << "Could not connect to memgraph database!" << std::endl;
-            connectionError << "\tHost: " <<params.host << std::endl;
-            connectionError << "\tPort: " << std::to_string(params.port) << std::endl;
-            connectionError << "\tUsername: " << params.username << std::endl;
-            return std::unexpected(connectionError.str());
-        }
-        return std::expected<MemgraphClient,std::string>(std::move(clientPtr));
-    }
-
-    /**
-     * @brief Factory Method to create a Memgraph client from hostname and port
-     * 
-     * @param hostname (e.g. localhost)
-     * @param port (e.g. 7687)
-     * @return std::expected<MemgraphClient,std::string>: Containing the MemgraphClient on success or a string explaining the error
-     */
-    static std::expected<MemgraphClient ,std::string> create(std::string hostname, uint16_t port) {
-        mg::Client::Params params;
-        params.host = hostname;
-        params.port = port;
-        params.use_ssl = false;
-        return create(params);
-    }
 
     bool createConstraints()const noexcept {
         return Query("CREATE CONSTRAINT ON (n:Node) ASSERT n.id IS UNIQUE").executeAndDiscard(mgConnection)
@@ -268,7 +97,7 @@ public:
     }
 
     bool insertEdge(NodeReference const & from, NodeReference const & to) const noexcept {
-        return ParameterizedQuery(4)
+        return ParameterizedQuery()
             .line("MATCH (ff:File) WHERE ID(ff)=$fromFile")
             .setInt("fromFile",from.fileRef.fileId)
             .line("MATCH (ft:File) WHERE ID(ft)=$toFile")
@@ -288,7 +117,7 @@ public:
     }
 
     bool insertEdges(fishnet::util::forward_range_of<std::pair<NodeReference,NodeReference>> auto && edges)const noexcept{
-        ParameterizedQuery query(1);
+        ParameterizedQuery query;
         query.line("UNWIND $data AS edge");
         query.line("MATCH (ff:File) WHERE ID(ff)=edge.fromFile");
         query.line("MATCH (tf:File) WHERE ID(tf)=edge.toFile");
@@ -311,7 +140,7 @@ public:
     }
 
     bool insertNode(NodeReference const & node) const noexcept{
-        return ParameterizedQuery(2)
+        return ParameterizedQuery()
             .line("MATCH (f:File) WHERE ID(f)=$fid")
             .setInt("fid",node.fileRef.fileId)
             .line("MERGE (n:Node {id:$nid})")
@@ -321,7 +150,7 @@ public:
     }
 
     bool insertNodes(fishnet::util::forward_range_of<NodeReference> auto && nodes) const noexcept {
-        ParameterizedQuery query(1);
+        ParameterizedQuery query;
         query.line("UNWIND $data AS node");
         query.line("MATCH (f:File) WHERE ID(f) = node.fileId");
         query.line("MERGE (n:Node {id:node.id})");
@@ -338,7 +167,7 @@ public:
     }
 
     bool removeNode(NodeReference const & node) const noexcept {
-        return ParameterizedQuery(1)
+        return ParameterizedQuery()
             .line("MATCH (n:Node {id:$id})")
             .setInt("id",node.nodeId)
             .line("DETACH DELETE n")
@@ -346,7 +175,7 @@ public:
     }
 
     bool removeNodes(fishnet::util::forward_range_of<NodeReference> auto && nodes) const noexcept {
-        ParameterizedQuery query(1);
+        ParameterizedQuery query;
         query.line("UNWIND $data as node");
         query.line("MATCH (n:Node {id:node.id})");
         query.line("DETACH DELETE n");
@@ -361,7 +190,7 @@ public:
     }
 
     bool removeEdge(NodeReference const & from, NodeReference const & to) const noexcept {
-        return ParameterizedQuery(2)
+        return ParameterizedQuery()
             .line("MATCH (f:Node {id:$fromId})-[a:adj]->(t:Node {id:$toId})")
             .setInt("fromId",from.nodeId)
             .setInt("toId",to.nodeId)
@@ -370,7 +199,7 @@ public:
     }
 
     bool removeEdges(fishnet::util::forward_range_of<std::pair<NodeReference,NodeReference>> auto && edges) const noexcept {
-        ParameterizedQuery query(1);
+        ParameterizedQuery query;
         query.line("UNWIND $data as edge");
         query.line("MATCH (:Node {id:edge.from})-[a:adj]->(:Node {id:edge.to})");
         query.line("DETACH DELETE a");
@@ -411,7 +240,7 @@ public:
     }
 
     std::vector<ComponentReference> createComponents(const std::vector<std::vector<NodeIdType>> & components) const noexcept {
-        ParameterizedQuery query {1};
+        ParameterizedQuery query;
         query.line("WITH $data as components");
         query.line("UNWIND range(0,size(components)-1) as index");
         query.line("CREATE (c:Component)");
@@ -445,7 +274,7 @@ public:
     }
 
     bool containsNode(size_t nodeId) const noexcept {
-        if(ParameterizedQuery(1).line("MATCH (n:Node {id:$id})").setInt("id",nodeId).line("RETURN ID(n)").execute(mgConnection)){
+        if(ParameterizedQuery().line("MATCH (n:Node {id:$id})").setInt("id",nodeId).line("RETURN ID(n)").execute(mgConnection)){
                 auto result =  mgConnection->FetchAll();
                 return result.has_value() && result->size() > 0;
         }
@@ -454,7 +283,7 @@ public:
 
     bool containsEdge(size_t from, size_t to) const noexcept {
         if(
-            ParameterizedQuery(2)
+            ParameterizedQuery()
             .line("MATCH (:Node {id:$fid})-[r:adj]->(:Node {id:$tid})")
             .line("RETURN ID(r)")
             .setInt("fid",from)
@@ -469,7 +298,7 @@ public:
 
     std::vector<NodeIdType> adjacency(const NodeReference & node) const noexcept {
         if(
-            ParameterizedQuery(1)
+            ParameterizedQuery()
             .line("MATCH (:Node {id:$id})-[:adj]->(x:Node)")
             .setInt("id",node.nodeId)
             .line("RETURN x.id")
@@ -530,7 +359,7 @@ public:
         std::ranges::transform(componentIds,std::back_inserter(data),[](ComponentReference componentRef){
             return mg::Value(componentRef.componentId);
         });
-        if(ParameterizedQuery(1)
+        if(ParameterizedQuery()
             .line("WITH $data as components")
             .line("UNWIND components as component_id")
             .line("MATCH (c:Component) WHERE ID(c)=component_id")
@@ -550,11 +379,6 @@ public:
 
     bool clearAll() const noexcept{
         return Query("MATCH (n)").line("DETACH DELETE n").executeAndDiscard(mgConnection);
-    }
-
-    ~MemgraphClient(){
-        mgConnection.reset(nullptr);
-        mg::Client::Finalize();
     }
 };
 

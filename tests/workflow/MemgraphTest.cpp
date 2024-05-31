@@ -33,6 +33,7 @@ RETURN n,r,f,n2,n1,a
 class MemgraphTest: public ::testing::Test {
 protected:
     void SetUp() override {
+        mgAdj = MemgraphConnection::create(hostname,port).transform([](auto && connection){return MemgraphAdjacency<ExampleNode>(MemgraphClient(std::move(connection)));});
         if(not mgAdj) {
             throw std::runtime_error(mgAdj.error());
         }
@@ -51,12 +52,12 @@ protected:
 
     u_int16_t port = 7687;
     std::string hostname = "localhost";
-    std::expected<MemgraphAdjacency<ExampleNode>,std::string> mgAdj = MemgraphAdjacency<ExampleNode>::create(hostname,port);
+    std::expected<MemgraphAdjacency<ExampleNode>,std::string> mgAdj = std::unexpected("Not initialized yet");
     FileReference fileRef;
 };
 
 TEST_F(MemgraphTest, create) {
-    auto invalidParamsClient = MemgraphAdjacency<ExampleNode>::create("invalidhost",1234);
+    auto invalidParamsClient = MemgraphConnection::create("invalidhost",1234);
     EXPECT_EMPTY(invalidParamsClient);
     EXPECT_VALUE(mgAdj);
 }
@@ -264,7 +265,7 @@ TEST_F(MemgraphTest, clear) {
 TEST_F(MemgraphTest, undirectedGraph){
     u_int16_t port = 7687;
     std::string hostname = "localhost";
-    std::expected<MemgraphAdjacency<ExampleNode>,std::string> mgAdj = MemgraphAdjacency<ExampleNode>::create(hostname,port);
+    std::expected<MemgraphAdjacency<ExampleNode>,std::string> mgAdj = MemgraphConnection::create(hostname,port).transform([](auto && c){return MemgraphAdjacency<ExampleNode>(MemgraphClient(std::move(c)));});
     auto g = fishnet::graph::GraphFactory::UndirectedGraph<ExampleNode>(std::move(mgAdj.value()));
     ExampleNode n1 {1,fileRef};
     ExampleNode n2 {2,fileRef};
