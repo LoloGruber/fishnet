@@ -31,7 +31,7 @@ public:
     static std::expected<MemgraphConnection,std::string> create(const mg::Client::Params & params ) {
         auto clientPtr = mg::Client::Connect(params);
         if(not clientPtr){
-            std::stringstream connectionError;
+            std::ostringstream connectionError;
             connectionError << "Could not connect to memgraph database!" << std::endl;
             connectionError << "\tHost: " <<params.host << std::endl;
             connectionError << "\tPort: " << std::to_string(params.port) << std::endl;
@@ -81,7 +81,7 @@ public:
  */
 class Query {
     protected:
-        std::stringstream query;
+        std::ostringstream query;
     public:
         template<typename T>
         Query(T && value){
@@ -111,7 +111,7 @@ class Query {
             return *this;
         }
 
-        std::stringstream & getQuery() {
+        std::ostringstream & getQuery() {
             return query;
         }
 
@@ -134,14 +134,16 @@ class Query {
 class ParameterizedQuery{
     private:
         std::unordered_map<std::string, mg::Value> params;
-        std::stringstream query;
+        std::ostringstream query {std::ios::ate};
     public:
         ParameterizedQuery() = default;
 
-        ParameterizedQuery(ParameterizedQuery && other):params(std::move(other.params)),query(std::move(other.query)) {}
+        ParameterizedQuery(ParameterizedQuery && other):params(std::move(other.params)),query(std::move(other.query)) {
+        }
 
         ParameterizedQuery(const ParameterizedQuery & other):params(other.params){
-            this->query = std::stringstream(other.query.str());
+            this->query = std::ostringstream(std::ios::ate);
+            this->query.str(other.getQuery().str());
         }
 
         ParameterizedQuery(std::string_view value){
@@ -207,11 +209,11 @@ class ParameterizedQuery{
             return params;
         }
 
-        const std::stringstream & getQuery() const {
+        const std::ostringstream & getQuery() const {
             return query;
         }
 
-        std::stringstream & getQuery() {
+        std::ostringstream & getQuery() {
             return this->query;
         }
 
