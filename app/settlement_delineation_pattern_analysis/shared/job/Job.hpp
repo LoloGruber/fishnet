@@ -5,9 +5,31 @@ enum class JobType {
     FILTER,NEIGHBOURS,COMPONENTS,CONTRACTION,ANALYSIS,UNDEFINED
 };
 
+static int jobTypeId(JobType jobType){
+    switch(jobType){
+        case JobType::FILTER:
+            return 1;
+        case JobType::NEIGHBOURS:
+            return 2;
+        case JobType::COMPONENTS:
+            return 3;
+        case JobType::CONTRACTION:
+            return 4;
+        case JobType::ANALYSIS:
+            return 5;
+        default:
+            return -1;
+    }
+}
+
+bool operator<(JobType lhs, JobType rhs) noexcept {
+    return jobTypeId(lhs) < jobTypeId(rhs);
+}
+
 enum class JobState{
     RUNNABLE,RUNNING,SUCCEED,FAILED,UNDEFINED
 };
+
 
 struct Job{
     size_t id;
@@ -28,4 +50,30 @@ struct Job{
     bool operator==(const Job & other)const noexcept {
         return this->id == other.id;
     }
+};
+
+struct ConfigurableJob:public Job{
+    std::filesystem::path config;
+};
+
+struct FilterJob: public ConfigurableJob {
+    std::filesystem::path input;
+};
+
+struct NeighboursJob: public ConfigurableJob {
+    std::vector<std::filesystem::path> inputs;
+};
+
+struct ComponentsJob:public ConfigurableJob {
+
+};
+
+struct ContractionJob: public ConfigurableJob{
+    std::vector<std::filesystem::path> inputs;
+    std::string outputStem;
+};
+
+struct AnalysisJob: public ConfigurableJob {
+    std::filesystem::path input;
+    std::string outputStem;   
 };
