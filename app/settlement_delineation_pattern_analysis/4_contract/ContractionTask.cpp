@@ -7,10 +7,10 @@
 int main(int argc, const char * argv[]){
     using GeometryType = fishnet::geometry::Polygon<double>;
     CLI::App app {"ContractionTask"};
-    std::vector<std::string> inputFilenames;
-    std::vector<ComponentReference> components;
-    std::string configFilename;
-    std::string outputStem;
+    std::vector<std::string> inputFilenames;// {{"/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/test/workingDirectory/Punjab_0_1_filtered.shp"}};
+    std::vector<ComponentReference> components;// {{{138241},{138240}}};
+    std::string configFilename;//="/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/cfg/contraction.json";
+    std::string outputStem;//="Test.shp";
     std::string outputDirectory;
     app.add_option("-i,--inputs",inputFilenames,"Input Shapefiles storing the polygons with id for the contraction")->required()->each([](const std::string & str){
         try{

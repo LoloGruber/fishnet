@@ -41,7 +41,13 @@ public:
     ContractionTask(ContractionConfig<P> && config,std::vector<ComponentReference> && components,fishnet::Shapefile output):components(std::move(components)),config(std::move(config)),output(std::move(output)){
         this->writeDescLine("Contraction Task:")
         .writeDescLine("-Config:")
-        .indentDescLine(this->config.jsonDescription.dump());
+        .indentDescLine(this->config.jsonDescription.dump())
+        .writeDescLine("-Components:");
+        std::stringstream componentsString;
+        for(const auto & component: this->components){
+            componentsString << component.componentId <<",";
+        }
+        this->indentDescLine(componentsString.str());
     }
 
     ContractionTask<P> & addInput(fishnet::Shapefile && shpFile) noexcept {
@@ -80,7 +86,9 @@ public:
                 polygons.emplace_back(optId.value(),fileRef.value(),std::move(feature.getGeometry()));
             }   
         }
-        adj.loadNodes(polygons,components);
+        if(not adj.loadNodes(polygons,components)){
+            throw std::runtime_error("Could not load nodes from components");
+        }
         return polygons;
     }
 
