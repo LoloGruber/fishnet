@@ -85,10 +85,14 @@ public:
      * @param path path to file
      * @return std::optional<FileReference> containing the unique ID of the file if successful 
      */
-    std::optional<FileReference> addFileReference(const std::string & path) const noexcept{
+    std::optional<FileReference> addFileReference(const std::filesystem::path & pathToFile) const noexcept{
+        std::filesystem::path path = pathToFile;
+        if(std::filesystem::is_symlink(pathToFile)){
+            path = std::filesystem::read_symlink(pathToFile);
+        }
         ParameterizedQuery query;
         query.append("MERGE (f:File {path:$path})");
-        query.set("path",mg::Value(path));
+        query.set("path",mg::Value(path.string()));
         query.append("RETURN ID(f)");
         if(not query.execute(mgConnection)) {
             return std::nullopt;
