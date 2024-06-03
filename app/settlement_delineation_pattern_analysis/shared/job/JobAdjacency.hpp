@@ -118,6 +118,10 @@ public:
         });
     }
 
+    bool updateJobState(const Job & job) const noexcept {
+        return queryJob(job,QueryType::MATCH,"j").line("SET j.state=$state").set("state",mg::Value(magic_enum::enum_name(job.state))).executeAndDiscard(dbConnection);
+    }
+
     bool removeNode(const Job & job) const noexcept{
         return queryJob(job,QueryType::MATCH,"j").line("DETACH DELETE j;").executeAndDiscard(dbConnection);
     }
