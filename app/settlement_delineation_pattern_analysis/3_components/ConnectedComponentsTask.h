@@ -20,7 +20,14 @@ private:
 
 public:
     ConnectedComponentsTask(ConnectedComponentsConfig && config,std::filesystem::path && jobDirectory,std::filesystem::path && cfgDirectory,size_t nextJobID):config(std::move(config)),jobDirectory(std::move(jobDirectory)),cfgDirectory(std::move(cfgDirectory)),nextJobID(nextJobID){
-
+        this->writeDescLine("ComponentTask")
+        .writeDescLine("-Config:")
+        .indentDescLine(this->config.jsonDescription.dump())
+        .writeDescLine("-Job Directory:")
+        .indentDescLine(this->jobDirectory.string())
+        .writeDescLine("-Cfg Directory:")
+        .indentDescLine(this->cfgDirectory.string())
+        .writeDesc("-Next Job Id: ").writeDesc(nextJobID);
     }
 
     std::unordered_map<uint64_t,std::vector<std::string>> queryPathsForComponent(const std::vector<ComponentReference> & componentIds, const MemgraphConnection & memgraphConnection){
@@ -34,7 +41,6 @@ public:
                 .line("WHERE ID(c)=component_id")
                 .set("data",mg::Value(mg::List(componentValues)))
                 .line("RETURN DISTINCT component_id,f.path;")
-                .debug()
                 .execute(memgraphConnection)
         ) throw std::runtime_error("Could not execute query to find files part of a component");
         while(auto currentRow = memgraphConnection->FetchOne()){
