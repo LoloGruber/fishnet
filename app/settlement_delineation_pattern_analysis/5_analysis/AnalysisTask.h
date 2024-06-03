@@ -48,7 +48,7 @@ public:
     std::vector<NodeType> readInput(const MemgraphAdjacency<NodeType> & adj ,OGRSpatialReference & ref) const  {
         std::vector<NodeType> settlements;
         auto layer = fishnet::VectorLayer<ShapeType>::read(inputFile);
-        auto fileRef = adj.getDatabaseConnection().addFileReference(inputFile.getPath().filename().string());
+        auto fileRef = adj.getDatabaseConnection().addFileReference(inputFile.getPath());
         if(not fileRef){
             throw std::runtime_error("Could not read file reference for shp file:\n"+inputFile.getPath().string());
         }

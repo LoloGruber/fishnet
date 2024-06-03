@@ -76,7 +76,7 @@ public:
         std::vector<SettlementPolygon<P>> polygons;
         auto layer = fishnet::VectorLayer<P>::read(primaryInput); // load polygons from primary shapefile
         PrimaryInputAABB inputBoundingBox;
-        auto primaryFileRef = graph.getAdjacencyContainer().getDatabaseConnection().addFileReference(primaryInput.getPath().string()); // load file reference from database
+        auto primaryFileRef = graph.getAdjacencyContainer().getDatabaseConnection().addFileReference(primaryInput.getPath()); // load file reference from database
         if(not primaryFileRef){
             throw std::runtime_error("Could not create file reference for shp file:\n"+primaryInput.getPath().string());
         }
@@ -97,7 +97,7 @@ public:
         for(const auto & shp : additionalInput) {
             this->indentDescLine(shp.getPath().filename().string());
             auto layer = fishnet::VectorLayer<P>::read(shp); // load polygons from shapefile
-            auto fileRef = graph.getAdjacencyContainer().getDatabaseConnection().addFileReference(shp.getPath().string()); // load file reference from database
+            auto fileRef = graph.getAdjacencyContainer().getDatabaseConnection().addFileReference(shp.getPath()); // load file reference from database
             if(not fileRef){
                 throw std::runtime_error("Could not create file reference for shp file:\n"+shp.getPath().string());
             }

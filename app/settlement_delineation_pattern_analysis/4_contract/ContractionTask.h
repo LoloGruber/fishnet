@@ -63,7 +63,7 @@ public:
         for(const auto & shp : inputs) {
             this->indentDescLine(shp.getPath().filename().string());
             auto layer = fishnet::VectorLayer<P>::read(shp);
-            auto fileRef = adj.getDatabaseConnection().addFileReference(shp.getPath().filename().string());
+            auto fileRef = adj.getDatabaseConnection().addFileReference(shp.getPath());
             if(not fileRef){
                 throw std::runtime_error("Could not read file reference for shp file:\n"+shp.getPath().string());
             }
@@ -96,7 +96,7 @@ public:
         auto settlements = readInputs(memgraphAdjSrc.value(),ref);
         this->writeDescLine("-Output:");
         this->indentDescLine(output.getPath().filename().string());
-        auto outputFileRef = memgraphAdjSrc->getDatabaseConnection().addFileReference(output.getPath().filename().string());
+        auto outputFileRef = memgraphAdjSrc->getDatabaseConnection().addFileReference(output.getPath());
         if(not outputFileRef)
             throw std::runtime_error( "Could not create file reference for output in Database: "+output.getPath().string());
         auto sourceGraph = fishnet::graph::GraphFactory::UndirectedGraph<SourceNodeType>(std::move(memgraphAdjSrc.value()));
