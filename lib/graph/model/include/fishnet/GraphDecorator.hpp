@@ -125,6 +125,10 @@ public:
         return g.getInboundEdges(node);
     }
 
+    const auto & getAdjacencyContainer() const {
+        return g.getAdjacencyContainer();
+    }
+
     void clear(){
         g.clear();
     }
