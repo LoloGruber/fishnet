@@ -61,6 +61,10 @@ public:
         return this->mgConnection.get();
     }
 
+    const MemgraphConnection & getMemgraphConnection() const noexcept {
+        return this->mgConnection;
+    }
+
 
     bool createConstraints()const noexcept {
         return Query("CREATE CONSTRAINT ON (n:Node) ASSERT n.id IS UNIQUE").executeAndDiscard(mgConnection)
