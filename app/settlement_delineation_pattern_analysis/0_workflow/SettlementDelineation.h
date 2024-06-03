@@ -3,23 +3,32 @@
 #include <filesystem>
 
 #include "Task.hpp"
+#include "JobDAG.hpp"
 
 #include "JobGenerator.hpp"
 #include "SettlementDelineationConfig.hpp"
+#include "Scheduler.hpp"
 
 class SettlementDelineation: public Task{
 private:
-    std::vector<std::filesystem::path> inputFiles;
     SettlementDelineationConfig config;
+    std::vector<std::filesystem::path> inputFiles;
 
 public:
-    
+    SettlementDelineation(SettlementDelineationConfig && config,  std::vector<std::filesystem::path> && inputFiles):config(std::move(config)),inputFiles(std::move(inputFiles)){
 
+    }
 
     void run() override {
         if(inputFiles.empty())
             throw std::runtime_error("No input files provided");
-        // JobGenerator()
-
+        JobGenerator jobGenerator {config.neighbouringFilesPredicate,config.jobDirectory,config.cfgDirectory,config.workingDirectory,config.lastJobType};
+        auto exp = MemgraphConnection::create(config.params).transform([](auto && conn){return JobAdjacency(std::move(conn));});
+        auto && jobAdj = getExpectedOrThrowError(exp);
+        auto jobDAG = loadDAG(std::move(jobAdj));
+        jobDAG.clear();
+        jobGenerator.generate(inputFiles,jobDAG);
+        Scheduler scheduler {std::move(jobDAG)};
+        scheduler.schedule();
     }
 };

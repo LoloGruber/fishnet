@@ -10,6 +10,7 @@ private:
     fishnet::util::BiPredicate_t<std::filesystem::path> neighbouringFilesPredicate;
     std::filesystem::path jobDirectory;
     std::filesystem::path cfgDirectory;
+    std::filesystem::path workingDirectory;
     JobType lastJobType;
     size_t jobIdCounter = 0;
 
@@ -33,8 +34,8 @@ private:
     }
 
     std::vector<NeighboursJob> generateNeighboursJobs(const std::unordered_map<std::filesystem::path,FilterJob> & inputToFilterJobMap,JobDAG_t & jobDag) noexcept {
-        auto filteredFilenameMapper = [](std::filesystem::path const & path){
-            return fishnet::Shapefile(path).appendToFilename("_filtered").getPath();
+        auto filteredFilenameMapper = [this](std::filesystem::path const & path){
+            return this->workingDirectory / fishnet::Shapefile(path).appendToFilename("_filtered").getPath().filename();
         };
         std::unordered_map<std::filesystem::path,std::unordered_set<std::filesystem::path>> dependencyMap;
         for(const auto & [lhsInput,_] : inputToFilterJobMap){
@@ -99,8 +100,8 @@ private:
 
 
 public:
-    JobGenerator(fishnet::util::BiPredicate<std::filesystem::path> auto && neighbouringFilesPredicate,std::filesystem::path jobDirectory,std::filesystem::path cfgDirectory, JobType lastJobTypeToGenerate = JobType::ANALYSIS )
-    :neighbouringFilesPredicate(neighbouringFilesPredicate),jobDirectory(std::move(jobDirectory)),cfgDirectory(std::move(cfgDirectory)),lastJobType(lastJobTypeToGenerate){}
+    JobGenerator(fishnet::util::BiPredicate<std::filesystem::path> auto && neighbouringFilesPredicate,std::filesystem::path jobDirectory,std::filesystem::path cfgDirectory, std::filesystem::path workingDirectory,JobType lastJobTypeToGenerate = JobType::ANALYSIS )
+    :neighbouringFilesPredicate(neighbouringFilesPredicate),jobDirectory(std::move(jobDirectory)),cfgDirectory(std::move(cfgDirectory)),workingDirectory(std::move(workingDirectory)),lastJobType(lastJobTypeToGenerate){}
 
     void generate(const std::vector<std::filesystem::path> & inputs,JobDAG_t & jobDag) noexcept{
         std::unordered_map<std::filesystem::path,FilterJob> filterJobs;
