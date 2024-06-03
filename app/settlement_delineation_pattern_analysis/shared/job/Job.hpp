@@ -52,6 +52,15 @@ struct Job{
     }
 };
 
+namespace std {
+    template<>
+    struct hash<Job>{
+        size_t operator()(const Job & job) const noexcept {
+            return job.id;
+        }
+    };
+}
+
 struct ConfigurableJob:public Job{
     std::filesystem::path config;
 };
