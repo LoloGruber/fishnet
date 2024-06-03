@@ -4,11 +4,16 @@ baseCommand: [SettlementDelineationNeighbours]
 requirements:
     InlineJavascriptRequirement: {}
 inputs:
-    shpFiles:
-        type: File[]
+    primaryInput:
+        type: File
         inputBinding:
             prefix: -i
-        doc: "List of input shapefiles, with their required secondary files (.dbf, .shx, .prj)"
+        doc: "Primary input shapefile, with its required secondary files (.dbf, .shx, .prj)"
+    additionalInput:
+        type: File[]?
+        inputBinding:
+            prefix: -a
+        doc: "List of additional input shapefiles in proximity to the primary input, with their required secondary files (.dbf, .shx, .prj)"
     config:
         type: File
         inputBinding:
