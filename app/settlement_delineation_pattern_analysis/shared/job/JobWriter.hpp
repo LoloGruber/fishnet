@@ -60,7 +60,7 @@ public:
         for(const auto & input: neighboursJob.additionalInput){
             inputFiles.push_back(asFile(input));
         }
-        output["primaryInput"] = neighboursJob.primaryInput;
+        output["primaryInput"] = asFile(neighboursJob.primaryInput);
         output["additionalInput"] = inputFiles;
         output["config"] = asFile(neighboursJob.config);
         output["taskID"] = neighboursJob.id;
@@ -69,7 +69,7 @@ public:
 
     static void write(const ComponentsJob & componentsJob){
         json output;
-        output["config"] = componentsJob.config;
+        output["config"] = asFile(componentsJob.config);
         output["jobDirectory"] = asDirectory(componentsJob.jobDirectory);
         output["configDirectory"] = asDirectory(componentsJob.cfgDirectory);
         output["nextId"] = componentsJob.nextJobId;
@@ -95,6 +95,7 @@ public:
         output["shpFile"]=asFile(analysisJob.input);
         output["config"] = asFile(analysisJob.config);
         output["outputStem"] = analysisJob.outputStem;
+        output["taskID"] = analysisJob.id;
         writeJson(output,analysisJob);
     }
 };

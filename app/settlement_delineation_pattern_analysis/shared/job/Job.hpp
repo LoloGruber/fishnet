@@ -27,7 +27,7 @@ bool operator<(JobType lhs, JobType rhs) noexcept {
 }
 
 enum class JobState{
-    RUNNABLE,RUNNING,SUCCEED,FAILED,UNDEFINED
+    RUNNABLE,RUNNING,SUCCEED,FAILED,UNDEFINED,ABORTED
 };
 
 
