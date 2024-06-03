@@ -34,6 +34,7 @@ def writeJobToPath(job, path):
     with open(path,"w") as f:
         json.dump(job,f)
 
+@DeprecationWarning
 def main():
     script = []
     script.append("!/bin/bash")
@@ -70,5 +71,5 @@ def main():
         bashFile.write(completeScript)
 
 if __name__ == "__main__":
-    main()
-
+    # main() @deprecated
+    pass
