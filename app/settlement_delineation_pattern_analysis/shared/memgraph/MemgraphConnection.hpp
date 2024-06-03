@@ -227,7 +227,12 @@ class ParameterizedQuery{
             for(auto && [key,mgValue]:params){
                 mgParams.Insert(key,std::move(mgValue));
             }
-            return connection->Execute(query.str(),mgParams.AsConstMap());
+            bool result = connection->Execute(query.str(),mgParams.AsConstMap());
+            if(not result) {
+                std::cerr << "Could not execute query:" << std::endl;
+                std::cerr << query.str() << std::endl;
+            }
+            return result;
         }
 
         bool executeAndDiscard(const MemgraphConnection & connection) {
