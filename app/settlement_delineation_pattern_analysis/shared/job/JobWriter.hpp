@@ -49,10 +49,11 @@ public:
     static void write(const NeighboursJob & neighboursJob){
         json output;
         std::vector<json> inputFiles;
-        for(const auto & input: neighboursJob.inputs){
+        for(const auto & input: neighboursJob.additionalInput){
             inputFiles.push_back(asFile(input));
         }
-        output["shpFiles"] = inputFiles;
+        output["primaryInput"] = neighboursJob.primaryInput;
+        output["additionalInput"] = inputFiles;
         output["config"] = asFile(neighboursJob.config);
         output["taskID"] = neighboursJob.id;
         writeJson(output,neighboursJob.file);

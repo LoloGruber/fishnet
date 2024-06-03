@@ -61,7 +61,8 @@ struct FilterJob: public ConfigurableJob {
 };
 
 struct NeighboursJob: public ConfigurableJob {
-    std::vector<std::filesystem::path> inputs;
+    std::filesystem::path primaryInput;
+    std::vector<std::filesystem::path> additionalInput;
 };
 
 struct ComponentsJob:public ConfigurableJob {
