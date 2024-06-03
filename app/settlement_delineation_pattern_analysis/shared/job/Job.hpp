@@ -75,11 +75,14 @@ struct NeighboursJob: public ConfigurableJob {
 };
 
 struct ComponentsJob:public ConfigurableJob {
-
+    std::filesystem::path jobDirectory;
+    std::filesystem::path cfgDirectory;
+    size_t nextJobId;
 };
 
 struct ContractionJob: public ConfigurableJob{
     std::vector<std::filesystem::path> inputs;
+    std::vector<uint64_t> components;
     std::string outputStem;
 };
 
