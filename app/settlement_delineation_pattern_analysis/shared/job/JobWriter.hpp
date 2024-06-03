@@ -9,21 +9,29 @@ using json = nlohmann::json;
 
 class JobWriter{
 private:
-    static json asFile(const std::filesystem::path  & path) noexcept {
+    static json asFile(const std::filesystem::path  & path)  {
         json output;
         output["class"] = "File";
         output["path"]= path.string();
         if(path.string().ends_with(".shp")){
             std::vector<json> secondaryFiles;
             fishnet::Shapefile shpFile {path};
-            for(auto const& path : shpFile.getAssociatedFiles()| std::views::filter([](const auto & path){return path.extension().string() !=".shp";})){
+            for(auto const& ext : fishnet::Shapefile::REQUIRED_FILES | std::views::filter([](const auto & str){return str !=".shp";})){
                 json secondaryFile;
                 secondaryFile["class"]="File";
-                secondaryFile["path"]=path.string();
+                auto copyOfPath = shpFile.getPath();
+                secondaryFile["path"]= copyOfPath.replace_extension(ext);
                 secondaryFiles.push_back(std::move(secondaryFile));
             }
             output["secondaryFiles"]=secondaryFiles;
         }
+        return output;
+    }
+
+    static json asDirectory(const std::filesystem::path & path) {
+        json output;
+        output["class"] = "Directory";
+        output["path"] = path;
         return output;
     }
 
@@ -62,6 +70,9 @@ public:
     static void write(const ComponentsJob & componentsJob){
         json output;
         output["config"] = componentsJob.config;
+        output["jobDirectory"] = asDirectory(componentsJob.jobDirectory);
+        output["configDirectory"] = asDirectory(componentsJob.cfgDirectory);
+        output["nextId"] = componentsJob.nextJobId;
         writeJson(output,componentsJob);
     }
 
@@ -71,6 +82,7 @@ public:
         for(const auto & input: contractionJob.inputs){
             inputFiles.push_back(asFile(input));
         }
+        output["components"] = contractionJob.components;
         output["shpFiles"] = inputFiles;
         output["config"] = asFile(contractionJob.config);
         output["taskID"] = contractionJob.id;
