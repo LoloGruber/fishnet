@@ -12,7 +12,7 @@ namespace fishnet{
  * 
  */
 class Shapefile: public AbstractGISFile{
-private:
+public:
 
     [[nodiscard]] std::vector<std::filesystem::path> getAssociatedFiles()const;
 
@@ -24,7 +24,6 @@ private:
         ".shp",".shx",".dbf",".prj"
     };
 
-public:
     static bool supportsExtension(const std::filesystem::path & path){
         return std::ranges::any_of(FILE_EXTENSIONS,[&path](const auto & ext){return ext == path.extension().string();});
     }
