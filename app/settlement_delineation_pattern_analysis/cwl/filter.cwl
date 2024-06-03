@@ -6,10 +6,6 @@ requirements:
 inputs:
   shpFile:
     type: File
-    secondaryFiles: 
-      - $(inputs.shpFile.nameroot + ".shx")
-      - $(inputs.shpFile.nameroot + ".dbf")
-      - $(inputs.shpFile.nameroot + ".prj")
     inputBinding:
       position: 1
       prefix: -i
