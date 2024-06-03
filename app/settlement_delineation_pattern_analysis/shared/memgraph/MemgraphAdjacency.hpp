@@ -206,7 +206,7 @@ public:
             nodeIdSet.insert(std::ranges::begin(allNodeIds),std::ranges::end(allNodeIds));
         }else {
             auto nodeIds = client.nodesOfComponents(componentIds);
-            std::unordered_set<NodeIdType> nodeIdSet {std::ranges::begin(nodeIds),std::ranges::end(nodeIds)};
+            nodeIdSet =  std::unordered_set<NodeIdType>(std::ranges::begin(nodeIds),std::ranges::end(nodeIds));
         }
         if(nodeIdSet.empty())
             return false;
