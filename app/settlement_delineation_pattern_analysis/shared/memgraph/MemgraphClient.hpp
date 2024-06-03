@@ -1,6 +1,5 @@
 #pragma once
 #include "MemgraphConnection.hpp"
-#include <iostream>
 #include <unordered_map>
 #include <memory>
 #include <expected>
@@ -277,7 +276,6 @@ public:
             }
             return result;
         }
-        std::cerr << "Could not create Component indexes in database" << std::endl;
         return {};
     }
 
@@ -321,7 +319,6 @@ public:
             }
             return output;
         }
-        std::cerr << "Could not execute query for \"adjacency(Node)\"" << std::endl;
         return {};
     }
 
@@ -342,7 +339,6 @@ public:
             }
             return output;
         }
-        std::cerr << "Could not execute query for \"edges()\"" << std::endl;
         return {};
     }
 
@@ -358,7 +354,6 @@ public:
             }
             return output;
         }
-        std::cerr << "Could not execute query for \"nodes()\"" << std::endl;
         return {};
     }
 
@@ -369,10 +364,11 @@ public:
         });
         if(ParameterizedQuery()
             .line("WITH $data as components")
+            .set("data",mg::Value(mg::List(std::move(data))))
             .line("UNWIND components as component_id")
             .line("MATCH (c:Component) WHERE ID(c)=component_id")
             .line("MATCH (n:Node)-[:part_of]->(c)")
-            .line("RETURN n")
+            .line("RETURN n.id")
             .execute(mgConnection)
         ){
             std::vector<NodeIdType> result;
@@ -381,7 +377,6 @@ public:
             }
             return result;
         }
-        std::cerr << "Could not execute query for \"nodesOfComponents()\"" << std::endl;
         return {};
     }
 
