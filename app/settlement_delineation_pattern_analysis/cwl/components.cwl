@@ -17,13 +17,13 @@ inputs:
   configDirectory:
     type: Directory
     inputBinding:
-      position:3
-      prefix:-d
+      position: 3
+      prefix: -d
     doc: "Path to diretory where config files reside"
   nextId:
     type: int
     inputBinding:
-      position: 4,
+      position: 4
       prefix: -i
     doc: "Next job valid job id"
 

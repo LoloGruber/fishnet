@@ -11,7 +11,7 @@ inputs:
       prefix: -i
     doc: "Input shapefiles for the filter step"
     
-  filterConfig:
+  config:
     type: File
     inputBinding:
       position: 2
