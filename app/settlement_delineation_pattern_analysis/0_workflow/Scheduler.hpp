@@ -6,6 +6,7 @@ class Scheduler {
 private:
     JobDAG_t dag;
     CwlToolExecutor executor;
+    JobType lastJobType;
 
     bool isFinished(const Job & job) const noexcept {
         return job.state == JobState::FAILED || job.state == JobState::SUCCEED;
@@ -15,19 +16,30 @@ private:
         return job.state == JobState::RUNNABLE;
     }
 
-    bool canBeScheduled(const Job & job) const noexcept {
+    bool canBeScheduled( Job & job) const noexcept {
+        if(job.type > lastJobType){
+            updateJobState(job,JobState::ABORTED);
+            return false;
+        }
         if(not isRunnable(job))
             return false;
         return this->dag.inDegree(job) == 0 || std::ranges::all_of(dag.getReachableFrom(job),[this](const Job & parent){return this->isFinished(parent);});
     }
 
+    void updateJobState(Job & job, JobState newState)const noexcept {
+        job.updateStatus(newState);
+        this->getDAG().getAdjacencyContainer().updateJobState(job);
+    }
 
+    void persistJobState(const Job & job) const noexcept{
+        this->getDAG().getAdjacencyContainer().updateJobState(job);
+    }
 
 public:
-    Scheduler(JobDAG_t && dag):dag(std::move(dag)),executor(){
+    Scheduler(JobDAG_t && dag,JobType lastJobType):dag(std::move(dag)),executor(),lastJobType(lastJobType){
         executor.setCallback(
             [this](Job & job){
-                this->getDAG().getAdjacencyContainer().updateJobState(job);
+                persistJobState(job);
                 if(job.state == JobState::SUCCEED){
                      this->schedule();
                 }
@@ -36,11 +48,10 @@ public:
     }
 
     void schedule() {
-        auto jobsToSchedule =  dag.getNodes() | std::views::filter([this](const Job & job){return canBeScheduled(job);});
+        auto jobsToSchedule =  dag.getNodes() | std::views::filter([this](Job & job){return canBeScheduled(job);});
         std::vector<Job> jobsToRun;
         for(auto && job : jobsToSchedule){
-            job.updateStatus(JobState::RUNNING);
-            dag.getAdjacencyContainer().updateJobState(job);
+            updateJobState(job,JobState::RUNNING);
             jobsToRun.push_back(std::move(job));
         }
         for(auto & job: jobsToRun) {
@@ -52,11 +63,7 @@ public:
         return this->dag;
     }
 
-    static auto jobFinishedCallback(Scheduler & scheduler,Job & job) noexcept {
-        return [](Scheduler & scheduler,Job & job){
-          
-        };
+    const JobDAG_t & getDAG() const noexcept {
+        return this->dag;
     }
-
-
 };
