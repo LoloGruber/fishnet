@@ -14,5 +14,7 @@ public:
     static std::filesystem::path getCurrentPath() noexcept;
     static std::filesystem::path projectDirectory(std::string_view searchPattern) noexcept;
     static std::filesystem::path projectDirectory() noexcept;
+    static std::filesystem::path appendToFilename(const std::filesystem::path & path,std::string_view suffix) noexcept;
+    static std::filesystem::path changeFilename(const std::filesystem::path & path, std::string_view filename) noexcept;
 };
 }
