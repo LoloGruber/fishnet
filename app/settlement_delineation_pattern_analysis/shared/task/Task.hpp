@@ -21,12 +21,7 @@ public:
     virtual void run() = 0;
 
     virtual ~Task(){
-        auto desc = taskDesc.str();
-        if(desc.ends_with("\n")){
-            std::cout << desc;
-        }else {
-            std::cout << desc << std::endl;
-        }
+        flushDescription();
     }
 
     Task & operator << (auto && value ) noexcept {
@@ -51,6 +46,16 @@ public:
     Task & indentDescLine(std::string_view line) noexcept {
         taskDesc << "\t" << line << std::endl;
         return *this;
+    }
+
+    void flushDescription() noexcept {
+        auto desc = taskDesc.str();
+        if(desc.ends_with("\n")){
+            std::cout << desc;
+        }else {
+            std::cout << desc << std::endl;
+        }
+        this->taskDesc.clear();
     }
 };
 
