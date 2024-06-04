@@ -93,14 +93,15 @@ public:
             std::ranges::for_each(files,[&paths](const auto & file){paths.emplace_back(file);});
             return paths;
         };
-        for(auto && [files,components]: contractionJobs){
+        
+        for(auto && [files,componentIdList]: contractionJobs){
             ContractionJob contractionJob;
             contractionJob.id = nextJobID++;
-            auto jobFilename = std::filesystem::path(files[0]).filename().replace_extension(".json");
-            contractionJob.file = jobDirectory / std::filesystem::path {"Contraction_"+jobFilename.string()};
+            auto filename = std::to_string(componentIdList[0])+"_"+std::filesystem::path(files[0]).filename().replace_extension(".json").string();
+            contractionJob.file = jobDirectory / std::filesystem::path {"Contraction_"+filename};
             contractionJob.config = cfgDirectory / std::filesystem::path{"contraction.json"};
             contractionJob.inputs = stringsToPathsMapper(files);
-            contractionJob.components = components;
+            contractionJob.components = componentIdList;
             contractionJob.state = JobState::RUNNABLE;
             contractionJob.type = JobType::CONTRACTION;
             auto outputName = config.contractionOutputStem + "_" +std::to_string(contractionJob.id);
@@ -108,12 +109,12 @@ public:
             JobWriter::write(contractionJob);
             AnalysisJob analysisJob;
             analysisJob.id = nextJobID++;
-            analysisJob.file = jobDirectory / std::filesystem::path {"Analysis_"+jobFilename.string()};
+            analysisJob.file = jobDirectory / std::filesystem::path {"Analysis_"+filename};
             analysisJob.config = cfgDirectory / std::filesystem::path{"analysis.json"};
             analysisJob.state = JobState::RUNNABLE;
             analysisJob.type = JobType::ANALYSIS;
-            analysisJob.outputStem = config.analysisOutputStem;
             analysisJob.input = fishnet::Shapefile(files[0]).changeFilename(outputName).getPath();
+            analysisJob.outputStem = config.analysisOutputStem + "_"+std::to_string(analysisJob.id);
             JobWriter::write(analysisJob);
             jobDAG.addEdge(contractionJob,analysisJob);
         }
