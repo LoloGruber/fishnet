@@ -37,10 +37,14 @@ public:
 
     void schedule() {
         auto jobsToSchedule =  dag.getNodes() | std::views::filter([this](const Job & job){return canBeScheduled(job);});
-        for(auto & job : jobsToSchedule){
+        std::vector<Job> jobsToRun;
+        for(auto && job : jobsToSchedule){
             job.updateStatus(JobState::RUNNING);
             dag.getAdjacencyContainer().updateJobState(job);
-            executor.run(job,dag.getAdjacencyContainer());
+            jobsToRun.push_back(std::move(job));
+        }
+        for(auto & job: jobsToRun) {
+            executor.run(job);
         }
     }
 

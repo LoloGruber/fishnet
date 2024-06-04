@@ -13,7 +13,7 @@ public:
         this->callback = cb;
     }
 
-    void run(Job & job, const JobAdjacency & jobAdj){
+    void run(Job & job){
         std::stringstream command;
         command << "cwltool ";
         auto jobTypeName = std::string(magic_enum::enum_name(job.type));
@@ -22,7 +22,6 @@ public:
         command << pathToCwl << " " << job.file.string() << std::endl;
         int exitCode = system(command.str().c_str());
         job.updateStatus(exitCode==0?JobState::SUCCEED:JobState::FAILED);
-        jobAdj.updateJobState(job);
         callback(job);
     }
 };
