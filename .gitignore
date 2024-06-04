@@ -7,3 +7,5 @@
 /extern/CLI11/
 cmake-build-debug/CMakeFiles/clion-environment.txt
 cmake-build-debug/CMakeFiles/clion-log.txt
+app/settlement_delineation_pattern_analysis/test/jobs/
+app/settlement_delineation_pattern_analysis/test/workingDirectory
