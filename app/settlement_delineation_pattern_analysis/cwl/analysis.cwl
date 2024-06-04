@@ -32,6 +32,11 @@ outputs:
         type: File[]
         outputBinding:
             glob: $(inputs.outputStem).*
-        doc: "Filtered output file"
+        doc: "Analysis output file"
+    outEdges:
+        type: File[]
+        outputBinding:
+            glob: $(inputs.outputStem)_edges.*
+        doc: "Edges output file"
 stdout: $(inputs.outputStem)$(inputs.taskID==null?"":"_"+inputs.taskID)_stdout.log
 stderr: $(inputs.outputStem)$(inputs.taskID==null?"":"_"+inputs.taskID)_stderr.log
