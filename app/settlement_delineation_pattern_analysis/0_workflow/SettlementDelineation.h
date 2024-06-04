@@ -28,7 +28,7 @@ public:
         auto jobDAG = loadDAG(std::move(jobAdj));
         jobDAG.clear();
         jobGenerator.generate(inputFiles,jobDAG);
-        Scheduler scheduler {std::move(jobDAG)};
+        Scheduler scheduler {std::move(jobDAG),config.lastJobType};
         scheduler.schedule();
     }
 };
