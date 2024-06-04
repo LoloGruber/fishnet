@@ -1,6 +1,7 @@
 #pragma once
 #include <filesystem>
 #include <fishnet/FunctionalConcepts.hpp>
+#include <fishnet/PathHelper.h>
 #include "Job.hpp"
 #include "JobDAG.hpp"
 #include "JobWriter.hpp"
@@ -35,7 +36,7 @@ private:
 
     std::vector<NeighboursJob> generateNeighboursJobs(const std::unordered_map<std::filesystem::path,FilterJob> & inputToFilterJobMap,JobDAG_t & jobDag) noexcept {
         auto filteredFilenameMapper = [this](std::filesystem::path const & path){
-            return this->workingDirectory / fishnet::Shapefile(path).appendToFilename("_filtered").getPath().filename();
+            return this->workingDirectory / fishnet::util::PathHelper::appendToFilename(path,"_filtered").filename();
         };
         std::unordered_map<std::filesystem::path,std::unordered_set<std::filesystem::path>> dependencyMap;
         for(const auto & [lhsInput,_] : inputToFilterJobMap){
