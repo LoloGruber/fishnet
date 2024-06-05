@@ -1,11 +1,11 @@
 {
     "shpFiles":[{
         "class": "File",
-        "path": "/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/test/example/workingDir/Punjab_Small_filtered.shp",
+        "path": "/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/example/workingDir/Punjab_Small_filtered.shp",
         "secondaryFiles": [
-            {"class": "File", "path": "/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/test/example/workingDir/Punjab_Small_filtered.shx"},
-            {"class": "File", "path": "/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/test/example/workingDir/Punjab_Small_filtered.dbf"},
-            {"class": "File", "path": "/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/test/example/workingDir/Punjab_Small_filtered.prj"}
+            {"class": "File", "path": "/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/example/workingDir/Punjab_Small_filtered.shx"},
+            {"class": "File", "path": "/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/example/workingDir/Punjab_Small_filtered.dbf"},
+            {"class": "File", "path": "/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/example/workingDir/Punjab_Small_filtered.prj"}
         ]
     }],
     "config":{
