@@ -146,7 +146,7 @@ public:
 
     template<fishnet::util::forward_range_of<ComponentReference> ComponentRange = std::vector<ComponentReference>>
     bool loadNodes(fishnet::util::forward_range_of<N> auto && nodes, ComponentRange && componentIds = {}){
-        bool success = Base::loadNodes(std::forward<ComponentRange>(nodes),std::move(componentIds));
+        bool success = Base::loadNodes(std::forward<decltype(nodes)>(nodes),std::move(componentIds));
         if(not success) {
             return false;
         }
