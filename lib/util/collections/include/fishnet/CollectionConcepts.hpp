@@ -48,7 +48,7 @@ concept view_over = std::ranges::view<V> && range_over<V,C>;
 constexpr size_t size(std::ranges::range auto && range) noexcept{
     using R = decltype(range);
     if constexpr(std::ranges::sized_range<R>){
-        return std::ranges::distance(range);
+        return static_cast<size_t>(std::ranges::distance(range));
     }else {
         return std::ranges::count_if(range, [](const auto & e){return true;});
     }
