@@ -36,7 +36,7 @@ private:
 
     std::vector<NeighboursJob> generateNeighboursJobs(const std::unordered_map<std::filesystem::path,FilterJob> & inputToFilterJobMap,JobDAG_t & jobDag) noexcept {
         auto filteredFilenameMapper = [this](std::filesystem::path const & path){
-            return this->workingDirectory / fishnet::util::PathHelper::appendToFilename(path,"_filtered").filename();
+            return this->workingDirectory / fishnet::util::PathHelper::appendToFilename(path,"_filtered").filename().replace_extension(".shp");
         };
         std::unordered_map<std::filesystem::path,std::unordered_set<std::filesystem::path>> dependencyMap;
         for(const auto & [lhsInput,_] : inputToFilterJobMap){
