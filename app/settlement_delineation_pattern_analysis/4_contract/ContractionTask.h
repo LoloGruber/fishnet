@@ -64,7 +64,7 @@ public:
      * @throws runtime_error when the file reference for the inputs could not be loaded or the id of a settlement could not be read
      * @return fishnet::util::forward_range_of<SettlementPolygon<P>> list of settlements
      */
-    fishnet::util::forward_range_of<SettlementPolygon<P>> auto readInputs( MemgraphAdjacency<SourceNodeType> & adj, OGRSpatialReference & spatialRef) {
+    fishnet::util::forward_range_of<SettlementPolygon<P>> auto readInputs( CachingMemgraphAdjacency<SourceNodeType> & adj, OGRSpatialReference & spatialRef) {
         std::vector<SettlementPolygon<P>> polygons;
         this->writeDescLine("-Inputs:");
         for(const auto & shp : inputs) {
