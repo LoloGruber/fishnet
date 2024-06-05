@@ -33,9 +33,10 @@ public:
     }
 
     static std::optional<GISFileType> getType(const std::filesystem::path & path) {
-        if(Shapefile::supportsExtension(path))
+        const auto & ext = path.extension().string();
+        if(ext == ".shp" )
             return GISFileType::SHP;
-        else if (path.extension().string() == ".tif" || path.extension().string() == ".tiff") {
+        else if (ext  == ".tif" || ext  == ".tiff") {
             return GISFileType::TIFF;
         }
         return std::nullopt;
