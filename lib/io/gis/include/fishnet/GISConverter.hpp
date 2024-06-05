@@ -3,6 +3,7 @@
 #include "GeoTiff.hpp"
 #include <gdal/gdal.h>
 #include <gdal_alg.h>
+#include <ogrsf_frmts.h>
 #include <gdal/ogr_core.h>
 #include <gdal/gdal_priv.h>
 #include <fishnet/TemporaryDirectiory.h>
@@ -19,6 +20,7 @@ public:
      * @return std::expected<Shapefile,std::string>: Shapefile on success, otherwise string explaining the error
      */
     static std::expected<Shapefile,std::string> convert(const GeoTiff & geoTiff,bool maskZero = true, bool showProgress=true) noexcept{
+        GDALAllRegister();
         GDALDataset *src = (GDALDataset *) GDALOpen(geoTiff.getPath().c_str(), GA_ReadOnly);
         if(src == nullptr)
             return std::unexpected("Could not open Geotiff-Dataset: "+geoTiff.getPath().string());
