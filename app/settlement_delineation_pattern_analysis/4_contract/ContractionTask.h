@@ -6,6 +6,7 @@
 #include <fishnet/Contraction.hpp>
 #include <fishnet/CompositePredicate.hpp>
 
+#include "CachingMemgraphAdjacency.hpp"
 #include "MemgraphAdjacency.hpp"
 #include "SettlementPolygon.hpp"
 #include "ContractionConfig.hpp"
@@ -96,18 +97,19 @@ public:
         if(inputs.empty()){
             throw std::runtime_error( "No input file provided");
         }
-        auto memgraphAdjSrc = MemgraphAdjacency<SourceNodeType>::create(config.params);
+        auto memgraphConnection = MemgraphConnection::create(config.params);
+        testExpectedOrThrowError(memgraphConnection);
+        auto memgraphAdjSrc = CachingMemgraphAdjacency<SourceNodeType>(memgraphConnection.transform([](auto && con){return MemgraphClient(std::move(con));}).value());
         auto memgraphAdjRes = MemgraphAdjacency<ResultNodeType>::create(config.params);
         OGRSpatialReference ref; // set by readInputs function, used as spatial reference for output layer
-        testExpectedOrThrowError(memgraphAdjSrc);
         testExpectedOrThrowError(memgraphAdjRes);
-        auto settlements = readInputs(memgraphAdjSrc.value(),ref);
+        auto settlements = readInputs(memgraphAdjSrc,ref);
         this->writeDescLine("-Output:");
         this->indentDescLine(output.getPath().filename().string());
-        auto outputFileRef = memgraphAdjSrc->getDatabaseConnection().addFileReference(output.getPath());
+        auto outputFileRef = memgraphAdjSrc.getDatabaseConnection().addFileReference(output.getPath());
         if(not outputFileRef)
             throw std::runtime_error( "Could not create file reference for output in Database: "+output.getPath().string());
-        auto sourceGraph = fishnet::graph::GraphFactory::UndirectedGraph<SourceNodeType>(std::move(memgraphAdjSrc.value()));
+        auto sourceGraph = fishnet::graph::GraphFactory::UndirectedGraph<SourceNodeType>(std::move(memgraphAdjSrc));
         auto resultGraph = fishnet::graph::GraphFactory::UndirectedGraph<ResultNodeType>(std::move(memgraphAdjRes.value()));
         /*Reduce function used to merge a connected component of nodes (SourceNodeType), solely connected via to-be-contracted edges, into a single node of the ResultNodeType*/
         auto reduceFunction = IDReduceFunction(outputFileRef.value());

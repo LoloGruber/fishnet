@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include "Testutil.h"
 #include "MemgraphAdjacency.hpp"
+#include "CachingMemgraphAdjacency.hpp"
 #include <fishnet/GraphFactory.hpp>
 using namespace testutil;
 using namespace fishnet::graph;
@@ -33,7 +34,7 @@ RETURN n,r,f,n2,n1,a
 class MemgraphTest: public ::testing::Test {
 protected:
     void SetUp() override {
-        mgAdj = MemgraphConnection::create(hostname,port).transform([](auto && connection){return MemgraphAdjacency<ExampleNode>(MemgraphClient(std::move(connection)));});
+        mgAdj = MemgraphConnection::create(hostname,port).transform([](auto && connection){return CachingMemgraphAdjacency<ExampleNode>(MemgraphClient(std::move(connection)));});
         if(not mgAdj) {
             throw std::runtime_error(mgAdj.error());
         }
@@ -52,7 +53,7 @@ protected:
 
     u_int16_t port = 7687;
     std::string hostname = "localhost";
-    std::expected<MemgraphAdjacency<ExampleNode>,std::string> mgAdj = std::unexpected("Not initialized yet");
+    std::expected<CachingMemgraphAdjacency<ExampleNode>,std::string> mgAdj = std::unexpected("Not initialized yet");
     FileReference fileRef;
 };
 
