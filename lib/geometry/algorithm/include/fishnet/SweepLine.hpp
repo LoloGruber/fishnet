@@ -22,7 +22,7 @@ enum class EventType{
  * @tparam SLSLess BiPredicate for sorting the SLS
  * @tparam EventQueueGreater BiPredicate for sorting the event points
  */
-template<typename Input, typename Output,util::BiPredicate<Input> SLSLess, util::BiPredicate<fishnet::math::DEFAULT_NUMERIC> EventQueueGreater = std::greater<fishnet::math::DEFAULT_NUMERIC>>
+template<typename Input, typename Output,util::BiPredicate<Input> SLSLess,bool InsertEventsFirst = false, util::BiPredicate<fishnet::math::DEFAULT_NUMERIC> EventQueueGreater = std::greater<fishnet::math::DEFAULT_NUMERIC>>
 class SweepLine{
 public: 
     
@@ -39,7 +39,7 @@ public:
 
         IEvent(const Input & obj):obj(&obj){}
 
-        virtual void process(SweepLine<Input,Output,SLSLess,EventQueueGreater> & sweepLine, std::vector<Output> & output)const=0;
+        virtual void process(SweepLine<Input,Output,SLSLess,InsertEventsFirst,EventQueueGreater> & sweepLine, std::vector<Output> & output)const=0;
 
         virtual EventType type() const noexcept = 0;
 
@@ -68,14 +68,14 @@ public:
 
     struct DefaultInsertEvent: public InsertEvent {
         DefaultInsertEvent(const Input & obj):InsertEvent(obj){}
-        virtual void process(SweepLine<Input,Output,SLSLess,EventQueueGreater> & sweepLine, std::vector<Output> & output) const {
+        virtual void process(SweepLine<Input,Output,SLSLess,InsertEventsFirst,EventQueueGreater> & sweepLine, std::vector<Output> & output) const {
             sweepLine.addSLS(this->obj);
         }
     };
 
     struct DefaultRemoveEvent: public RemoveEvent{
         DefaultRemoveEvent(const Input & obj):RemoveEvent(obj){}
-        virtual void process(SweepLine<Input,Output,SLSLess,EventQueueGreater> & sweepLine, std::vector<Output> & output) const {
+        virtual void process(SweepLine<Input,Output,SLSLess,InsertEventsFirst,EventQueueGreater> & sweepLine, std::vector<Output> & output) const {
             sweepLine.removeSLS(this->obj);
         }
     };
@@ -92,8 +92,13 @@ private:
      */
     struct EventQueueGreaterPtr {
         bool operator()(const eventPointer & lhs, const eventPointer & rhs) const noexcept {
-            if(lhs->eventPoint() == rhs->eventPoint())
-                return lhs->type() == EventType::INSERT ? false:true; // insert events are processed after remove events
+            if(fishnet::math::areEqual(lhs->eventPoint(),rhs->eventPoint())){
+                if constexpr(InsertEventsFirst)
+                    return lhs->type() == EventType::INSERT; // insert events are processed after remove events
+                else {
+                    return lhs->type() != EventType::INSERT; // insert events are processed before remove events
+                }
+            }
             return eventQueueGreater(rhs->eventPoint(), lhs->eventPoint());
         }
     };

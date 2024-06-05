@@ -11,10 +11,11 @@ namespace __impl {
  * @brief Type for Polygon Neighbours Sweepline
  * It stores the polygons as BoundingBoxPolygons in the SLS and sorts them from left to right
  * The output is a vector of pairs of polygons of type P, with each pair indicating the adjacency of two polygons
+ * Insert events are processed before remove events
  * @tparam P 
  */
 template<IPolygon P>
-using PolygonNeighbours = SweepLine<BoundingBoxPolygon<P>,std::pair<P,P>,HorizontalAABBOrdering<P>>;
+using PolygonNeighbours = SweepLine<BoundingBoxPolygon<P>,std::pair<P,P>,HorizontalAABBOrdering<P>,true>;
 
 template<IPolygon P>
 struct PolygonNeighboursInsertEvent : public PolygonNeighbours<P>::DefaultInsertEvent {
