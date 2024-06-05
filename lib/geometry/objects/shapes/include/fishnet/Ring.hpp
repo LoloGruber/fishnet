@@ -298,6 +298,10 @@ public:
         std::ranges::sort(splittingPoints,[segment](const Vec2DReal & a, const Vec2DReal & b ){
             return segment.p().distance(a) < segment.p().distance(b); // sort endpoints according to distance from p()
         });
+        if(splittingPoints.size() == 2){ // segment under test was not split through segments of the ring -> both endpoints inside -> segment inside
+            return contains(segment.p()) && contains(segment.q());
+        }   
+
         for(size_t i = 0; i < splittingPoints.size()-1; i++){
             auto middlePointOfPartialSegment = splittingPoints[i] + (splittingPoints[i+1]-splittingPoints[i]) * 0.5;
             if(not contains(middlePointOfPartialSegment)) 
