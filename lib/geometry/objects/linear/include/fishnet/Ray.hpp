@@ -78,10 +78,10 @@ public:
         if(point==originPoint) 
             return true;
         if(directionVector.x == 0){ // vertical ray -> point is on ray if its on the origin or above/below depending on the direction vector
-            return point.x == originPoint.x and (directionVector.y > 0 ? point.y > originPoint.y : point.y < originPoint.y);
+            return fishnet::math::areEqual(point.x,originPoint.x) and (directionVector.y > 0 ? point.y > originPoint.y : point.y < originPoint.y);
         }
         if(directionVector.y == 0){ // horizontal ray -> point is on ray if its on the origin or left/right depending on the direction vector
-            return point.y == originPoint.y and (directionVector.x > 0 ? point.x > originPoint.x : point.x < originPoint.x);
+            return fishnet::math::areEqual(point.y,originPoint.y) and (directionVector.x > 0 ? point.x > originPoint.x : point.x < originPoint.x);
         }
         FLOAT_TYPE lX = FLOAT_TYPE(point.x - originPoint.x) / FLOAT_TYPE(directionVector.x);
         FLOAT_TYPE lY = FLOAT_TYPE(point.y - originPoint.y) / FLOAT_TYPE(directionVector.y);
