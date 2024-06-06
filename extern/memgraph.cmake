@@ -1,11 +1,23 @@
+# Find and link OpenSSL
+# SET(OPENSSL_ROOT_DIR /dss/dsshome1/0D/di35pof/micromamba/envs/fishnet)
+find_package(OpenSSL REQUIRED)
+if (OpenSSL_FOUND)
+  message(STATUS "Found OpenSSL: ${OPENSSL_VERSION}")
+  message(STATUS "Using OpenSSL include dir: ${OPENSSL_INCLUDE_DIR}")
+  message(STATUS "Using OpenSSL libraries: ${OPENSSL_LIBRARIES}")
+endif()
 include(ExternalProject)
-set(MGCLIENT_GIT_TAG      "v1.4.0" CACHE STRING "mgclient git tag")
-set(MGCLIENT_LIBRARY      mgclient-lib)
+
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   set(MGCLIENT_INSTALL_DIR ${CMAKE_BINARY_DIR}/mgclient)
 else()
   set(MGCLIENT_INSTALL_DIR ${CMAKE_INSTALL_PREFIX})
 endif()
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_RPATH}:${MGCLIENT_INSTALL_DIR}/lib" CACHE STRING "Install Rpath")
+message(STATUS "Adding mgclient to rpath: ${CMAKE_INSTALL_RPATH}")
+
+set(MGCLIENT_GIT_TAG      "v1.4.0" CACHE STRING "mgclient git tag")
+set(MGCLIENT_LIBRARY      mgclient-lib)
 set(MGCLIENT_INCLUDE_DIRS ${MGCLIENT_INSTALL_DIR}/include)
 if (UNIX AND NOT APPLE)
   set(MGCLIENT_LIBRARY_PATH ${MGCLIENT_INSTALL_DIR}/lib/libmgclient.so)
@@ -20,6 +32,10 @@ ExternalProject_Add(mgclient-proj
                    "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}"
                    "-DBUILD_CPP_BINDINGS=ON"
                    "-DCMAKE_POSITION_INDEPENDENT_CODE=ON"
+                  "-DCMAKE_INSTALL_LIBDIR=lib"
+                  "-DOPENSSL_ROOT_DIR=${OPENSSL_ROOT_DIR}"
+                  "-DOPENSSL_INCLUDE_DIR=${OPENSSL_INCLUDE_DIR}"
+                  "-DOPENSSL_LIBRARIES=${OPENSSL_LIBRARIES}"
   BUILD_BYPRODUCTS "${MGCLIENT_LIBRARY_PATH}"
   INSTALL_DIR      "${PROJECT_BINARY_DIR}/mgclient"
 )
