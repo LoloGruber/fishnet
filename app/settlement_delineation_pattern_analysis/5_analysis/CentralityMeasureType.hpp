@@ -4,7 +4,7 @@
 #include "SettlementPolygon.hpp"
 
 enum class CentralityMeasureType {
-    DegreeCentrality
+    DegreeCentrality,MeanLocalSignificance,SmallerNeighboursRatio
 };
 
 /**

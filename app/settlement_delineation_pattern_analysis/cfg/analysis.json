@@ -5,6 +5,12 @@
     "centrality-measures":[
         {
             "name": "DegreeCentrality"
+        },
+        {
+            "name": "MeanLocalSignificance"
+        },
+        {
+            "name": "SmallerNeighboursRatio"
         }
     ]
 }
