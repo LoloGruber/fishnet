@@ -1,5 +1,6 @@
 module use /dss/dsstbyfs01/pn56su/pn56su-dss-0020/usr/share/modules/files/
 module load micromamba
+module load charliecloud
 eval "$(micromamba shell hook --shell bash)"
 micromamba shell init --shell bash --root-prefix=~/micromamba
 micromamba create -n fishnet
