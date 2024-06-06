@@ -2,6 +2,7 @@
 #include "SweepLine.hpp"
 #include "BoundingBoxPolygon.hpp"
 #include <fishnet/FunctionalConcepts.hpp>
+#include <Quadtree.h>
 
 namespace fishnet::geometry {
 
