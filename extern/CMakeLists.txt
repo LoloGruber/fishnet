@@ -1,3 +1,4 @@
+add_subdirectory(quadtree)
 if(FISHNET_APPS)
     set(JSON_BuildTests OFF CACHE INTERNAL "")
     add_subdirectory(json)
