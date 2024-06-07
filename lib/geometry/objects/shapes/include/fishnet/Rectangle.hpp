@@ -12,8 +12,8 @@ template<fishnet::math::Number T>
 class Rectangle:public Ring<T>{
 private:
     T _left;
-    T _right;
     T _top;
+    T _right;
     T _bottom;
 
     void init() noexcept {
@@ -51,6 +51,8 @@ public:
     Rectangle(Shape auto const & ring):Ring<T>(ring.aaBB().getPoints()){
         init();
     }
+
+    Rectangle(T left, T top, T right, T bottom):Ring<T>({{left,top},{right,top},{right,bottom},{left,bottom}}),_left(left),_top(top),_right(right),_bottom(bottom){}
 
     T left() const noexcept {
         return _left;
