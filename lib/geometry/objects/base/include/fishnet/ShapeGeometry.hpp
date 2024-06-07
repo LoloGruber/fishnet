@@ -116,7 +116,7 @@ concept IMultiPolygon = __impl::LocationQueries<M> && requires(const M & multiPo
  * @tparam S shape type
  * @tparam S::numeric_type used for computations
  */
-template<typename S, typename T =typename S::numeric_type>
+template<typename S, typename T =typename std::remove_cvref_t<S>::numeric_type>
 concept Shape = ((IRing<S,T> or (IPolygon<S,T> and  __impl::HolesQueries<S,S> )) and __impl::ShapeQueries<S,S>) or (IMultiPolygon<S> and __impl::ShapeQueries<S,typename S::polygon_type> and __impl::HolesQueries<S,typename S::polygon_type>) 
     && requires(const S & shape){
         {shape.area()} -> std::same_as<math::DEFAULT_FLOATING_POINT>;
