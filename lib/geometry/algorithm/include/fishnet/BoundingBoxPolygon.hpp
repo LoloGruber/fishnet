@@ -40,6 +40,37 @@ public:
 };
 
 /**
+ * @brief Helper function to get the common bounding box for a range of polygons
+ * 
+ * @tparam R type of polygon range
+ * @param polygons polygons to compute the bounding box around
+ * @return Rectangle<typename std::ranges::range_value_t<R>::numeric_type> BoundingBox using the numeric type like the input
+ */
+template<PolygonRange R>
+static Rectangle<typename std::ranges::range_value_t<R>::numeric_type> minimalBoundingBox(const R & polygons) {
+    using number = typename std::ranges::range_value_t<R>::numeric_type;
+    number left = std::numeric_limits<number>::max();
+    number right = std::numeric_limits<number>::min();
+    number top = std::numeric_limits<number>::min();
+    number bottom = std::numeric_limits<number>::max();
+    if(util::isEmpty(polygons)){
+        throw std::runtime_error("Range of polygons is empty, cannot compute bounding box");
+    }
+    for(const auto & polygon: polygons){
+        auto aaBB = Rectangle<number>(polygon);
+        if(aaBB.left() < left)
+            left = aaBB.left();
+        if(aaBB.right() > right)
+            right = aaBB.right();
+        if(aaBB.top() > top)
+            top = aaBB.top();
+        if(aaBB.bottom() < bottom)
+            bottom = aaBB.bottom();
+    }
+    return Rectangle<number>({{left,top},{right,top},{right,bottom},{left,bottom}});
+}
+
+/**
  * @brief Comparator for sorting BoundingBoxPolygons according to top-most position of the bounding box
  * 
  * @tparam P 
