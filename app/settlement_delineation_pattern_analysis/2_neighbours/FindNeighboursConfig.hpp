@@ -16,14 +16,17 @@ template<typename GeometryType>
 struct FindNeighboursConfig: public MemgraphTaskConfig{
     constexpr static const char * MAX_DISTANCE_KEY = "maxDistanceMeters";
     constexpr static const char * NEIGHBOURING_PREDICATES_KEY = "neighbouring-predicates";
+    constexpr static const char * MAX_NEIGHBOURS_KEY ="maxNeighbours";
 
     double maxEdgeDistance;
+    size_t maxNeighbours;
     std::vector<fishnet::util::BiPredicate_t<GeometryType>> neighbouringPredicates;
 
     FindNeighboursConfig()=default;
 
     FindNeighboursConfig(const json & configDescription):MemgraphTaskConfig(configDescription){
         jsonDescription.at(MAX_DISTANCE_KEY).get_to(this->maxEdgeDistance);
+        jsonDescription.at(MAX_NEIGHBOURS_KEY).get_to(this->maxNeighbours);
         this->neighbouringPredicates.push_back(DistanceBiPredicate(this->maxEdgeDistance));
         for(const auto & neighbourPredicateJson : jsonDescription.at(NEIGHBOURING_PREDICATES_KEY)){
             std::string predicateName;

@@ -48,8 +48,6 @@ private:
         fishnet::geometry::Rectangle<number> asShape() const noexcept {
             return fishnet::geometry::Rectangle<number>({{left,top},{right,top},{right,bottom},{left,bottom}});
         }
-
-
     };
 
 public:
@@ -133,7 +131,7 @@ public:
             double scale = maxEdgeDistanceVar / distanceMetersTopLeftBotLeft; 
             return fishnet::geometry::BoundingBoxPolygon(settPolygon,aaBB.scale(scale));
         };
-        auto result = fishnet::geometry::findNeighbouringPolygons(polygons,neighbouringPredicate,boundingBoxPolygonWrapper);
+        auto result = fishnet::geometry::findNeighbouringPolygons(polygons,neighbouringPredicate,boundingBoxPolygonWrapper,config.maxNeighbours);
         graph.addNodes(polygons);
         graph.addEdges(result);
     }
