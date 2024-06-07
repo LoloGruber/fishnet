@@ -2,7 +2,7 @@
 #include "SweepLine.hpp"
 #include "BoundingBoxPolygon.hpp"
 #include <fishnet/FunctionalConcepts.hpp>
-#include <Quadtree.h>
+#include <fishnet/FixedSizePriorityQueue.hpp>
 
 namespace fishnet::geometry {
 
@@ -34,7 +34,8 @@ struct PolygonNeighboursInsertEvent : public PolygonNeighbours<P>::DefaultInsert
 template<IPolygon P>
 struct PolygonNeighboursRemoveEvent: public PolygonNeighbours<P>::RemoveEvent {
     util::BiPredicate_t<BoundingBoxPolygon<P>>  neighbouringPredicate; // BiPredicate deciding if two polygons are adjacent
-    PolygonNeighboursRemoveEvent(const BoundingBoxPolygon<P> & bbPptr, util::BiPredicate<BoundingBoxPolygon<P>> auto const & neighbouringBiPredicate):PolygonNeighbours<P>::RemoveEvent(bbPptr),neighbouringPredicate(neighbouringBiPredicate){}
+    size_t k;
+    PolygonNeighboursRemoveEvent(const BoundingBoxPolygon<P> & bbPptr, util::BiPredicate<BoundingBoxPolygon<P>> auto const & neighbouringBiPredicate,size_t k):PolygonNeighbours<P>::RemoveEvent(bbPptr),neighbouringPredicate(neighbouringBiPredicate),k(k){}
 
     virtual fishnet::math::DEFAULT_NUMERIC eventPoint() const noexcept {
         return this->obj->getBoundingBox().bottom();
@@ -43,19 +44,33 @@ struct PolygonNeighboursRemoveEvent: public PolygonNeighbours<P>::RemoveEvent {
     virtual void process(PolygonNeighbours<P> & sweepLine, std::vector<std::pair<P,P>> & output) const {
         const auto & sls = sweepLine.getSLS();
         const auto & current = *this->obj;
-
+        auto distanceMapper = [&current](const auto & p){
+            return current.getPolygon().distance(p);
+        };
+        auto itInRange = [&current](auto it){
+            return current.getBoundingBox().left() <= (*it)->getBoundingBox().right() ||
+                current.getBoundingBox().right() >= (*it)->getBoundingBox().left();
+        };
+        auto closestNeighbours = util::FixedSizePriorityQueue<P,decltype(distanceMapper)>(k,distanceMapper);
         bool skippedSameObject = false; // skip same Polygon object, since it is returned as the lower_bound in the first iteration
-        for(auto it = sls.lower_bound(this->obj); it != sls.begin() && it != sls.end(); --it){
+        for(auto it = sls.lower_bound(this->obj); it != sls.end() && itInRange(it); --it){
             const auto & neighbour = *(*it);
             if(skippedSameObject && neighbouringPredicate(current,neighbour)){
-                output.push_back(std::make_pair(current.getPolygon(),neighbour.getPolygon()));   
+                closestNeighbours.push(neighbour.getPolygon());
+                // output.push_back(std::make_pair(current.getPolygon(),neighbour.getPolygon()));   
             }
             skippedSameObject = true;
+            if(it == sls.begin())
+                break;
         }
-        for(auto it = sls.upper_bound(this->obj); it != sls.end();++it){
+        for(auto it = sls.upper_bound(this->obj); it != sls.end() && itInRange(it);++it){
             const auto & neighbour = *(*it);
             if(neighbouringPredicate(current,neighbour))
-                output.push_back(std::make_pair(current.getPolygon(),neighbour.getPolygon()));
+                closestNeighbours.push(neighbour.getPolygon());
+                // output.push_back(std::make_pair(current.getPolygon(),neighbour.getPolygon()));
+        }
+        for(auto && neighbour: closestNeighbours) {
+            output.emplace_back(current.getPolygon(),std::move(neighbour));
         }
         sweepLine.removeSLS(this->obj);
     }
@@ -72,7 +87,7 @@ struct PolygonNeighboursRemoveEvent: public PolygonNeighbours<P>::RemoveEvent {
  * @return std::vector<std::pair<P,P>> list of pairs, indicating the neighbouring relationship of two polygons
  */
 template<PolygonRange R, IPolygon P = std::ranges::range_value_t<R>>
-static std::vector<std::pair<P,P>> findNeighbouringPolygons(const R & polygons, util::BiPredicate<BoundingBoxPolygon<P>> auto const & neighbouringPredicate,util::UnaryFunction<P,BoundingBoxPolygon<P>> auto const & wrapper) {
+static std::vector<std::pair<P,P>> findNeighbouringPolygons(const R & polygons, util::BiPredicate<BoundingBoxPolygon<P>> auto const & neighbouringPredicate,util::UnaryFunction<P,BoundingBoxPolygon<P>> auto const & wrapper, size_t k) {
     using SweepLine_t = typename __impl::PolygonNeighbours<P>;
     SweepLine_t sweepLine;
     std::vector<std::pair<P,P>> output;
@@ -81,9 +96,9 @@ static std::vector<std::pair<P,P>> findNeighbouringPolygons(const R & polygons, 
     std::ranges::for_each(polygons,[&boundingBoxPolygons,&wrapper](const auto & p){
         boundingBoxPolygons.push_back(wrapper(p)); // wrap each polygon in a BoundingBoxPolygon
     });
-    std::ranges::for_each(boundingBoxPolygons,[&sweepLine,&neighbouringPredicate](const auto & bbPptr){
+    std::ranges::for_each(boundingBoxPolygons,[&sweepLine,&neighbouringPredicate,k](const auto & bbPptr){
         sweepLine.addEvent(std::make_unique<__impl::PolygonNeighboursInsertEvent<P>>(bbPptr)); // add insert events to sweepline
-        sweepLine.addEvent(std::make_unique<__impl::PolygonNeighboursRemoveEvent<P>>(bbPptr,neighbouringPredicate)); // add remove events to sweepline
+        sweepLine.addEvent(std::make_unique<__impl::PolygonNeighboursRemoveEvent<P>>(bbPptr,neighbouringPredicate,k)); // add remove events to sweepline
     });
     return sweepLine.sweep(output);
 }
@@ -101,10 +116,10 @@ static std::vector<std::pair<P,P>> findNeighbouringPolygons(const R & polygons, 
  * @return std::vector<std::pair<P,P>> list of pairs, indicating the neighbouring relationship of two polygons
  */
 template<PolygonRange R, IPolygon P = std::ranges::range_value_t<R>>
-static std::vector<std::pair<P,P>> findNeighbouringPolygons(const R & polygons, util::BiPredicate<P> auto const & neighbouringPredicate,util::UnaryFunction<P,BoundingBoxPolygon<P>> auto const & wrapper) {
+static std::vector<std::pair<P,P>> findNeighbouringPolygons(const R & polygons, util::BiPredicate<P> auto  && neighbouringPredicate,util::UnaryFunction<P,BoundingBoxPolygon<P>> auto const & wrapper,size_t k) {
     return __impl::findNeighbouringPolygons(polygons, [&neighbouringPredicate](const BoundingBoxPolygon<P> & current, const BoundingBoxPolygon<P> & neighbour){
         return neighbouringPredicate(current.getPolygon(),neighbour.getPolygon());
-    },wrapper);
+    },wrapper,k);
 }
 
 /**
@@ -117,8 +132,8 @@ static std::vector<std::pair<P,P>> findNeighbouringPolygons(const R & polygons, 
  * @return std::vector<std::pair<P,P>> list of pairs, indicating the neighbouring relationship of two polygons
  */
 template<PolygonRange R, IPolygon P = std::ranges::range_value_t<R>>
-static std::vector<std::pair<P,P>> findNeighbouringPolygons(const R & polygons, util::BiPredicate<P> auto const & neighbouringPredicate) {
-    return findNeighbouringPolygons(polygons,neighbouringPredicate,[](const P & p){return BoundingBoxPolygon(p);});
+static std::vector<std::pair<P,P>> findNeighbouringPolygons(const R & polygons, util::BiPredicate<P> auto const & neighbouringPredicate,size_t k) {
+    return findNeighbouringPolygons(polygons,neighbouringPredicate,[](const P & p){return BoundingBoxPolygon(p);},k);
 }
 
 /**
