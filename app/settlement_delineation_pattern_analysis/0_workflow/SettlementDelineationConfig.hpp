@@ -19,7 +19,7 @@ public:
     std::filesystem::path workingDirectory;
     std::filesystem::path cfgDirectory;
     JobType lastJobType;
-    fishnet::util::BiPredicate_t<std::filesystem::path> neighbouringFilesPredicate = NeighbouringFileTilesPredicate();
+    fishnet::util::BiPredicate_t<std::filesystem::path> neighbouringFilesPredicate = NeighbouringWSFFilesPredicate();
     ExecutorType executorType;
     json executorDesc;
 

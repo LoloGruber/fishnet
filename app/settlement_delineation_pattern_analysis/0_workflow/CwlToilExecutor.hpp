@@ -14,6 +14,7 @@ private:
         auto jobTypeName = std::string(magic_enum::enum_name(type));
         std::transform(jobTypeName.begin(),jobTypeName.end(),jobTypeName.begin(),::tolower);
         auto pathToCwl = cwlDir / std::filesystem::path(jobTypeName+".cwl");
+        return pathToCwl;
     }
 
 public:
@@ -27,7 +28,7 @@ public:
     void operator()(Job & job){
         std::thread([this,&job]()mutable{
             std::stringstream command;
-            command << "cwltoil " << flags << " "<< getCwlFile(job.type) << " " << job.file.string() << std::endl;
+            command << "toil-cwl-runner " << flags << " "<< getCwlFile(job.type) << " " << job.file.string() << std::endl;
             std::cout << "Starting Job "<< job.id << " (" << job.file <<")"<< std::endl;
             int exitCode = std::system(command.str().c_str());
             job.updateStatus(exitCode==0?JobState::SUCCEED:JobState::FAILED);

@@ -3,7 +3,8 @@
     "config-directory":"/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/cfg",
     "last-job-type":"ANALYSIS",
     "executor":{
-        "name":"cwltool",
+        "name":"CWLTOIL",
+        "flags":"",
         "cwl-directory":"/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/cwl"
     },
     "memgraph-host":"localhost",
