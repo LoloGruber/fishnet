@@ -119,6 +119,9 @@ public:
         fishnet::util::AllOfPredicate<P,P> neighbouringPredicate;
         /* add all neighbouring predicates to composite predicate */
         std::ranges::for_each(config.neighbouringPredicates,[&neighbouringPredicate](const auto & predicate){neighbouringPredicate.add(predicate);});
+        auto expAdj = MemgraphAdjacency<SettlementPolygon<P>>::create(config.params);
+        testExpectedOrThrowError(expAdj);
+        auto graph = fishnet::graph::GraphFactory::UndirectedGraph<SettlementPolygon<P>>(std::move(expAdj.value()));   
         std::vector<SettlementPolygon<P>> polygons = readInput(graph);
         double maxEdgeDistanceVar = config.maxEdgeDistance;
         auto boundingBoxPolygonWrapper = [maxEdgeDistanceVar](const SettlementPolygon<P> & settPolygon ){
@@ -128,10 +131,7 @@ public:
             double scale = maxEdgeDistanceVar / distanceMetersTopLeftBotLeft; 
             return fishnet::geometry::BoundingBoxPolygon(settPolygon,aaBB.scale(scale));
         };
-        auto result = fishnet::geometry::findNeighbouringPolygons(polygons,neighbouringPredicate,boundingBoxPolygonWrapper,config.maxNeighbours);
-        auto expAdj = MemgraphAdjacency<SettlementPolygon<P>>::create(config.params);
-        testExpectedOrThrowError(expAdj);
-        auto graph = fishnet::graph::GraphFactory::UndirectedGraph<SettlementPolygon<P>>(std::move(expAdj.value()));       
+        auto result = fishnet::geometry::findNeighbouringPolygons(polygons,neighbouringPredicate,boundingBoxPolygonWrapper,config.maxNeighbours);    
         graph.addNodes(polygons);
         graph.addEdges(result);
     }
