@@ -1,11 +1,12 @@
 #pragma once
 #include "JobDAG.hpp"
 #include "CwlToolExecutor.hpp"
+#include "Executor.hpp"
 
 class Scheduler {
 private:
     JobDAG_t dag;
-    CwlToolExecutor executor;
+    Executor_t executor;
     JobType lastJobType;
 
     bool isFinished(const Job & job) const noexcept {
@@ -35,16 +36,20 @@ private:
         this->getDAG().getAdjacencyContainer().updateJobState(job);
     }
 
+    auto onFinishedCallback() noexcept{
+        return [this](Job & job){
+            this->persistJobState(job);
+            if(job.state == JobState::SUCCEED)
+                this->schedule();
+        };
+    }
+
+
 public:
-    Scheduler(JobDAG_t && dag,JobType lastJobType):dag(std::move(dag)),executor(),lastJobType(lastJobType){
-        executor.setCallback(
-            [this](Job & job){
-                persistJobState(job);
-                if(job.state == JobState::SUCCEED){
-                     this->schedule();
-                }
-            }
-        );
+    Scheduler(JobDAG_t && dag,Executor auto && executor,JobType lastJobType):dag(std::move(dag)),lastJobType(lastJobType){
+         static_assert(std::convertible_to<decltype(this->onFinishedCallback()),Callback_t>);
+         executor.setCallback(onFinishedCallback());
+         this->executor = std::move(executor);
     }
 
     void schedule() {
@@ -55,7 +60,7 @@ public:
             jobsToRun.push_back(std::move(job));
         }
         for(auto & job: jobsToRun) {
-            executor.run(job);
+            executor(job);
         }
     }
 

@@ -13,11 +13,11 @@ class SettlementDelineation: public Task{
 private:
     SettlementDelineationConfig config;
     std::vector<std::filesystem::path> inputFiles;
+    std::filesystem::path workingDirectory;
 
 public:
-    SettlementDelineation(SettlementDelineationConfig && config,  std::vector<std::filesystem::path> && inputFiles):config(std::move(config)),inputFiles(std::move(inputFiles)){
-
-    }
+    SettlementDelineation(SettlementDelineationConfig && config,  std::vector<std::filesystem::path> && inputFiles)
+    :config(std::move(config)),inputFiles(std::move(inputFiles)),workingDirectory(std::filesystem::current_path()){}
 
     void run() override {
         if(inputFiles.empty())
@@ -28,7 +28,7 @@ public:
         auto jobDAG = loadDAG(std::move(jobAdj));
         jobDAG.clear();
         jobGenerator.generate(inputFiles,jobDAG);
-        Scheduler scheduler {std::move(jobDAG),config.lastJobType};
+        Scheduler scheduler = config.getSchedulerWithExecutorType(std::move(jobDAG));
         scheduler.schedule();
     }
 };

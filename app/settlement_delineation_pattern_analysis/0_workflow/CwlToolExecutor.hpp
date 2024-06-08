@@ -2,18 +2,20 @@
 #include <sstream>
 #include <filesystem>
 #include "Job.hpp"
-#include "JobAdjacency.hpp"
+#include "Executor.hpp"
 
 class CwlToolExecutor{
 private:
-    static inline std::filesystem::path cwlDir = "/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/cwl";
-    std::function<void(Job & job)> callback;
+    std::filesystem::path cwlDir = "/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/cwl";
+    Callback_t callback;
 public:
-    void setCallback(std::function<void(Job & job)> cb){
-        this->callback = cb;
+    CwlToolExecutor(std::filesystem::path cwlDir):cwlDir(std::move(cwlDir)){}
+
+    void setCallback(Callback_t && callback){
+        this->callback = std::move(callback);
     }
 
-    void run(Job & job){
+    void operator()(Job & job)const{
         std::stringstream command;
         command << "cwltool ";
         auto jobTypeName = std::string(magic_enum::enum_name(job.type));
@@ -25,3 +27,4 @@ public:
         callback(job);
     }
 };
+static_assert(Executor<CwlToolExecutor>);
