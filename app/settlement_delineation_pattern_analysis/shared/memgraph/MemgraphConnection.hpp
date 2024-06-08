@@ -7,11 +7,13 @@
 
 class MemgraphConnection {
 private:
-    std::unique_ptr<mg::Client> connection;
+    mutable std::unique_ptr<mg::Client> connection;
+    mg::Client::Params parameters;
 public:
     MemgraphConnection()=default;
 
-    explicit MemgraphConnection(std::unique_ptr<mg::Client> && connection):connection(std::move(connection)){}
+    explicit MemgraphConnection(std::unique_ptr<mg::Client> && connection,const mg::Client::Params & params)
+    :connection(std::move(connection)),parameters(params){}
 
     MemgraphConnection(MemgraphConnection && other)noexcept{
         this->connection = std::move(other.connection);
@@ -22,6 +24,10 @@ public:
         return *this;
     }
 
+    const MemgraphConnection & retry() const {
+        connection = mg::Client::Connect(this->parameters);
+        return *this;
+    }
     /**
      * @brief Factory Method to create a Memgraph Connection from Memgraph parameters
      * 
@@ -38,7 +44,7 @@ public:
             connectionError << "\tUsername: " << params.username << std::endl;
             return std::unexpected(connectionError.str());
         }
-        return std::expected<MemgraphConnection,std::string>(MemgraphConnection(std::move(clientPtr)));
+        return std::expected<MemgraphConnection,std::string>(MemgraphConnection(std::move(clientPtr),params));
     }
 
         /**
@@ -116,7 +122,10 @@ class Query {
         }
 
         bool execute(const MemgraphConnection & connection) {
-            return connection->Execute(query.str());
+            bool result =  connection->Execute(query.str());
+            if(not result)
+                result =  connection.retry()->Execute(query.str());
+            return result;
         }
 
         bool executeAndDiscard(const MemgraphConnection & connection) {
@@ -228,7 +237,9 @@ class ParameterizedQuery{
                 mgParams.Insert(key,std::move(mgValue));
             }
             bool result = connection->Execute(query.str(),mgParams.AsConstMap());
-            // todo retry on failure
+            if(not result){
+                result = connection.retry()->Execute(query.str(),mgParams.AsConstMap());
+            }
             if(not result) {
                 std::cerr << "Could not execute query:" << std::endl;
                 std::cerr << query.str() << std::endl;
