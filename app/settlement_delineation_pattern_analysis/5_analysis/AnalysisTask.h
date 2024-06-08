@@ -6,7 +6,7 @@
 #include "Task.hpp"
 #include "AnalysisConfig.cpp"
 #include "CentralityMeasureJsonReader.hpp"
-#include "MemgraphAdjacency.hpp"
+#include "CachingMemgraphAdjacency.hpp"
 #include "SettlementPolygon.hpp"
 #include "EdgeVisualizer.hpp"
 
@@ -45,7 +45,7 @@ public:
      * @throws runtime_error when the file reference for the inputs could not be loaded or the id of a settlement could not be read
      * @return fishnet::util::forward_range_of<SettlementPolygon<P>> list of settlements
      */
-    std::vector<NodeType> readInput(const MemgraphAdjacency<NodeType> & adj ,OGRSpatialReference & ref) const  {
+    std::vector<NodeType> readInput(const CachingMemgraphAdjacency<NodeType> & adj ,OGRSpatialReference & ref) const  {
         std::vector<NodeType> settlements;
         auto layer = fishnet::VectorLayer<ShapeType>::read(inputFile);
         auto fileRef = adj.getDatabaseConnection().addFileReference(inputFile.getPath());
@@ -70,12 +70,13 @@ public:
     }
 
     void run() override {
-        auto memgraphAdjExp = MemgraphAdjacency<NodeType>::create(config.params);
-        testExpectedOrThrowError(memgraphAdjExp);
+        auto memgraphConnection = MemgraphConnection::create(config.params);
+        testExpectedOrThrowError(memgraphConnection);
+        auto memgraphAdj = CachingMemgraphAdjacency<NodeType>(MemgraphClient(std::move(memgraphConnection.value())));
         OGRSpatialReference outputRef; // used for the ouput shapefile
-        auto settlements = readInput(memgraphAdjExp.value(),outputRef);
-        memgraphAdjExp->loadNodes(settlements); //load settlement relationships
-        auto graph = fishnet::graph::GraphFactory::UndirectedGraph<NodeType>(std::move(memgraphAdjExp.value()));
+        auto settlements = readInput(memgraphAdj,outputRef);
+        memgraphAdj.loadNodes(settlements); //load settlement relationships
+        auto graph = fishnet::graph::GraphFactory::UndirectedGraph<NodeType>(std::move(memgraphAdj));
         std::unordered_map<size_t,fishnet::Feature<ShapeType>> centralityMeasureResults; // result map, which stores: Fishnet_ID -> <Feature of the settlement stored in output>
         std::ranges::for_each(settlements,[&centralityMeasureResults](auto && settlement){
             centralityMeasureResults.try_emplace(settlement.key(),fishnet::Feature<ShapeType>(std::move(static_cast<ShapeType>(settlement))));
