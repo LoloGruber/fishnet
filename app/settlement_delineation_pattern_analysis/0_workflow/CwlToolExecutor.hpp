@@ -15,7 +15,7 @@ public:
         this->callback = std::move(callback);
     }
 
-    void operator()(Job & job)const{
+    void operator()(Job job)const{
         std::stringstream command;
         command << "cwltool ";
         auto jobTypeName = std::string(magic_enum::enum_name(job.type));

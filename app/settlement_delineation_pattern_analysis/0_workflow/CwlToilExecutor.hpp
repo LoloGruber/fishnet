@@ -25,14 +25,12 @@ public:
         this->callback = std::move(callback);
     }
 
-    void operator()(Job & job){
-        std::thread([this,&job]()mutable{
+    void operator()(Job job){
+        std::thread([this,job=std::move(job)]()mutable{
             std::stringstream command;
-            command << "toil-cwl-runner " << flags << " "<< getCwlFile(job.type) << " " << job.file.string() << std::endl;
-            std::cout << "Starting Job "<< job.id << " (" << job.file <<")"<< std::endl;
+            command << "toil-cwl-runner " << flags << " "<< getCwlFile(job.type) << " " << job.file.string() <<" > /dev/null 2>&1" << std::endl;
             int exitCode = std::system(command.str().c_str());
             job.updateStatus(exitCode==0?JobState::SUCCEED:JobState::FAILED);
-            std::cout << "Finished Job " << job.id << " with state: "<<magic_enum::enum_name(job.state) << std::endl;
             callback(job);
         }).detach();
     }
