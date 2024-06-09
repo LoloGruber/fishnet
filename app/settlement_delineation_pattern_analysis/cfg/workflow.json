@@ -4,7 +4,7 @@
     "last-job-type":"ANALYSIS",
     "executor":{
         "name":"CWLTOIL",
-        "flags":"",
+        "flags":"--quiet",
         "cwl-directory":"/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/cwl"
     },
     "memgraph-host":"localhost",
