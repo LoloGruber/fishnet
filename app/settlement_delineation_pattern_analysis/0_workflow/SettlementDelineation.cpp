@@ -8,7 +8,7 @@
 int main(int argc, char * argv[]){
     CLI::App app {"SettlementDelineation Workload-Generator and Scheduler"};
     std::string pathToCfg = "/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/cfg/workflow.json";
-    std::string inputDirectory = "/home/lolo/Documents/fishnet/data/WSF/2019/Germany";
+    std::string inputDirectory = "/home/lolo/Documents/fishnet/data/testing/Punjab_Split";
     std::vector<std::filesystem::path> inputFiles;
     app.add_option("-c,--config",pathToCfg,"Path to workflow.json configuration")->required()->check(CLI::ExistingFile);
     app.add_option("-i,--inputDirectory",inputDirectory,"Path to input directory")->required()->check(CLI::ExistingDirectory);

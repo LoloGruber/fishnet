@@ -16,10 +16,9 @@ private:
     constexpr static const char * EXECUTOR_KEY = "executor";
 public:
     std::filesystem::path jobDirectory;
-    std::filesystem::path workingDirectory;
     std::filesystem::path cfgDirectory;
     JobType lastJobType;
-    fishnet::util::BiPredicate_t<std::filesystem::path> neighbouringFilesPredicate = NeighbouringWSFFilesPredicate();
+    fishnet::util::BiPredicate_t<std::filesystem::path> neighbouringFilesPredicate = NeighbouringFileTilesPredicate();
     ExecutorType executorType;
     json executorDesc;
 
