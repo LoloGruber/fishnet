@@ -74,8 +74,10 @@ public:
     bool createIndexes() const noexcept {
         return Query("CREATE INDEX ON :Node(id)").executeAndDiscard(mgConnection)
             && Query("CREATE INDEX ON :File").executeAndDiscard(mgConnection)
+            && Query("CREATE INDEX ON :Component").executeAndDiscard(mgConnection)
             && Query("CREATE EDGE INDEX ON :stored").executeAndDiscard(mgConnection)
-            && Query("CREATE EDGE INDEX ON :adj").executeAndDiscard(mgConnection);
+            && Query("CREATE EDGE INDEX ON :adj").executeAndDiscard(mgConnection)
+            && Query("CREATE EDGE INDEX ON :part_of").executeAndDiscard(mgConnection);
     }
 
     /**
