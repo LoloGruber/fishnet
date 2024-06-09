@@ -248,7 +248,6 @@ class ParameterizedQuery{
         }
 
         bool executeAndDiscard(const MemgraphConnection & connection) {
-        
             bool success = execute(connection);
             if(success)
                 connection->DiscardAll();

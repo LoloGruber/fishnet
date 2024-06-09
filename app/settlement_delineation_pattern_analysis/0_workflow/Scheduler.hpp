@@ -1,7 +1,9 @@
 #pragma once
+#include <atomic>
 #include "JobDAG.hpp"
 #include "CwlToolExecutor.hpp"
 #include "Executor.hpp"
+
 
 class Scheduler {
 private:
@@ -9,6 +11,9 @@ private:
     JobDAG_t dag;
     Executor_t executor;
     JobType lastJobType;
+    std::atomic_uint16_t activeThreads = 0;
+
+    static inline size_t THREAD_CONCURRENCY = std::thread::hardware_concurrency();
 
     bool isFinished(const Job & job) const noexcept {
         return job.state == JobState::FAILED || job.state == JobState::SUCCEED;
@@ -19,12 +24,11 @@ private:
     }
 
     bool canBeScheduled( Job & job) const noexcept {
-        std::lock_guard lock {this->mutex};
         if(job.type > lastJobType){
             updateJobState(job,JobState::ABORTED);
             return false;
         }
-        if(not isRunnable(job))
+        if(not isRunnable(job) || activeThreads >= THREAD_CONCURRENCY)
             return false;
         return this->dag.inDegree(job) == 0 || std::ranges::all_of(dag.getReachableFrom(job),[this](const Job & parent){return this->isFinished(parent);});
     }
@@ -35,14 +39,15 @@ private:
     }
 
     void persistJobState(const Job & job) const noexcept{
-        std::lock_guard lock {this->mutex};
         this->getDAG().getAdjacencyContainer().updateJobState(job);
     }
 
     auto onFinishedCallback() noexcept{
         return [this](const Job & job){
+            std::lock_guard lock {this->mutex};
             std::cout << "Finished Job " << job.id << " (" << job.file.filename() << ") with state: "<<magic_enum::enum_name(job.state) << std::endl;
             this->persistJobState(job);
+            this->activeThreads--;
         };
     }
 
@@ -84,10 +89,14 @@ public:
     void schedule() {
         while(hasRunnableJobs() || jobsAreRunning()){
             std::vector<Job> jobsToRun;
-            for(auto & job: dag.getNodes()){
-                if(canBeScheduled(job)){
-                    jobsToRun.push_back(job);
-                    updateJobState(job,JobState::RUNNING);
+            {
+                std::lock_guard lock {this->mutex};
+                for(auto & job: dag.getNodes()){
+                    if(canBeScheduled(job)){
+                        activeThreads++;
+                        jobsToRun.push_back(job);
+                        updateJobState(job,JobState::RUNNING);
+                    }
                 }
             }
             for(const auto & job: jobsToRun) {
