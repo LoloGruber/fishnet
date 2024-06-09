@@ -3,13 +3,7 @@
         "class":"File",
         "path": "/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/cfg/components.json"
     },
-    "jobDirectory":{
-        "class":"Directory",
-        "path":"/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/cwl/jobs"
-    },
-    "configDirectory":{
-        "class":"Directory",
-        "path":"/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/cfg"
-    },
+    "jobDirectory":"/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/cwl/jobs",
+    "configDirectory":"/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/cfg",
     "nextId":1001
 }

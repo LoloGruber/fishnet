@@ -9,13 +9,13 @@ inputs:
       prefix: -c
     doc: "Path to configuration for the filters"
   jobDirectory:
-    type: Directory
+    type: string
     inputBinding:
       position: 2
       prefix: -j
     doc: "Path to directory where created jobs will be stored"
   configDirectory:
-    type: Directory
+    type: string
     inputBinding:
       position: 3
       prefix: -d

@@ -70,8 +70,8 @@ public:
     static void write(const ComponentsJob & componentsJob){
         json output;
         output["config"] = asFile(componentsJob.config);
-        output["jobDirectory"] = asDirectory(componentsJob.jobDirectory);
-        output["configDirectory"] = asDirectory(componentsJob.cfgDirectory);
+        output["jobDirectory"] = componentsJob.jobDirectory.string();
+        output["configDirectory"] = componentsJob.cfgDirectory.string();
         output["nextId"] = componentsJob.nextJobId;
         writeJson(output,componentsJob);
     }
