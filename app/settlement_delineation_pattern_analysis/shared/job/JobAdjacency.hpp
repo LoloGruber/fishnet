@@ -95,6 +95,10 @@ public:
         return *this;
     }
 
+    const MemgraphConnection & getConnection() const noexcept {
+        return this->dbConnection;
+    }
+
     bool addAdjacency(const Job & from, const Job & to)const noexcept {
        return (queryJob(from,QueryType::MERGE,"f") + queryJob(to,QueryType::MERGE,"t")).
             line("MERGE (f)-[:before]->(t)")
