@@ -6,6 +6,8 @@ services:
       - "7687:7687"
       - "7444:7444"
     command: ["--log-level=TRACE","--query-execution-timeout-sec=0"]
+    volumes:
+      - memgraph-logs:/var/log/memgraph
  
   lab:
     image: memgraph/lab:latest
@@ -17,3 +19,6 @@ services:
     environment:
       - QUICK_CONNECT_MG_HOST=memgraph
       - QUICK_CONNECT_MG_PORT=7687
+volumes:
+  memgraph-logs:
+    driver: local
