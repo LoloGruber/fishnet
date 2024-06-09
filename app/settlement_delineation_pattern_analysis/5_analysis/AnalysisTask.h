@@ -102,9 +102,11 @@ public:
             for(const auto & edge : graph.getEdges()){
                 auto edgePolygon = visualizeEdge(edge.getFrom(),edge.getTo());
                 if (not edgePolygon){
-                    std::cerr << "Could not create edge\nFrom:"<<edge.getFrom() <<"\nTo:" << edge.getTo() << std::endl;
+                    std::cerr << "Could not create edge\nFrom:"<<edge.getFrom().key() <<"\nTo:" << edge.getTo().key() << std::endl;
                 }
-                edgeLayer.addGeometry(std::move(edgePolygon.value()));
+                else {
+                    edgeLayer.addGeometry(std::move(edgePolygon.value()));
+                }
             }
             edgeLayer.overwrite(edgeFile);
         }
