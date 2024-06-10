@@ -44,7 +44,7 @@ struct BoxWrapper {
     }
 };
 
-static std::unordered_map<PolygonType,std::vector<PolygonType>> toMap(std::vector<std::pair<PolygonType,PolygonType>>  & adjacencies) {
+static std::unordered_map<PolygonType,std::vector<PolygonType>> toMap(std::vector<std::pair<PolygonType,PolygonType>>  const& adjacencies) {
     std::unordered_map<PolygonType,std::vector<PolygonType>> map;
     for(auto && [from,to]:adjacencies){
         map.try_emplace(from,std::vector<PolygonType>());
@@ -70,6 +70,13 @@ TEST_F(PolygonNeighboursTest, simple){
     EXPECT_CONTAINS_ALL(resultMap.at(t1),b2,b3);
     EXPECT_SIZE(resultMap.at(t1),2);
     EXPECT_SIZE(std::views::keys(resultMap),7);
+}
+
+TEST_F(PolygonNeighboursTest, touching){
+    auto touchesB1 = SimplePolygonSamples::aaBB({0,2},{-0.5,2.5});
+    polygons.push_back(touchesB1);
+    auto result = toMap(findNeighbouringPolygons(polygons,DistancePredicate{1},BoxWrapper(1),1));
+    EXPECT_CONTAINS(result.at(b1),touchesB1);
 }
 
 // #define TEST_PERFORMANCE false
