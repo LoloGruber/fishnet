@@ -97,6 +97,8 @@ private:
         }
     };
 
+    constexpr static const char * openOptions[] = { "ADJUST_TYPE=YES", nullptr };
+
     /**
      * @brief Construct a new Vector Layer object
      * 
@@ -106,7 +108,7 @@ private:
         GDALInitializer::init();
         if(not shapefile.exists())
             return;
-        auto * ds = (GDALDataset *) GDALOpenEx(shapefile.getPath().c_str(), GDAL_OF_VECTOR,nullptr, nullptr,nullptr);
+        auto * ds = (GDALDataset *) GDALOpenEx(shapefile.getPath().c_str(), GDAL_OF_VECTOR,nullptr, openOptions,nullptr);
         OGRLayer * layer = ds->GetLayer(0);
         OGRFeatureDefn * layerDef = layer->GetLayerDefn();
         for(int i = 0; i < layerDef->GetFieldCount();i++) {
@@ -168,6 +170,7 @@ private:
                 fieldType = OGRFieldAdapter::fromTypeIndex(typeid(T));
             },fieldDefinition);
             auto fieldDefn = OGRFieldDefn(fieldName.c_str(),fieldType);
+            fieldDefn.SetPrecision(20);
             outputLayer->CreateField(&fieldDefn); // add OGRFieldDefinition to output layer
         }
         for(const auto & f : this->features){

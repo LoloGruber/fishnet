@@ -401,9 +401,11 @@ namespace std{
     template<typename T>
     struct hash<fishnet::geometry::Ring<T>>{
         constexpr static auto segmentHasher = hash<fishnet::geometry::Segment<T>>{};
+        constexpr static auto pointHasher = hash<fishnet::geometry::Vec2DReal>{};
         size_t operator()(const fishnet::geometry::Ring<T> & ring) const noexcept{
             auto segmentsHashView = ring.getSegments() | std::views::transform([](const auto & segment){return segmentHasher(segment);});
-            return std::accumulate(std::ranges::begin(segmentsHashView),std::ranges::end(segmentsHashView),0);
+            auto centroidHash = pointHasher(ring.centroid());
+            return std::accumulate(std::ranges::begin(segmentsHashView),std::ranges::end(segmentsHashView),centroidHash);
         }
     };
 }
