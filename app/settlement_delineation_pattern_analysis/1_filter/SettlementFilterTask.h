@@ -29,7 +29,7 @@ public:
     SettlementFilterTask(FilterConfig<P> && config,fishnet::Shapefile  input, fishnet::Shapefile  output):Task(),config(std::move(config)),input(std::move(input)),output(std::move(output)){
         this->writeDescLine("FilterTask")
         .writeDescLine("-Config:")
-        .indentDescLine(this->config.jsonDescription.dump())
+        .writeDescLine(this->config.jsonDescription.dump(4))
         .writeDescLine("-Input:")
         .indentDescLine(input.getPath().filename().string())
         .writeDescLine("-Output:")

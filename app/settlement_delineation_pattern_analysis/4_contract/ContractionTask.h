@@ -42,7 +42,7 @@ public:
     ContractionTask(ContractionConfig<P> && config,std::vector<ComponentReference> && components,fishnet::Shapefile output):components(std::move(components)),config(std::move(config)),output(std::move(output)){
         this->writeDescLine("Contraction Task:")
         .writeDescLine("-Config:")
-        .indentDescLine(this->config.jsonDescription.dump())
+        .writeDescLine(this->config.jsonDescription.dump(4))
         .writeDescLine("-Components:");
         std::stringstream componentsString;
         for(const auto & component: this->components){

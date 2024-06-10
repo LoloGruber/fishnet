@@ -22,7 +22,7 @@ public:
     ConnectedComponentsTask(ConnectedComponentsConfig && config,std::filesystem::path && jobDirectory,std::filesystem::path && cfgDirectory,size_t nextJobID):config(std::move(config)),jobDirectory(std::move(jobDirectory)),cfgDirectory(std::move(cfgDirectory)),nextJobID(nextJobID){
         this->writeDescLine("ComponentTask")
         .writeDescLine("-Config:")
-        .indentDescLine(this->config.jsonDescription.dump())
+        .writeDescLine(this->config.jsonDescription.dump(4))
         .writeDescLine("-Job Directory:")
         .indentDescLine(this->jobDirectory.string())
         .writeDescLine("-Cfg Directory:")

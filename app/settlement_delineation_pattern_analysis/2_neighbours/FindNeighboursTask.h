@@ -54,7 +54,7 @@ public:
     FindNeighboursTask(FindNeighboursConfig<P> && config,fishnet::Shapefile primaryInput):config(std::move(config)),primaryInput(std::move(primaryInput)){
         this->writeDescLine("Find Neighbours Task:");
         this->writeDescLine("-Config:");
-        this->indentDescLine(this->config.jsonDescription.dump());
+        this->writeDescLine(this->config.jsonDescription.dump(4));
         this->writeDescLine("-Inputs: ");
         this->indentDescLine(primaryInput.getPath().filename().string());
     }

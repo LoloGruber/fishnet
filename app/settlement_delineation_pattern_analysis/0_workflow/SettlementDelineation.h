@@ -20,7 +20,7 @@ public:
     :config(std::move(config)),inputFiles(std::move(inputFiles)),workingDirectory(std::filesystem::current_path()){
         this->writeDescLine("Settlement Delineation Workload Generator & Scheduler:")
         .writeDescLine("Config:")
-        .indentDescLine(this->config.jsonDescription.dump())
+        .writeDescLine(this->config.jsonDescription.dump(4))
         .writeDescLine("Working Directory:")
         .indentDescLine(this->workingDirectory.string())
         .writeDescLine("Inputs:");
