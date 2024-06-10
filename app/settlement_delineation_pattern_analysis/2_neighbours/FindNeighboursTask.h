@@ -128,7 +128,7 @@ public:
             /* Create scaled aaBB containing at least all points reachable from the polygon within the maximum edge distance*/
             auto aaBB = fishnet::geometry::Rectangle<fishnet::math::DEFAULT_NUMERIC>(settPolygon.aaBB().getPoints());
             double distanceMetersTopLeftBotLeft = fishnet::WGS84Ellipsoid::distance(aaBB.left(),aaBB.top(),aaBB.left(),aaBB.bottom());
-            double scale = maxEdgeDistanceVar / distanceMetersTopLeftBotLeft; 
+            double scale = (maxEdgeDistanceVar / distanceMetersTopLeftBotLeft) +1;
             return fishnet::geometry::BoundingBoxPolygon(settPolygon,aaBB.scale(scale));
         };
         auto result = fishnet::geometry::findNeighbouringPolygons(polygons,neighbouringPredicate,boundingBoxPolygonWrapper,config.maxNeighbours);    
