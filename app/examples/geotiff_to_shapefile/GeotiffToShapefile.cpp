@@ -5,7 +5,7 @@
 
 using namespace fishnet;
 int main(int argc, char * argv[]) {
-    std::filesystem::path src {util::PathHelper::projectDirectory().append("data/WSF/2019/Casablanca/WesternCasablanca.tif")};
+    std::filesystem::path src {util::PathHelper::projectDirectory().append("data/WSF/2019/Bolivia/Bolivia_WSF2019population_WSF3D_binary.tif")};
     auto shpFileExp = GISFactory::asShapefile(src);
     if(not shpFileExp)
         throw std::runtime_error(shpFileExp.error());

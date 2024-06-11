@@ -6,9 +6,9 @@ using namespace fishnet;
 
 int main(int argc, char * argv[]) {
     auto projectDirPath = util::PathHelper::projectDirectory();
-    const Shapefile source  {projectDirPath.append("data/testing/Punjab_Small/Punjab_Small.shp")};
+    const Shapefile source  {projectDirPath.append("data/WSF/2019/Bolivia/Bolivia_WSF2019population_WSF3D_binary.shp")};
     const auto input = VectorLayer<fishnet::geometry::Polygon<double>>::read(source);
-    const int splits = 2;
+    const int splits = 16;
     
     auto rectangleView = input.getGeometries() | std::views::transform([](const auto & shape){return geometry::Rectangle(shape);});
     double top = std::ranges::max(rectangleView | std::views::transform(&geometry::Rectangle<double>::top));
