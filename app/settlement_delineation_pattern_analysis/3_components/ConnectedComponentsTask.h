@@ -1,5 +1,6 @@
 #include <fishnet/GraphFactory.hpp>
 #include <fishnet/BFSAlgorithm.hpp>
+#include <fishnet/PathHelper.h>
 #include "MemgraphClient.hpp"
 #include "Task.hpp"
 #include "ConnectedComponentsConfig.hpp"
@@ -68,6 +69,7 @@ public:
             }
         }
         auto components = fishnet::graph::BFS::connectedComponents(graph).get();
+        this->writeDescLine("Connected Components: "+std::to_string(components.size()));
         auto componentIds = memgraphClient.createComponents(components);
         std::unordered_map<uint64_t,std::vector<std::string>> componentToFilesMap = queryPathsForComponent(componentIds,memgraphClient.getMemgraphConnection());
         std::unordered_map<std::string,std::vector<uint64_t>> fileToComponentsMap;
@@ -97,14 +99,14 @@ public:
         for(auto && [files,componentIdList]: contractionJobs){
             ContractionJob contractionJob;
             contractionJob.id = nextJobID++;
-            auto filename = std::to_string(componentIdList[0])+"_"+std::filesystem::path(files[0]).filename().replace_extension(".json").string();
+            auto filename = "_"+std::filesystem::path(files[0]+"_Component_"+std::to_string(componentIdList[0])).filename().replace_extension(".json").string();
             contractionJob.file = jobDirectory / std::filesystem::path {"Contraction_"+filename};
             contractionJob.config = cfgDirectory / std::filesystem::path{"contraction.json"};
             contractionJob.inputs = stringsToPathsMapper(files);
             contractionJob.components = componentIdList;
             contractionJob.state = JobState::RUNNABLE;
             contractionJob.type = JobType::CONTRACTION;
-            auto outputName = config.contractionOutputStem + "_" +std::to_string(contractionJob.id);
+            auto outputName = config.contractionOutputStem + std::filesystem::path(filename).replace_extension(".shp").string();
             contractionJob.outputStem = outputName;
             JobWriter::write(contractionJob);
             AnalysisJob analysisJob;
@@ -113,8 +115,8 @@ public:
             analysisJob.config = cfgDirectory / std::filesystem::path{"analysis.json"};
             analysisJob.state = JobState::RUNNABLE;
             analysisJob.type = JobType::ANALYSIS;
-            analysisJob.input = fishnet::Shapefile(files[0]).changeFilename(outputName).getPath();
-            analysisJob.outputStem = config.analysisOutputStem + "_"+std::to_string(analysisJob.id);
+            analysisJob.input = fishnet::util::PathHelper::changeFilename(files[0],outputName);
+            analysisJob.outputStem = config.analysisOutputStem + std::filesystem::path(filename).replace_extension(".shp").string();
             JobWriter::write(analysisJob);
             jobDAG.addEdge(contractionJob,analysisJob);
         }
