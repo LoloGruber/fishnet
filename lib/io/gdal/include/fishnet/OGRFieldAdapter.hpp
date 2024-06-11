@@ -28,7 +28,7 @@ public:
             if constexpr(std::same_as<T,int>)
                 feature->SetField(name, value);
             else if constexpr(std::integral<T>)
-                feature->SetField(name, GIntBig((static_cast<long long>(value))));
+                feature->SetField(name, GIntBig((static_cast<int64_t>(value))));
             else if constexpr (std::floating_point<T>)
                 feature->SetField(name, static_cast<double>(value));
             else if constexpr (std::same_as<T,std::string>)
