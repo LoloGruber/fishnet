@@ -245,6 +245,14 @@ public:
         return VectorLayer(shapefile);
     }
 
+    constexpr size_t size() const noexcept {
+        return this->features.size();
+    }
+
+    constexpr bool isEmpty() const noexcept {
+        return this->size() == 0;
+    }
+
     constexpr util::view_of<G> auto getGeometries() const noexcept {
         return std::views::all(features) | std::views::transform([](const auto & feature){return feature.getGeometry();});
     }
