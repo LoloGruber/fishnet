@@ -53,6 +53,7 @@ public:
             outputLayer.addFeature(std::move(current));
         }
         outputLayer.overwrite(output);
+        this->indentDescLine("Polygon count: "+std::to_string(outputLayer.size()));
     }
 
     SettlementFilterTask & setInput(fishnet::Shapefile && inputFile)noexcept{
