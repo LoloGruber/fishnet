@@ -48,6 +48,8 @@ public:
     std::vector<NodeType> readInput(const CachingMemgraphAdjacency<NodeType> & adj ,OGRSpatialReference & ref) const  {
         std::vector<NodeType> settlements;
         auto layer = fishnet::VectorLayer<ShapeType>::read(inputFile);
+        if(layer.isEmpty())
+            return settlements;
         auto fileRef = adj.getDatabaseConnection().addFileReference(inputFile.getPath());
         if(not fileRef){
             throw std::runtime_error("Could not read file reference for shp file:\n"+inputFile.getPath().string());
@@ -75,6 +77,10 @@ public:
         auto memgraphAdj = CachingMemgraphAdjacency<NodeType>(MemgraphClient(std::move(memgraphConnection.value())));
         OGRSpatialReference outputRef; // used for the ouput shapefile
         auto settlements = readInput(memgraphAdj,outputRef);
+        if(settlements.empty()){
+            std::cerr << "Input shapefile is empty!" << std::endl;
+            return;
+        }
         memgraphAdj.loadNodes(settlements); //load settlement relationships
         auto graph = fishnet::graph::GraphFactory::UndirectedGraph<NodeType>(std::move(memgraphAdj));
         std::unordered_map<size_t,fishnet::Feature<ShapeType>> centralityMeasureResults; // result map, which stores: Fishnet_ID -> <Feature of the settlement stored in output>
