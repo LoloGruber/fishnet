@@ -12,12 +12,6 @@ int main(int argc, char * argv[]){
     app.add_option("-d,--cfgDirectory",cfgDirectory,"Path to directory where the jobs are stored")->required()->check(CLI::ExistingDirectory);
     app.add_option("-i,--id",jobIdCounter,"Next free job id")->required()->check(CLI::PositiveNumber);
     CLI11_PARSE(app,argc,argv);
-    // if(std::filesystem::is_symlink(cfgDirectory)){
-    //     cfgDirectory = std::filesystem::read_symlink(cfgDirectory);
-    // }
-    // if(std::filesystem::is_symlink(jobDirectory)){
-    //     jobDirectory = std::filesystem::read_symlink(jobDirectory);
-    // }
     ConnectedComponentsTask task {ConnectedComponentsConfig(json::parse(std::ifstream(configFilename))),{jobDirectory},{cfgDirectory},jobIdCounter};
     task.run();
     return 0;

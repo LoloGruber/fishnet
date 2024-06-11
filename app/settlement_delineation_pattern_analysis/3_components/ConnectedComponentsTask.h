@@ -99,24 +99,24 @@ public:
         for(auto && [files,componentIdList]: contractionJobs){
             ContractionJob contractionJob;
             contractionJob.id = nextJobID++;
-            auto filename = "_"+std::filesystem::path(files[0]+"_Component_"+std::to_string(componentIdList[0])).filename().replace_extension(".json").string();
-            contractionJob.file = jobDirectory / std::filesystem::path {"Contraction"+filename};
+            auto filenameStem = "_"+std::filesystem::path(files[0]).stem().string()+"_Component_"+std::to_string(componentIdList[0]);
+            contractionJob.file = jobDirectory / std::filesystem::path("Contraction"+filenameStem).replace_extension(".json");
             contractionJob.config = cfgDirectory / std::filesystem::path{"contraction.json"};
             contractionJob.inputs = stringsToPathsMapper(files);
             contractionJob.components = componentIdList;
             contractionJob.state = JobState::RUNNABLE;
             contractionJob.type = JobType::CONTRACTION;
-            auto outputName = std::filesystem::path(config.contractionOutputStem+ filename).stem();
+            auto outputName = config.contractionOutputStem + filenameStem;
             contractionJob.outputStem = outputName;
             JobWriter::write(contractionJob);
             AnalysisJob analysisJob;
             analysisJob.id = nextJobID++;
-            analysisJob.file = jobDirectory / std::filesystem::path {"Analysis"+filename};
+            analysisJob.file = jobDirectory / std::filesystem::path("Analysis"+filenameStem).replace_extension(".json");
             analysisJob.config = cfgDirectory / std::filesystem::path{"analysis.json"};
             analysisJob.state = JobState::RUNNABLE;
             analysisJob.type = JobType::ANALYSIS;
-            analysisJob.input = fishnet::util::PathHelper::changeFilename(files[0],outputName.string());
-            analysisJob.outputStem = std::filesystem::path(config.analysisOutputStem + filename).stem();
+            analysisJob.input = fishnet::util::PathHelper::changeFilename(files[0],outputName);
+            analysisJob.outputStem = config.analysisOutputStem + filenameStem;
             JobWriter::write(analysisJob);
             jobDAG.addEdge(contractionJob,analysisJob);
         }
