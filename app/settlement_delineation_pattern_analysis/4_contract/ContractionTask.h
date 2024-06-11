@@ -49,6 +49,8 @@ public:
             componentsString << component.componentId <<",";
         }
         this->indentDescLine(componentsString.str());
+        this->writeDescLine("-Output:")
+        .indentDescLine(output.getPath().filename().string());
     }
 
     ContractionTask<P> & addInput(fishnet::Shapefile && shpFile) noexcept {
@@ -64,12 +66,14 @@ public:
      * @throws runtime_error when the file reference for the inputs could not be loaded or the id of a settlement could not be read
      * @return fishnet::util::forward_range_of<SettlementPolygon<P>> list of settlements
      */
-    fishnet::util::forward_range_of<SettlementPolygon<P>> auto readInputs( CachingMemgraphAdjacency<SourceNodeType> & adj, OGRSpatialReference & spatialRef) {
+    std::vector<SettlementPolygon<P>> readInputs( CachingMemgraphAdjacency<SourceNodeType> & adj, OGRSpatialReference & spatialRef) {
         std::vector<SettlementPolygon<P>> polygons;
         this->writeDescLine("-Inputs:");
         for(const auto & shp : inputs) {
             this->indentDescLine(shp.getPath().filename().string());
             auto layer = fishnet::VectorLayer<P>::read(shp);
+            if(layer.isEmpty())
+                continue;
             auto fileRef = adj.getDatabaseConnection().addFileReference(shp.getPath());
             if(not fileRef){
                 throw std::runtime_error("Could not read file reference for shp file:\n"+shp.getPath().string());
@@ -104,8 +108,7 @@ public:
         OGRSpatialReference ref; // set by readInputs function, used as spatial reference for output layer
         testExpectedOrThrowError(memgraphAdjRes);
         auto settlements = readInputs(memgraphAdjSrc,ref);
-        this->writeDescLine("-Output:");
-        this->indentDescLine(output.getPath().filename().string());
+        this->writeDescLine("Node count before contraction: "+std::to_string(settlements.size()));
         auto outputFileRef = memgraphAdjSrc.getDatabaseConnection().addFileReference(output.getPath());
         if(not outputFileRef)
             throw std::runtime_error( "Could not create file reference for output in Database: "+output.getPath().string());
@@ -130,6 +133,7 @@ public:
             f.addAttribute(idField,node.key());
             outputLayer.addFeature(std::move(f));
         }
+        this->writeDescLine("Node count after contraction: "+std::to_string(outputLayer.size()));
         outputLayer.overwrite(output);
     }
 };

@@ -73,6 +73,9 @@ public:
     std::vector<SettlementPolygon<P>> readInput(auto const & graph)  {
         std::vector<SettlementPolygon<P>> polygons;
         auto layer = fishnet::VectorLayer<P>::read(primaryInput); // load polygons from primary shapefile
+        if(layer.isEmpty()){
+            return polygons;
+        }
         PrimaryInputAABB inputBoundingBox;
         auto primaryFileRef = graph.getAdjacencyContainer().getDatabaseConnection().addFileReference(primaryInput.getPath()); // load file reference from database
         if(not primaryFileRef){
@@ -94,16 +97,18 @@ public:
         fishnet::geometry::Rectangle<number> primaryInputAABB = inputBoundingBox.asShape();
         for(const auto & shp : additionalInput) {
             this->indentDescLine(shp.getPath().filename().string());
-            auto layer = fishnet::VectorLayer<P>::read(shp); // load polygons from shapefile
+            auto neighbourLayer = fishnet::VectorLayer<P>::read(shp); // load polygons from shapefile
+            if(neighbourLayer.isEmpty())
+                continue;
             auto fileRef = graph.getAdjacencyContainer().getDatabaseConnection().addFileReference(shp.getPath()); // load file reference from database
             if(not fileRef){
                 throw std::runtime_error("Could not create file reference for shp file:\n"+shp.getPath().string());
             }
-            auto optFishnetIdField = layer.getSizeField(Task::FISHNET_ID_FIELD);
+            auto optFishnetIdField = neighbourLayer.getSizeField(Task::FISHNET_ID_FIELD);
             if(not optFishnetIdField) {
                 throw std::runtime_error("Could not find FISHNET_ID field in shp file: \n"+shp.getPath().string());
             }
-            for(const auto & feature : layer.getFeatures()) {
+            for(const auto & feature : neighbourLayer.getFeatures()) {
                 auto optId = feature.getAttribute(optFishnetIdField.value()); // read FISHNET_ID of feature
                 if(not optId){
                     throw std::runtime_error("No id exists for feature with geometry:\n"+feature.getGeometry().toString());
@@ -132,6 +137,7 @@ public:
             return fishnet::geometry::BoundingBoxPolygon(settPolygon,aaBB.scale(scale));
         };
         auto result = fishnet::geometry::findNeighbouringPolygons(polygons,neighbouringPredicate,boundingBoxPolygonWrapper,config.maxNeighbours);    
+        this->writeDescLine("Found adjacencies: "+std::to_string(result.size()));
         graph.addNodes(polygons);
         graph.addEdges(result);
     }
