@@ -21,14 +21,14 @@ private:
 
 public:
     ConnectedComponentsTask(ConnectedComponentsConfig && config,std::filesystem::path && jobDirectory,std::filesystem::path && cfgDirectory,size_t nextJobID):config(std::move(config)),jobDirectory(std::move(jobDirectory)),cfgDirectory(std::move(cfgDirectory)),nextJobID(nextJobID){
-        this->writeDescLine("ComponentTask")
+        this->writeDescLine("Task COMPONENTS")
         .writeDescLine("-Config:")
         .writeDescLine(this->config.jsonDescription.dump(4))
         .writeDescLine("-Job Directory:")
         .indentDescLine(this->jobDirectory.string())
         .writeDescLine("-Cfg Directory:")
         .indentDescLine(this->cfgDirectory.string())
-        .writeDesc("-Next Job Id: ").writeDesc(nextJobID);
+        .writeDesc("-Next Job Id: ").writeDescLine(std::to_string(nextJobID));
     }
 
     std::unordered_map<uint64_t,std::vector<std::string>> queryPathsForComponent(const std::vector<ComponentReference> & componentIds, const MemgraphConnection & memgraphConnection){
@@ -100,23 +100,23 @@ public:
             ContractionJob contractionJob;
             contractionJob.id = nextJobID++;
             auto filename = "_"+std::filesystem::path(files[0]+"_Component_"+std::to_string(componentIdList[0])).filename().replace_extension(".json").string();
-            contractionJob.file = jobDirectory / std::filesystem::path {"Contraction_"+filename};
+            contractionJob.file = jobDirectory / std::filesystem::path {"Contraction"+filename};
             contractionJob.config = cfgDirectory / std::filesystem::path{"contraction.json"};
             contractionJob.inputs = stringsToPathsMapper(files);
             contractionJob.components = componentIdList;
             contractionJob.state = JobState::RUNNABLE;
             contractionJob.type = JobType::CONTRACTION;
-            auto outputName = config.contractionOutputStem + std::filesystem::path(filename).replace_extension(".shp").string();
+            auto outputName = std::filesystem::path(config.contractionOutputStem+ filename).stem();
             contractionJob.outputStem = outputName;
             JobWriter::write(contractionJob);
             AnalysisJob analysisJob;
             analysisJob.id = nextJobID++;
-            analysisJob.file = jobDirectory / std::filesystem::path {"Analysis_"+filename};
+            analysisJob.file = jobDirectory / std::filesystem::path {"Analysis"+filename};
             analysisJob.config = cfgDirectory / std::filesystem::path{"analysis.json"};
             analysisJob.state = JobState::RUNNABLE;
             analysisJob.type = JobType::ANALYSIS;
-            analysisJob.input = fishnet::util::PathHelper::changeFilename(files[0],outputName);
-            analysisJob.outputStem = config.analysisOutputStem + std::filesystem::path(filename).replace_extension(".shp").string();
+            analysisJob.input = fishnet::util::PathHelper::changeFilename(files[0],outputName.string());
+            analysisJob.outputStem = std::filesystem::path(config.analysisOutputStem + filename).stem();
             JobWriter::write(analysisJob);
             jobDAG.addEdge(contractionJob,analysisJob);
         }

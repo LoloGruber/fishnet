@@ -40,7 +40,7 @@ public:
      */
     using ResultNodeType = SettlementPolygon<ResultGeometryType>;
     ContractionTask(ContractionConfig<P> && config,std::vector<ComponentReference> && components,fishnet::Shapefile output):components(std::move(components)),config(std::move(config)),output(std::move(output)){
-        this->writeDescLine("Contraction Task:")
+        this->writeDescLine("Task CONTRACTION")
         .writeDescLine("-Config:")
         .writeDescLine(this->config.jsonDescription.dump(4))
         .writeDescLine("-Components:");

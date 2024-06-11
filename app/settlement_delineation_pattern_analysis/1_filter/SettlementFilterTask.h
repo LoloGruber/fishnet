@@ -27,7 +27,7 @@ private:
     fishnet::Shapefile output;
 public:
     SettlementFilterTask(FilterConfig<P> && config,fishnet::Shapefile  input, fishnet::Shapefile  output):Task(),config(std::move(config)),input(std::move(input)),output(std::move(output)){
-        this->writeDescLine("FilterTask")
+        this->writeDescLine("Task FILTER")
         .writeDescLine("-Config:")
         .writeDescLine(this->config.jsonDescription.dump(4))
         .writeDescLine("-Input:")

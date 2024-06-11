@@ -52,7 +52,7 @@ private:
 
 public:
     FindNeighboursTask(FindNeighboursConfig<P> && config,fishnet::Shapefile primaryInput):config(std::move(config)),primaryInput(std::move(primaryInput)){
-        this->writeDescLine("Find Neighbours Task:");
+        this->writeDescLine("Task NEIGHBOURS");
         this->writeDescLine("-Config:");
         this->writeDescLine(this->config.jsonDescription.dump(4));
         this->writeDescLine("-Inputs: ");

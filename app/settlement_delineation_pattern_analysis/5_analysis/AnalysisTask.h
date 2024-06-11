@@ -29,7 +29,7 @@ public:
     using NodeType = SettlementPolygon<ShapeType>;
 
     AnalysisTask(AnalysisConfig && config, fishnet::Shapefile inputFile, fishnet::Shapefile outputFile):config(std::move(config)),inputFile(std::move(inputFile)),outputFile(std::move(outputFile)){
-        this->writeDescLine("Analysis Task:")
+        this->writeDescLine("Task ANALYSIS")
             .writeDescLine("-Config:")
             .indentDescLine(this->config.jsonDescription.dump(4))
             .writeDescLine("-Input:")
