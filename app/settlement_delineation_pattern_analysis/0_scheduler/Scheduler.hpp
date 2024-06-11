@@ -34,19 +34,26 @@ private:
     }
 
     void updateJobState(Job & job, JobState newState)const noexcept {
-        job.updateStatus(newState);
-        persistJobState(job);
+        if(job.state != newState){
+            job.updateStatus(newState);
+            persistJobState(job);
+            printOnJobStateChange(job);
+        }
     }
 
     void persistJobState(const Job & job) const noexcept{
         this->getDAG().getAdjacencyContainer().updateJobState(job);
     }
 
+    void printOnJobStateChange(const Job & job) const noexcept {
+        std::cout << magic_enum::enum_name(job.state) << ": Job "<<job.id << " (" << job.file.filename() << ")" << std::endl;
+    }
+
     auto onFinishedCallback() noexcept{
         return [this](const Job & job){
             std::lock_guard lock {this->mutex};
-            std::cout << "Finished Job " << job.id << " (" << job.file.filename() << ") with state: "<<magic_enum::enum_name(job.state) << std::endl;
             this->persistJobState(job);
+            this->printOnJobStateChange(job);
             this->activeThreads--;
         };
     }
@@ -100,10 +107,9 @@ public:
                 }
             }
             for(const auto & job: jobsToRun) {
-                std::cout << "Starting Job "<< job.id << " (" << job.file.filename() <<")"<< std::endl;
                 executor(job);
             }
-            sleep(1);
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
         }
         std::cout <<"Shutting down scheduler" <<std::endl;
         std::cout << std::endl;
