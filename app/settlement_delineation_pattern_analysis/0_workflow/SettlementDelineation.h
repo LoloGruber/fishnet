@@ -6,21 +6,21 @@
 #include "JobDAG.hpp"
 
 #include "JobGenerator.hpp"
-#include "SettlementDelineationConfig.hpp"
-#include "Scheduler.hpp"
+#include "SchedulerConfig.hpp"
 
 class SettlementDelineation: public Task{
 private:
-    SettlementDelineationConfig config;
+    SchedulerConfig schedulerConfig;
+    JobGeneratorConfig jobGeneratorConfig;
     std::vector<std::filesystem::path> inputFiles;
     std::filesystem::path workingDirectory;
 
 public:
-    SettlementDelineation(SettlementDelineationConfig && config,  std::vector<std::filesystem::path> && inputFiles)
-    :config(std::move(config)),inputFiles(std::move(inputFiles)),workingDirectory(std::filesystem::current_path()){
+    SettlementDelineation(const json & cfg, std::vector<std::filesystem::path> && inputFiles,std::filesystem::path workingDirectory = std::filesystem::current_path())
+    :schedulerConfig(cfg),jobGeneratorConfig(cfg),inputFiles(std::move(inputFiles)),workingDirectory(std::move(workingDirectory)){
         this->writeDescLine("Settlement Delineation Workload Generator & Scheduler:")
         .writeDescLine("Config:")
-        .writeDescLine(this->config.jsonDescription.dump(4))
+        .writeDescLine(cfg.dump(4))
         .writeDescLine("Working Directory:")
         .indentDescLine(this->workingDirectory.string())
         .writeDescLine("Inputs:");
@@ -30,13 +30,12 @@ public:
     void run() override {
         if(inputFiles.empty())
             throw std::runtime_error("No input files provided");
-        JobGenerator jobGenerator {config.neighbouringFilesPredicate,config.jobDirectory,config.cfgDirectory,workingDirectory,config.lastJobType};
-        auto exp = MemgraphConnection::create(config.params).transform([](auto && conn){return JobAdjacency(std::move(conn));});
+        auto exp = MemgraphConnection::create(schedulerConfig.params).transform([](auto && conn){return JobAdjacency(std::move(conn));});
         auto && jobAdj = getExpectedOrThrowError(exp);
         auto jobDAG = loadDAG(std::move(jobAdj));
-        jobDAG.clear();
+        JobGenerator jobGenerator {std::move(jobGeneratorConfig),workingDirectory};
         jobGenerator.generate(inputFiles,jobDAG);
-        Scheduler scheduler = config.getSchedulerWithExecutorType(std::move(jobDAG));
+        Scheduler scheduler = schedulerConfig.getSchedulerWithExecutorType(std::move(jobDAG));
         scheduler.schedule();
     }
 };

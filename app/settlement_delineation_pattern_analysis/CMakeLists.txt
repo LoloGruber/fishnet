@@ -1,5 +1,7 @@
 set(WORKFLOW_NAME "SettlementDelineation")
 add_subdirectory(shared)
+add_subdirectory(0_scheduler)
+add_subdirectory(0_job_generator)
 add_subdirectory(0_workflow)
 add_subdirectory(1_filter)
 add_subdirectory(2_neighbours)

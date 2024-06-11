@@ -9,17 +9,15 @@ int main(int argc, char * argv[]){
     CLI::App app {"SettlementDelineation Workload-Generator and Scheduler"};
     std::string pathToCfg = "/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/cfg/workflow.json";
     std::string inputDirectory = "/home/lolo/Documents/fishnet/data/testing/Punjab_Split";
+    std::string workingDirectory;
     std::vector<std::filesystem::path> inputFiles;
     app.add_option("-c,--config",pathToCfg,"Path to workflow.json configuration")->required()->check(CLI::ExistingFile);
     app.add_option("-i,--inputDirectory",inputDirectory,"Path to input directory")->required()->check(CLI::ExistingDirectory);
-    // CLI11_PARSE(app,argc,argv);
-    for(auto const& file : std::filesystem::directory_iterator(inputDirectory)){
-        if(file.is_regular_file() && fishnet::GISFactory::getType(file).has_value()) {
-            inputFiles.push_back(file.path());
-        }
-    }
-    SettlementDelineationConfig config {json::parse(std::ifstream(pathToCfg))};
-    SettlementDelineation task {std::move(config),std::move(inputFiles)};
+    app.add_option("-d,--workingDirectory",workingDirectory,"Path to working directory [default: current directory]")->check(CLI::ExistingDirectory);
+    CLI11_PARSE(app,argc,argv);
+    if(workingDirectory.empty())
+        workingDirectory = std::filesystem::current_path().string();
+    SettlementDelineation task {json::parse(std::ifstream(pathToCfg)),fishnet::GISFactory::getGISFiles(inputDirectory),{workingDirectory}};
     task.run();
     return 0;
 }
