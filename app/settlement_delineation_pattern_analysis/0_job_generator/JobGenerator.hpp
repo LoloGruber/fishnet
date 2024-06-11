@@ -65,11 +65,11 @@ private:
             inputToNeighboursJobMap.try_emplace(input,std::move(job));
         }
 
-        for(const auto & [primaryInput,surroundingInputs]:dependencyMap){
-            for(const auto & additionalInput : surroundingInputs){
-                jobDag.addEdge(inputToNeighboursJobMap.at(primaryInput),inputToNeighboursJobMap.at(additionalInput));
-            }
-        }
+        // for(const auto & [primaryInput,surroundingInputs]:dependencyMap){
+        //     for(const auto & additionalInput : surroundingInputs){
+        //         jobDag.addEdge(inputToNeighboursJobMap.at(primaryInput),inputToNeighboursJobMap.at(additionalInput));
+        //     }
+        // }
         std::vector<NeighboursJob> output;
         for(auto && [_,job]: inputToNeighboursJobMap){
             output.push_back(std::move(job));
