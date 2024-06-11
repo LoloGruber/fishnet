@@ -32,6 +32,27 @@ public:
         return std::unexpected("Unknown Error");
     }
 
+    /**
+     * @brief Get all GIS files in a directory
+     * 
+     * @param directory search directory
+     * @return std::vector<std::filesystem::path> list of gis files in that directory
+     */
+    static std::vector<std::filesystem::path> getGISFiles(const std::filesystem::path & directory){
+        std::vector<std::filesystem::path> gisFiles;
+        auto dir = directory;
+        if(std::filesystem::is_symlink(directory))
+            dir = std::filesystem::read_symlink(directory);
+        if(not std::filesystem::is_directory(dir))
+            return {};
+        for(auto && file: std::filesystem::directory_iterator(dir)){
+            if(file.is_regular_file() && getType(file).has_value()){
+                gisFiles.push_back(std::move(file));
+            }
+        }
+        return gisFiles;
+    }
+
     static std::optional<GISFileType> getType(const std::filesystem::path & path) {
         const auto & ext = path.extension().string();
         if(ext == ".shp" )
