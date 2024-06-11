@@ -12,6 +12,7 @@ int main(int argc, char * argv[]){
     generatorApp.add_option("-c,--config",configPath,"Path to job generator / workflow configuration file")->required()->check(CLI::ExistingFile);
     generatorApp.add_option("-i,--inputDirectory",inputDirectory,"Path to input directory of GIS Files")->required()->check(CLI::ExistingDirectory);
     generatorApp.add_option("-d,--workingDirectory",workingDirectoryName,"Working Directory for the workflow")->check(CLI::ExistingDirectory);
+    CLI11_PARSE(generatorApp,argc,argv);
     auto cfg = JobGeneratorConfig(nlohmann::json::parse(std::ifstream(configPath)));
     std::filesystem::path workingDirectory;
     if(workingDirectoryName.empty()) {
