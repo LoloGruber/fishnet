@@ -108,11 +108,11 @@ public:
         OGRSpatialReference ref; // set by readInputs function, used as spatial reference for output layer
         testExpectedOrThrowError(memgraphAdjRes);
         auto settlements = readInputs(memgraphAdjSrc,ref);
-        this->writeDescLine("Node count before contraction: "+std::to_string(settlements.size()));
         auto outputFileRef = memgraphAdjSrc.getDatabaseConnection().addFileReference(output.getPath());
         if(not outputFileRef)
             throw std::runtime_error( "Could not create file reference for output in Database: "+output.getPath().string());
         auto sourceGraph = fishnet::graph::GraphFactory::UndirectedGraph<SourceNodeType>(std::move(memgraphAdjSrc));
+        this->writeDescLine("Node count before contraction: "+std::to_string(fishnet::util::size(sourceGraph.getNodes())));
         auto resultGraph = fishnet::graph::GraphFactory::UndirectedGraph<ResultNodeType>(std::move(memgraphAdjRes.value()));
         /*Reduce function used to merge a connected component of nodes (SourceNodeType), solely connected via to-be-contracted edges, into a single node of the ResultNodeType*/
         auto reduceFunction = IDReduceFunction(outputFileRef.value());
