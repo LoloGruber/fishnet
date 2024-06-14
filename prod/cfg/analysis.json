@@ -1,0 +1,16 @@
+{
+    "memgraph-host":"localhost",
+    "memgraph-port":7687,
+    "visualize-edges":true,
+    "centrality-measures":[
+        {
+            "name": "DegreeCentrality"
+        },
+        {
+            "name": "MeanLocalSignificance"
+        },
+        {
+            "name": "SmallerNeighboursRatio"
+        }
+    ]
+}

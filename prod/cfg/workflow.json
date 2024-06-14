@@ -1,0 +1,13 @@
+{
+    "job-directory":"/root/jobs",
+    "config-directory":"/root/cfg",
+    "neighbouring-files-predicate":"WSF",
+    "last-job-type":"ANALYSIS",
+    "executor":{
+        "name":"CWLTOIL",
+        "flags":"--log-dir ~/logs --no-container",
+        "cwl-directory":"/root/cwl"
+    },
+    "memgraph-host":"localhost",
+    "memgraph-port":7687
+}

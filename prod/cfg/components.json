@@ -1,0 +1,6 @@
+{
+    "memgraph-host":"localhost",
+    "memgraph-port":7687,
+    "contraction-output-stem":"Contracted",
+    "analysis-output-stem":"Analysis"
+}
