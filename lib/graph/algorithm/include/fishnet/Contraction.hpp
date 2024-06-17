@@ -4,12 +4,12 @@
 #include <mutex>
 #include <numeric>
 #include <type_traits>
-
+#include <chrono>
+#include <unordered_set>
 #include <fishnet/GraphModel.hpp>
 #include <fishnet/NetworkConcepts.hpp>
-
 #include <fishnet/CollectionConcepts.hpp>
-#include <chrono>
+
 namespace fishnet::graph::__impl {
 
 template<typename N>
@@ -84,7 +84,7 @@ static std::vector<std::pair<int,R>> mergeWorker(QueuePtr<N>  queue, util::Reduc
             break;
         }
         const auto & [componentId, nodes] = current.get();
-        mergeResult.emplace_back(componentId, reduceFunction(nodes));
+        mergeResult.emplace_back(componentId, reduceFunction(std::move(nodes)));
     }while(current != queue->getPoisonPill());
     return mergeResult;
 }
@@ -122,10 +122,10 @@ static inline void constructFromComponentsMap(const SourceGraphType & source, Ta
     }
     output.addNodes(disconnectedNodes);
     output.addNodes(std::views::values(result)); // ensure that all nodes are added, even disconnected nodes after the merge
-    std::vector<typename TargetGraphType::edge_type> edges;
+    std::unordered_set<typename TargetGraphType::edge_type> edges;
     for(const auto & edge: source.getEdges()){
         if(componentsMap.at(edge.getFrom()) != componentsMap.at(edge.getTo())){
-            edges.push_back(
+            edges.insert(
                 output.makeEdge(result.at(componentsMap.at(edge.getFrom())), result.at(componentsMap.at(edge.getTo())))
             );
         }
@@ -152,10 +152,10 @@ static inline void constructFromComponentsMapInPlace(SourceGraphType & source, T
             disconnectedNodes.emplace_back(mapper(node));
         }
     }
-    std::vector<typename TargetGraphType::edge_type> edges;
+    std::unordered_set<typename TargetGraphType::edge_type> edges;
     for(const auto & edge: source.getEdges()){
         if(componentsMap.at(edge.getFrom()) != componentsMap.at(edge.getTo())){
-            edges.push_back(
+            edges.insert(
                 output.makeEdge(result.at(componentsMap.at(edge.getFrom())), result.at(componentsMap.at(edge.getTo())))
             );
         }
