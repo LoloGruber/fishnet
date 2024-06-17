@@ -49,7 +49,7 @@ public:
         auto polygonHasher = std::hash<P>();
         for(auto && geometry: result) {
             fishnet::Feature<P> current {std::move(geometry)};
-            current.addAttribute(*idField,polygonHasher(current.getGeometry()));
+            current.addAttribute(*idField,normalizeToShpFileIntField(polygonHasher(current.getGeometry())));
             outputLayer.addFeature(std::move(current));
         }
         outputLayer.overwrite(output);

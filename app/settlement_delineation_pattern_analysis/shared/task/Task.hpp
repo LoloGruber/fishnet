@@ -4,6 +4,7 @@
 #include <ostream>
 #include <iostream>
 #include <expected>
+#include <fishnet/Normalize.hpp>
 
 /**
  * @brief Common super class for all tasks
@@ -104,4 +105,9 @@ void testExpectedOrThrowError(std::expected<T,E> & expected) {
     if(not expected){
         throw std::runtime_error(expected.error());
     }
+}
+
+uint64_t normalizeToShpFileIntField(std::integral auto number) noexcept {
+    const uint64_t SHP_MAX_VALUE = 1000000000000000000ULL;
+    return fishnet::math::normalize(number,SHP_MAX_VALUE); 
 }
