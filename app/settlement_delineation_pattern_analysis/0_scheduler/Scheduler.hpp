@@ -4,15 +4,35 @@
 #include "CwlToolExecutor.hpp"
 #include "Executor.hpp"
 
+ static void printOnJobStateChange(const Job & job) noexcept {
+        std::cout << magic_enum::enum_name(job.state) << ": Job "<<job.id << " (" << job.file.filename() << ")" << std::endl;
+}
+
+struct SchedulerLog {
+    std::vector<Job> failedJobs;
+    ~SchedulerLog(){
+        std::cout <<"Shutting down scheduler" <<std::endl;
+        std::cout << std::endl;
+        if(not failedJobs.empty()){
+            std::cout << "Failed jobs:" << std::endl;
+            for(const auto & job: failedJobs){
+                std::cout << "\t";
+                printOnJobStateChange(job);
+            }
+        }
+        std::cout << std::endl;
+    }
+};
 
 class Scheduler {
 private:
+    friend class SchedulerLog;
     mutable std::mutex mutex;
     JobDAG_t dag;
     Executor_t executor;
     JobType lastJobType;
     std::atomic_uint16_t activeThreads = 0;
-    std::vector<Job> failedJobs;
+    SchedulerLog log;
 
     static inline size_t THREAD_CONCURRENCY = std::thread::hardware_concurrency();
 
@@ -46,17 +66,13 @@ private:
         this->getDAG().getAdjacencyContainer().updateJobState(job);
     }
 
-    void printOnJobStateChange(const Job & job) const noexcept {
-        std::cout << magic_enum::enum_name(job.state) << ": Job "<<job.id << " (" << job.file.filename() << ")" << std::endl;
-    }
-
     auto onFinishedCallback() noexcept{
         return [this](const Job & job){
             std::lock_guard lock {this->mutex};
             this->persistJobState(job);
-            this->printOnJobStateChange(job);
+            printOnJobStateChange(job);
             if(job.state==JobState::FAILED)
-                this->failedJobs.push_back(job);
+                this->log.failedJobs.push_back(job);
             this->activeThreads--;
         };
     }
@@ -114,14 +130,6 @@ public:
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
         }
-        std::cout <<"Shutting down scheduler" <<std::endl;
-        if(not failedJobs.empty()){
-            std::cout << "Failed jobs:" << std::endl;
-            for(const auto & job: failedJobs){
-                this->printOnJobStateChange(job);
-            }
-        }
-        std::cout << std::endl;
     }
 
     JobDAG_t & getDAG() noexcept {
