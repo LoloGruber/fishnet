@@ -9,7 +9,7 @@ int main(int argc, char * argv[]){
     size_t jobIdCounter;// = 0;
     app.add_option("-c,--config",configFilename,"Path to components.json configuration")->required()->check(CLI::ExistingFile);
     app.add_option("-j,--jobDirectory",jobDirectory,"Path to directory where the jobs are stored")->required()->check(CLI::ExistingDirectory);
-    app.add_option("-d,--cfgDirectory",cfgDirectory,"Path to directory where the jobs are stored")->required()->check(CLI::ExistingDirectory);
+    app.add_option("-d,--cfgDirectory",cfgDirectory,"Path to directory where the cfg are stored")->required()->check(CLI::ExistingDirectory);
     app.add_option("-i,--id",jobIdCounter,"Next free job id")->required()->check(CLI::PositiveNumber);
     CLI11_PARSE(app,argc,argv);
     ConnectedComponentsTask task {ConnectedComponentsConfig(json::parse(std::ifstream(configFilename))),{jobDirectory},{cfgDirectory},jobIdCounter};
