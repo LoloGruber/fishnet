@@ -102,9 +102,6 @@ public:
             if(entry.is_regular_file()&& entry.path().extension() == ".json")
                 std::filesystem::remove(entry);
         }
-        for(const auto & file: fishnet::GISFactory::getGISFiles(workingDirectory)){
-            std::filesystem::remove(file);
-        }
         Query("MATCH (n) DETACH DELETE n;").executeAndDiscard(jobDag.getAdjacencyContainer().getConnection());
     }
 
