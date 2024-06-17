@@ -47,13 +47,13 @@ struct PolygonNeighboursRemoveEvent: public PolygonNeighbours<P>::RemoveEvent {
         auto distanceMapper = [&current](const auto & p){
             return current.getPolygon().distance(p);
         };
-        auto itInRange = [&current](auto it){
-            return current.getBoundingBox().left() <= (*it)->getBoundingBox().right() ||
-                current.getBoundingBox().right() >= (*it)->getBoundingBox().left();
-        };
+        // auto itInRange = [&current](auto it){
+        //     return current.getBoundingBox().left() <= (*it)->getBoundingBox().right() ||
+        //         current.getBoundingBox().right() >= (*it)->getBoundingBox().left();
+        // };
         auto closestNeighbours = util::FixedSizePriorityQueue<P,decltype(distanceMapper)>(k,distanceMapper);
         bool skippedSameObject = false; // skip same Polygon object, since it is returned as the lower_bound in the first iteration
-        for(auto it = sls.lower_bound(this->obj); it != sls.end() && itInRange(it); --it){
+        for(auto it = sls.lower_bound(this->obj); it != sls.end(); --it){
             const auto & neighbour = *(*it);
             if(skippedSameObject && neighbouringPredicate(current,neighbour)){
                 closestNeighbours.push(neighbour.getPolygon());
@@ -63,7 +63,7 @@ struct PolygonNeighboursRemoveEvent: public PolygonNeighbours<P>::RemoveEvent {
             if(it == sls.begin())
                 break;
         }
-        for(auto it = sls.upper_bound(this->obj); it != sls.end() && itInRange(it);++it){
+        for(auto it = sls.upper_bound(this->obj); it != sls.end();++it){
             const auto & neighbour = *(*it);
             if(neighbouringPredicate(current,neighbour))
                 closestNeighbours.push(neighbour.getPolygon());
