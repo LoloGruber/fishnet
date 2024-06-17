@@ -98,4 +98,15 @@ public:
         output["taskID"] = analysisJob.id;
         writeJson(output,analysisJob);
     }
+
+    static void write(const MergeJob & mergeJob){
+        json output;
+        std::vector<json> inputsJson;
+        for(const auto & input: mergeJob.inputs){
+            inputsJson.push_back(asFile(input));
+        }
+        output["shpFiles"]=inputsJson;
+        output["outputPath"] = mergeJob.output.string();
+        writeJson(output,mergeJob);
+    }
 };

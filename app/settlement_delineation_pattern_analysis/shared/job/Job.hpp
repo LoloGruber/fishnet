@@ -2,7 +2,7 @@
 #include <filesystem>
 
 enum class JobType {
-    FILTER,NEIGHBOURS,COMPONENTS,CONTRACTION,ANALYSIS,UNDEFINED
+    FILTER,NEIGHBOURS,COMPONENTS,CONTRACTION,ANALYSIS,MERGE,UNDEFINED
 };
 
 static int jobTypeId(JobType jobType){
@@ -17,6 +17,8 @@ static int jobTypeId(JobType jobType){
             return 4;
         case JobType::ANALYSIS:
             return 5;
+        case JobType::MERGE:
+            return 6;
         default:
             return -1;
     }
@@ -89,4 +91,12 @@ struct ContractionJob: public ConfigurableJob{
 struct AnalysisJob: public ConfigurableJob {
     std::filesystem::path input;
     std::string outputStem;   
+};
+
+struct MergeJob: public Job {
+    MergeJob(){
+        this->type = JobType::MERGE;
+    }
+    std::vector<std::filesystem::path> inputs;
+    std::filesystem::path output;
 };
