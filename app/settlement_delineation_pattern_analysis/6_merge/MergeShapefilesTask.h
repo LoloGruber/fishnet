@@ -14,7 +14,7 @@ public:
     MergeShapefilesTask(std::string_view taskName,std::vector<fishnet::Shapefile> && inputs, fishnet::Shapefile output):inputs(std::move(inputs)),output(std::move(output)),taskName(taskName){
         this->writeDescLine(taskName)
         .writeDescLine("Inputs:");
-        std::ranges::for_each(inputs,[this](const auto & shp){this->indentDescLine(shp.getPath().string());});
+        std::ranges::for_each(this->inputs,[this](const auto & shp){this->indentDescLine(shp.getPath().string());});
         this->writeDescLine("Output:")
         .indentDescLine(output.getPath().string());
     }
@@ -24,6 +24,7 @@ public:
     }
 
     void run() override {
+        fishnet::GDALInitializer::init();
         std::vector<std::future<fishnet::VectorLayer<ShapeType>>> futures;
         for(size_t i = 1; i < inputs.size();i++){
             futures.emplace_back(std::async(std::launch::async,[this,i](){return readSingleInput(inputs[i]);}));
