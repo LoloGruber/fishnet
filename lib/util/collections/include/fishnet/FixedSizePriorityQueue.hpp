@@ -21,7 +21,7 @@ public:
         if(queue.size() < capacity){
             queue.push_back(std::move(value));
         }else{
-            int swapIndex=-1;
+            int swapIndex=0;
             auto max = mapper(queue[0]);
             for(int i=1; i < int(capacity);i++){
                 auto val = mapper(queue[i]);
@@ -30,7 +30,7 @@ public:
                     swapIndex = i;
                 }
             }
-            if(swapIndex!=-1 && mapper(value) < max)
+            if(mapper(value) < max)
                 queue[swapIndex] = std::move(value);
         }
     }
