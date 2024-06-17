@@ -20,6 +20,9 @@ int main(int argc, char * argv[]){
     app.add_option("-o,--output",outputFilename,"Output file location")->required()->check([](const std::string & str){
         try{
             auto file = fishnet::Shapefile(str);
+            std::filesystem::path parentPath = std::filesystem::path(str).parent_path();
+            if(not std::filesystem::exists(parentPath))
+                return std::string("Path to output file does not exist");
             return std::string();
         }catch(std::invalid_argument & error){
             return std::string("Invalid output path:\n"+str+"\n")+ error.what();
