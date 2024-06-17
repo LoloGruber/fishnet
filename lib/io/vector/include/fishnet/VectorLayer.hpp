@@ -133,7 +133,7 @@ private:
                 auto converted = OGRGeometryAdapter::fromOGR<G::type>(*geo);
                 if (not converted) 
                     continue;
-                Feature f {converted.value()};
+                Feature<G> f {converted.value()};
                 for(const auto & [_,fieldDefinition]: this->fields){
                     std::visit(AddAttributeVisitor(&f,ogrFeature.get()),fieldDefinition);
                 }
