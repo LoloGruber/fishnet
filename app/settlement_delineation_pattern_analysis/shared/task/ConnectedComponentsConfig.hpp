@@ -5,9 +5,7 @@ public:
     constexpr static const char * CONTRACTION_STEM_KEY = "contraction-output-stem";
     constexpr static const char * ANALYSIS_STEM_KEY = "analysis-output-stem";
 
-    std::filesystem::path contractionCfgPath;
     std::string contractionOutputStem;
-    std::filesystem::path analysisConfigPath;
     std::string analysisOutputStem;
 
     ConnectedComponentsConfig(const json & configDescription):MemgraphTaskConfig(configDescription){
