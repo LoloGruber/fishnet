@@ -6,6 +6,8 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     cmake \
     git \
+    nodejs \
+    npm \
     python3 \
     python3-pip \
     python3-venv && \
@@ -15,7 +17,7 @@ RUN python3 -m venv /opt/venv
 # Install toil
 RUN /opt/venv/bin/pip install toil[cwl]
 # Add to PATH
-ENV PATH="/opt/venv/bin:$PATH"
+RUN export PATH="/opt/venv/bin:$PATH"
 # Clone Repository
 RUN git clone https://gitlab2.informatik.uni-wuerzburg.de/log66jr/fishnet
 # Copy cwl and cfg files in user directory
