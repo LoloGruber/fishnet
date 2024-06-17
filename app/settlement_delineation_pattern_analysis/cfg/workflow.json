@@ -2,12 +2,15 @@
     "job-directory":"/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/test/jobs",
     "config-directory":"/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/cfg",
     "neighbouring-files-predicate":"TILES",
-    "last-job-type":"ANALYSIS",
+    "cleanup-first":true,
+    "last-job-type":"MERGE",
     "executor":{
         "name":"CWLTOIL",
         "flags":"--log-dir ~/logs",
         "cwl-directory":"/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/cwl"
     },
+    "contraction-output-stem":"Contracted",
+    "analysis-output-stem":"Analysis",
     "memgraph-host":"localhost",
     "memgraph-port":7687
 }

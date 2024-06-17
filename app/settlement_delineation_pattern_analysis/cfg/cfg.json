@@ -4,6 +4,7 @@
     "job-directory":"/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/test/jobs",
     "config-directory":"/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/cfg",
     "neighbouring-files-predicate":"TILES",
+    "cleanup-first":true,
     "last-job-type":"ANALYSIS",
     "executor":{
         "name":"CWLTOIL",
