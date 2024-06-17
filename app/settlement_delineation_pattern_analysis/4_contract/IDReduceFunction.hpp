@@ -16,7 +16,7 @@ struct IDReduceFunction{
     template<fishnet::geometry::IPolygon P>
     SettlementPolygon<fishnet::geometry::MultiPolygon<P>> operator()( const std::vector<SettlementPolygon<P>> & settlementPolygons) const noexcept {
         size_t id = std::ranges::fold_left(settlementPolygons,0,[](size_t current, const auto & settlementPolygon){return current + settlementPolygon.key();}); 
-        fishnet::geometry::MultiPolygon<P> resultGeometry {settlementPolygons | std::views::transform([](const auto & settPoly){return static_cast<P>(settPoly);})};
+        fishnet::geometry::MultiPolygon<P> resultGeometry {settlementPolygons | std::views::transform([](const auto & settPoly){return static_cast<P>(settPoly);}),true};
         return SettlementPolygon<fishnet::geometry::MultiPolygon<P>>(id,outputFileRef,resultGeometry);
     }
 };
