@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <fishnet/FunctionalConcepts.hpp>
 #include <fishnet/PathHelper.h>
+#include <fishnet/GISFactory.hpp>
 #include "Job.hpp"
 #include "JobDAG.hpp"
 #include "JobWriter.hpp"
@@ -96,8 +97,20 @@ private:
 public:
     JobGenerator(JobGeneratorConfig && config, std::filesystem::path workingDirectory):config(std::move(config)),workingDirectory(std::move(workingDirectory)){}
 
+    void cleanup(JobDAG_t & jobDag){
+        for(const auto & entry: std::filesystem::directory_iterator(config.jobDirectory)){
+            if(entry.is_regular_file()&& entry.path().extension() == ".json")
+                std::filesystem::remove(entry);
+        }
+        for(const auto & file: fishnet::GISFactory::getGISFiles(workingDirectory)){
+            std::filesystem::remove(file);
+        }
+        Query("MATCH (n) DETACH DELETE n;").executeAndDiscard(jobDag.getAdjacencyContainer().getConnection());
+    }
+
     void generate(const std::vector<std::filesystem::path> & inputs,JobDAG_t & jobDag) noexcept{
-        jobDag.clear();
+        if(config.cleanup)
+            cleanup(jobDag);
         std::unordered_map<std::filesystem::path,FilterJob> filterJobs;
         std::vector<NeighboursJob> neighboursJobs;
         if(config.lastJobType >= JobType::FILTER)
