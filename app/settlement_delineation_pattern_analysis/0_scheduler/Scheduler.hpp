@@ -12,6 +12,7 @@ private:
     Executor_t executor;
     JobType lastJobType;
     std::atomic_uint16_t activeThreads = 0;
+    std::vector<Job> failedJobs;
 
     static inline size_t THREAD_CONCURRENCY = std::thread::hardware_concurrency();
 
@@ -54,6 +55,8 @@ private:
             std::lock_guard lock {this->mutex};
             this->persistJobState(job);
             this->printOnJobStateChange(job);
+            if(job.state==JobState::FAILED)
+                this->failedJobs.push_back(job);
             this->activeThreads--;
         };
     }
@@ -112,6 +115,12 @@ public:
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
         }
         std::cout <<"Shutting down scheduler" <<std::endl;
+        if(not failedJobs.empty()){
+            std::cout << "Failed jobs:" << std::endl;
+            for(const auto & job: failedJobs){
+                this->printOnJobStateChange(job);
+            }
+        }
         std::cout << std::endl;
     }
 
