@@ -6,10 +6,10 @@ int main(int argc, char const *argv[]){
     using GeometryType = fishnet::geometry::Polygon<double>;
     CLI::App app {"NeighboursTask"};
     std::string primaryInput;
-    std::vector<std::string> inputFilenames;
+    std::vector<std::string> additionalInputs;
     std::string configFilename;
     app.add_option("-i,--input",primaryInput,"Primary input shapefile storing the settlements")->required()->check(CLI::ExistingFile);
-    app.add_option("-a,--additional_input",inputFilenames,"Additional input shapefiles storing the settlements")->each([](const std::string & str){
+    app.add_option("-a,--additional_input",additionalInputs,"Additional input shapefiles storing the settlements")->each([](const std::string & str){
         try{
             auto file = fishnet::Shapefile(str);
             if(not file.exists())
@@ -21,7 +21,7 @@ int main(int argc, char const *argv[]){
     app.add_option("-c,--config",configFilename,"Path to neighbours.json configuration")->required()->check(CLI::ExistingFile);
     CLI11_PARSE(app,argc,argv);
     FindNeighboursTask<GeometryType> task {FindNeighboursConfig<GeometryType>(json::parse(std::ifstream(configFilename))),fishnet::Shapefile(primaryInput)};
-    for(auto && filename : inputFilenames) {
+    for(auto && filename : additionalInputs) {
         task.addShapefile(fishnet::Shapefile(filename));
     }
     task.run();
