@@ -4,6 +4,7 @@
 #include <vector>
 #include <algorithm>
 #include <expected>
+#include <iostream>
 
 
 #include <fishnet/GeometryObject.hpp>
