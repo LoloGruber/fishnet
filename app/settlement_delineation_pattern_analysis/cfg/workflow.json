@@ -3,10 +3,10 @@
     "config-directory":"/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/cfg",
     "neighbouring-files-predicate":"TILES",
     "cleanup-first":true,
-    "last-job-type":"MERGE",
+    "last-job-type":"COMPONENTS",
     "executor":{
         "name":"CWLTOIL",
-        "flags":"--log-dir ~/logs",
+        "flags":"--log-dir ~/logs --no-container",
         "cwl-directory":"/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/cwl"
     },
     "contraction-output-stem":"Contracted",
