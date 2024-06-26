@@ -1,15 +1,15 @@
 {
     "memgraph-host":"localhost",
     "memgraph-port":7687,
-    "job-directory":"/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/test/jobs",
-    "config-directory":"/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/cfg",
+    "job-directory":"/home/lolo/Documents/fishnet/tests/workflow/test/jobs",
+    "config-directory":"/home/lolo/Documents/fishnet/prod/local/cfg",
     "neighbouring-files-predicate":"TILES",
     "cleanup-first":true,
     "last-job-type":"ANALYSIS",
     "executor":{
         "name":"CWLTOIL",
         "flags":"--log-dir ~/logs",
-        "cwl-directory":"/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/cwl"
+        "cwl-directory":"/home/lolo/Documents/fishnet/prod/cwl"
     },
     "unary-filters": [
         {
