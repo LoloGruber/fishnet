@@ -3,7 +3,7 @@
     "config-directory":"/home/lolo/Documents/fishnet/prod/local/cfg",
     "neighbouring-files-predicate":"TILES",
     "cleanup-first":true,
-    "last-job-type":"COMPONENTS",
+    "last-job-type":"MERGE",
     "executor":{
         "name":"CWLTOIL",
         "flags":"--log-dir ~/logs --no-container",
