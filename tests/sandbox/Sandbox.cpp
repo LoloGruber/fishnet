@@ -15,8 +15,8 @@ void concepts(){
     auto weightFunction = [](int x, int y){return x+y;};
     TestWeightedGraph<int,int,decltype(weightFunction)> wg;
     auto we = makeWeightedEdge(wg,1,2);
-    auto wfrom = we.getFrom();
-    auto weight = we.getWeight();
+    [[maybe_unused]] auto wfrom = we.getFrom();
+    [[maybe_unused]] auto weight = we.getWeight();
     addEdgeAndGet(wg,from,to);
     auto other = WeightedEdgeImpl<int,int,decltype(weightFunction)>(1,2, 10);
     std::cout << (we == other) << std::endl;
@@ -62,7 +62,7 @@ void concepts(){
 void crtp(){
     Derived1 d1;
     Derived2 d2;
-    Derived1::node_type x = 1;
+    [[maybe_unused]] Derived1::node_type x = 1;
 
     print(d1); // 42
     print(d2); // -1
