@@ -1,0 +1,19 @@
+{
+    "primaryInput":{
+        "class": "File",
+        "path": "/home/lolo/Documents/fishnet/tests/workflow/example/workingDir/Punjab_Small_filtered.shp",
+        "secondaryFiles": [
+            {"class": "File", "path": "/home/lolo/Documents/fishnet/tests/workflow/example/workingDir/Punjab_Small_filtered.shx"},
+            {"class": "File", "path": "/home/lolo/Documents/fishnet/tests/workflow/example/workingDir/Punjab_Small_filtered.dbf"},
+            {"class": "File", "path": "/home/lolo/Documents/fishnet/tests/workflow/example/workingDir/Punjab_Small_filtered.prj"}
+        ]
+    },
+    "additionalInput":[
+        
+    ],
+    "config":{
+        "class":"File",
+        "path": "/home/lolo/Documents/fishnet/prod/local/cfg/neighbours.json"
+    },
+    "taskID":1
+}
