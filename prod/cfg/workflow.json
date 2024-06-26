@@ -4,6 +4,7 @@
     "neighbouring-files-predicate":"WSF",
     "cleanup-first":true,
     "last-job-type":"ANALYSIS",
+    "hardware-concurrency":0,
     "executor":{
         "name":"CWLTOIL",
         "flags":"--log-dir ~/logs --no-container",

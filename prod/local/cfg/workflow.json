@@ -4,6 +4,7 @@
     "neighbouring-files-predicate":"TILES",
     "cleanup-first":true,
     "last-job-type":"MERGE",
+    "hardware-concurrency":0,
     "executor":{
         "name":"CWLTOIL",
         "flags":"--log-dir ~/logs --no-container",

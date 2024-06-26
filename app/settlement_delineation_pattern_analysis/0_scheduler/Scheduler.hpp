@@ -33,8 +33,7 @@ private:
     JobType lastJobType;
     std::atomic_uint16_t activeThreads = 0;
     SchedulerLog log;
-
-    static inline size_t THREAD_CONCURRENCY = std::thread::hardware_concurrency();
+    size_t threadConcurrency;
 
     bool isFinished(const Job & job) const noexcept {
         return job.state == JobState::FAILED || job.state == JobState::SUCCEED;
@@ -49,7 +48,7 @@ private:
             updateJobState(job,JobState::ABORTED);
             return false;
         }
-        if(not isRunnable(job) || activeThreads >= THREAD_CONCURRENCY)
+        if(not isRunnable(job) || activeThreads >= threadConcurrency)
             return false;
         return this->dag.inDegree(job) == 0 || std::ranges::all_of(dag.getReachableFrom(job),[this](const Job & parent){return this->isFinished(parent);});
     }
@@ -106,8 +105,10 @@ private:
     }
     
 public:
-    Scheduler(JobDAG_t && dag,Executor auto && executor,JobType lastJobType):dag(std::move(dag)),lastJobType(lastJobType){
+    Scheduler(JobDAG_t && dag,Executor auto && executor,JobType lastJobType,size_t concurrency):dag(std::move(dag)),lastJobType(lastJobType),threadConcurrency(concurrency){
          static_assert(std::convertible_to<decltype(this->onFinishedCallback()),Callback_t>);
+         if(concurrency==0)
+            this->threadConcurrency = std::thread::hardware_concurrency();
          executor.setCallback(onFinishedCallback());
          this->executor = std::move(executor);
     }
