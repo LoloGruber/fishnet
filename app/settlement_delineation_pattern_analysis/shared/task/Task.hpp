@@ -5,7 +5,9 @@
 #include <iostream>
 #include <expected>
 #include <fishnet/Normalize.hpp>
+#include <nlohmann/json.hpp>
 
+using json=nlohmann::json;
 /**
  * @brief Common super class for all tasks
  * -User can specify a description of the task
@@ -13,8 +15,8 @@
  * -RAII type -> description and execution time is printed on destruction
  */
 class Task {
-private:
-    std::stringstream taskDesc;
+protected:
+    json desc;
     fishnet::util::StopWatch stopWatch;
 public:
     constexpr static std::string FISHNET_ID_FIELD = "FISHNET_ID";
@@ -22,41 +24,8 @@ public:
     virtual void run() = 0;
 
     virtual ~Task(){
-        flushDescription();
-    }
-
-    Task & operator << (auto && value ) noexcept {
-        taskDesc << value;
-        return *this;
-    }
-
-    Task & writeDescLine(std::string_view line) noexcept {
-        taskDesc << line << std::endl;
-        return *this;
-    }
-
-    Task & writeDesc (auto && value) noexcept  {
-        return *this << value;
-    }
-
-    Task & indentDesc(auto && value ) noexcept {
-        taskDesc << "\t" << value;
-        return *this;
-    }
-
-    Task & indentDescLine(std::string_view line) noexcept {
-        taskDesc << "\t" << line << std::endl;
-        return *this;
-    }
-
-    void flushDescription() noexcept {
-        auto desc = taskDesc.str();
-        if(desc.ends_with("\n")){
-            std::cout << desc;
-        }else {
-            std::cout << desc << std::endl;
-        }
-        this->taskDesc.clear();
+        this->desc["duration[s]"]=stopWatch.stop();
+        std::cout <<  this->desc.dump(4) << std::endl;
     }
 };
 

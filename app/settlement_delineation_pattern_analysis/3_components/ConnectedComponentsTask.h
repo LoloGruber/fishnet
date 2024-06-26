@@ -21,14 +21,11 @@ private:
 
 public:
     ConnectedComponentsTask(ConnectedComponentsConfig && config,std::filesystem::path && jobDirectory,std::filesystem::path && cfgDirectory,size_t nextJobID):config(std::move(config)),jobDirectory(std::move(jobDirectory)),cfgDirectory(std::move(cfgDirectory)),nextJobID(nextJobID){
-        this->writeDescLine("Task COMPONENTS")
-        .writeDescLine("-Config:")
-        .writeDescLine(this->config.jsonDescription.dump(4))
-        .writeDescLine("-Job Directory:")
-        .indentDescLine(this->jobDirectory.string())
-        .writeDescLine("-Cfg Directory:")
-        .indentDescLine(this->cfgDirectory.string())
-        .writeDesc("-Next Job Id: ").writeDescLine(std::to_string(nextJobID));
+        this->desc["type"]="COMPONENTS";
+        this->desc["config"]=this->config.jsonDescription;
+        this->desc["job-directory"]=this->jobDirectory.string();
+        this->desc["cfg-directory"]=this->cfgDirectory.string();
+        this->desc["next-job-id"]=this->nextJobID;
     }
 
     std::unordered_map<uint64_t,std::vector<std::string>> queryPathsForComponent(const std::vector<ComponentReference> & componentIds, const MemgraphConnection & memgraphConnection){
@@ -69,7 +66,7 @@ public:
             }
         }
         auto components = fishnet::graph::BFS::connectedComponents(graph).get();
-        this->writeDescLine("Connected Components: "+std::to_string(components.size()));
+        this->desc["Connected Components"]=components.size();
         auto componentIds = memgraphClient.createComponents(components);
         std::unordered_map<uint64_t,std::vector<std::string>> componentToFilesMap = queryPathsForComponent(componentIds,memgraphClient.getMemgraphConnection());
         std::unordered_map<std::string,std::vector<uint64_t>> fileToComponentsMap;

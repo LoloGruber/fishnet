@@ -12,11 +12,11 @@ private:
     std::string_view taskName;
 public:
     MergeShapefilesTask(std::string_view taskName,std::vector<fishnet::Shapefile> && inputs, fishnet::Shapefile output):inputs(std::move(inputs)),output(std::move(output)),taskName(taskName){
-        this->writeDescLine(taskName)
-        .writeDescLine("Inputs:");
-        std::ranges::for_each(this->inputs,[this](const auto & shp){this->indentDescLine(shp.getPath().string());});
-        this->writeDescLine("Output:")
-        .indentDescLine(output.getPath().string());
+        this->desc["type"]=taskName;
+        std::vector<std::string> inputStrings;
+        std::ranges::for_each(this->inputs,[&inputStrings](auto const & file){inputStrings.push_back(file.getPath().filename().string());});
+        this->desc["inputs"]=inputStrings;
+        this->desc["output"]=this->output.getPath().string();
     }
 
     static fishnet::VectorLayer<ShapeType> readSingleInput(const fishnet::Shapefile & input) {

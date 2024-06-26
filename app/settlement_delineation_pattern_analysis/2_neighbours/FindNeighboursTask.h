@@ -52,11 +52,9 @@ private:
 
 public:
     FindNeighboursTask(FindNeighboursConfig<P> && config,fishnet::Shapefile primaryInput):config(std::move(config)),primaryInput(std::move(primaryInput)){
-        this->writeDescLine("Task NEIGHBOURS");
-        this->writeDescLine("-Config:");
-        this->writeDescLine(this->config.jsonDescription.dump(4));
-        this->writeDescLine("-Inputs: ");
-        this->indentDescLine(primaryInput.getPath().filename().string());
+        this->desc["type"]="NEIGHBOURS";
+        this->desc["config"]=this->config.jsonDescription;
+        this->desc["primary-input"] = this->primaryInput.getPath().filename().string();
     }
 
     FindNeighboursTask<P> & addShapefile(fishnet::Shapefile && shpFile) noexcept {
@@ -95,8 +93,10 @@ public:
         }
         DistanceBiPredicate distanceToPrimaryInput {config.maxEdgeDistance};
         fishnet::geometry::Rectangle<number> primaryInputAABB = inputBoundingBox.asShape();
+        std::vector<std::string> additionalInputStrings;
+        std::ranges::for_each(additionalInput,[&additionalInputStrings](auto const & file){additionalInputStrings.push_back(file.getPath().filename().string());});
+        this->desc["additional-inputs"]=additionalInputStrings;
         for(const auto & shp : additionalInput) {
-            this->indentDescLine(shp.getPath().filename().string());
             auto neighbourLayer = fishnet::VectorLayer<P>::read(shp); // load polygons from shapefile
             if(neighbourLayer.isEmpty())
                 continue;
@@ -137,7 +137,7 @@ public:
             return fishnet::geometry::BoundingBoxPolygon(settPolygon,aaBB.scale(scale));
         };
         auto result = fishnet::geometry::findNeighbouringPolygons(polygons,neighbouringPredicate,boundingBoxPolygonWrapper,config.maxNeighbours);    
-        this->writeDescLine("Found adjacencies: "+std::to_string(result.size()));
+        this->desc["Adjacencies"]=result.size();
         graph.addNodes(polygons);
         graph.addEdges(result);
     }

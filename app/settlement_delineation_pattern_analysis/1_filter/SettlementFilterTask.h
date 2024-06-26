@@ -27,13 +27,10 @@ private:
     fishnet::Shapefile output;
 public:
     SettlementFilterTask(FilterConfig<P> && config,fishnet::Shapefile  input, fishnet::Shapefile  output):Task(),config(std::move(config)),input(std::move(input)),output(std::move(output)){
-        this->writeDescLine("Task FILTER")
-        .writeDescLine("-Config:")
-        .writeDescLine(this->config.jsonDescription.dump(4))
-        .writeDescLine("-Input:")
-        .indentDescLine(input.getPath().filename().string())
-        .writeDescLine("-Output:")
-        .indentDescLine(output.getPath().filename().string());
+        this->desc["type"]="FILTER";
+        this->desc["input"]=this->input.getPath().filename().string();
+        this->desc["config"]=this->config.jsonDescription;
+        this->desc["output"]=this->output.getPath().filename().string();
     }
 
     void run() override{
@@ -53,7 +50,7 @@ public:
             outputLayer.addFeature(std::move(current));
         }
         outputLayer.overwrite(output);
-        this->indentDescLine("Polygon count: "+std::to_string(outputLayer.size()));
+        this->desc["polygon count"]=outputLayer.size();
     }
 
     SettlementFilterTask & setInput(fishnet::Shapefile && inputFile)noexcept{

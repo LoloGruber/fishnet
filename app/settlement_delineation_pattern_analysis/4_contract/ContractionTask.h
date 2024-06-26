@@ -40,17 +40,12 @@ public:
      */
     using ResultNodeType = SettlementPolygon<ResultGeometryType>;
     ContractionTask(ContractionConfig<P> && config,std::vector<ComponentReference> && components,fishnet::Shapefile output):components(std::move(components)),config(std::move(config)),output(std::move(output)){
-        this->writeDescLine("Task CONTRACTION")
-        .writeDescLine("-Config:")
-        .writeDescLine(this->config.jsonDescription.dump(4))
-        .writeDescLine("-Components:");
-        std::stringstream componentsString;
-        for(const auto & component: this->components){
-            componentsString << component.componentId <<",";
-        }
-        this->indentDescLine(componentsString.str());
-        this->writeDescLine("-Output:")
-        .indentDescLine(output.getPath().filename().string());
+        this->desc["type"]="CONTRACTION";
+        this->desc["config"]=this->config.jsonDescription;
+        std::vector<std::string> componentStrings;
+        std::ranges::for_each(this->components,[&componentStrings](auto compRef){componentStrings.push_back(std::to_string(compRef.componentId));});
+        this->desc["components"]= componentStrings;
+        this->desc["output"] = this->output.getPath().filename().string();
     }
 
     ContractionTask<P> & addInput(fishnet::Shapefile && shpFile) noexcept {
@@ -68,9 +63,10 @@ public:
      */
     std::vector<SettlementPolygon<P>> readInputs( CachingMemgraphAdjacency<SourceNodeType> & adj, OGRSpatialReference & spatialRef) {
         std::vector<SettlementPolygon<P>> polygons;
-        this->writeDescLine("-Inputs:");
+        std::vector<std::string> inputStrings;
+        std::ranges::for_each(this->inputs,[&inputStrings](auto const & file){inputStrings.push_back(file.getPath().filename().string());});
+        this->desc["inputs"]=inputStrings;
         for(const auto & shp : inputs) {
-            this->indentDescLine(shp.getPath().filename().string());
             auto layer = fishnet::VectorLayer<P>::read(shp);
             if(layer.isEmpty())
                 continue;
@@ -112,7 +108,7 @@ public:
         if(not outputFileRef)
             throw std::runtime_error( "Could not create file reference for output in Database: "+output.getPath().string());
         auto sourceGraph = fishnet::graph::GraphFactory::UndirectedGraph<SourceNodeType>(std::move(memgraphAdjSrc));
-        this->writeDescLine("Node count before contraction: "+std::to_string(fishnet::util::size(sourceGraph.getNodes())));
+        this->desc["#Nodes-before-contraction"]=fishnet::util::size(sourceGraph.getNodes());
         auto resultGraph = fishnet::graph::GraphFactory::UndirectedGraph<ResultNodeType>(std::move(memgraphAdjRes.value()));
         /*Reduce function used to merge a connected component of nodes (SourceNodeType), solely connected via to-be-contracted edges, into a single node of the ResultNodeType*/
         auto reduceFunction = IDReduceFunction(outputFileRef.value());
@@ -133,7 +129,7 @@ public:
             f.addAttribute(idField,node.key());
             outputLayer.addFeature(std::move(f));
         }
-        this->writeDescLine("Node count after contraction: "+std::to_string(outputLayer.size()));
+        this->desc["#Nodes-after-contraction"]=outputLayer.size();
         outputLayer.overwrite(output);
     }
 };

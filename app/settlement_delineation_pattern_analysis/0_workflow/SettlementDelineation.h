@@ -21,15 +21,13 @@ private:
 public:
     SettlementDelineation(const json & cfg, std::vector<std::filesystem::path> && inputFiles,std::filesystem::path outputPath, std::filesystem::path workingDirectory = std::filesystem::current_path())
     :schedulerConfig(cfg),jobGeneratorConfig(cfg),connectedComponentsConfig(cfg),inputFiles(std::move(inputFiles)),workingDirectory(std::move(workingDirectory)),outputPath(std::move(outputPath)){
-        this->writeDescLine("Settlement Delineation Workload Generator & Scheduler:")
-        .writeDescLine("Config:")
-        .writeDescLine(cfg.dump(4))
-        .writeDescLine("Working Directory:")
-        .indentDescLine(this->workingDirectory.string())
-        .writeDescLine("Inputs:");
-        std::ranges::for_each(this->inputFiles,[this](const auto & file){this->indentDescLine(file.string());});
-        this->writeDescLine("Output:")
-        .indentDescLine(this->outputPath.string());
+        this->desc["type"]="Settlement Delineation Workload Generator & Scheduler";
+        this->desc["config"] = cfg;
+        this->desc["working-directory"]=this->workingDirectory.string();
+        std::vector<std::string> inputStrings;
+        std::ranges::for_each(this->inputFiles,[this,&inputStrings](const auto & file){inputStrings.push_back(file.string());});
+        this->desc["inputs"]=inputStrings;
+        this->desc["output"]=this->outputPath.string();
     }
 
     void run() override {
