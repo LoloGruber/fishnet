@@ -46,7 +46,7 @@ private:
         }
 
         fishnet::geometry::Rectangle<number> asShape() const noexcept {
-            return fishnet::geometry::Rectangle<number>({{left,top},{right,top},{right,bottom},{left,bottom}});
+            return fishnet::geometry::Rectangle<number>(left,top,right,bottom);
         }
     };
 
@@ -131,12 +131,15 @@ public:
         double maxEdgeDistanceVar = config.maxEdgeDistance;
         auto boundingBoxPolygonWrapper = [maxEdgeDistanceVar](const SettlementPolygon<P> & settPolygon ){
             /* Create scaled aaBB containing at least all points reachable from the polygon within the maximum edge distance*/
-            auto aaBB = fishnet::geometry::Rectangle<fishnet::math::DEFAULT_NUMERIC>(settPolygon.aaBB().getPoints());
+            auto aaBB = fishnet::geometry::Rectangle<fishnet::math::DEFAULT_NUMERIC>(settPolygon);
             double distanceMetersTopLeftBotLeft = fishnet::WGS84Ellipsoid::distance(aaBB.left(),aaBB.top(),aaBB.left(),aaBB.bottom());
             double scale = (maxEdgeDistanceVar / distanceMetersTopLeftBotLeft) +1;
             return fishnet::geometry::BoundingBoxPolygon(settPolygon,aaBB.scale(scale));
         };
-        auto result = fishnet::geometry::findNeighbouringPolygons(polygons,neighbouringPredicate,boundingBoxPolygonWrapper,config.maxNeighbours);    
+        auto shortCircuitPredicate = [neighbouringPredicate= std::move(neighbouringPredicate)](const fishnet::geometry::BoundingBoxPolygon<SettlementPolygon<P>> & lhs, const fishnet::geometry::BoundingBoxPolygon<SettlementPolygon<P>> & rhs){
+            return lhs.getBoundingBox().overlap(rhs.getBoundingBox()) && neighbouringPredicate(lhs.getPolygon(),rhs.getPolygon());
+        };
+        auto result = fishnet::geometry::findNeighbouringPolygonsTemplate(polygons,shortCircuitPredicate,boundingBoxPolygonWrapper,config.maxNeighbours);    
         this->desc["Adjacencies"]=result.size();
         graph.addNodes(polygons);
         graph.addEdges(result);
