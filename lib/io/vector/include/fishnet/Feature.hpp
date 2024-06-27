@@ -6,9 +6,6 @@
 
 namespace fishnet {
 
-template<typename From, typename To>
-concept convertible_without_loss = requires(From f){To{f};};
-
 /**
  * @brief Feature implementation storing a geometry and associated attributes
  * 
@@ -69,7 +66,7 @@ public:
     constexpr explicit Feature(G && geometry):geometry(std::move(geometry)){}
 
     template<IFieldDefinition FieldDef>
-    constexpr bool addAttribute(const FieldDef & fieldDefinition, convertible_without_loss<typename FieldDef::value_type> auto value) noexcept {
+    constexpr bool addAttribute(const FieldDef & fieldDefinition, math::convertible_without_loss<typename FieldDef::value_type> auto value) noexcept {
         if (hasAttribute(fieldDefinition))
             return false;
         attributes.emplace_back(static_cast<typename FieldDef::value_type>(value), fieldDefinition.getFieldID());
@@ -92,7 +89,7 @@ public:
     }
 
     template<IFieldDefinition FieldDef>
-    constexpr void setAttribute(const FieldDef & fieldDefinition, std::convertible_to<typename FieldDef::value_type> auto value) noexcept {
+    constexpr void setAttribute(const FieldDef & fieldDefinition, math::convertible_without_loss<typename FieldDef::value_type> auto value) noexcept {
         if(not addAttribute(fieldDefinition,value)) {
             *getItPosOfAttribute(fieldDefinition) = FieldValue(static_cast<typename FieldDef::value_type>(value), fieldDefinition.getFieldID());
         }
