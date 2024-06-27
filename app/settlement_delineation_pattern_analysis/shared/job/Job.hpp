@@ -2,11 +2,13 @@
 #include <filesystem>
 
 enum class JobType {
-    FILTER,NEIGHBOURS,COMPONENTS,CONTRACTION,ANALYSIS,MERGE,UNDEFINED
+    SPLIT,FILTER,NEIGHBOURS,COMPONENTS,CONTRACTION,ANALYSIS,MERGE,UNDEFINED
 };
 
 static int jobTypeId(JobType jobType){
     switch(jobType){
+        case JobType::SPLIT:
+            return 0;
         case JobType::FILTER:
             return 1;
         case JobType::NEIGHBOURS:
@@ -99,4 +101,15 @@ struct MergeJob: public Job {
     }
     std::vector<std::filesystem::path> inputs;
     std::filesystem::path output;
+};
+
+struct SplitJob: public Job {
+    SplitJob() {
+        this->type = JobType::SPLIT;
+    }
+    std::filesystem::path input;
+    std::filesystem::path outDir;
+    u_int32_t splits;
+    int xOffset;
+    int yOffset;
 };

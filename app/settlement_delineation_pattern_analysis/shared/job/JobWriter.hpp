@@ -109,4 +109,14 @@ public:
         output["outputPath"] = mergeJob.output.string();
         writeJson(output,mergeJob);
     }
+
+    static void write(const SplitJob & splitJob){
+        json output;
+        output["shpFile"] = asFile(splitJob.input);
+        output["outputDir"]=splitJob.outDir.string();
+        output["splits"]=splitJob.splits;
+        output["xOffset"]=splitJob.xOffset;
+        output["yOffset"]=splitJob.yOffset;
+        writeJson(output,splitJob);
+    }
 };
