@@ -20,7 +20,7 @@ public:
      * 
      * @param polygon 
      */
-    BoundingBoxPolygon(const P & polygon):polygon(polygon),boundingBox(polygon.aaBB().getPoints()){}
+    BoundingBoxPolygon(const P & polygon):polygon(polygon),boundingBox(polygon){}
 
     /**
      * @brief Construct a new Bounding Box Polygon object, with custom bounding box rectangle
@@ -67,7 +67,7 @@ static Rectangle<typename std::ranges::range_value_t<R>::numeric_type> minimalBo
         if(aaBB.bottom() < bottom)
             bottom = aaBB.bottom();
     }
-    return Rectangle<number>({{left,top},{right,top},{right,bottom},{left,bottom}});
+    return Rectangle<number>(left,top,right,bottom);
 }
 
 /**
