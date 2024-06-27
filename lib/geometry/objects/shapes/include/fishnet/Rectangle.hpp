@@ -36,23 +36,16 @@ private:
     }
 
 public:
-    Rectangle(util::random_access_range_of<Vec2D<T>> auto const& points):Ring<T>(points){
-        init();
-    }
-
-    Rectangle(util::random_access_range_of<Segment<T>> auto const& segments):Ring<T>(segments){
-        init();
-    }
-
-    Rectangle(std::initializer_list<Vec2D<T>> && points):Ring<T>(std::move(points)){
-        init();
-    }
-
     Rectangle(Shape auto const & ring):Ring<T>(ring.aaBB().getPoints()){
         init();
     }
 
     Rectangle(T left, T top, T right, T bottom):Ring<T>({{left,top},{right,top},{right,bottom},{left,bottom}}),_left(left),_top(top),_right(right),_bottom(bottom){}
+
+    Rectangle(Vec2D<T> const& topLeft, Vec2D<T> const& botRight):Ring<T>({{topLeft.x,topLeft.y},{botRight.x,topLeft.y},{botRight.x,botRight.y},{topLeft.x,botRight.y}}),_left(topLeft.x),_top(topLeft.y),_right(botRight.x),_bottom(botRight.y){
+        if(topLeft == botRight)
+            throw fishnet::geometry::InvalidGeometryException("TopLeft and BottomRight point of Rectangle are coinciding");
+    }
 
     T left() const noexcept {
         return _left;
@@ -81,9 +74,16 @@ public:
         auto bottom = _bottom - yDiff;
         auto left = _left - xDiff;
         auto right = _right + xDiff;
-        return Rectangle<T>({
-            {left,top}, {right,top},{right,bottom},{left,bottom}
-        });
+        return Rectangle<T>(left,top,right,bottom);
+    }
+
+    template<fishnet::math::Number U>
+    bool overlap(const Rectangle<U> & other) const noexcept {
+        if(this->right() < other.left() || this->left() > other.right())
+            return false;
+        if(this->top() < other.bottom() || this->bottom() > other.top())
+            return false;
+        return true;
     }
 
 };
@@ -92,6 +92,8 @@ public:
 template<Shape S>
 Rectangle(const S &) -> Rectangle<typename S::numeric_type>;
 }
+
+
 namespace std{
     template<typename T>
     struct hash<fishnet::geometry::Rectangle<T>>{

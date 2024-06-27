@@ -4,6 +4,7 @@
 #include <fishnet/SimplePolygon.hpp>
 #include <fishnet/GeometryObject.hpp>
 #include "ShapeSamples.h"
+#include <fishnet/Rectangle.hpp>
 
 using namespace fishnet::geometry;
 using namespace testutil;
@@ -95,5 +96,16 @@ TEST_F(SimplePolygonTest, equality) {
     SimplePolygon<double> t2 = LinearRingSamples::triangle({1,1},{0,1},{0,0});
     EXPECT_EQ(t1,t2);
     EXPECT_NE(*simpleWithComplexBoundary,t1);
+}
+
+TEST_F(SimplePolygonTest, rectangleOverlap){
+    auto r = Rectangle(Vec2D(0,1),Vec2D(1,0));
+    auto intersects = Rectangle(Vec2D(0.5,0.5),Vec2DStd(10,0));
+    auto touches = Rectangle(Vec2D(1,2),Vec2D(2,1));
+    auto noOverlap = Rectangle(Vec2D(2,1),Vec2D(3,0));
+    EXPECT_TRUE(r.overlap(intersects));
+    EXPECT_TRUE(r.overlap(touches));
+    EXPECT_FALSE(r.overlap(noOverlap));
+    EXPECT_FALSE(r.overlap(Rectangle(Vec2D(0.5,2),Vec2D(1.5,1.5))));
 }
 
