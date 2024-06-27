@@ -75,7 +75,7 @@ struct PolygonNeighboursRemoveEvent: public PolygonNeighbours<P>::RemoveEvent {
         sweepLine.removeSLS(this->obj);
     }
 };
-
+}
 /**
  * @brief Generic findNeighbouringPolygons function, which returns a list of pairs indicating the adjacencies of two polygons
  * 
@@ -87,7 +87,7 @@ struct PolygonNeighboursRemoveEvent: public PolygonNeighbours<P>::RemoveEvent {
  * @return std::vector<std::pair<P,P>> list of pairs, indicating the neighbouring relationship of two polygons
  */
 template<PolygonRange R, IPolygon P = std::ranges::range_value_t<R>>
-static std::vector<std::pair<P,P>> findNeighbouringPolygons(const R & polygons, util::BiPredicate<BoundingBoxPolygon<P>> auto const & neighbouringPredicate,util::UnaryFunction<P,BoundingBoxPolygon<P>> auto const & wrapper, size_t k) {
+static std::vector<std::pair<P,P>> findNeighbouringPolygonsTemplate(const R & polygons, util::BiPredicate<BoundingBoxPolygon<P>> auto const & neighbouringPredicate,util::UnaryFunction<P,BoundingBoxPolygon<P>> auto const & wrapper, size_t k) {
     using SweepLine_t = typename __impl::PolygonNeighbours<P>;
     SweepLine_t sweepLine;
     std::vector<std::pair<P,P>> output;
@@ -102,7 +102,7 @@ static std::vector<std::pair<P,P>> findNeighbouringPolygons(const R & polygons, 
     });
     return sweepLine.sweep(output);
 }
-}
+
 
 
 /**
@@ -117,7 +117,7 @@ static std::vector<std::pair<P,P>> findNeighbouringPolygons(const R & polygons, 
  */
 template<PolygonRange R, IPolygon P = std::ranges::range_value_t<R>>
 static std::vector<std::pair<P,P>> findNeighbouringPolygons(const R & polygons, util::BiPredicate<P> auto  && neighbouringPredicate,util::UnaryFunction<P,BoundingBoxPolygon<P>> auto const & wrapper,size_t k) {
-    return __impl::findNeighbouringPolygons(polygons, [&neighbouringPredicate](const BoundingBoxPolygon<P> & current, const BoundingBoxPolygon<P> & neighbour){
+    return findNeighbouringPolygonsTemplate(polygons, [&neighbouringPredicate](const BoundingBoxPolygon<P> & current, const BoundingBoxPolygon<P> & neighbour){
         return neighbouringPredicate(current.getPolygon(),neighbour.getPolygon());
     },wrapper,k);
 }
@@ -158,6 +158,6 @@ static std::vector<std::pair<std::ranges::range_value_t<R>,std::ranges::range_va
         auto aaBBRectangle = Rectangle<fishnet::math::DEFAULT_NUMERIC>(polygon.aaBB().getPoints());
         return BoundingBoxPolygon(polygon,aaBBRectangle.scale(bufferMultiplier));
     };
-    return __impl::findNeighbouringPolygons(polygons, crossesOrContainedInBoundingBox,scaledWrapper);
+    return findNeighbouringPolygonsTemplate(polygons, crossesOrContainedInBoundingBox,scaledWrapper);
 }
 }
