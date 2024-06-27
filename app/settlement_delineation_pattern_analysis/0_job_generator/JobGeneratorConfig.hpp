@@ -12,12 +12,15 @@ private:
     constexpr static const char * LAST_JOB_TYPE_KEY = "last-job-type";
     constexpr static const char * NEIGHBOURING_FILES_PREDICATE_KEY = "neighbouring-files-predicate";
     constexpr static const char * CLEANUP_FIRST_KEY = "cleanup-first";
+    constexpr static const char * SPLIT_KEY ="splits";
 public:
     std::filesystem::path jobDirectory;
     std::filesystem::path cfgDirectory;
     JobType lastJobType;
     bool cleanup;
+    u_int32_t splits = 0;
     fishnet::util::BiPredicate_t<std::filesystem::path> neighbouringFilesPredicate;
+    NeighbouringFilesPredicateType neighbouringFilesPredicateType;
 
     JobGeneratorConfig(const json & config):MemgraphTaskConfig(config){
         const auto & cfg = this->jsonDescription;
@@ -33,11 +36,16 @@ public:
             lastJobType = asJobType.value();
         std::string neighbouringFilesPredicateTypeName;
         cfg.at(NEIGHBOURING_FILES_PREDICATE_KEY).get_to(neighbouringFilesPredicateTypeName);
-        auto neighbouringPredicate = magic_enum::enum_cast<NeighbouringFilesPredicateType>(neighbouringFilesPredicateTypeName).and_then([desc = cfg.at(NEIGHBOURING_FILES_PREDICATE_KEY)](NeighbouringFilesPredicateType type){
+        auto neighbouringPredicateType = magic_enum::enum_cast<NeighbouringFilesPredicateType>(neighbouringFilesPredicateTypeName);
+        auto neighbouringPredicate = neighbouringPredicateType.and_then([desc = cfg.at(NEIGHBOURING_FILES_PREDICATE_KEY)](NeighbouringFilesPredicateType type){
             return fromJson(type,desc);
         });
         if(not neighbouringPredicate)
             throw std::runtime_error("Could not parse neighbouring files predicate type");
+        neighbouringFilesPredicateType = neighbouringPredicateType.value();
         neighbouringFilesPredicate = neighbouringPredicate.value();
+        if(cfg.contains(SPLIT_KEY)){
+            cfg.at(SPLIT_KEY).get_to(this->splits);
+        }
     }
 };

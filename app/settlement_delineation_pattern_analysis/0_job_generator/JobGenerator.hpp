@@ -14,6 +14,52 @@ private:
     std::filesystem::path workingDirectory;
     size_t jobIdCounter = 0;
 private:
+    std::unordered_map<std::filesystem::path,FilterJob> generateWSFSplitFilterJobs(const std::vector<std::filesystem::path> & inputs,JobDAG_t & jobDag) noexcept {
+        assert(config.splits > 0);
+        if(inputs.size() > 1)
+            assert(config.neighbouringFilesPredicateType==NeighbouringFilesPredicateType::WSF);
+        std::unordered_map<std::filesystem::path,fishnet::geometry::Vec2D<int>> fileToCoordinate;
+        NeighbouringWSFFilesPredicate neighbouringPredicate;
+        auto botLeftOpt = neighbouringPredicate.spatialCoordinatesFromFilename(inputs.front().string());
+        if(not botLeftOpt && inputs.size() > 1)
+            throw std::runtime_error("File not in the correct format\nExpecting: <WSF-Filename>_<longitude>_<latitude>.tif");
+        fishnet::geometry::Vec2D<int> botLeft = botLeftOpt.value_or({0,0});
+        /*Find bottom left file in the WSF files */
+        for(const auto & input: inputs){
+            auto coord = neighbouringPredicate.spatialCoordinatesFromFilename(input.string()).value();
+            fileToCoordinate.try_emplace(input,coord);
+            if(coord.x < botLeft.x || coord.y < botLeft.y)
+                botLeft = coord;
+        }
+        std::unordered_map<std::filesystem::path,FilterJob> result;
+        for(const auto & [file,coordinate]: fileToCoordinate){
+            SplitJob job;
+            job.id = jobIdCounter++;
+            auto jobFilename = "Split_"+file.stem().string()+".json";
+            job.file = config.jobDirectory / std::filesystem::path(jobFilename);
+            job.state = JobState::RUNNABLE;
+            job.input = file;
+            job.outDir = workingDirectory;
+            job.xOffset = (coordinate.x - botLeft.x) * config.splits;
+            job.yOffset = (coordinate.y - botLeft.y) * config.splits;
+            job.splits = config.splits;
+            JobWriter::write(job);
+            std::vector<std::filesystem::path> splitFiles;
+            for(uint32_t y = 0; y <= config.splits ; y++){
+                for(uint32_t x = 0; x <= config.splits; x++){
+                    auto splitFilename = fishnet::util::PathHelper::appendToFilename(file,"_"+ std::to_string(x+job.xOffset)+"_"+std::to_string(y+job.yOffset)).replace_extension(".shp").filename();
+                    splitFiles.push_back(workingDirectory / splitFilename);
+                }
+            }
+            for(auto && [splitFile,filterJob] : generateFilterJobs(splitFiles,jobDag)){
+                jobDag.addEdge(job,filterJob);
+                result.try_emplace(splitFile,filterJob);
+            }
+        }
+        config.neighbouringFilesPredicate = NeighbouringFileTilesPredicate();
+        return result;
+    }
+
     std::unordered_map<std::filesystem::path,FilterJob> generateFilterJobs(const std::vector<std::filesystem::path> & inputs,JobDAG_t & jobDag) noexcept{
         std::unordered_map<std::filesystem::path,FilterJob> result;
         for(const auto & input : inputs){
@@ -110,8 +156,12 @@ public:
             cleanup(jobDag);
         std::unordered_map<std::filesystem::path,FilterJob> filterJobs;
         std::vector<NeighboursJob> neighboursJobs;
-        if(config.lastJobType >= JobType::FILTER)
-            filterJobs = generateFilterJobs(inputs,jobDag);
+        if(config.lastJobType >= JobType::FILTER) {
+            if(config.neighbouringFilesPredicateType == NeighbouringFilesPredicateType::WSF || inputs.size() == 1 && config.splits > 0)
+                filterJobs = generateWSFSplitFilterJobs(inputs,jobDag);
+            else    
+                filterJobs = generateFilterJobs(inputs,jobDag);
+        }
         if(config.lastJobType >= JobType::NEIGHBOURS )
             neighboursJobs = generateNeighboursJobs(filterJobs,jobDag);
         if(config.lastJobType >= JobType::COMPONENTS){
