@@ -27,5 +27,5 @@ outputs:
         type: stdout
     errorOut:
         type: stderr
-stdout: $(inputs.primaryInput.nameroot)_neighbours$(inputs.taskID==null?"":"_"+inputs.taskID)_stdout.log
-stderr: $(inputs.primaryInput.nameroot)_neighbours$(inputs.taskID==null?"":"_"+inputs.taskID)_stderr.log
+stdout: Neighbours_$(inputs.primaryInput.nameroot)$(inputs.taskID==null?"":"_"+inputs.taskID)_stdout.log
+stderr: Neighbours_$(inputs.primaryInput.nameroot)$(inputs.taskID==null?"":"_"+inputs.taskID)_stderr.log

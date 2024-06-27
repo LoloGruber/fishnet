@@ -10,7 +10,7 @@
         "flags":"--log-dir ~/logs --no-container",
         "cwl-directory":"/root/cwl"
     },
-    "contraction-output-stem":"Contracted",
+    "contraction-output-stem":"Contraction",
     "analysis-output-stem":"Analysis",
     "memgraph-host":"localhost",
     "memgraph-port":7687
