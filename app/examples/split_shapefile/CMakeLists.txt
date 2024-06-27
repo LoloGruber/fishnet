@@ -1,2 +1,0 @@
-add_executable(shapeFileSplitter ShapeSplitter.cpp)
-target_link_libraries(shapeFileSplitter PRIVATE Fishnet::Fishnet)

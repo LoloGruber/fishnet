@@ -1,2 +1,1 @@
-add_subdirectory(split_shapefile)
 add_subdirectory(geotiff_to_shapefile)
