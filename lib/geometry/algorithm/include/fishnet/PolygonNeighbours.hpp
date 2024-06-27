@@ -2,7 +2,7 @@
 #include "SweepLine.hpp"
 #include "BoundingBoxPolygon.hpp"
 #include <fishnet/FunctionalConcepts.hpp>
-#include <fishnet/FixedSizePriorityQueue.hpp>
+#include <fishnet/FixedSizeBuffer.hpp>
 
 namespace fishnet::geometry {
 
@@ -51,7 +51,7 @@ struct PolygonNeighboursRemoveEvent: public PolygonNeighbours<P>::RemoveEvent {
         //     return current.getBoundingBox().left() <= (*it)->getBoundingBox().right() ||
         //         current.getBoundingBox().right() >= (*it)->getBoundingBox().left();
         // };
-        auto closestNeighbours = util::FixedSizePriorityQueue<P,decltype(distanceMapper)>(k,distanceMapper);
+        auto closestNeighbours = util::FixedSizeBuffer<P,std::invoke_result_t<decltype(distanceMapper),P>>(k,distanceMapper);
         bool skippedSameObject = false; // skip same Polygon object, since it is returned as the lower_bound in the first iteration
         for(auto it = sls.lower_bound(this->obj); it != sls.end(); --it){
             const auto & neighbour = *(*it);
