@@ -13,7 +13,7 @@ enum class NeighbouringFilesPredicateType {
 struct NeighbouringFileTilesPredicate{
     
     std::optional<fishnet::geometry::Vec2D<int>> tileCoordinateFromFilenames(const std::string & input)const noexcept{
-        std::regex pattern(R"((.+)_(\d+)_(\d+)\.shp)");
+        std::regex pattern(R"((.+)_(-?\d+)_(-?\d+)\.shp)");
         std::smatch matches;
 
         if (std::regex_match(input, matches, pattern) && matches.size() == 4) {
