@@ -14,7 +14,7 @@ private:
     std::filesystem::path workingDirectory;
     size_t jobIdCounter = 0;
 private:
-    std::unordered_map<std::filesystem::path,FilterJob> generateWSFSplitFilterJobs(const std::vector<std::filesystem::path> & inputs,JobDAG_t & jobDag) noexcept {
+    std::unordered_map<std::filesystem::path,FilterJob> generateWSFSplitFilterJobs(const std::vector<std::filesystem::path> & inputs,JobDAG_t & jobDag)  {
         assert(config.splits > 0);
         if(inputs.size() > 1)
             assert(config.neighbouringFilesPredicateType==NeighbouringFilesPredicateType::WSF);
@@ -23,7 +23,7 @@ private:
         auto botLeftOpt = neighbouringPredicate.spatialCoordinatesFromFilename(inputs.front().string());
         if(not botLeftOpt && inputs.size() > 1)
             throw std::runtime_error("File not in the correct format\nExpecting: <WSF-Filename>_<longitude>_<latitude>.tif");
-        fishnet::geometry::Vec2D<int> botLeft = botLeftOpt.value_or({0,0});
+        fishnet::geometry::Vec2D<int> botLeft = botLeftOpt.value_or(fishnet::geometry::Vec2D<int>(0,0));
         /*Find bottom left file in the WSF files */
         for(const auto & input: inputs){
             auto coord = neighbouringPredicate.spatialCoordinatesFromFilename(input.string()).value();
@@ -157,7 +157,7 @@ public:
         std::unordered_map<std::filesystem::path,FilterJob> filterJobs;
         std::vector<NeighboursJob> neighboursJobs;
         if(config.lastJobType >= JobType::FILTER) {
-            if(config.neighbouringFilesPredicateType == NeighbouringFilesPredicateType::WSF || inputs.size() == 1 && config.splits > 0)
+            if(config.neighbouringFilesPredicateType == NeighbouringFilesPredicateType::WSF || (inputs.size() == 1 && config.splits > 0))
                 filterJobs = generateWSFSplitFilterJobs(inputs,jobDag);
             else    
                 filterJobs = generateFilterJobs(inputs,jobDag);
