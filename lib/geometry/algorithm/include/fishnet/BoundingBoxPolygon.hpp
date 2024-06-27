@@ -50,8 +50,8 @@ template<PolygonRange R>
 static Rectangle<typename std::ranges::range_value_t<R>::numeric_type> minimalBoundingBox(const R & polygons) {
     using number = typename std::ranges::range_value_t<R>::numeric_type;
     number left = std::numeric_limits<number>::max();
-    number right = std::numeric_limits<number>::min();
-    number top = std::numeric_limits<number>::min();
+    number right = std::numeric_limits<number>::lowest();
+    number top = std::numeric_limits<number>::lowest();
     number bottom = std::numeric_limits<number>::max();
     if(util::isEmpty(polygons)){
         throw std::runtime_error("Range of polygons is empty, cannot compute bounding box");
