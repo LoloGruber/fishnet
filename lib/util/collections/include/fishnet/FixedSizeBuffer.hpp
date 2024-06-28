@@ -10,12 +10,6 @@ private:
     std::vector<C> cache;
     size_t capacity;
     std::function<C(const T &)> mapper;
-
-    void inline insert(T && value,std::integral auto index){
-        cache[index] = mapper(value);
-        collection[index] = std::move(value);
-    }
-
 public:
     FixedSizeBuffer(size_t capacity,UnaryFunction<T,C> auto mapper):capacity(capacity),mapper(mapper){
         collection.reserve(capacity);
@@ -28,7 +22,8 @@ public:
 
     void push(T && value){
         if(collection.size() < capacity){
-            insert(std::move(value),collection.size());
+            cache.push_back(mapper(value));
+            collection.push_back(std::move(value));
         }else{
             int swapIndex=0;
             auto max = cache[0];
@@ -40,7 +35,8 @@ public:
                 }
             }
             if(mapper(value) < max){
-                insert(std::move(value),swapIndex);
+                cache[swapIndex] = mapper(value);
+                collection[swapIndex] = std::move(value);
             }
         }
     }
