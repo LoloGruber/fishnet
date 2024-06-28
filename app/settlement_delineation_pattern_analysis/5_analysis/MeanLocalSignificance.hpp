@@ -2,6 +2,7 @@
 #include <fishnet/Graph.hpp>
 #include <fishnet/Feature.hpp>
 #include "CentralityMeasureType.hpp"
+#include <execution>
 
 struct MeanLocalSignificance{
     static CentralityMeasureType type() noexcept {
@@ -14,7 +15,8 @@ struct MeanLocalSignificance{
         if(not field){
             throw std::runtime_error("Could not create field \"MeanLocSig\"");
         }
-        for(const auto & node : source.getNodes()) {
+        const auto & nodes = source.getNodes();
+        std::for_each(std::execution::par,std::ranges::begin(nodes),std::ranges::end(nodes),[&source,&field,&result](const auto & node){
             double accLocalSig = 0;
             int count = 0;
             for(const auto & neighbour : source.getNeighbours(node)){
@@ -23,6 +25,6 @@ struct MeanLocalSignificance{
             }
             double meanLocalSig = count==0?0.0:accLocalSig / count;
             result.at(node.key()).addAttribute(field.value(),meanLocalSig);
-        }
+        });
     }
 };
