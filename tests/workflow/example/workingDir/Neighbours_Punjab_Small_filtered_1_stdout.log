@@ -1,0 +1,14 @@
+{
+    "Adjacencies": 275,
+    "additional-inputs": [],
+    "config": {
+        "maxDistanceMeters": 3000.0,
+        "maxNeighbours": 5,
+        "memgraph-host": "localhost",
+        "memgraph-port": 7687,
+        "neighbouring-predicates": []
+    },
+    "duration[s]": 0.027707884,
+    "primary-input": "Punjab_Small_filtered.shp",
+    "type": "NEIGHBOURS"
+}

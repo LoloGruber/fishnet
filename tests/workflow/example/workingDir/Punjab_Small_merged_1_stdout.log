@@ -1,0 +1,22 @@
+{
+    "#Nodes-after-contraction": 33,
+    "#Nodes-before-contraction": 75,
+    "components": [],
+    "config": {
+        "contraction-predicates": [
+            {
+                "distance": 500.0,
+                "name": "DistanceBiPredicate"
+            }
+        ],
+        "memgraph-host": "localhost",
+        "memgraph-port": 7687,
+        "merge-workers": 2
+    },
+    "duration[s]": 0.017578393,
+    "inputs": [
+        "Punjab_Small_filtered.shp"
+    ],
+    "output": "Punjab_Small_merged.shp",
+    "type": "CONTRACTION"
+}
