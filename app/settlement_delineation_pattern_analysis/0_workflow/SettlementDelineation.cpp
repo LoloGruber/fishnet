@@ -7,8 +7,8 @@
 
 int main(int argc, char * argv[]){
     CLI::App app {"SettlementDelineation Workload-Generator and Scheduler"};
-    std::string pathToCfg = "/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/cfg/workflow.json";
-    std::string inputDirectory = "/home/lolo/Documents/fishnet/data/testing/Punjab_Small_Split";
+    std::string pathToCfg = "/home/lolo/Documents/fishnet/prod/local/cfg/workflow.json";
+    std::string inputDirectory = "/home/lolo/Documents/fishnet/data/WSF/2019/Punjab";
     std::string outputFilename;
     std::string workingDirectory;
     std::vector<std::filesystem::path> inputFiles;
