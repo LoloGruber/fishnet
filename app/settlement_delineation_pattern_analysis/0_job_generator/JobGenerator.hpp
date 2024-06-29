@@ -141,12 +141,14 @@ public:
             job.state = JobState::RUNNABLE;
             job.input = file;
             job.outDir = outDir;
-            job.xOffset = (coordinate.x - botLeft.x) * config.splits;
-            job.yOffset = (coordinate.y - botLeft.y) * config.splits;
+            job.xOffset = (coordinate.x - botLeft.x)/2 * (config.splits+1);
+            job.yOffset = (coordinate.y - botLeft.y)/2 * (config.splits+1);
             job.splits = config.splits;
             JobWriter::write(job);
             jobDag.addNode(job);
         }
+        config.neighbouringFilesPredicate = NeighbouringFileTilesPredicate();
+        config.neighbouringFilesPredicateType = NeighbouringFilesPredicateType::TILES;
     }
 
     void generate(const std::vector<std::filesystem::path> & inputs,JobDAG_t & jobDag) noexcept{
