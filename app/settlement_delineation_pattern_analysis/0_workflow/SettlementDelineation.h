@@ -39,7 +39,11 @@ public:
         auto & jobDag = scheduler.getDAG();
         JobGeneratorConfig copy = jobGeneratorConfig;
         JobGenerator jobGenerator {std::move(copy),workingDirectory};
-        auto tmpDir = fishnet::util::TemporaryDirectory(workingDirectory / std::filesystem::path("tmp/") );
+        auto pathToTmpDir = workingDirectory / std::filesystem::path("tmp/");
+        if (std::filesystem::exists(pathToTmpDir)) {
+            std::filesystem::remove_all(pathToTmpDir);
+        }
+        auto tmpDir = fishnet::util::TemporaryDirectory(pathToTmpDir);
         if(jobGeneratorConfig.cleanup)
             jobGenerator.cleanup(jobDag);
         if(jobGeneratorConfig.splits > 0){
