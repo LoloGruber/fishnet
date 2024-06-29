@@ -118,7 +118,7 @@ private:
         for(const auto & ogrFeature: layer){
             auto geo = ogrFeature->GetGeometryRef();
             if constexpr(G::type == fishnet::geometry::GeometryType::MULTIPOLYGON){
-                if(geo && wkbFlatten(geo->getGeometryType() == GeometryTypeWKBAdapter::toWKB(G::polygon_type::type))) {
+                if(geo && wkbFlatten(geo->getGeometryType()) == GeometryTypeWKBAdapter::toWKB(G::polygon_type::type)) {
                     auto converted = OGRGeometryAdapter::fromOGR<G::polygon_type::type>(*geo);
                     if (not converted) 
                         continue;
@@ -129,7 +129,7 @@ private:
                     addFeature(std::move(f));
                 }                
             }
-            if(geo && wkbFlatten(geo->getGeometryType() == GeometryTypeWKBAdapter::toWKB(G::type))) {
+            if(geo && wkbFlatten(geo->getGeometryType()) == GeometryTypeWKBAdapter::toWKB(G::type)) {
                 auto converted = OGRGeometryAdapter::fromOGR<G::type>(*geo);
                 if (not converted) 
                     continue;
