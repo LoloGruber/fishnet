@@ -56,11 +56,13 @@ static std::optional<fishnet::geometry::Polygon<fishnet::math::DEFAULT_NUMERIC>>
     try{
         auto ogrBoundary = ogrPolygon.getExteriorRing();
         auto fishnetBoundary = fromOGR(*ogrBoundary);
-        if(not fishnetBoundary) return std::nullopt;
+        if(not fishnetBoundary) 
+            return std::nullopt;
         std::vector<fishnet::geometry::Ring<fishnet::math::DEFAULT_NUMERIC>> holes;
         for(int i = 0; i < ogrPolygon.getNumInteriorRings(); i++){
             auto hole = fromOGR(*(ogrPolygon.getInteriorRing(i)));
-            if(not hole) return std::nullopt;
+            if(not hole) 
+                continue;
             holes.push_back(hole.value());
         }
         return fishnet::geometry::Polygon<fishnet::math::DEFAULT_NUMERIC>(fishnetBoundary.value(),holes);
@@ -94,7 +96,7 @@ static std::optional<fishnet::geometry::MultiPolygon<fishnet::geometry::Polygon<
         for(auto ogrPolygonPtr : multiPolygon) {
             auto polygon = fromOGR(*ogrPolygonPtr);
             if (not polygon)
-                return std::nullopt;
+                continue;
             polygons.push_back(polygon.value());
         }
         return fishnet::geometry::MultiPolygon<fishnet::geometry::Polygon<double>>(polygons);
