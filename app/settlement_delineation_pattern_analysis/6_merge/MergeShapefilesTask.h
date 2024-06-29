@@ -27,7 +27,7 @@ public:
         fishnet::GDALInitializer::init();
         std::vector<std::future<fishnet::VectorLayer<ShapeType>>> futures;
         for(size_t i = 1; i < inputs.size();i++){
-            futures.emplace_back(std::async(std::launch::async,[this,i](){return readSingleInput(inputs[i]);}));
+            futures.push_back(std::async(std::launch::async,[this,i](){return readSingleInput(inputs[i]);}));
         }
         auto firstLayer = readSingleInput(inputs.front());
         auto outputLayer = fishnet::VectorLayer<ShapeType>::empty(firstLayer);
