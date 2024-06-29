@@ -35,11 +35,20 @@ public:
             throw std::runtime_error("No input files provided");
         auto exp = MemgraphConnection::create(schedulerConfig.params).transform([](auto && conn){return JobAdjacency(std::move(conn));});
         auto && jobAdj = getExpectedOrThrowError(exp);
-        auto jobDAG = loadDAG(std::move(jobAdj));
+        Scheduler scheduler = schedulerConfig.getSchedulerWithExecutorType(loadDAG(std::move(jobAdj)));
+        auto & jobDag = scheduler.getDAG();
         JobGeneratorConfig copy = jobGeneratorConfig;
         JobGenerator jobGenerator {std::move(copy),workingDirectory};
-        jobGenerator.generate(inputFiles,jobDAG);
-        Scheduler scheduler = schedulerConfig.getSchedulerWithExecutorType(std::move(jobDAG));
+        auto tmpDir = fishnet::util::TemporaryDirectory(workingDirectory / std::filesystem::path("tmp/") );
+        if(jobGeneratorConfig.cleanup)
+            jobGenerator.cleanup(jobDag);
+        if(jobGeneratorConfig.splits > 0){
+            jobGenerator.generateWSFSplitJobs(inputFiles,tmpDir.getDirectory(),jobDag);
+            scheduler.schedule();
+            jobGenerator.generate(fishnet::GISFactory::getGISFiles(tmpDir.getDirectory()),jobDag);
+        }else {
+            jobGenerator.generate(inputFiles,jobDag);
+        }
         scheduler.schedule();
         if(schedulerConfig.lastJobType >= JobType::MERGE){
             MergeJob mergeJob;
