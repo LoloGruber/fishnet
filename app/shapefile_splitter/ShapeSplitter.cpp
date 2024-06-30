@@ -2,6 +2,7 @@
 #include <fishnet/PathHelper.h>
 #include <fishnet/GISFactory.hpp>
 #include <fishnet/BoundingBoxPolygon.hpp>
+#include <fishnet/StopWatch.h>
 #include <cassert>
 #include <CLI/CLI.hpp>
 
@@ -9,6 +10,7 @@ using namespace fishnet;
 
 int main(int argc, char * argv[]) {
     CLI::App app  {"Fishnet Shapefile Splitter"};
+    fishnet::util::StopWatch splitTask {"Split Task"};
     std::string inputFilename;//="/home/lolo/Documents/fishnet/data/WSF/2019/Casablanca/Small/WesternCasablanca.tif";
     std::string outputDirectoryName;//="/home/lolo/Documents/fishnet/data/WSF/2019/Casablanca/Small/";
     uint32_t splits;//=3;
@@ -54,5 +56,6 @@ int main(int argc, char * argv[]) {
             }
         }
     }
+    std::cout << "{duration[s]:"<< splitTask.stop() << "}" << std::endl;
     return 0;
 }
