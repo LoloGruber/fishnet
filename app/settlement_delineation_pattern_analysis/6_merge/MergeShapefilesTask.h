@@ -9,10 +9,9 @@ class MergeShapefilesTask: public Task {
 private:
     std::vector<fishnet::Shapefile> inputs;
     fishnet::Shapefile output;
-    std::string_view taskName;
 public:
-    MergeShapefilesTask(std::string_view taskName,std::vector<fishnet::Shapefile> && inputs, fishnet::Shapefile output):inputs(std::move(inputs)),output(std::move(output)),taskName(taskName){
-        this->desc["type"]=taskName;
+    MergeShapefilesTask(std::vector<fishnet::Shapefile> && inputs, fishnet::Shapefile output):inputs(std::move(inputs)),output(std::move(output)){
+        this->desc["type"]="MERGE";
         std::vector<std::string> inputStrings;
         std::ranges::for_each(this->inputs,[&inputStrings](auto const & file){inputStrings.push_back(file.getPath().filename().string());});
         this->desc["inputs"]=inputStrings;
