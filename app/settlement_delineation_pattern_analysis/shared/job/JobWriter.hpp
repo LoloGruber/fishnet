@@ -107,6 +107,7 @@ public:
         }
         output["shpFiles"]=inputsJson;
         output["outputPath"] = mergeJob.output.string();
+        output["taskID"] = mergeJob.id;
         writeJson(output,mergeJob);
     }
 
