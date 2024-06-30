@@ -56,19 +56,39 @@ public:
         scheduler.schedule();
         if(schedulerConfig.lastJobType >= JobType::MERGE){
             MergeJob mergeJob;
-            mergeJob.id=(size_t)-1;
+            MergeJob mergeEdgesJob;
+            mergeJob.id=1000000000000;
+            mergeEdgesJob.id  = 99999999999;
             mergeJob.file = jobGeneratorConfig.jobDirectory / "Merge.json";
+            mergeEdgesJob.file = jobGeneratorConfig.jobDirectory / "Merge_edges.json";
             mergeJob.state = JobState::RUNNABLE;
+            mergeEdgesJob.state = JobState::RUNNABLE;
             for(auto && path : fishnet::GISFactory::getGISFiles(workingDirectory)){
                 if(path.stem().string().starts_with(connectedComponentsConfig.analysisOutputStem) && path.string().ends_with(".shp")){
-                    mergeJob.inputs.push_back(std::move(path));
+                    if(path.string().ends_with("_edges.shp"))
+                        mergeEdgesJob.inputs.push_back(std::move(path));
+                    else
+                        mergeJob.inputs.push_back(std::move(path));
                 }
             }
             mergeJob.output = outputPath;
+            mergeEdgesJob.output = fishnet::util::PathHelper::appendToFilename(outputPath,"_edges");
             JobWriter::write(mergeJob);
             scheduler.getDAG().addNode(mergeJob);
+            if(not mergeEdgesJob.inputs.empty()){
+                JobWriter::write(mergeEdgesJob);
+                scheduler.getDAG().addNode(mergeEdgesJob);
+            }
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
             scheduler.schedule();
         }
+        json cfg;
+        for(auto && cfgFile : std::filesystem::directory_iterator(jobGeneratorConfig.cfgDirectory)){
+            if(cfgFile.is_regular_file() && cfgFile.path().extension() == ".json"){
+                cfg.merge_patch(json::parse(std::ifstream(cfgFile.path())));
+            }
+        }
+        std::ofstream cfgStream {fishnet::util::PathHelper::appendToFilename(outputPath,"_cfg.json")};
+        cfgStream << cfg.dump(4) << std::endl;
     }
 };
