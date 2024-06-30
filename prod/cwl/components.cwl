@@ -21,7 +21,7 @@ inputs:
       prefix: -d
     doc: "Path to diretory where config files reside"
   nextId:
-    type: int
+    type: long
     inputBinding:
       position: 4
       prefix: -i

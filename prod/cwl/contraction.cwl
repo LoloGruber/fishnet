@@ -20,7 +20,7 @@ inputs:
             prefix: --components
         doc: "List of connected components to be processed by this job"
     taskID:
-        type: int?
+        type: long?
         doc: "Optional task id to distinguish log files"
     outputStem:
         type: string

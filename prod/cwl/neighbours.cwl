@@ -20,7 +20,7 @@ inputs:
             prefix: -c
         doc: "Path to configuration for neighbours task"
     taskID:
-        type: int?
+        type: long?
         doc: "Optional task id to distinguish log files"
 outputs:
     standardOut:

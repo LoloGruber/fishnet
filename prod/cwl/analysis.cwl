@@ -15,7 +15,7 @@ inputs:
             prefix: -c
         doc: "Path to configuration for analysis task"
     taskID:
-        type: int?
+        type: long?
         doc: "Optional task id to distinguish log files"
     outputStem:
         type: string

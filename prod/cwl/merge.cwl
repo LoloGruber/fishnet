@@ -16,7 +16,7 @@ inputs:
             prefix: -o 
         doc: "Output filename for result (Shapefile)"
     taskID:
-        type: int?
+        type: long?
         doc: "Optional task id to distinguish log files"   
 outputs:
     standardOut:
