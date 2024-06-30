@@ -18,6 +18,9 @@ int main(int argc, char * argv[]){
     app.add_option("-o,--output",outputFilename,"Path where merged output will be stored (only applied if last job type is at least MERGE)")->check([](const std::string & str){
         try{
             auto file = fishnet::Shapefile(str);
+            std::filesystem::path parentPath = std::filesystem::path(str).parent_path();
+            if(not std::filesystem::exists(parentPath))
+                return std::string("Path to output file (\""+str+"\") does not exist");
             return std::string();
         }catch(std::invalid_argument & error){
             return std::string("Invalid output path:\n"+str+"\n")+ error.what();
