@@ -3,6 +3,7 @@
 #include <fishnet/VectorLayer.hpp>
 #include <fishnet/Shapefile.hpp>
 #include <fishnet/GraphFactory.hpp>
+#include <future>
 #include "Task.hpp"
 #include "AnalysisConfig.cpp"
 #include "CentralityMeasureJsonReader.hpp"
@@ -68,6 +69,21 @@ public:
         return settlements;
     }
 
+    void visualizeEdges(const Graph auto & graph,OGRSpatialReference & outputRef) {
+        auto edgeFile = outputFile.appendToFilename("_edges");
+        auto edgeLayer = fishnet::VectorLayer<fishnet::geometry::SimplePolygon<double>>::empty(outputRef);
+        for(const auto & edge : graph.getEdges()){
+            auto edgePolygon = visualizeEdge(edge.getFrom(),edge.getTo());
+            if (not edgePolygon){
+                std::cerr << "Could not create edge\nFrom:"<<edge.getFrom().key() <<"\nTo:" << edge.getTo().key() << std::endl;
+            }
+            else {
+                edgeLayer.addGeometry(std::move(edgePolygon.value()));
+            }
+        }
+        edgeLayer.overwrite(edgeFile);
+    }
+
     void run() override {
         auto memgraphConnection = MemgraphConnection::create(config.params);
         testExpectedOrThrowError(memgraphConnection);
@@ -80,12 +96,17 @@ public:
         }
         memgraphAdj.loadNodes(settlements); //load settlement relationships
         auto graph = fishnet::graph::GraphFactory::UndirectedGraph<NodeType>(std::move(memgraphAdj));
+        std::future<void> edgesTask;
+        if(config.visualizeEdges) {
+            edgesTask = std::async(std::launch::async,[this,&graph,&outputRef]{
+                this->visualizeEdges(graph,outputRef);
+            });
         std::unordered_map<size_t,fishnet::Feature<ShapeType>> centralityMeasureResults; // result map, which stores: Fishnet_ID -> <Feature of the settlement stored in output>
         std::ranges::for_each(settlements,[&centralityMeasureResults](auto && settlement){
             centralityMeasureResults.try_emplace(settlement.key(),fishnet::Feature<ShapeType>(std::move(static_cast<ShapeType>(settlement))));
         });
         fishnet::VectorLayer<ShapeType> outputLayer = fishnet::VectorLayer<ShapeType>::empty(outputRef);
-        for(auto centralityMeasure : config.loadCentralityMeasures<decltype(graph),ShapeType>()) {
+        for(auto && centralityMeasure : config.loadCentralityMeasures<decltype(graph),ShapeType>()) {
             /*Execute each centrality measure using the settlement graph. 
             The measure is expected to create the field for the centrality measure on the layer.
             The measure is expected to store a centrality measure value for each feature*/
@@ -99,19 +120,8 @@ public:
             outputLayer.addFeature(std::move(feature));
         }
         outputLayer.overwrite(outputFile);
-        if(config.visualizeEdges) {
-            auto edgeFile = outputFile.appendToFilename("_edges");
-            auto edgeLayer = fishnet::VectorLayer<fishnet::geometry::SimplePolygon<double>>::empty(outputRef);
-            for(const auto & edge : graph.getEdges()){
-                auto edgePolygon = visualizeEdge(edge.getFrom(),edge.getTo());
-                if (not edgePolygon){
-                    std::cerr << "Could not create edge\nFrom:"<<edge.getFrom().key() <<"\nTo:" << edge.getTo().key() << std::endl;
-                }
-                else {
-                    edgeLayer.addGeometry(std::move(edgePolygon.value()));
-                }
-            }
-            edgeLayer.overwrite(edgeFile);
         }
+        if(edgesTask.valid())
+            edgesTask.get();
     }
 };
