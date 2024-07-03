@@ -1,5 +1,7 @@
 #pragma once
 #include <optional>
+#include <array>
+#include <algorithm>
 #include <fishnet/Vec2D.hpp>
 #include "Line.hpp"
 
@@ -44,13 +46,27 @@ public:
     }
 
     constexpr Vec2D<T> upperEndpoint() const noexcept {
-        if (fishnet::math::areEqual(_p.y,_q.y)) return _p.x < _q.x ? _p:_q;
+        if (fishnet::math::areEqual(_p.y,_q.y)) 
+            return _p.x > _q.x ? _p:_q;
         return _p.y > _q.y ? _p:_q;
     }
 
     constexpr Vec2D<T> lowerEndpoint() const noexcept {
-        if(fishnet::math::areEqual(_p.y,_q.y)) return _p.x < _q.x ? _q:_p;
-        return _p.y > _q.y ? _q:_p;
+        if(fishnet::math::areEqual(_p.y,_q.y)) 
+            return _p.x < _q.x ? _p:_q;
+        return _p.y < _q.y ? _p:_q;
+    }
+
+    constexpr Vec2D<T> leftEndpoint() const noexcept {
+        if(fishnet::math::areEqual(_p.x,_q.x))
+            return _p.y < _q.y ? _p : _q;
+        return _p.x < _q.x ? _p : _q;
+    }
+
+    constexpr Vec2D<T> rightEndpoint() const noexcept {
+        if(fishnet::math::areEqual(_p.x,_q.x))
+            return _p.y > _q.y ? _p : _q;
+        return _p.x > _q.x ? _p : _q;
     }
 
     constexpr bool isEndpoint(IPoint auto const & point) const noexcept {
@@ -143,6 +159,17 @@ public:
         if(intersection) 
             return point.distance(*intersection); // intersection on the segment of orthogonal line between segment and point
         return std::min(_p.distance(point), _q.distance(point)); // return closest endpoint of segment to the point otherwise
+    }
+
+    template<fishnet::math::Number U>
+    constexpr fishnet::math::DEFAULT_FLOATING_POINT distance(const Segment<U> & other) const noexcept {
+        std::array<fishnet::math::DEFAULT_FLOATING_POINT,4> candidates {
+            other.distance(this->_p),
+            other.distance(this->_q),
+            this->distance(other.p()),
+            this->distance(other.q())
+        };
+        return *std::ranges::min_element(candidates);
     }
 
     constexpr auto intersection(LinearGeometry auto const& other)const noexcept {

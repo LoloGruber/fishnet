@@ -38,16 +38,20 @@ TEST(SegmentTest, direction){
     EXPECT_EQ(Segment(Vec2D(2,1),Vec2D(-3,2)).direction(), Vec2D(-5,1));
 }
 
-TEST (SegmentTest, upperLowerEndpoint){
+TEST (SegmentTest, endpoints){
     Vec2D p = Vec2D(1,1);
     Vec2D q = Vec2D(1,2);
     Segment s {p,q};
     EXPECT_EQ(s.upperEndpoint(), q);
     EXPECT_EQ(s.lowerEndpoint(),p);
+    EXPECT_EQ(s.leftEndpoint(),p);
+    EXPECT_EQ(s.rightEndpoint(),q);
     q= Vec2D(2,1);
     Segment t = Segment(p,q);
-    EXPECT_EQ(t.upperEndpoint(),p);
-    EXPECT_EQ(t.lowerEndpoint(),q);
+    EXPECT_EQ(t.upperEndpoint(),q);
+    EXPECT_EQ(t.lowerEndpoint(),p);
+    EXPECT_EQ(t.leftEndpoint(),p);
+    EXPECT_EQ(t.rightEndpoint(),q);
 }
 
 TEST(SegmentTest, length){
@@ -151,6 +155,18 @@ TEST(SegmentTest, distance){
     EXPECT_DOUBLE_EQ(s.distance(Vec2D(0,1)),sqrt(2)/2);
     EXPECT_EQ(Segment(Vec2D(0,0),Vec2D(10,0)).distance(Vec2D(5,0.5)),0.5);
     EXPECT_TRUE(areEqual(Segment(Vec2D(2,2),Vec2D(4,2)).distance(Vec2D(5,4)), 2.2360679774998));
+}
+
+TEST(SegmentTest, distanceSegment){
+    Segment s {Vec2D(0,0),Vec2D(2,2)};
+    Segment t {Vec2D(1.5,0.5),Vec2D(3,1)};
+    EXPECT_DOUBLE_EQ(s.distance(t),sqrt(2)/2);
+    EXPECT_DOUBLE_EQ(s.distance(t),sqrt(2)/2);
+    Segment r {Vec2D(3,2),Vec2D(3.5,4)};
+    EXPECT_DOUBLE_EQ(s.distance(r),1);
+    EXPECT_DOUBLE_EQ(r.distance(s),1);
+    EXPECT_DOUBLE_EQ(r.distance(t),1);
+    EXPECT_DOUBLE_EQ(t.distance(r),1);   
 }
 
 TEST(SegmentTest, intersection){
