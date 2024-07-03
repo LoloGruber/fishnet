@@ -20,7 +20,7 @@ struct yOrdering {
     }
 };
 
-using MySweepLine = SweepLine<Vec2D<double>,std::string, xOrdering>;
+using MySweepLine = SweepLine<Vec2D<double>,std::vector<std::string>, xOrdering>;
 
 struct MyPointInsertEvent: public MySweepLine::InsertEvent{
 public:

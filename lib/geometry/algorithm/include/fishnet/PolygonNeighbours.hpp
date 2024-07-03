@@ -16,7 +16,7 @@ namespace __impl {
  * @tparam P 
  */
 template<IPolygon P>
-using PolygonNeighbours = SweepLine<BoundingBoxPolygon<P>,std::pair<P,P>,HorizontalAABBOrdering<P>,true>;
+using PolygonNeighbours = SweepLine<BoundingBoxPolygon<P>,std::vector<std::pair<P,P>>,HorizontalAABBOrdering<P>,true>;
 
 template<IPolygon P>
 struct PolygonNeighboursInsertEvent : public PolygonNeighbours<P>::DefaultInsertEvent {

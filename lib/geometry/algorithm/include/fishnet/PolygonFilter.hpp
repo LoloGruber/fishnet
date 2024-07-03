@@ -12,7 +12,7 @@ namespace __impl{
  * @tparam P polygon type
  */
 template<IPolygon P>
-using PolygonFilter = SweepLine<BoundingBoxPolygon<P>,P,HorizontalAABBOrdering<P>>;
+using PolygonFilter = SweepLine<BoundingBoxPolygon<P>,std::vector<P>,HorizontalAABBOrdering<P>>;
 
 /**
  * @brief Insert event for Polygon Filter Sweepline

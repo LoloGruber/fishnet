@@ -2,11 +2,12 @@
 
 #include <set>
 #include <queue>
+#include <memory>
 
 #include <fishnet/CollectionConcepts.hpp>
 #include <fishnet/FunctionalConcepts.hpp>
 #include <fishnet/GeometryObject.hpp>
-#include <fishnet/Polygon.hpp>
+
 namespace fishnet::geometry {
 
 enum class EventType{
@@ -22,7 +23,7 @@ enum class EventType{
  * @tparam SLSLess BiPredicate for sorting the SLS
  * @tparam EventQueueGreater BiPredicate for sorting the event points
  */
-template<typename Input, typename Output,util::BiPredicate<Input> SLSLess,bool InsertEventsFirst = false, util::BiPredicate<fishnet::math::DEFAULT_NUMERIC> EventQueueGreater = std::greater<fishnet::math::DEFAULT_NUMERIC>>
+template<typename Input, typename Output,util::BiPredicate<Input> SLSLess = std::less<Input>,bool InsertEventsFirst = false, util::BiPredicate<fishnet::math::DEFAULT_NUMERIC> EventQueueGreater = std::greater<fishnet::math::DEFAULT_NUMERIC>>
 class SweepLine{
 public: 
     
@@ -39,7 +40,7 @@ public:
 
         IEvent(const Input & obj):obj(&obj){}
 
-        virtual void process(SweepLine<Input,Output,SLSLess,InsertEventsFirst,EventQueueGreater> & sweepLine, std::vector<Output> & output)const=0;
+        virtual void process(SweepLine<Input,Output,SLSLess,InsertEventsFirst,EventQueueGreater> & sweepLine, Output & output)const=0;
 
         virtual EventType type() const noexcept = 0;
 
@@ -68,14 +69,14 @@ public:
 
     struct DefaultInsertEvent: public InsertEvent {
         DefaultInsertEvent(const Input & obj):InsertEvent(obj){}
-        virtual void process(SweepLine<Input,Output,SLSLess,InsertEventsFirst,EventQueueGreater> & sweepLine, std::vector<Output> & output) const {
+        virtual void process(SweepLine<Input,Output,SLSLess,InsertEventsFirst,EventQueueGreater> & sweepLine, Output & output) const {
             sweepLine.addSLS(this->obj);
         }
     };
 
     struct DefaultRemoveEvent: public RemoveEvent{
         DefaultRemoveEvent(const Input & obj):RemoveEvent(obj){}
-        virtual void process(SweepLine<Input,Output,SLSLess,InsertEventsFirst,EventQueueGreater> & sweepLine, std::vector<Output> & output) const {
+        virtual void process(SweepLine<Input,Output,SLSLess,InsertEventsFirst,EventQueueGreater> & sweepLine, Output & output) const {
             sweepLine.removeSLS(this->obj);
         }
     };
@@ -167,7 +168,7 @@ public:
         }
     }
 
-    std::vector<Output> sweep(std::vector<Output> & output) noexcept {
+    Output sweep(Output & output) noexcept {
         while(not queue.empty()){
             queue.top()->process(*this,output);
             queue.pop();
