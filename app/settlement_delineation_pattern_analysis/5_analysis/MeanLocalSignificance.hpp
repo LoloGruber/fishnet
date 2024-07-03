@@ -1,10 +1,13 @@
 #pragma once
 #include <fishnet/Graph.hpp>
 #include <fishnet/Feature.hpp>
+#include <fishnet/ThreadPool.hpp>
 #include "CentralityMeasureType.hpp"
-#include <execution>
+
+#include <fishnet/StopWatch.h>
 
 struct MeanLocalSignificance{
+    constexpr static size_t NODES_PER_THREAD = 100;
     static CentralityMeasureType type() noexcept {
         return CentralityMeasureType::MeanLocalSignificance;
     }
@@ -15,8 +18,7 @@ struct MeanLocalSignificance{
         if(not field){
             throw std::runtime_error("Could not create field \"MeanLocSig\"");
         }
-        const auto & nodes = source.getNodes();
-        std::for_each(std::execution::par,std::ranges::begin(nodes),std::ranges::end(nodes),[&source,&field,&result](const auto & node){
+        auto computeMeanLocalSig = [&source,&field,&result](const auto & node){
             double accLocalSig = 0;
             int count = 0;
             for(const auto & neighbour : source.getNeighbours(node)){
@@ -25,6 +27,17 @@ struct MeanLocalSignificance{
             }
             double meanLocalSig = count==0?0.0:accLocalSig / count;
             result.at(node.key()).addAttribute(field.value(),meanLocalSig);
-        });
+        };
+        const auto & nodes = source.getNodes();
+        auto threadPoolSize = std::min(static_cast<size_t>(std::thread::hardware_concurrency()/2),static_cast<size_t>(fishnet::util::size(nodes)/NODES_PER_THREAD + 1));
+        if(threadPoolSize > 1){
+            fishnet::util::ThreadPool pool {threadPoolSize};
+            for(const auto & node: nodes){
+                pool.submit([&computeMeanLocalSig,&node]{computeMeanLocalSig(node);});
+            }
+            pool.join();
+        }else{
+            std::ranges::for_each(nodes,computeMeanLocalSig);
+        }
     }
 };
