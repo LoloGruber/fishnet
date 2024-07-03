@@ -48,8 +48,22 @@ static std::optional<fishnet::geometry::SimplePolygon<double>> visualizeEdge(con
  * @return std::optional<fishnet::geometry::SimplePolygon<double>>: contains a simple polygon when edge can be created successfully
  */
 static std::optional<fishnet::geometry::SimplePolygon<double>> visualizeEdge(const fishnet::geometry::IMultiPolygon auto & from, const fishnet::geometry::IMultiPolygon auto & to) noexcept{
-    auto areaComparator = [](const auto & lhs, const auto & rhs){return lhs.area() < rhs.area();};
-    auto fromBiggest = std::ranges::max_element(from.getPolygons(),areaComparator);
-    auto toBiggest = std::ranges::max_element(to.getPolygons(),areaComparator);
-    return visualizeEdge(*fromBiggest,*toBiggest);
+    // auto areaComparator = [](const auto & lhs, const auto & rhs){return lhs.area() < rhs.area();};
+    // auto fromBiggest = std::ranges::max_element(from.getPolygons(),areaComparator);
+    // auto toBiggest = std::ranges::max_element(to.getPolygons(),areaComparator);
+    auto fromCentroids = std::views::transform(from.getPolygons(),[](const auto & p){return std::make_pair(p.centroid(),&p);});
+    auto toCentroids = std::views::transform(to.getPolygons(),[](const auto & p){return std::make_pair(p.centroid(),&p);});
+    double minDistance = std::numeric_limits<double>::max();
+    auto fromMin = *std::ranges::begin(from.getPolygons());
+    auto toMin = *std::ranges::begin(to.getPolygons());
+    for(const auto & [fCenter,f]:fromCentroids){
+        for(const auto & [tCenter,t]:toCentroids){
+            if(fCenter.distance(tCenter) < minDistance){
+                minDistance = fCenter.distance(tCenter);
+                fromMin = *f;
+                toMin = *t;
+            }
+        }
+    }
+    return visualizeEdge(fromMin,toMin);
 }
