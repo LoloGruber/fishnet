@@ -63,12 +63,15 @@ concept ISegment = __impl::requiredLinearFeatureInterface<S,T> && requires (cons
         {segment.length()} -> std::floating_point;
         {segment.upperEndpoint()} -> IPoint; // returns endpoint with greater y coordinate
         {segment.lowerEndpoint()} -> IPoint; // returns endpoint with lower y coordinate
+        {segment.leftEndpoint()} -> IPoint; // returns endpoint with greater y coordinate
+        {segment.rightEndpoint()} -> IPoint; // returns endpoint with lower y coordinate
         {segment.isEndpoint(point)} -> std::same_as<bool>; // test whether any the point is either p or q
         {segment.isValid()} -> std::same_as<bool>; // a segment is valid if its length is greater than 0, i.e. if p != q
         {segment.hasOverlay(segment)} -> std::same_as<bool>; // test whether the segment has a true overlay with another segment (not only touching the endpoints)
         {segment.containsSegment(segment)} -> std::same_as<bool>; // test whether the segment fully contains another segment
         {segment.touches(segment)} -> std::same_as<bool>; // test whether two segments touch each other at the endpoints
         {segment.distance(point)} -> std::floating_point; // returns minimum distance from the segment to a point
+        {segment.distance(segment)} -> std::floating_point; // returns minimum distance from the segment to a point
 };
 
 /**
