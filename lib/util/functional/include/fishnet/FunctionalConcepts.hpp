@@ -38,6 +38,9 @@ concept Producer = std::convertible_to<F,std::function<T()>>;
 template<typename F, typename T>
 concept Consumer = UnaryFunction<F,T,void>;
 
+template<typename F>
+concept Task = std::convertible_to<F,std::function<void()>>;
+
 template<typename F, typename RangeType, typename ResultType = std::ranges::range_value_t<RangeType>>
 concept ReduceFunction = std::ranges::forward_range<RangeType> && UnaryFunction<F,RangeType,ResultType>;
 
