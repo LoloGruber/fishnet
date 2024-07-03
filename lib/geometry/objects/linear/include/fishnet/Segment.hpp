@@ -29,11 +29,11 @@ public:
     template<fishnet::math::Number U, typename = std::enable_if_t<!std::is_same_v<U,T> && std::is_same_v<T,fishnet::math::DEFAULT_NUMERIC>>>
     constexpr Segment(Vec2D<U> p, Vec2D<T> q):Segment(Vec2D<T>(p.x ,p.y) ,q){}
 
-    constexpr Vec2D<T> p() const noexcept {
+    constexpr const Vec2D<T> & p() const noexcept {
         return _p;
     }
 
-    constexpr Vec2D<T> q() const noexcept {
+    constexpr const Vec2D<T> & q() const noexcept {
         return _q;
     }
 
@@ -45,25 +45,25 @@ public:
         return _q-_p;
     }
 
-    constexpr Vec2D<T> upperEndpoint() const noexcept {
+    constexpr const Vec2D<T> & upperEndpoint() const noexcept {
         if (fishnet::math::areEqual(_p.y,_q.y)) 
             return _p.x > _q.x ? _p:_q;
         return _p.y > _q.y ? _p:_q;
     }
 
-    constexpr Vec2D<T> lowerEndpoint() const noexcept {
+    constexpr const Vec2D<T> & lowerEndpoint() const noexcept {
         if(fishnet::math::areEqual(_p.y,_q.y)) 
             return _p.x < _q.x ? _p:_q;
         return _p.y < _q.y ? _p:_q;
     }
 
-    constexpr Vec2D<T> leftEndpoint() const noexcept {
+    constexpr const Vec2D<T> & leftEndpoint() const noexcept {
         if(fishnet::math::areEqual(_p.x,_q.x))
             return _p.y < _q.y ? _p : _q;
         return _p.x < _q.x ? _p : _q;
     }
 
-    constexpr Vec2D<T> rightEndpoint() const noexcept {
+    constexpr const Vec2D<T> & rightEndpoint() const noexcept {
         if(fishnet::math::areEqual(_p.x,_q.x))
             return _p.y > _q.y ? _p : _q;
         return _p.x > _q.x ? _p : _q;
@@ -180,8 +180,8 @@ public:
         return "[" + this->_p.toString() +","+this->_q.toString()+"]";
     }
 };
-static_assert(LinearGeometry<Segment<double>>);
 static_assert(ISegment<Segment<double>>);
+static_assert(LinearGeometry<Segment<double>>);
 }
 namespace std{
     template<typename T>

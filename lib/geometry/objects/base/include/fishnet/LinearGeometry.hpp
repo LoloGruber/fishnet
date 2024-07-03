@@ -10,8 +10,8 @@ namespace fishnet::geometry{
  * @tparam P IPoint implementation type
  * @tparam T numeric type used for computations
  */
-template<typename P,typename T = P::numeric_type>
-concept IPoint = std::same_as<P,Vec2D<typename P::numeric_type>>;
+template<typename P,typename T = typename std::remove_cvref_t<P>::numeric_type>
+concept IPoint = std::same_as<std::remove_cvref_t<P>,Vec2D<typename std::remove_cvref_t<P>::numeric_type>>;
 
 /**
  * @brief Interface for a line
