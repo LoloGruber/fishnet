@@ -150,6 +150,14 @@ public:
         return this->sls;
     }
 
+    auto lowerBound(const Input & input) const noexcept {
+        return this->sls.lower_bound(&input);
+    }
+
+    auto upperBound(const Input & input) const noexcept {
+        return this->sls.upper_bound(&input);
+    }
+
     const EventQ & getEventQueue() const noexcept {
         return this->queue;
     }
