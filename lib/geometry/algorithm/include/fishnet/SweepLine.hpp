@@ -150,6 +150,10 @@ public:
         return this->sls;
     }
 
+    SLS & getSLS() noexcept {
+        return this->sls;
+    }
+
     auto lowerBound(const Input & input) const noexcept {
         return this->sls.lower_bound(&input);
     }
@@ -159,6 +163,10 @@ public:
     }
 
     const EventQ & getEventQueue() const noexcept {
+        return this->queue;
+    }
+
+    EventQ & getEventQueue() noexcept {
         return this->queue;
     }
 
