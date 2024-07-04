@@ -29,14 +29,14 @@ static Vec2DReal closestPointOnSegment(ISegment auto const & segment, IPoint aut
  * 
  * @param lhs 
  * @param rhs 
- * @return closest pair of points
+ * @return closest pair of points (first point from lhs segment, second point from rhs segment)
  */
 static std::pair<Vec2DReal,Vec2DReal> closestPoints(ISegment auto const & lhs, ISegment auto const & rhs) noexcept {
     std::array<std::pair<Vec2DReal,Vec2DReal>,4> points {{
         {closestPointOnSegment(lhs,rhs.p()),rhs.p()},
         {closestPointOnSegment(lhs,rhs.q()),rhs.q()},
-        {closestPointOnSegment(rhs,lhs.p()),lhs.p()},
-        {closestPointOnSegment(rhs,lhs.q()),lhs.q()}
+        {lhs.p(),closestPointOnSegment(rhs,lhs.p())},
+        {lhs.q(),closestPointOnSegment(rhs,lhs.q())}
     }};
     return *std::ranges::min_element(points,[](const auto & left, const auto & right){
         const auto & [lFrom,lTo] = left;
@@ -49,6 +49,10 @@ namespace __impl{
 
 class ClosestPointsResult;
 
+/**
+ * @brief Helper class for referencing the associated polygon of segment / point during sweep line
+ * 
+ */
 class PolygonReference{
 private:
     friend class ClosestPointsResult;
@@ -64,7 +68,7 @@ private:
         return this->type==Type::NONE;
     }
 public:
-    static PolygonReference THIS() {
+    static inline PolygonReference THIS() {
         return PolygonReference(Type::THIS);
     }
 
@@ -89,8 +93,16 @@ public:
 
 };
 
+/**
+ * @brief Input type of the Polygon Segment sweep
+ * Stores the segment and holds polygon reference to its associated polygon
+ * 
+ * @tparam isXOrdered indicates whether the points are ordered by x or y coordinate first
+ */
+template<bool isXOrdered>
 struct PolygonPoint {
-    constexpr static LexicographicOrder ordering {};
+    constexpr static LexicographicOrder xOrdering {};
+    constexpr static YLexicographicOrder yOrdering{};
     Segment<fishnet::math::DEFAULT_FLOATING_POINT> segment;
     PolygonReference polygonRef;
 
@@ -106,85 +118,231 @@ struct PolygonPoint {
     }
 
     constexpr bool inline operator<(const PolygonPoint& other ) const noexcept {
-        if(polygonRef==other.polygonRef)
-            return ordering(this->getPoint(),other.getPoint());
+        if(polygonRef==other.polygonRef){
+            if constexpr(isXOrdered)
+                return xOrdering(this->getPoint(),other.getPoint());
+            else
+                return yOrdering(this->getPoint(),other.getPoint());
+        }
         return polygonRef < other.polygonRef;
     }
 };
 
+/**
+ * @brief Result of Polygon Segment Sweep line
+ * Keeps track of the minimum distance and the closest pair of points
+ * Additionally tracks whether the other polygon was found by the sweep line and if one polygon was already fully processed.
+ * This avoids unnecessary distance computations
+ */
 class ClosestPointsResult{
 private:
     bool foundPointOfOtherPolygon = false;
     PolygonReference polyRef;
 public:
-    Vec2DReal p1;
-    Vec2DReal p2;
+    Vec2DReal thisPoint;
+    Vec2DReal otherPoint;
+    size_t thisCounter = 0;
+    size_t otherCounter = 0;
     fishnet::math::DEFAULT_FLOATING_POINT minDistance;
 
-    ClosestPointsResult(fishnet::math::DEFAULT_FLOATING_POINT initialMinDistance):minDistance(initialMinDistance){}
+    ClosestPointsResult(const Vec2DReal & thisInitial, const Vec2DReal & otherInitial,size_t thisCounter, size_t otherCounter)
+    :thisPoint(thisInitial),otherPoint(otherInitial),thisCounter(thisCounter),otherCounter(otherCounter),minDistance(thisInitial.distance(otherInitial)){}
 
     bool startSearch(PolygonReference polygonRef){
         if(foundPointOfOtherPolygon){
             return true;
         }
-        [[unlikely]] if(polyRef.isNone()){
-            polyRef = polygonRef;
+        [[unlikely]] if(polyRef.isNone()){// only the case for the first element
+            polyRef = polygonRef; 
         }
         if(polyRef != polygonRef){
             foundPointOfOtherPolygon = true;
         }
         return foundPointOfOtherPolygon;
     }
+
+    /**
+     * @brief Updates the amount of points to be left for processing
+     * 
+     * @tparam O 
+     * @param point 
+     */
+    template<bool O>
+    void inline visit(const PolygonPoint<O> & point) noexcept {
+        if(point.polygonRef == PolygonReference::THIS())
+            thisCounter--;
+        else 
+            otherCounter--;
+    }
+
+    /**
+     * @brief Get the current point of other polygon which is part of the closest pair
+     * 
+     * @tparam O 
+     * @param point 
+     * @return const Vec2DReal& 
+     */
+    template<bool O>
+    const Vec2DReal & getNeighbour(const PolygonPoint<O> & point) const noexcept {
+        if(point.polygonRef == PolygonReference::THIS()){
+            return otherPoint;
+        }
+        return thisPoint;
+    }
 };
 
-using PolygonPointSweepLine = SweepLine<PolygonPoint,ClosestPointsResult,std::less<PolygonPoint>,false,std::less<fishnet::math::DEFAULT_NUMERIC>>;
+template<bool isXOrdered>
+using PolygonPointSweepLine = SweepLine<PolygonPoint<isXOrdered>,ClosestPointsResult,std::less<PolygonPoint<isXOrdered>>,false,std::less<fishnet::math::DEFAULT_NUMERIC>>;
 
-struct PolygonSegmentSweepEvent : public PolygonPointSweepLine::InsertEvent {
-    PolygonSegmentSweepEvent(const PolygonPoint & point):PolygonPointSweepLine::InsertEvent(point){}
+template<bool isXOrdered>
+struct PolygonSegmentSweepEvent : public PolygonPointSweepLine<isXOrdered>::InsertEvent {
+
+    PolygonSegmentSweepEvent(const PolygonPoint<isXOrdered> & point):PolygonPointSweepLine<isXOrdered>::InsertEvent(point){}
+
     virtual fishnet::math::DEFAULT_NUMERIC eventPoint() const noexcept {
-        return this->obj->getPoint().x;
+        if constexpr(isXOrdered)
+            return this->obj->getPoint().x;
+        else 
+            return this->obj->getPoint().y;
     }
-    virtual void process(PolygonPointSweepLine & sweepLine, ClosestPointsResult & status) const {
+
+    /**
+     * @brief Indicates whether the sweep line can be stop.
+     * This is the case when one polygon was fully processed and the current segment is out of range of the closest possible neighbour
+     * @param sweepLine 
+     * @param status 
+     * @return true 
+     * @return false 
+     */
+    bool inline stop(PolygonPointSweepLine<isXOrdered> & sweepLine, ClosestPointsResult & status) const {
+        if constexpr(isXOrdered)
+            return (status.thisCounter==0 || status.otherCounter==0) && this->obj->segment.leftEndpoint().x - status.minDistance > status.getNeighbour(*this->obj).x;
+        else 
+            return (status.thisCounter==0 || status.otherCounter==0) && this->obj->segment.lowerEndpoint().x - status.minDistance > status.getNeighbour(*this->obj).x;
+    }
+
+    /**
+     * @brief Query for finding segments in the buffer of the sweep line (currentSegment.left.x-distance,current.x]
+     * x is swapped for y when sweep line is not ordered by x
+     * @param status 
+     * @return PolygonPoint<isXOrdered>
+     */
+    PolygonPoint<isXOrdered> lowerBoundQuery(ClosestPointsResult & status) const noexcept {
+        if constexpr(isXOrdered)
+            return PolygonPoint<isXOrdered>(Segment<fishnet::math::DEFAULT_FLOATING_POINT>(this->obj->segment.leftEndpoint() - Vec2DReal(status.minDistance,0),this->obj->getPoint()),this->obj->polygonRef.other());
+        else 
+            return PolygonPoint<isXOrdered>(Segment<fishnet::math::DEFAULT_FLOATING_POINT>(this->obj->segment.lowerEndpoint() - Vec2DReal(0,status.minDistance),this->obj->getPoint()),this->obj->polygonRef.other());
+    }
+
+    /**
+     * @brief Query for finding segments in the buffer of the sweep line [current.x,currentSegment.right.x+distance)
+     * x is swapped for y when sweep line is not ordered by x
+     * @param status 
+     * @return PolygonPoint<isXOrdered> 
+     */
+    PolygonPoint<isXOrdered> upperBoundQuery(ClosestPointsResult & status) const noexcept {
+        if constexpr(isXOrdered)
+            return PolygonPoint<isXOrdered>({this->obj->segment.rightEndpoint() + Vec2DReal(status.minDistance,0),this->obj->getPoint()},this->obj->polygonRef.other());
+        else 
+            return PolygonPoint<isXOrdered>({this->obj->segment.upperEndpoint() + Vec2DReal(0,status.minDistance),this->obj->getPoint()},this->obj->polygonRef.other());
+    }
+
+    virtual void process(PolygonPointSweepLine<isXOrdered> & sweepLine, ClosestPointsResult & status) const {
         const auto & polygonPoint = *this->obj;
         const auto & point = polygonPoint.getPoint();
         const auto & segment = polygonPoint.getSegment();
         sweepLine.addSLS(this->obj);
+        status.visit(polygonPoint);
+        if(stop(sweepLine,status)){
+            /*Clear Event Queue since not closer distances can be found*/
+            while(sweepLine.getEventQueue().size() > 1)
+                sweepLine.getEventQueue().pop();
+            return;
+        }
         if(not status.startSearch(polygonPoint.polygonRef))
             return;
-        auto leftQuery  = PolygonPoint({segment.leftEndpoint() - Vec2DReal(status.minDistance,0),point},polygonPoint.polygonRef.other());
-        auto rightQuery = PolygonPoint({segment.rightEndpoint() + Vec2DReal(status.minDistance,0),point},polygonPoint.polygonRef.other());
+        auto leftQuery  = lowerBoundQuery(status);
+        auto rightQuery = upperBoundQuery(status);
         auto lowerBound = sweepLine.lowerBound(leftQuery);
         auto upperBound = sweepLine.upperBound(rightQuery);
-        for(auto it= lowerBound; it != upperBound; ++it){
+        auto & sweepLineStatus = sweepLine.getSLS();
+        for(auto it= lowerBound; it != upperBound;){
             const auto & currentSegment = (*it)->getSegment();
+            /*Remove elements out of range from the sweep line*/
+            if(currentSegment.rightEndpoint().x + status.minDistance < point.x){
+                it = sweepLineStatus.erase(it);
+                continue;
+            }
             auto [l,r] = closestPoints(segment,currentSegment);
             auto distance = l.distance(r);
             if(distance < status.minDistance){
                 status.minDistance = distance;
-                status.p1 = l;
-                status.p2 = r;
+                /*Ensure the points in status are set for the correct polygon*/
+                if(polygonPoint.polygonRef == PolygonReference::THIS()){
+                    status.thisPoint = l;
+                    status.otherPoint = r;
+                } else {
+                    status.thisPoint = r;
+                    status.otherPoint = l;
+                }
             }
+            ++it;
         }
     }
 };
 
-static std::pair<Vec2DReal,Vec2DReal> closestPointsSweep(IRing auto const & lhs, IRing auto const & rhs) noexcept {
-    PolygonPointSweepLine sweepLine;
-    ClosestPointsResult status {std::ranges::begin(lhs.getSegments())->p().distance(std::ranges::begin(rhs.getSegments())->p())};
-    std::vector<PolygonPoint> segments;
-    std::ranges::for_each(lhs.getSegments(),[&segments](const auto & segmentLeft){
-        segments.push_back(PolygonPoint(Segment<fishnet::math::DEFAULT_FLOATING_POINT>(Vec2DReal(segmentLeft.leftEndpoint()),Vec2DReal(segmentLeft.rightEndpoint())),PolygonReference::THIS()));
-        segments.push_back(PolygonPoint(Segment<fishnet::math::DEFAULT_FLOATING_POINT>(Vec2DReal(segmentLeft.rightEndpoint()),Vec2DReal(segmentLeft.leftEndpoint())),PolygonReference::THIS()));
+/**
+ * @brief Sweep line approach for computing the closest pair of points for two segment ranges
+ * 
+ * @tparam xSweep true -> sweep left to right, false -> sweep bottom to top
+ * @param lhs segment range of a shape
+ * @param rhs segment range of another shape
+ * @return std::pair<Vec2DReal,Vec2DReal> closest pair of points
+ */
+template<bool xSweep>
+static std::pair<Vec2DReal,Vec2DReal> closestPointsSweep(SegmentRange auto const & lhs, SegmentRange auto const & rhs) noexcept {
+    const auto & lInit = std::ranges::begin(lhs)->p();
+    const auto & rInit = std::ranges::begin(rhs)->p();
+    PolygonPointSweepLine<xSweep> sweepLine;
+    /*Initialize status with two "random" points of the segment ranges*/
+    ClosestPointsResult status {lInit,rInit,fishnet::util::size(lhs),fishnet::util::size(rhs)};
+    std::vector<PolygonPoint<xSweep>> segments;
+    std::ranges::for_each(lhs,[&segments,&status](const auto & segmentLeft){
+        if constexpr(xSweep){
+            segments.push_back(PolygonPoint<xSweep>(Segment<fishnet::math::DEFAULT_FLOATING_POINT>(Vec2DReal(segmentLeft.leftEndpoint()),Vec2DReal(segmentLeft.rightEndpoint())),PolygonReference::THIS()));
+            segments.push_back(PolygonPoint<xSweep>(Segment<fishnet::math::DEFAULT_FLOATING_POINT>(Vec2DReal(segmentLeft.rightEndpoint()),Vec2DReal(segmentLeft.leftEndpoint())),PolygonReference::THIS()));
+        }else {
+            segments.push_back(PolygonPoint<xSweep>(Segment<fishnet::math::DEFAULT_FLOATING_POINT>(Vec2DReal(segmentLeft.lowerEndpoint()),Vec2DReal(segmentLeft.upperEndpoint())),PolygonReference::THIS()));
+            segments.push_back(PolygonPoint<xSweep>(Segment<fishnet::math::DEFAULT_FLOATING_POINT>(Vec2DReal(segmentLeft.upperEndpoint()),Vec2DReal(segmentLeft.lowerEndpoint())),PolygonReference::THIS()));
+        }
+        status.thisCounter+=2; // keep track of points to be processed -> allows early return
     });
-    std::ranges::for_each(rhs.getSegments(),[&segments](const auto & segmentRight){
-        segments.push_back(PolygonPoint(Segment<fishnet::math::DEFAULT_FLOATING_POINT>(Vec2DReal(segmentRight.leftEndpoint()),Vec2DReal(segmentRight.rightEndpoint())),PolygonReference::OTHER()));
-        segments.push_back(PolygonPoint(Segment<fishnet::math::DEFAULT_FLOATING_POINT>(Vec2DReal(segmentRight.rightEndpoint()),Vec2DReal(segmentRight.leftEndpoint())),PolygonReference::OTHER()));
+    std::ranges::for_each(rhs,[&segments,&status](const auto & segmentRight){
+        if constexpr(xSweep){
+            segments.push_back(PolygonPoint<xSweep>(Segment<fishnet::math::DEFAULT_FLOATING_POINT>(Vec2DReal(segmentRight.leftEndpoint()),Vec2DReal(segmentRight.rightEndpoint())),PolygonReference::OTHER()));
+            segments.push_back(PolygonPoint<xSweep>(Segment<fishnet::math::DEFAULT_FLOATING_POINT>(Vec2DReal(segmentRight.rightEndpoint()),Vec2DReal(segmentRight.leftEndpoint())),PolygonReference::OTHER()));
+        }else {
+            segments.push_back(PolygonPoint<xSweep>(Segment<fishnet::math::DEFAULT_FLOATING_POINT>(Vec2DReal(segmentRight.lowerEndpoint()),Vec2DReal(segmentRight.upperEndpoint())),PolygonReference::OTHER()));
+            segments.push_back(PolygonPoint<xSweep>(Segment<fishnet::math::DEFAULT_FLOATING_POINT>(Vec2DReal(segmentRight.upperEndpoint()),Vec2DReal(segmentRight.lowerEndpoint())),PolygonReference::OTHER()));
+        }
+        status.otherCounter+=2;
     });
     std::ranges::for_each(segments,[&sweepLine](const auto & segment){
-        sweepLine.addEvent(std::make_unique<PolygonSegmentSweepEvent>(segment));
+        sweepLine.addEvent(std::make_unique<PolygonSegmentSweepEvent<xSweep>>(segment));
     });
     auto result = sweepLine.sweep(status);
-    return {result.p1,result.p2};
+    return {result.thisPoint,result.otherPoint};
+}
+
+
+static std::pair<Vec2DReal,Vec2DReal> closestPointsSweep(IRing auto const & lhs, IRing auto const & rhs) noexcept {
+    const auto & lInit = std::ranges::begin(lhs.getSegments())->p();
+    const auto & rInit = std::ranges::begin(rhs.getSegments())->p();
+    auto dirVector = rInit - lInit;
+    if(fabs(dirVector.x) > fabs(dirVector.y)){
+        return closestPointsSweep<true>(lhs.getSegments(),rhs.getSegments());
+    }
+    return closestPointsSweep<false>(lhs.getSegments(),rhs.getSegments());
 }
 
 
@@ -236,20 +394,33 @@ struct DefaultDistanceFunction{
 }
 
 /**
- * @brief Generic Shape overload to compute the closest pair of points of two shapes
+ * @brief Ring overload to compute the closest pair of points of two shapes
  * This function uses the solely the boundary of the shape for the closest points, assuming that the shapes do not contain each other.
- * @tparam Shape 
- * @tparam OtherShape 
- * @param lhs 
- * @param rhs 
- * @return std::pair<Vec2DReal,Vec2DReal> 
+ * @param lhs ring
+ * @param rhs other ring
+ * @return std::pair<Vec2DReal,Vec2DReal> closest pair
  */
-template<Shape ShapeType, Shape OtherShapeType>
-static std::pair<Vec2DReal,Vec2DReal> closestPoints(const ShapeType & lhs, const OtherShapeType & rhs) noexcept {
-/*     if(fishnet::util::size(lhs.getSegments())+ fishnet::util::size(rhs.getSegments()) > 100){
-        return __impl::closestPointsSweep(lhs.getBoundary(),rhs.getBoundary());
-    } */
-    return __impl::closestPointsBruteForce(lhs.getBoundary(),rhs.getBoundary());
+static std::pair<Vec2DReal,Vec2DReal> closestPoints(const IRing auto & lhs, const IRing auto & rhs) noexcept {
+    constexpr static size_t SWEEP_LINE_THRESHOLD = 10000;
+    if(fishnet::util::size(lhs.getSegments()) * fishnet::util::size(rhs.getSegments()) > SWEEP_LINE_THRESHOLD){
+        return __impl::closestPointsSweep(lhs,rhs);
+    }
+    return __impl::closestPointsBruteForce(lhs,rhs);
+}
+
+/**
+ * @brief Generic overload for shapes to compute the closest pair of points
+ * 
+ * @tparam S ShapeType 
+ * @tparam T ShapeType
+ * @tparam std::enable_if_t<!IRing<S> || !IRing<T>> ensure not both types are Rings
+ * @param lhs shape
+ * @param rhs other shape
+ * @return std::pair<Vec2DReal,Vec2DReal> closest pair
+ */
+template <Shape S, Shape T, typename = std::enable_if_t<!IRing<S> || !IRing<T>>>
+static std::pair<Vec2DReal,Vec2DReal> closestPoints(const S  & lhs, const T  & rhs) noexcept {
+    return closestPoints(lhs.getBoundary(),rhs.getBoundary());
 }
 
 /**
