@@ -207,6 +207,18 @@ struct LexicographicOrder{
         return lhs.x < rhs.x;
     }
 };
+
+/**
+ * @brief Comparator for lexigraphically-ordering of Vec2D objects, with y Coordinate first
+ */
+struct YLexicographicOrder{
+    template<fishnet::math::Number T,fishnet::math::Number U>
+    constexpr inline bool operator()(const Vec2D<T> & lhs, const Vec2D<U> & rhs)const noexcept {
+        if(fishnet::math::areEqual(lhs.y,rhs.y))
+             return lhs.x < rhs.x;
+        return lhs.y < rhs.y;
+    }
+};
 using Vec2DStd = Vec2D<fishnet::math::DEFAULT_NUMERIC>;
 using Vec2DReal =Vec2D<fishnet::math::DEFAULT_FLOATING_POINT>;
 }
