@@ -254,7 +254,7 @@ struct PolygonSegmentSweepEvent : public PolygonPointSweepLine<isXOrdered>::Inse
         sweepLine.addSLS(this->obj);
         status.visit(polygonPoint);
         if(stop(sweepLine,status)){
-            /*Clear Event Queue since not closer distances can be found*/
+            /*Clear Event Queue since no closer distances can be found*/
             while(sweepLine.getEventQueue().size() > 1)
                 sweepLine.getEventQueue().pop();
             return;
@@ -269,9 +269,16 @@ struct PolygonSegmentSweepEvent : public PolygonPointSweepLine<isXOrdered>::Inse
         for(auto it= lowerBound; it != upperBound;){
             const auto & currentSegment = (*it)->getSegment();
             /*Remove elements out of range from the sweep line*/
-            if(currentSegment.rightEndpoint().x + status.minDistance < point.x){
-                it = sweepLineStatus.erase(it);
-                continue;
+            if constexpr(isXOrdered){
+                if(currentSegment.rightEndpoint().x + status.minDistance < point.x){
+                    it = sweepLineStatus.erase(it);
+                    continue;
+                }
+            }else {
+                if(currentSegment.upperEndpoint().y + status.minDistance < point.y){
+                    it = sweepLineStatus.erase(it);
+                    continue;
+                }
             }
             auto [l,r] = closestPoints(segment,currentSegment);
             auto distance = l.distance(r);
