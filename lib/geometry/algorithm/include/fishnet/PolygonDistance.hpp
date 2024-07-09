@@ -307,7 +307,7 @@ struct PolygonSegmentSweepEvent : public PolygonPointSweepLine<isXOrdered>::Inse
  * @return std::pair<Vec2DReal,Vec2DReal> closest pair of points
  */
 template<bool xSweep>
-static std::pair<Vec2DReal,Vec2DReal> closestPointsSweep(SegmentRange auto const & lhs, SegmentRange auto const & rhs) noexcept {
+static std::pair<Vec2DReal,Vec2DReal> closestPointsSweep(SegmentRange auto && lhs, SegmentRange auto && rhs) noexcept {
     const auto & lInit = std::ranges::begin(lhs)->p();
     const auto & rInit = std::ranges::begin(rhs)->p();
     PolygonPointSweepLine<xSweep> sweepLine;
@@ -342,30 +342,32 @@ static std::pair<Vec2DReal,Vec2DReal> closestPointsSweep(SegmentRange auto const
 }
 
 
-static std::pair<Vec2DReal,Vec2DReal> closestPointsSweep(IRing auto const & lhs, IRing auto const & rhs) noexcept {
-    const auto & lInit = std::ranges::begin(lhs.getSegments())->p();
-    const auto & rInit = std::ranges::begin(rhs.getSegments())->p();
+static std::pair<Vec2DReal,Vec2DReal> closestPointsSweep(SegmentRange auto && lhs, SegmentRange auto && rhs) noexcept {
+    const auto & lInit = std::ranges::begin(lhs)->p();
+    const auto & rInit = std::ranges::begin(rhs)->p();
     auto dirVector = rInit - lInit;
     if(fabs(dirVector.x) > fabs(dirVector.y)){
-        return closestPointsSweep<true>(lhs.getSegments(),rhs.getSegments());
+        return closestPointsSweep<true>(lhs,rhs);
     }
-    return closestPointsSweep<false>(lhs.getSegments(),rhs.getSegments());
+    return closestPointsSweep<false>(lhs,rhs);
 }
 
 
 /**
- * @brief Compute the pair of closest points of two rings
+ * @brief Compute the pair of closest points of two segment ranges belong to different shapes
  * 
  * @param lhs ring object
  * @param rhs ring object
  * @return std::pair<Vec2DReal,Vec2DReal> 
  */
-static std::pair<Vec2DReal,Vec2DReal> closestPointsBruteForce(IRing auto const & lhs,IRing auto const & rhs) noexcept {
+static std::pair<Vec2DReal,Vec2DReal> closestPointsBruteForce(SegmentRange auto && lhs,SegmentRange auto  && rhs) noexcept {
     fishnet::math::DEFAULT_FLOATING_POINT minDistance = std::numeric_limits<fishnet::math::DEFAULT_FLOATING_POINT>::max();
     Vec2DReal bestLeft;
     Vec2DReal bestRight;
-    for(const auto & s : lhs.getSegments()){
-        for(const auto & p : rhs.getPoints()){
+    auto leftPoints = lhs | std::views::transform([](const auto & s){return s.p();});
+    auto rightPoints = rhs | std::views::transform([](const auto & s){return s.p();});
+    for(const auto & s : lhs){
+        for(const auto & p : rightPoints){
             auto pointOnSegment = closestPointOnSegment(s,p);
             if(pointOnSegment.distance(p) < minDistance){
                 bestLeft = pointOnSegment;
@@ -374,8 +376,8 @@ static std::pair<Vec2DReal,Vec2DReal> closestPointsBruteForce(IRing auto const &
             }
         }
     }
-    for(const auto & s : rhs.getSegments()){
-        for(const auto & p: lhs.getPoints()){
+    for(const auto & s : rhs){
+        for(const auto & p: leftPoints){
             auto pointOnSegment = closestPointOnSegment(s,p);
             if(pointOnSegment.distance(p) < minDistance){
                 bestLeft = p;
@@ -398,37 +400,59 @@ struct DefaultDistanceFunction{
     }
 };
 
+/**
+ * @brief Generic SegmentRange overload to compute the closest pair of points of two shapes
+ * This function uses the solely the range of segments of the shape for the closest points, assuming that the shapes induced by the segments do not contain each other.
+ * @param lhs ring
+ * @param rhs other ring
+ * @return std::pair<Vec2DReal,Vec2DReal> closest pair
+ */
+static std::pair<Vec2DReal,Vec2DReal> closestPoints( SegmentRange auto && lhs,  SegmentRange auto && rhs) noexcept {
+    constexpr static size_t SWEEP_LINE_THRESHOLD = 10000;
+    if(fishnet::util::size(lhs) * fishnet::util::size(rhs) > SWEEP_LINE_THRESHOLD){
+        return __impl::closestPointsSweep(lhs,rhs);
+    }
+    return __impl::closestPointsBruteForce(lhs,rhs);
+}
 }
 
 /**
- * @brief Ring overload to compute the closest pair of points of two shapes
- * This function uses the solely the boundary of the shape for the closest points, assuming that the shapes do not contain each other.
+ * @brief Ring overload to compute the closest pair of points
+ * This function uses the segment on the boundary of the shape to compute the closest pair of points, assuming that the rings do not contain each other.
  * @param lhs ring
  * @param rhs other ring
  * @return std::pair<Vec2DReal,Vec2DReal> closest pair
  */
 static std::pair<Vec2DReal,Vec2DReal> closestPoints(const IRing auto & lhs, const IRing auto & rhs) noexcept {
-    constexpr static size_t SWEEP_LINE_THRESHOLD = 10000;
-    if(fishnet::util::size(lhs.getSegments()) * fishnet::util::size(rhs.getSegments()) > SWEEP_LINE_THRESHOLD){
-        return __impl::closestPointsSweep(lhs,rhs);
-    }
-    return __impl::closestPointsBruteForce(lhs,rhs);
+    return __impl::closestPoints(lhs.getSegments(),rhs.getSegments());
 }
 
 /**
- * @brief Generic overload for shapes to compute the closest pair of points
+ * @brief Overload for polygons to compute the closest pair of points
  * 
- * @tparam S ShapeType 
- * @tparam T ShapeType
- * @tparam std::enable_if_t<!IRing<S> || !IRing<T>> ensure not both types are Rings
- * @param lhs shape
- * @param rhs other shape
+ * @param lhs polygon
+ * @param rhs other polygon
  * @return std::pair<Vec2DReal,Vec2DReal> closest pair
  */
-template <Shape S, Shape T, typename = std::enable_if_t<!IRing<S> || !IRing<T>>>
-static std::pair<Vec2DReal,Vec2DReal> closestPoints(const S  & lhs, const T  & rhs) noexcept {
+template <Shape S, Shape T, typename = std::enable_if_t<IPolygon<S> || IPolygon<T>>>
+static std::pair<Vec2DReal,Vec2DReal> closestPoints(const S  & lhs, const T   & rhs) noexcept {
     return closestPoints(lhs.getBoundary(),rhs.getBoundary());
 }
+
+/**
+ * @brief Overload for multiPolygons to compute the closest pair of points
+ * 
+ * @param lhs multi-polygon
+ * @param rhs other multi-polygon
+ * @return std::pair<Vec2DReal,Vec2DReal> closest pair
+ */
+static std::pair<Vec2DReal,Vec2DReal> closestPoints(const IMultiPolygon auto & lhs, const IMultiPolygon auto & rhs) noexcept {
+    return __impl::closestPoints(
+        lhs.getPolygons()|std::views::transform([](const auto & polygon){return polygon.getBoundary().getSegments();}) | std::views::join,
+        rhs.getPolygons()|std::views::transform([](const auto & polygon){return polygon.getBoundary().getSegments();}) | std::views::join
+    );
+}
+
 
 /**
  * @brief Compute the distance between two shapes, with custom distance function
