@@ -22,9 +22,9 @@ static std::pair<geometry::Vec2DReal,geometry::Vec2DReal> runScenario(fishnet::g
     util::StopWatch timer;
     for([[maybe_unused]] auto _ : std::views::iota(0UL,repetitions)){
         if constexpr(ExecMode == ExecutionMode::BRUTE_FORCE){
-            result = geometry::__impl::closestPointsBruteForce(lhs.getBoundary(),rhs.getBoundary());
+            result = geometry::__impl::closestPointsBruteForce(lhs.getBoundary().getSegments(),rhs.getBoundary().getSegments());
         }else if constexpr(ExecMode == ExecutionMode::SWEEP_LINE){
-            result = geometry::__impl::closestPointsSweep(lhs.getBoundary(),rhs.getBoundary());
+            result = geometry::__impl::closestPointsSweep(lhs.getBoundary().getSegments(),rhs.getBoundary().getSegments());
         }else if constexpr(ExecMode == ExecutionMode::DEFAULT){
             result = geometry::closestPoints(lhs,rhs);
         }
