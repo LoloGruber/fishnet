@@ -3,6 +3,7 @@
 #include "BoundingBoxPolygon.hpp"
 #include <fishnet/FunctionalConcepts.hpp>
 #include <fishnet/FixedSizeBuffer.hpp>
+#include "PolygonDistance.hpp"
 
 namespace fishnet::geometry {
 
@@ -45,7 +46,7 @@ struct PolygonNeighboursRemoveEvent: public PolygonNeighbours<P>::RemoveEvent {
         const auto & sls = sweepLine.getSLS();
         const auto & current = *this->obj;
         auto distanceMapper = [&current](const auto & p){
-            return current.getPolygon().distance(p);
+            return shapeDistance(current.getPolygon(),p);
         };
         // auto itInRange = [&current](auto it){
         //     return current.getBoundingBox().left() <= (*it)->getBoundingBox().right() ||
