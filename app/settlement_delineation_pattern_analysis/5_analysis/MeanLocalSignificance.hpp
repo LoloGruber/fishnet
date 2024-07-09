@@ -2,6 +2,7 @@
 #include <fishnet/Graph.hpp>
 #include <fishnet/Feature.hpp>
 #include <fishnet/ThreadPool.hpp>
+#include <fishnet/PolygonDistance.hpp>
 #include "CentralityMeasureType.hpp"
 
 #include <fishnet/StopWatch.h>
@@ -22,7 +23,8 @@ struct MeanLocalSignificance{
             double accLocalSig = 0;
             int count = 0;
             for(const auto & neighbour : source.getNeighbours(node)){
-                accLocalSig+= (node.area() * neighbour.area()) / pow(node.distance(neighbour),2);
+                auto distance = fishnet::geometry::shapeDistance(node,neighbour);
+                accLocalSig+= (node.area() * neighbour.area()) / pow(distance,2);
                 count++;
             }
             double meanLocalSig = count==0?0.0:accLocalSig / count;
