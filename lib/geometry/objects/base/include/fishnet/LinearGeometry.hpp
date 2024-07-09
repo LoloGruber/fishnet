@@ -55,8 +55,8 @@ concept requiredLinearFeatureInterface = fishnet::math::Number<T> && !ILine<L,T>
  * @tparam S segment implementation type
  * @tparam T numeric type used for computations
  */
-template<typename S, typename T = S::numeric_type>
-concept ISegment = __impl::requiredLinearFeatureInterface<S,T> && requires (const S & segment, const Vec2D<T> & point){
+template<typename S, typename T = typename std::remove_cvref_t<S>::numeric_type>
+concept ISegment = __impl::requiredLinearFeatureInterface<typename std::remove_cvref_t<S>,T> && requires (const S & segment, const Vec2D<T> & point){
         {segment.p()} -> IPoint;
         {segment.q()} -> IPoint;
         {segment.flip()} -> std::same_as<S>; // returnes a new segment with p and q swapped
