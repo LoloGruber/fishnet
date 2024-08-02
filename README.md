@@ -19,7 +19,7 @@ cmake ..
 cmake --build . <add custom cmake parameters here>
 ```
 When utilizing the **Memgraph** client, a running instance of the **Memgraph** database can be obtained using docker compose:
-```
+```shell
 cd prod/memgraph
 sudo docker compose up -d
 ```
@@ -58,6 +58,10 @@ int main() {
     resultLayer.overwrite(output);
 }
 ```
-
+To link the *Fishnet* framework to the program the following *CMake* file can be used:
+```cmake 
+add_executable(polygonGraph PolygonGraph.cpp)
+target_link_libraries(polygonGraph PRIVATE Fishnet::Fishnet)
+```
 
 
