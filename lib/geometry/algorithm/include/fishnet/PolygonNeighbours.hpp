@@ -146,7 +146,7 @@ static std::vector<std::pair<P,P>> findNeighbouringPolygons(const R & polygons, 
  * @return std::vector<std::pair<P,P>> list of pairs, indicating the neighbouring relationship of two polygons  
  */
 template<PolygonRange R>
-static std::vector<std::pair<std::ranges::range_value_t<R>,std::ranges::range_value_t<R>>> findNeighbouringPolygons(const R & polygons, fishnet::math::DEFAULT_NUMERIC bufferMultiplier) {
+static std::vector<std::pair<std::ranges::range_value_t<R>,std::ranges::range_value_t<R>>> findNeighbouringPolygons(const R & polygons, fishnet::math::DEFAULT_NUMERIC bufferMultiplier, size_t k) {
     if (bufferMultiplier <= 1)
         throw std::invalid_argument("Buffer range multiplier has to be greater than 1");
     using P = std::ranges::range_value_t<R>;
@@ -156,9 +156,9 @@ static std::vector<std::pair<std::ranges::range_value_t<R>,std::ranges::range_va
     }; // polygons are in relation if (scaled) bounding boxes overlap
 
     auto scaledWrapper = [bufferMultiplier](const P & polygon) {
-        auto aaBBRectangle = Rectangle<fishnet::math::DEFAULT_NUMERIC>(polygon.aaBB().getPoints());
+        auto aaBBRectangle = Rectangle<fishnet::math::DEFAULT_NUMERIC>(polygon);
         return BoundingBoxPolygon(polygon,aaBBRectangle.scale(bufferMultiplier));
     };
-    return findNeighbouringPolygonsTemplate(polygons, crossesOrContainedInBoundingBox,scaledWrapper);
+    return findNeighbouringPolygonsTemplate(polygons, crossesOrContainedInBoundingBox,scaledWrapper,k);
 }
 }
