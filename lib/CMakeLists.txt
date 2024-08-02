@@ -16,6 +16,7 @@ set(FISHNET_TARGETS
         math
 )
 add_library(${FISHNET_NAME} INTERFACE)
+target_include_directories(${FISHNET_NAME} INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
 target_link_libraries(${FISHNET_NAME} INTERFACE ${FISHNET_TARGETS})
 add_library(${FISHNET_NAME}::${FISHNET_NAME} ALIAS ${FISHNET_NAME} )
 #export(TARGETS ${FISHNET_TARGETS} NAMESPACE fishnet:: FILE Fishnet.cmake)
