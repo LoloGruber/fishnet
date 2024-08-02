@@ -12,43 +12,52 @@
 using namespace fishnet;
 
 enum class ExecutionMode{
-    BRUTE_FORCE, SWEEP_LINE, DEFAULT
+    BRUTE_FORCE, SWEEP_LINE_X, SWEEP_LINE_Y, DEFAULT
 };
 
 template<ExecutionMode ExecMode>
 static std::pair<geometry::Vec2DReal,geometry::Vec2DReal> runScenario(fishnet::geometry::IPolygon auto const & lhs, fishnet::geometry::IPolygon auto const & rhs, size_t repetitions, std::string_view filename){
     assert(repetitions > 0 && lhs != rhs);
     std::pair<geometry::Vec2DReal,geometry::Vec2DReal> result;
+    size_t numberOfSegments = fishnet::util::size(lhs.getBoundary().getSegments())*fishnet::util::size(rhs.getBoundary().getSegments());
+    std::cout << filename <<";"<< std::string(magic_enum::enum_name(ExecMode)) << ";";
+    std::cout << fishnet::util::size(lhs.getBoundary().getSegments()) <<";"<<fishnet::util::size(rhs.getBoundary().getSegments())<< ";"<<numberOfSegments <<";";
     util::StopWatch timer;
+
     for([[maybe_unused]] auto _ : std::views::iota(0UL,repetitions)){
         if constexpr(ExecMode == ExecutionMode::BRUTE_FORCE){
             result = geometry::__impl::closestPointsBruteForce(lhs.getBoundary().getSegments(),rhs.getBoundary().getSegments());
-        }else if constexpr(ExecMode == ExecutionMode::SWEEP_LINE){
-            result = geometry::__impl::closestPointsSweep(lhs.getBoundary().getSegments(),rhs.getBoundary().getSegments());
+        }else if constexpr(ExecMode == ExecutionMode::SWEEP_LINE_X){
+            result = geometry::__impl::closestPointsSweep<true>(lhs.getBoundary().getSegments(),rhs.getBoundary().getSegments());
+        }else if constexpr(ExecMode == ExecutionMode::SWEEP_LINE_Y){
+            result = geometry::__impl::closestPointsSweep<false>(lhs.getBoundary().getSegments(), rhs.getBoundary().getSegments());
         }else if constexpr(ExecMode == ExecutionMode::DEFAULT){
             result = geometry::closestPoints(lhs,rhs);
         }
     }
     double time = timer.stop();
-    size_t numberOfSegments = fishnet::util::size(lhs.getBoundary().getSegments())*fishnet::util::size(rhs.getBoundary().getSegments());
-    std::cout << filename << "\t\t["<< std::string(magic_enum::enum_name(ExecMode)) << "]: \t"<< time/double(repetitions) << "s\t\tAVG\t\t\t(N x M: "<< numberOfSegments <<")"<< std::endl;
+
+    std::cout << time/double(repetitions) << std::endl;
     return result;
 }
 
 static void runScenarios(fishnet::geometry::IPolygon auto const & lhs, fishnet::geometry::IPolygon auto const & rhs, size_t repetitions, std::string_view filename){
+    std::cout << "Scenario; Type; N;M; NxM; AVG of "<< repetitions << " in [s]" << std::endl;
     auto [lForce,rForce] = runScenario<ExecutionMode::BRUTE_FORCE>(lhs,rhs,repetitions,filename);
-    auto [lSweep,rSweep] = runScenario<ExecutionMode::SWEEP_LINE>(lhs,rhs,repetitions,filename);
+    auto [lSweep,rSweep] = runScenario<ExecutionMode::SWEEP_LINE_X>(lhs,rhs,repetitions,filename);
+    auto [lySweep, rySweep] = runScenario<ExecutionMode::SWEEP_LINE_Y>(lhs,rhs,repetitions,filename);
     auto [l,r] = runScenario<ExecutionMode::DEFAULT>(lhs,rhs,repetitions,filename);
     EXPECT_TRUE(fishnet::math::areEqual(lForce.distance(rForce),lSweep.distance(rSweep)));
     EXPECT_TRUE(fishnet::math::areEqual(lForce.distance(rForce),l.distance(r)));
+    EXPECT_TRUE(fishnet::math::areEqual(lySweep.distance(rySweep), l.distance(r)));
 }
 
 
 
 TEST(PolygonDistanceTest, settlementSamples){
     const std::filesystem::path settlementSamplesPath = util::PathHelper::projectDirectory() / std::filesystem::path("data/testing/Settlement_Samples");
-    const size_t repetitions = 10;
-    const size_t samples = 1;
+    const size_t repetitions = 1;
+    const size_t samples = 100;
     auto files = fishnet::GISFactory::getGISFiles(settlementSamplesPath);
     for(const auto & file: files | std::views::take(samples) ){
         auto layer = fishnet::VectorLayer<geometry::Polygon<double>>::read({file});
