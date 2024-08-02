@@ -1,0 +1,1 @@
+scp fishnet-image.tar.gz terra:/dss/dsshome1/0D/di35pof/.fishnet/compressed-image
