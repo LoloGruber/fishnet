@@ -1,0 +1,1 @@
+xdg-open report/index.html
