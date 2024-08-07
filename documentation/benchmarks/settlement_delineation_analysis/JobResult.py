@@ -47,6 +47,8 @@ def parse_job_type_from_json(json_data: str) -> JobType:
 def parse_job(path:str)->JobResult:
     with open(path, 'r') as f:
         json_str = f.read()
+        if len(json_str)==0:
+            return None
         json_str = re.sub(r'([{,]\s*)([a-zA-Z0-9_\[\]]+)(\s*):', r'\1"\2":', json_str)
         log = json.loads(json_str)
         return JobResult(parse_job_type_from_json(log),timedelta(seconds=log["duration[s]"]), log)
