@@ -7,13 +7,12 @@ from matplotlib.ticker import LogLocator, NullFormatter
 def plot_runtime_log(results:List[WorkflowResult]):
     fig, ax = plt.subplots(figsize=(12, 7))
     x = np.array([r.report.run_time.total_seconds() for r in results])
-    custom_ticks = [60, 600, 3600, 36000, 86400, 2 * 86400]  # 1ms to 2 days
+    custom_ticks = [60, 600, 3600, 36000, 86400, 2 * 86400,3*86400]  # 1ms to 2 days
 
     minor_ticks = np.concatenate([
         np.arange(120, 600, 60),       # 1 minute to 10 minutes
-        np.arange(600, 3600, 600),    # 10 minutes to 1 hour
-        np.arange(3600, 86400, 3600), # 1 hour to 1 day
-        np.arange(86400, 2 * 86400, 86400) # 1 day to 2 days
+        np.arange(1200, 3600, 600),    # 10 minutes to 1 hour
+        np.arange(7200, 86400, 3600), # 1 hour to 1 day
     ])
     labeled_minor_ticks = [120,180,300,1200,1800,7200,10800,18000]
 
@@ -21,7 +20,6 @@ def plot_runtime_log(results:List[WorkflowResult]):
     # Set x-ticks and labels
     ax.set_xticks(custom_ticks)
     ax.set_xticks(minor_ticks,minor=True)
-
     def get_best_time_unit(value):
         if value < 1:
             return value*1e-3
@@ -60,7 +58,7 @@ def plot_runtime_log(results:List[WorkflowResult]):
     for i, (val, color) in enumerate(zip(x, colors)):
         ax.barh(i, val, color=color,zorder=3)
     ax.set_yticks(np.arange(len(results)))
-    ax.set_yticklabels([r.name for r in results])
+    ax.set_yticklabels([r.name +f"\n({r.report.run_time})" for r in results])
 
     # # Adding labels and title
     ax.set_ylabel('Input Region', fontsize=16)
@@ -68,11 +66,11 @@ def plot_runtime_log(results:List[WorkflowResult]):
     # # ax.set_title('CPU Times by Run for Different Workflow Steps')
 
     # Add a grid
-    ax.grid(True, which='major', axis='x', linestyle='-', color='gray', alpha=0.95)  # Major grid with solid lines
+    ax.grid(True, which='major', axis='x', linestyle='-', color='black', alpha=1,zorder=1)  # Major grid with solid lines
     ax.grid(True, which='minor', axis='x', linestyle='--', color='gray', alpha=0.5)  # Minor
     # Ensure all custom major ticks are displayed
     for tick in custom_ticks:
-        ax.axvline(x=tick, color='gray', linestyle='--', linewidth=0.5, zorder=2)
+        ax.axvline(x=tick, color='gray', linestyle='--', linewidth=0.5, zorder=0)
     # Show the plot
     fig.tight_layout()
     fig.show()
@@ -127,7 +125,7 @@ def plot_stacked_step_times(results: List[WorkflowResult]):
     for i,r in enumerate(results):
         accumulated_time = total_times[i]  # Total time for the run in seconds
         ax.text(
-            accumulated_time + 1000,  # x position (slightly to the right of the stack)
+            accumulated_time,
             y[i],  # y position (center of the bar)
             f'{timedelta(seconds=accumulated_time)}',  # text (accumulated time in HH:MM:SS format)
             ha='left',  # horizontal alignment
@@ -198,18 +196,22 @@ def get_graph_properties_as_latex_table(results: List[WorkflowResult], delimiter
 \\end{table}"""
     return output
 
-def evaluate_workflows(directory: str, output_file: str=None, log_scale=False, plot_distributions_file = None):
-    workflows = load_directory(directory)
+def evaluate_input_regions( plot_distributions_file = None):
+    input = "C:\\Users\\Lolo\\OneDrive\\Dokumente\\Master Informatik\\5_WS23\\2024_MA_Lorenz_Gruber\\Results\\Settlement Distribution"
+    workflows = load_directory(input)
     workflows.sort(key=lambda x: x.report.run_time.total_seconds())
     tab = get_graph_properties_as_latex_table(workflows)
     print(tab)
-    if output_file is None:
-        return
-    fig = plot_runtime_log(workflows) if log_scale else plot_stacked_step_times(workflows)
-    fig.savefig(output_file)
-    if plot_distributions_file is not None:
-        dist = plot_stage_distribution(workflows)
-        dist.savefig(plot_distributions_file)
+    fig = plot_runtime_log(workflows)
+    fig.savefig("ttr-different-input.pdf")
+
+def evaluate_different_cfg():
+    cfg = "C:\\Users\\Lolo\\OneDrive\\Dokumente\\Master Informatik\\5_WS23\\2024_MA_Lorenz_Gruber\\Results\\Parameter Impact"
+    workflows = load_directory(cfg)
+    workflows.sort(key=lambda x: x.report.cpu_time.total_seconds())
+    create_custom_table(cfg)
+    fig =  plot_stacked_step_times(workflows)
+    fig.savefig("cpu-time-per-stage-different-config.pdf")
 
 def create_custom_table(directory:str):
     runs = load_directory(directory)
@@ -233,12 +235,5 @@ def create_custom_table(directory:str):
 
 
 if __name__ == '__main__':
-    cfg = "C:\\Users\\Lolo\\OneDrive\\Dokumente\\Master Informatik\\5_WS23\\2024_MA_Lorenz_Gruber\\Results\\Parameter Impact"
-    input = "C:\\Users\\Lolo\\OneDrive\\Dokumente\\Master Informatik\\5_WS23\\2024_MA_Lorenz_Gruber\\Results\\Settlement Distribution"
-    output_file_cfg = "cpu-time-per-stage-different-config.pdf"
-    # create_custom_table(cfg)
-    # evaluate_workflows(cfg,output_file_cfg)
-    evaluate_workflows(input,"ttr-different-input.pdf",True,"percentage-workflow-stages-different-inputs.pdf")
-
-
-
+    # evaluate_different_cfg()
+    evaluate_input_regions("percentage-workflow-stages-different-inputs.pdf")

@@ -27,9 +27,9 @@ class WorkflowResult:
         self.report = report
         self.jobs = {}
         jobs_time = sum([job.duration for job in jobs], timedelta(seconds=0))
-        orchestration_time = report.cpu_time - jobs_time
+        overhead = abs(report.cpu_time - jobs_time)
         self.jobs[JobType.ORCHESTRATION] = [
-            JobResult(JobType.ORCHESTRATION, orchestration_time, {"duration[s]": orchestration_time})]
+            JobResult(JobType.ORCHESTRATION, overhead, {"duration[s]": overhead})]
         for job in jobs:
             if job.type not in self.jobs:
                 self.jobs[job.type] = []
@@ -83,6 +83,20 @@ def parse(directory: str) -> WorkflowResult:
     slurm_file_path = os.path.join(directory, 'slurm.txt')
     if not os.path.exists(slurm_file_path):
         raise FileNotFoundError("slurm.txt file not found in the specified directory")
+
+    # stdout_file = os.path.join(directory,"stdout.log")
+    # jobs = []
+    # with open(stdout_file, 'r') as stdout:
+    #     out = stdout.read()
+    #     duration_pattern = r'"duration\[s\]":\s*([\d.]+)'
+    #
+    #     # Search for the duration in the log content
+    #     match = re.search(duration_pattern, out)
+    #     if match:
+    #         # Convert the matched duration value to a float
+    #         duration = float(match.group(1))
+    #         orchestration_job = JobResult(JobType.ORCHESTRATION,timedelta(seconds=duration),{"duration[s]":duration})
+    #         jobs.append(orchestration_job)
 
     # Load JSON config file
     with open(json_file_path, 'r') as json_file:
