@@ -8,6 +8,19 @@ import glob
 
 
 class WorkflowResult:
+    graph_properties = ["Connected Components", "#Nodes-after-contraction", "#Nodes-before-contraction", "Adjacencies"]
+
+    def init_stats(self):
+        stats = {}
+        for f in WorkflowResult.graph_properties:
+            stats[f] = 0
+        for jobs in self.jobs.values():
+            for job in jobs:
+                for f in WorkflowResult.graph_properties:
+                    if job.attributes.__contains__(f):
+                        stats[f] += int(job.attributes[f])
+        return stats
+
     def __init__(self, name: str, config, jobs: List[JobResult], report: SlurmReport):
         self.name = name
         self.config = config
@@ -21,6 +34,7 @@ class WorkflowResult:
             if job.type not in self.jobs:
                 self.jobs[job.type] = []
             self.jobs[job.type].append(job)
+        self.stats = self.init_stats()
 
     def total_cpu_time_per_type(self, type: JobType):
         return sum([job.duration for job in self.jobs.get(type)], timedelta(seconds=0))
@@ -87,13 +101,26 @@ def parse(directory: str) -> WorkflowResult:
         for file in os.listdir(job_directory)
         if file.endswith("stdout.log")
     ]
-    jobs = [parse_job(file) for file in job_files]
+    jobs = [job for job in (parse_job(file) for file in job_files) if job is not None]
     name = os.path.basename(directory)
     return WorkflowResult(name, config, jobs, slurm_report)
 
 
+def load_directory(directory: str) -> List[WorkflowResult]:
+    workflow_results = []
+    # Iterate through each subdirectory in the root directory
+    for subdir in os.listdir(directory):
+        subdir_path = os.path.join(directory, subdir)
+        if os.path.isdir(subdir_path):  # Ensure it's a directory
+            workflow_result = parse(subdir_path)
+            if workflow_result is not None:  # Ensure the parsing was successful
+                workflow_results.append(workflow_result)
+    return workflow_results
+
+
 if __name__ == '__main__':
-    result = parse("/home/lolo/Documents/results/Baseline")
+    result = parse(
+        "C:\\Users\\Lolo\\OneDrive\\Dokumente\\Master Informatik\\5_WS23\\2024_MA_Lorenz_Gruber\\Results\\Parameter Impact\\Baseline")
     type = JobType.NEIGHBOURS
     print(result.name)
     print(result.avg(type))
