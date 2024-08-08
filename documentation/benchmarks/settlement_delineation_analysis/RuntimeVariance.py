@@ -12,15 +12,15 @@ def get_as_latex_table(results: List[WorkflowResult], delimiter = ' & ', newline
         edges_initially = result.stats.get("Adjacencies")
         components = result.stats.get("Connected Components")
         nodes_finally = result.stats.get("#Nodes-after-contraction")
-        output += delimiter.join([str(counter),str(time),str(cpu),str(nodes_initially),str(edges_initially),str(components),str(nodes_finally)]) + newline
+        output += delimiter.join([str(counter),str(time),str(cpu),f"{nodes_initially:,}",f"{edges_initially:,}",f"{components:,}",f"{nodes_finally:,}"]) + newline
         counter += 1
     return output
 
 
 if __name__ == '__main__':
     runs =  load_directory("C:\\Users\\Lolo\\OneDrive\\Dokumente\\Master Informatik\\5_WS23\\2024_MA_Lorenz_Gruber\\Results\\Runtime Variance")
-    # res = get_as_latex_table(runs)
-    # print(res)
+    res = get_as_latex_table(runs)
+    print(res)
     cpu_times = np.array([r.report.cpu_time for r in runs])
     exec_times = np.array([r.report.run_time for r in runs])
     avg_cpu = np.average(cpu_times)
