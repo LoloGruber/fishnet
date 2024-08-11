@@ -57,10 +57,10 @@ for _, row in table_df.iterrows():
     min_indices = np.where(np.abs(measurements - min_value) < epsilon)[0]
 
     # Format measurement values with 5 decimal places and bold if they are minimum
-    brute_force = f"\\textbf{{{row['Brute-Force[s]']:.5f}}}" if 0 in min_indices else f"{row['Brute-Force[s]']:.5f}"
-    x_sweep = f"\\textbf{{{row['X-Sweep[s]']:.5f}}}" if 1 in min_indices else f"{row['X-Sweep[s]']:.5f}"
-    y_sweep = f"\\textbf{{{row['Y-Sweep[s]']:.5f}}}" if 2 in min_indices else f"{row['Y-Sweep[s]']:.5f}"
-    fishnet = f"\\textbf{{{row['Fishnet[s]']:.5f}}}" if 3 in min_indices else f"{row['Fishnet[s]']:.5f}"
+    brute_force = f"\\textbf{{{row['Brute-Force[s]']*1000:,.2f}}}" if 0 in min_indices else f"{row['Brute-Force[s]']*1000:,.2f}"
+    x_sweep = f"\\textbf{{{row['X-Sweep[s]']*1000:,.2f}}}" if 1 in min_indices else f"{row['X-Sweep[s]']*1000:.2f}"
+    y_sweep = f"\\textbf{{{row['Y-Sweep[s]']*1000:,.2f}}}" if 2 in min_indices else f"{row['Y-Sweep[s]']*1000:.2f}"
+    fishnet = f"\\textbf{{{row['Fishnet[s]']*1000:,.2f}}}" if 3 in min_indices else f"{row['Fishnet[s]']*1000:.2f}"
 
     # Format NxM with comma as thousand separator and 0 decimal places
     nxm = f"{row['NxM']:,}"  # Adds commas as thousand separators
