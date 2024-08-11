@@ -8,7 +8,7 @@ import glob
 
 
 class WorkflowResult:
-    graph_properties = ["Connected Components", "#Nodes-after-contraction", "#Nodes-before-contraction", "Adjacencies"]
+    graph_properties = ["Connected Components", "#Nodes-after-contraction", "polygon count", "Adjacencies"]
 
     def init_stats(self):
         stats = {}

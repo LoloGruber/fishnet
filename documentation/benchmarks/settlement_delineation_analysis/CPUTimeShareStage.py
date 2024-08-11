@@ -182,7 +182,7 @@ def get_graph_properties_as_latex_table(results: List[WorkflowResult], delimiter
     content = []
     for result in results:
         ttr = result.report.run_time
-        nodes_initially = result.stats.get("#Nodes-before-contraction")
+        nodes_initially = result.stats.get("polygon count")
         edges_initially = result.stats.get("Adjacencies")
         components = result.stats.get("Connected Components")
         nodes_finally = result.stats.get("#Nodes-after-contraction")
@@ -235,5 +235,5 @@ def create_custom_table(directory:str):
 
 
 if __name__ == '__main__':
-    # evaluate_different_cfg()
-    evaluate_input_regions("percentage-workflow-stages-different-inputs.pdf")
+    evaluate_different_cfg()
+    # evaluate_input_regions("percentage-workflow-stages-different-inputs.pdf")
