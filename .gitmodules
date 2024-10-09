@@ -1,9 +1,0 @@
-[submodule "extern/json"]
-	path = extern/json
-	url = https://github.com/nlohmann/json.git
-[submodule "extern/CLI11"]
-	path = extern/CLI11
-	url = https://github.com/CLIUtils/CLI11.git
-[submodule "extern/magic_enum"]
-	path = extern/magic_enum
-	url = https://github.com/Neargye/magic_enum.git
