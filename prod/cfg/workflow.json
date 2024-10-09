@@ -8,10 +8,10 @@
     "executor":{
         "name":"CWLTOIL",
         "flags":"--log-dir ~/logs --no-container",
-        "cwl-directory":"/root/cwl"
+        "cwl-directory":"/fishnet/prod/cwl"
     },
     "contraction-output-stem":"Contraction",
     "analysis-output-stem":"Analysis",
-    "memgraph-host":"localhost",
+    "memgraph-host":"memgraph",
     "memgraph-port":7687
 }
