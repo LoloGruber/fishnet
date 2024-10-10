@@ -10,7 +10,7 @@
     },
     "config":{
         "class":"File",
-        "path": "/home/lolo/Documents/fishnet/prod/local/cfg/analysis.json"
+        "path": "/home/lolo/Documents/fishnet/prod/local/cfg/sda-workflow.json"
     },
     "outputStem": "Punjab_Small_Analysis"
 }

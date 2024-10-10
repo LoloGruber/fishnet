@@ -13,7 +13,7 @@
     ],
     "config":{
         "class":"File",
-        "path": "/home/lolo/Documents/fishnet/prod/local/cfg/neighbours.json"
+        "path": "/home/lolo/Documents/fishnet/prod/local/cfg/sda-workflow.json"
     },
     "taskID":1
 }

@@ -1,9 +1,8 @@
 {
     "config":{
         "class":"File",
-        "path": "/home/lolo/Documents/fishnet/prod/local/cfg/components.json"
+        "path": "/home/lolo/Documents/fishnet/prod/local/cfg/sda-workflow.json"
     },
     "jobDirectory":"/home/lolo/Documents/fishnet/tests/workflow/example/jobs",
-    "configDirectory":"/home/lolo/Documents/fishnet/prod/local/cfg",
     "nextId":1001
 }
