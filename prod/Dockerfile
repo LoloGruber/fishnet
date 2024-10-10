@@ -25,9 +25,9 @@ RUN cmake -DCMAKE_BUILD_TYPE=Release -DFISHNET_TEST=OFF -DFISHNET_APPS=ON -DCMAK
 RUN cmake --build . --config Release -j 16
 RUN cmake --install .
 # Copy cwl and cfg files in user directory
-WORKDIR /root
-RUN cp -r /fishnet/prod/cfg .
-RUN mkdir jobs
-RUN mkdir working
+RUN cp -r /fishnet/prod/cfg /root
+RUN mkdir -p /root/jobs
+RUN mkdir -p /root/working
 ENV PATH="/opt/venv/bin:$PATH"
+WORKDIR /root
 CMD ["tail", "-f", "/dev/null"]
