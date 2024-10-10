@@ -8,8 +8,6 @@ services:
     command: ["--log-level=TRACE","--query-execution-timeout-sec=0"]
     volumes:
       - memgraph-logs:/var/log/memgraph
-    networks:
-      default: {}
  
   lab:
     image: memgraph/lab:latest
@@ -23,18 +21,14 @@ services:
       - QUICK_CONNECT_MG_PORT=7687
 
   fishnet:
-    image: fishnet:latest  # Replace with the actual fishnet image name
+    image: fishnet:latest
     container_name: fishnet
     depends_on:
       - memgraph
-    networks:
-      default: {}
+    volumes:
+      - /home/lolo/.fishnet:/root
 
 volumes:
   memgraph-logs:
     driver: local
-
-networks:
-  default:
-    name: fishnet-net
-    attachable: true
+  

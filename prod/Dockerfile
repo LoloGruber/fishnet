@@ -16,21 +16,18 @@ RUN apt-get update && apt-get install -y \
 RUN python3 -m venv /opt/venv 
 # Install toil
 RUN /opt/venv/bin/pip install toil[cwl]
-# Add to PATH
-RUN export PATH="/opt/venv/bin:$PATH"
 # Clone Repository
 RUN git clone https://gitlab2.informatik.uni-wuerzburg.de/log66jr/fishnet
-# Copy cwl and cfg files in user directory
-WORKDIR /fishnet
-RUN cp -r prod/cfg /root/cfg
 # Build the project
-RUN mkdir build
+RUN mkdir /fishnet/build
 WORKDIR /fishnet/build
 RUN cmake -DCMAKE_BUILD_TYPE=Release -DFISHNET_TEST=OFF -DFISHNET_APPS=ON -DCMAKE_INSTALL_LIBDIR=lib ..
 RUN cmake --build . --config Release -j 16
 RUN cmake --install .
-# Initialize home directory
+# Copy cwl and cfg files in user directory
 WORKDIR /root
+RUN cp -r /fishnet/prod/cfg .
 RUN mkdir jobs
-
+RUN mkdir working
+ENV PATH="/opt/venv/bin:$PATH"
 CMD ["tail", "-f", "/dev/null"]
