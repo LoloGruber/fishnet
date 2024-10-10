@@ -11,7 +11,7 @@ class ConnectedComponentsTask: public Task{
 private:
     ConnectedComponentsConfig config;
     std::filesystem::path jobDirectory;
-    std::filesystem::path cfgDirectory;
+    std::filesystem::path cfgFile;
     size_t nextJobID;
 
     struct ComponentFileJob{
@@ -20,11 +20,11 @@ private:
     };
 
 public:
-    ConnectedComponentsTask(ConnectedComponentsConfig && config,std::filesystem::path && jobDirectory,std::filesystem::path && cfgDirectory,size_t nextJobID):config(std::move(config)),jobDirectory(std::move(jobDirectory)),cfgDirectory(std::move(cfgDirectory)),nextJobID(nextJobID){
+    ConnectedComponentsTask(ConnectedComponentsConfig && config,std::filesystem::path && jobDirectory,std::filesystem::path && cfgFile,size_t nextJobID):config(std::move(config)),jobDirectory(std::move(jobDirectory)),cfgFile(std::move(cfgFile)),nextJobID(nextJobID){
         this->desc["type"]="COMPONENTS";
         this->desc["config"]=this->config.jsonDescription;
         this->desc["job-directory"]=this->jobDirectory.string();
-        this->desc["cfg-directory"]=this->cfgDirectory.string();
+        this->desc["cfg-file"]=this->cfgFile.string();
         this->desc["next-job-id"]=this->nextJobID;
     }
 
@@ -98,7 +98,7 @@ public:
             contractionJob.id = nextJobID++;
             auto filenameStem = "_"+std::filesystem::path(files[0]).stem().string()+"_Component_"+std::to_string(componentIdList[0]);
             contractionJob.file = jobDirectory / std::filesystem::path("Contraction"+filenameStem).replace_extension(".json");
-            contractionJob.config = cfgDirectory / std::filesystem::path{"contraction.json"};
+            contractionJob.config = cfgFile / std::filesystem::path{"contraction.json"};
             contractionJob.inputs = stringsToPathsMapper(files);
             contractionJob.components = componentIdList;
             contractionJob.state = JobState::RUNNABLE;
@@ -109,7 +109,7 @@ public:
             AnalysisJob analysisJob;
             analysisJob.id = nextJobID++;
             analysisJob.file = jobDirectory / std::filesystem::path("Analysis"+filenameStem).replace_extension(".json");
-            analysisJob.config = cfgDirectory / std::filesystem::path{"analysis.json"};
+            analysisJob.config = cfgFile / std::filesystem::path{"analysis.json"};
             analysisJob.state = JobState::RUNNABLE;
             analysisJob.type = JobType::ANALYSIS;
             analysisJob.input = fishnet::util::PathHelper::changeFilename(files[0],outputName);

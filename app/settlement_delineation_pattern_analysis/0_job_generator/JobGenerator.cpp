@@ -23,7 +23,7 @@ int main(int argc, char * argv[]){
     auto exp = MemgraphConnection::create(cfg.params).transform([](auto && conn){return JobAdjacency(std::move(conn));});
     auto && jobAdj = getExpectedOrThrowError(exp);
     auto jobDAG = loadDAG(std::move(jobAdj));
-    JobGenerator jobGenerator {std::move(cfg),std::move(workingDirectory)};
+    JobGenerator jobGenerator {std::move(cfg),std::move(workingDirectory),{configPath}};
     jobGenerator.generate(fishnet::GISFactory::getGISFiles(inputDirectory),jobDAG);
     return 0;
 }

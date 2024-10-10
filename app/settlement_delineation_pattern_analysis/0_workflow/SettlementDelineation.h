@@ -15,12 +15,13 @@ private:
     JobGeneratorConfig jobGeneratorConfig;
     ConnectedComponentsConfig connectedComponentsConfig;
     std::vector<std::filesystem::path> inputFiles;
+    std::filesystem::path cfgFile;
     std::filesystem::path workingDirectory;
     std::filesystem::path outputPath;
 
 public:
-    SettlementDelineation(const json & cfg, std::vector<std::filesystem::path> && inputFiles,std::filesystem::path outputPath, std::filesystem::path workingDirectory = std::filesystem::current_path())
-    :schedulerConfig(cfg),jobGeneratorConfig(cfg),connectedComponentsConfig(cfg),inputFiles(std::move(inputFiles)),workingDirectory(std::move(workingDirectory)),outputPath(std::move(outputPath)){
+    SettlementDelineation(const json & cfg, std::vector<std::filesystem::path> && inputFiles,std::filesystem::path outputPath, std::filesystem::path cfgFile, std::filesystem::path workingDirectory = std::filesystem::current_path())
+    :schedulerConfig(cfg),jobGeneratorConfig(cfg),connectedComponentsConfig(cfg),inputFiles(std::move(inputFiles)),cfgFile(std::move(cfgFile)),workingDirectory(std::move(workingDirectory)),outputPath(std::move(outputPath)){
         this->desc["type"]="Settlement Delineation Workload Generator & Scheduler";
         this->desc["config"] = cfg;
         this->desc["working-directory"]=this->workingDirectory.string();
@@ -38,7 +39,7 @@ public:
         Scheduler scheduler = schedulerConfig.getSchedulerWithExecutorType(loadDAG(std::move(jobAdj)));
         auto & jobDag = scheduler.getDAG();
         JobGeneratorConfig copy = jobGeneratorConfig;
-        JobGenerator jobGenerator {std::move(copy),workingDirectory};
+        JobGenerator jobGenerator {std::move(copy),workingDirectory,cfgFile};
         auto pathToTmpDir = workingDirectory / std::filesystem::path("tmp/");
         if (std::filesystem::exists(pathToTmpDir)) {
             std::filesystem::remove_all(pathToTmpDir);
@@ -82,12 +83,7 @@ public:
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
             scheduler.schedule();
         }
-        json cfg;
-        for(auto && cfgFile : std::filesystem::directory_iterator(jobGeneratorConfig.cfgDirectory)){
-            if(cfgFile.is_regular_file() && cfgFile.path().extension() == ".json"){
-                cfg.merge_patch(json::parse(std::ifstream(cfgFile.path())));
-            }
-        }
+        json cfg = json::parse(std::ifstream(cfgFile));
         std::ofstream cfgStream {fishnet::util::PathHelper::appendToFilename(outputPath,"_cfg.json")};
         cfgStream << cfg.dump(4) << std::endl;
     }

@@ -21,7 +21,7 @@ int main(int argc, const char * argv[]){
             throw CLI::ValidationError(error.what());
         }
     });
-    app.add_option("-c,--config",configFilename,"Path to contract.json configuration")->required()->check(CLI::ExistingFile);
+    app.add_option("-c,--config",configFilename,"Path to configuration file")->required()->check(CLI::ExistingFile);
     app.add_option("--outputStem",outputStem,"Output file path, storing the merged polygons after performing the contraction on all inputs")->required();
     app.add_option("--components",components,"Component ids of connected components to contract")->each([](const std::string & str){
         std::stringstream stringStream {str};

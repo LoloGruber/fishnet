@@ -71,7 +71,6 @@ public:
         json output;
         output["config"] = asFile(componentsJob.config);
         output["jobDirectory"] = componentsJob.jobDirectory.string();
-        output["configDirectory"] = componentsJob.cfgDirectory.string();
         output["nextId"] = componentsJob.nextJobId;
         writeJson(output,componentsJob);
     }

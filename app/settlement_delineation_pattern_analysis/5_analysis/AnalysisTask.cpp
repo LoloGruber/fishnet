@@ -11,7 +11,7 @@ int main(int argc, char * argv[]){
     std::string outputStem;
     std::string outputDirectory;
     app.add_option("-i,--input",inputFilename,"Path to input shape file")->required()->check(CLI::ExistingFile);
-    app.add_option("-c,--config",configFilename,"Path to contract.json configuration")->required()->check(CLI::ExistingFile);
+    app.add_option("-c,--config",configFilename,"Path to configuration file")->required()->check(CLI::ExistingFile);
     app.add_option("--outputStem",outputStem,"Output file path, storing the merged polygons after performing the contraction on all inputs")->required();
     app.add_option("--outputDir",outputDirectory,"Output directory, created file at this directory with the filename ${outputStem}.shp")->check(CLI::ExistingDirectory);
     CLI11_PARSE(app,argc,argv);

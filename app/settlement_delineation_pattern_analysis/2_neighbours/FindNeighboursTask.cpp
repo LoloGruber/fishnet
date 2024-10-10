@@ -18,7 +18,7 @@ int main(int argc, char const *argv[]){
             throw CLI::ValidationError(error.what());
         }
     });
-    app.add_option("-c,--config",configFilename,"Path to neighbours.json configuration")->required()->check(CLI::ExistingFile);
+    app.add_option("-c,--config",configFilename,"Path to configuration file")->required()->check(CLI::ExistingFile);
     CLI11_PARSE(app,argc,argv);
     FindNeighboursTask<GeometryType> task {FindNeighboursConfig<GeometryType>(json::parse(std::ifstream(configFilename))),fishnet::Shapefile(primaryInput)};
     for(auto && filename : additionalInputs) {

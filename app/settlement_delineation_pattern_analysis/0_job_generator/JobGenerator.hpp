@@ -12,6 +12,7 @@ class JobGenerator{
 private:
     JobGeneratorConfig config;
     std::filesystem::path workingDirectory;
+    std::filesystem::path cfgFile;
     size_t jobIdCounter = 0;
 private:
     std::unordered_map<std::filesystem::path,FilterJob> generateFilterJobs(const std::vector<std::filesystem::path> & inputs,JobDAG_t & jobDag) noexcept{
@@ -24,7 +25,7 @@ private:
             job.state = JobState::RUNNABLE;
             job.type = JobType::FILTER;
             job.input = input;
-            job.config = config.cfgDirectory / std::filesystem::path("filter.json");
+            job.config = cfgFile;
             JobWriter::write(job);
             jobDag.addNode(job);
             result.try_emplace(input,std::move(job));
@@ -72,7 +73,7 @@ private:
             job.file = config.jobDirectory / std::filesystem::path(jobFilename);
             job.state = JobState::RUNNABLE;
             job.type = JobType::NEIGHBOURS;
-            job.config = config.cfgDirectory / std::filesystem::path("neighbours.json");
+            job.config = cfgFile;
             job.primaryInput = filteredFilenameMapper(input);
 
             for(const auto & neighbour: dependencyMap.at(input)){
@@ -103,9 +104,8 @@ private:
         job.file = config.jobDirectory / std::filesystem::path(jobFileName);
         job.state = JobState::RUNNABLE;
         job.type = JobType::COMPONENTS;
-        job.config = config.cfgDirectory / std::filesystem::path("components.json");
+        job.config = cfgFile;
         job.nextJobId = jobIdCounter;
-        job.cfgDirectory = config.cfgDirectory;
         job.jobDirectory = config.jobDirectory;
         for(const auto & predecessor: predecessors){
             jobDag.addEdge(predecessor,job);
@@ -113,7 +113,8 @@ private:
         JobWriter::write(job);
     }
 public:
-    JobGenerator(JobGeneratorConfig && config, std::filesystem::path workingDirectory):config(std::move(config)),workingDirectory(std::move(workingDirectory)){}
+    JobGenerator(JobGeneratorConfig && config, std::filesystem::path workingDirectory, std::filesystem::path cfgFile)
+        :config(std::move(config)),workingDirectory(std::move(workingDirectory)),cfgFile(std::move(cfgFile)){}
 
     void cleanup(JobDAG_t & jobDag){
         for(const auto & entry: std::filesystem::directory_iterator(config.jobDirectory)){

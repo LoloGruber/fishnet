@@ -22,7 +22,7 @@ int main(int argc, char * argv[]){
     std::string configFilename;
     std::string outputDirectory;
     app.add_option("-i,--input",inputFilename,"Input GIS file for the filter step")->required()->check(CLI::ExistingFile);
-    app.add_option("-c,--config", configFilename, "Path to filter.json file")->required()->check(CLI::ExistingFile);
+    app.add_option("-c,--config", configFilename, "Path to configuration file")->required()->check(CLI::ExistingFile);
     app.add_option("-o,--output", outputDirectory, "Output directory path")->check(CLI::ExistingDirectory);
     CLI11_PARSE(app,argc,argv);
     auto inputShapefile = GISFactory::asShapefile(inputFilename);

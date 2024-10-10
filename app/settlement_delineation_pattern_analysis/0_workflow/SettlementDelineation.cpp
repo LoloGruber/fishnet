@@ -12,7 +12,7 @@ int main(int argc, char * argv[]){
     std::string outputFilename;
     std::string workingDirectory;
     std::vector<std::filesystem::path> inputFiles;
-    app.add_option("-c,--config",pathToCfg,"Path to workflow.json configuration")->required()->check(CLI::ExistingFile);
+    app.add_option("-c,--config",pathToCfg,"Path to workflow configuration")->required()->check(CLI::ExistingFile);
     app.add_option("-i,--inputDirectory",inputDirectory,"Path to input directory")->required()->check(CLI::ExistingDirectory);
     app.add_option("-d,--workingDirectory",workingDirectory,"Path to working directory [default: current directory]")->check(CLI::ExistingDirectory);
     app.add_option("-o,--output",outputFilename,"Path where merged output will be stored (only applied if last job type is at least MERGE)")->check([](const std::string & str){
