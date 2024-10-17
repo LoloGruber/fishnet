@@ -14,12 +14,6 @@ inputs:
       position: 2
       prefix: -j
     doc: "Path to directory where created jobs will be stored"
-  configDirectory:
-    type: string
-    inputBinding:
-      position: 3
-      prefix: -d
-    doc: "Path to diretory where config files reside"
   nextId:
     type: long
     inputBinding:
