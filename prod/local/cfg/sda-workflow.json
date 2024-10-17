@@ -1,7 +1,7 @@
 {
     "job-directory":"/home/lolo/Documents/fishnet/tests/workflow/test/jobs",
     "neighbouring-files-predicate":"WSF",
-    "splits":4,
+    "splits":0,
     "cleanup-first":true,
     "last-job-type":"MERGE",
     "hardware-concurrency":0,
