@@ -20,7 +20,11 @@ private:
     };
 
 public:
-    ConnectedComponentsTask(ConnectedComponentsConfig && config,std::filesystem::path && jobDirectory,std::filesystem::path && cfgFile,size_t nextJobID):config(std::move(config)),jobDirectory(std::move(jobDirectory)),cfgFile(std::move(cfgFile)),nextJobID(nextJobID){
+    ConnectedComponentsTask(ConnectedComponentsConfig && config,std::filesystem::path && jobDirectory,std::filesystem::path && cfgFile,size_t nextJobID)
+    :config(std::move(config)),jobDirectory(std::move(jobDirectory)),nextJobID(nextJobID){
+        if(std::filesystem::is_symlink(cfgFile))
+            cfgFile = std::filesystem::read_symlink(cfgFile);
+        this->cfgFile = std::filesystem::absolute(cfgFile);
         this->desc["type"]="COMPONENTS";
         this->desc["config"]=this->config.jsonDescription;
         this->desc["job-directory"]=this->jobDirectory.string();
@@ -98,7 +102,7 @@ public:
             contractionJob.id = nextJobID++;
             auto filenameStem = "_"+std::filesystem::path(files[0]).stem().string()+"_Component_"+std::to_string(componentIdList[0]);
             contractionJob.file = jobDirectory / std::filesystem::path("Contraction"+filenameStem).replace_extension(".json");
-            contractionJob.config = cfgFile / std::filesystem::path{"contraction.json"};
+            contractionJob.config = cfgFile;
             contractionJob.inputs = stringsToPathsMapper(files);
             contractionJob.components = componentIdList;
             contractionJob.state = JobState::RUNNABLE;
@@ -109,7 +113,7 @@ public:
             AnalysisJob analysisJob;
             analysisJob.id = nextJobID++;
             analysisJob.file = jobDirectory / std::filesystem::path("Analysis"+filenameStem).replace_extension(".json");
-            analysisJob.config = cfgFile / std::filesystem::path{"analysis.json"};
+            analysisJob.config = cfgFile;
             analysisJob.state = JobState::RUNNABLE;
             analysisJob.type = JobType::ANALYSIS;
             analysisJob.input = fishnet::util::PathHelper::changeFilename(files[0],outputName);

@@ -114,7 +114,11 @@ private:
     }
 public:
     JobGenerator(JobGeneratorConfig && config, std::filesystem::path workingDirectory, std::filesystem::path cfgFile)
-        :config(std::move(config)),workingDirectory(std::move(workingDirectory)),cfgFile(std::move(cfgFile)){}
+        :config(std::move(config)),workingDirectory(std::move(workingDirectory)){
+            if(std::filesystem::is_symlink(cfgFile))
+                cfgFile = std::filesystem::read_symlink(cfgFile);
+            this->cfgFile = std::filesystem::absolute(cfgFile);
+        }
 
     void cleanup(JobDAG_t & jobDag){
         for(const auto & entry: std::filesystem::directory_iterator(config.jobDirectory)){

@@ -7,7 +7,7 @@
 
 int main(int argc, char * argv[]){
     CLI::App app {"SettlementDelineation Workload-Generator and Scheduler"};
-    std::string pathToCfg = "/home/lolo/Documents/fishnet/prod/local/cfg/workflow.json";
+    std::string pathToCfg = "/home/lolo/Documents/fishnet/prod/local/cfg/sda-workflow.json";
     std::string inputDirectory = "/home/lolo/Documents/fishnet/data/WSF/2019/Punjab";
     std::string outputFilename;
     std::string workingDirectory;
@@ -34,10 +34,10 @@ int main(int argc, char * argv[]){
         workingDir = {workingDirectory};
     std::filesystem::path output;
     if(outputFilename.empty())
-        output = workingDir / std::filesystem::path("Result.shp");
+        output = workingDir / std::filesystem::path(workingDir.stem()).replace_extension(".shp");
     else   
         output = outputFilename;    
-    SettlementDelineation task {json::parse(std::ifstream(pathToCfg)),fishnet::GISFactory::getGISFiles(inputDirectory),output,workingDir};
+    SettlementDelineation task {json::parse(std::ifstream(pathToCfg)),fishnet::GISFactory::getGISFiles(inputDirectory),output,{pathToCfg},workingDir};
     task.run();
     return 0;
 }
