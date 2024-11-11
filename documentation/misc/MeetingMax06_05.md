@@ -1,2 +1,0 @@
-- WSF auf terrabyte -> Julian Zeidler
-- OGC -> Workflow als beispiel use case
