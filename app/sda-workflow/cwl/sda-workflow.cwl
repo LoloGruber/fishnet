@@ -3,7 +3,7 @@ class: CommandLineTool
 baseCommand: [SettlementDelineation]
 hints:
     DockerRequirement:
-        dockerPull: fishnet:1.0
+        dockerPull: fishnet/sda:latest
 inputs:
   shpFile:
     type: File
