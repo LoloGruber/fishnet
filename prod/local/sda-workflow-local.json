@@ -6,9 +6,8 @@
     "last-job-type":"MERGE",
     "hardware-concurrency":0,
     "executor":{
-        "name":"CWLTOIL",
-        "flags":"--log-dir ~/logs --no-container",
-        "cwl-directory":"/home/lolo/Documents/fishnet/prod/cwl"
+        "name":"CWLTOOL",
+        "cwl-directory":"/home/lolo/Documents/fishnet/app/sda-workflow/cwl"
     },
     "contraction-output-stem":"Contraction",
     "analysis-output-stem":"Analysis",
