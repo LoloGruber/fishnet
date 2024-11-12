@@ -2,6 +2,7 @@
 #include <fstream>
 #include <nlohmann/json.hpp>
 #include <fishnet/Shapefile.hpp>
+#include <fishnet/PathHelper.h>
 #include "Job.hpp"
 
 
@@ -12,14 +13,14 @@ private:
     static json asFile(const std::filesystem::path  & path)  {
         json output;
         output["class"] = "File";
-        output["path"]= path.string();
+        output["path"]= fishnet::util::PathHelper::absoluteCanonical(path).string();
         if(path.string().ends_with(".shp")){
             std::vector<json> secondaryFiles;
             fishnet::Shapefile shpFile {path};
             for(auto const& ext : fishnet::Shapefile::REQUIRED_FILES | std::views::filter([](const auto & str){return str !=".shp";})){
                 json secondaryFile;
                 secondaryFile["class"]="File";
-                auto copyOfPath = shpFile.getPath();
+                auto copyOfPath = fishnet::util::PathHelper::absoluteCanonical(shpFile.getPath());
                 secondaryFile["path"]= copyOfPath.replace_extension(ext);
                 secondaryFiles.push_back(std::move(secondaryFile));
             }
