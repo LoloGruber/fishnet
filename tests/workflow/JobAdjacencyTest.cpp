@@ -6,12 +6,12 @@
 using namespace fishnet::graph;
 using namespace testutil;
 
-using DAGType = decltype(GraphFactory::DAG<Job>(JobAdjacency(MemgraphConnection::create("host",0).value(),0)));
+using DAGType = decltype(GraphFactory::DAG<Job>(JobAdjacency(MemgraphConnection::create("host",0).value())));
 
 class JobAdjacencyTest: public ::testing::Test{
 protected:
     void SetUp() override {
-        jobAdj = std::move(MemgraphConnection::create(hostname,port).transform([this](auto && connection){return JobAdjacency(std::move(connection),workflowID);}));
+        jobAdj = std::move(MemgraphConnection::create(hostname,port).transform([](auto && connection){return JobAdjacency(std::move(connection));}));
         if(not jobAdj){
             throw std::runtime_error(jobAdj.error());
         }
@@ -31,7 +31,6 @@ protected:
     }
     u_int16_t port = 7687;
     std::string hostname = "localhost";
-    size_t workflowID = 1;
     std::expected<JobAdjacency,std::string> jobAdj = std::unexpected("Not initialized yet"); 
     Job filterJob {1,"filter.json",JobType::FILTER,JobState::RUNNABLE};
     Job secondFilterJob {2,"otherFilter.json",JobType::FILTER,JobState::RUNNABLE};
@@ -41,7 +40,7 @@ protected:
 };
 
 TEST_F(JobAdjacencyTest, initDAG){
-    EXPECT_NO_FATAL_FAILURE(auto g= GraphFactory::DAG<Job>(JobAdjacency(MemgraphConnection::create(hostname,port).value(),0)));
+    EXPECT_NO_FATAL_FAILURE(auto g= GraphFactory::DAG<Job>(JobAdjacency(MemgraphConnection::create(hostname,port).value())));
 }
 
 TEST_F(JobAdjacencyTest, addNode){
@@ -152,18 +151,4 @@ TEST_F(JobAdjacencyTest, adjPairs) {
         {filterJob,neighboursJob},{secondFilterJob,neighboursJob}
     };
     EXPECT_UNSORTED_RANGE_EQ(jobAdj->getAdjacencyPairs(),expected);
-}
-
-TEST_F(JobAdjacencyTest, concurrentUsage){
-    auto duplicateJobAdjacency = std::move(MemgraphConnection::create(hostname,port).transform([this](auto && connection){return JobAdjacency(std::move(connection),workflowID);})).value();
-    duplicateJobAdjacency.removeNode(this->filterJob); // removes filterJob on same workflow reference
-    EXPECT_SIZE(this->jobAdj->nodes(),3);
-    EXPECT_FALSE(this->jobAdj->contains(filterJob));
-    size_t otherWorkflowID = 404;
-    assert(otherWorkflowID != workflowID);
-    auto differentWorkflowJobAdjacency = std::move(MemgraphConnection::create(hostname,port).transform([otherWorkflowID](auto && connection){return JobAdjacency(std::move(connection),otherWorkflowID);})).value();
-    EXPECT_EMPTY(differentWorkflowJobAdjacency.nodes());
-    differentWorkflowJobAdjacency.addNode(filterJob); // adding job to another workflow should not influence original
-    EXPECT_SIZE(differentWorkflowJobAdjacency.nodes(),1);
-    EXPECT_SIZE(this->jobAdj->nodes(),3); // size is still three
 }
