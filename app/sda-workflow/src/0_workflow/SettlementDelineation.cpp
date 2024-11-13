@@ -29,9 +29,11 @@ int main(int argc, char * argv[]){
     CLI11_PARSE(app,argc,argv);
     std::filesystem::path workingDir;
     if(workingDirectory.empty())
-        workingDir = std::filesystem::current_path().string();
-    else 
-        workingDir = {workingDirectory};
+        workingDir = std::filesystem::current_path();
+    else {
+        workingDir = fishnet::util::PathHelper::absoluteCanonical(workingDirectory);
+        std::filesystem::current_path(workingDir);
+    }
     std::filesystem::path output;
     if(outputFilename.empty())
         output = workingDir / std::filesystem::path(workingDir.stem()).replace_extension(".shp");
