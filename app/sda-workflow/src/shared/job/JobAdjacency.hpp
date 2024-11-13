@@ -17,42 +17,22 @@ public:
     using equality_predicate = std::equal_to<Job>;
     using hash_function = Hash;
 private:
-    constexpr static std::string_view WORKFLOW_VARIABLE = "w";
     MemgraphConnection dbConnection;
-    size_t workflowInstanceID;
     friend JobDAGTest;
     JobAdjacency() = default;
 
     bool createConstraintsAndIndexes() const noexcept {
-        return Query("CREATE CONSTRAINT ON (w:Workflow) ASSERT w.id IS UNIQUE").executeAndDiscard(dbConnection)
+        return Query("CREATE CONSTRAINT ON (j:Job) ASSERT j.id IS UNIQUE").executeAndDiscard(dbConnection)
             && Query("CREATE CONSTRAINT ON (j:Job) ASSERT exists(j.file)").executeAndDiscard(dbConnection)
             && Query("CREATE CONSTRAINT ON (j:Job) ASSERT exists(j.state)").executeAndDiscard(dbConnection)
             && Query("CREATE CONSTRAINT ON (j:Job) ASSERT exists(j.type)").executeAndDiscard(dbConnection)
-            && Query("CREATE INDEX ON :Workflow(id)").executeAndDiscard(dbConnection)
             && Query("CREATE INDEX ON :Job(id)").executeAndDiscard(dbConnection)
             && Query("CREATE EDGE INDEX ON :before").executeAndDiscard(dbConnection);
-    }
-
-    bool registerWorkflow() const noexcept {
-        return ParameterizedQuery()
-            .append("MERGE (")
-            .append(WORKFLOW_VARIABLE)
-            .append(":Workflow{id:$wid})")
-            .setInt("wid",this->workflowInstanceID)
-            .executeAndDiscard(dbConnection);
     }
 
     enum class QueryType{
         MERGE,MATCH
     };
-
-    ParameterizedQuery queryWorkflow() const noexcept {
-        return ParameterizedQuery()
-        .append("MATCH (")
-        .append(WORKFLOW_VARIABLE)
-        .append(":Workflow{id:$wid})")
-        .setInt("wid",workflowInstanceID);
-    }
 
     ParameterizedQuery queryJob(const Job & job, QueryType queryType,std::string_view varName = "j") const noexcept {
         std::stringstream builder;
@@ -65,27 +45,18 @@ private:
                 <<",state:$"<<varName<<"state})";
                 return ParameterizedQuery()
                     .line(builder.str())
-                    .append("MERGE (")
-                    .append(WORKFLOW_VARIABLE)
-                    .append(")-[:contains]->(")
-                    .append(varName)
-                    .line(")")
                     .setInt(std::string(varName)+"id",job.id)
                     .set(std::string(varName)+"file",mg::Value(job.file.string()))
                     .set(std::string(varName)+"type",mg::Value(magic_enum::enum_name(job.type)))
                     .set(std::string(varName)+"state",mg::Value(magic_enum::enum_name(job.state)));
             case QueryType::MATCH:
-                builder << magic_enum::enum_name(queryType) << "(" << varName << ":Job {id:$"<<varName<<"id})<-[:contains]-(w:Workflow{id:"<< workflowInstanceID<<"})";
+                builder << magic_enum::enum_name(queryType) << "(" << varName << ":Job {id:$"<<varName<<"id})";
                 return ParameterizedQuery()
                     .line(builder.str())
                     .setInt(std::string(varName)+"id",job.id);
             default:
                 return ParameterizedQuery();
         }
-    }
-
-    ParameterizedQuery queryAdjacency(const Job & from, std::string_view fromVariable, const Job & to, std::string_view toVariable) const noexcept {
-        return (queryJob(from,QueryType::MATCH,fromVariable) + queryJob(to,QueryType::MATCH,toVariable));
     }
 
     static size_t asJobIdType(int64_t value) {
@@ -108,23 +79,19 @@ private:
     }
 
 public:
-    explicit JobAdjacency(MemgraphConnection && dbConnection, size_t workflowInstanceID):dbConnection(std::move(dbConnection)),workflowInstanceID(workflowInstanceID){
+    explicit JobAdjacency(MemgraphConnection && dbConnection):dbConnection(std::move(dbConnection)){
         if(not this->dbConnection.isConnected()) {
             throw std::runtime_error("Not connected to database");
         }
         if(not createConstraintsAndIndexes()) {
             throw std::runtime_error("Could not create constraints and indexes for \"Job\" label.");
         }
-        if(not registerWorkflow()) {
-            throw std::runtime_error("Could not register workflow with id "+workflowInstanceID);
-        }
     }
 
-    JobAdjacency(JobAdjacency && other):dbConnection(std::move(other.dbConnection)),workflowInstanceID(other.workflowInstanceID){}
+    JobAdjacency(JobAdjacency && other):dbConnection(std::move(other.dbConnection)){}
 
     JobAdjacency & operator=(JobAdjacency && other) noexcept {
         this->dbConnection = std::move(other.dbConnection);
-        this->workflowInstanceID = other.workflowInstanceID;
         return *this;
     }
 
@@ -133,7 +100,7 @@ public:
     }
 
     bool addAdjacency(const Job & from, const Job & to)const noexcept {
-       return (queryWorkflow() + queryJob(from,QueryType::MERGE,"f") + queryJob(to,QueryType::MERGE,"t")).
+       return (queryJob(from,QueryType::MERGE,"f") + queryJob(to,QueryType::MERGE,"t")).
             line("MERGE (f)-[:before]->(t)")
             .executeAndDiscard(dbConnection);
     }
@@ -146,7 +113,7 @@ public:
     }
 
     bool addNode(const Job & job) const noexcept {
-        return (queryWorkflow() + queryJob(job,QueryType::MERGE)).executeAndDiscard(dbConnection);
+        return queryJob(job,QueryType::MERGE).executeAndDiscard(dbConnection);
     }
 
     bool addNodes(fishnet::util::forward_range_of<Job> auto && jobs) const noexcept{
@@ -170,8 +137,10 @@ public:
     }
 
     bool removeAdjacency(const Job & from, const Job & to) const noexcept {
-        return queryAdjacency(from,"f",to,"t")
-            .line("MATCH (f)-[r:before]->(t)")
+        return ParameterizedQuery()
+            .line("MATCH (f:Job {id:$fid})-[r:before]->(t:Job {id:$tid})")
+            .setInt("fid",from.id)
+            .setInt("tid",to.id)
             .line("DETACH DELETE r")
             .executeAndDiscard(dbConnection);
     }
@@ -184,10 +153,7 @@ public:
     }
 
     bool clear() const noexcept {
-        return ParameterizedQuery("MATCH (j:Job)<-[:contains]-(w:Workflow {id:$wid})")
-        .setInt("wid",workflowInstanceID)
-        .line("DETACH DELETE j;")
-        .executeAndDiscard(dbConnection);
+        return Query("MATCH (j:Job) DETACH DELETE j;").executeAndDiscard(dbConnection);
     }
 
     bool contains(const Job & job) const noexcept {
@@ -201,9 +167,11 @@ public:
 
     bool hasAdjacency(const Job & from, const Job & to) const noexcept {
         if(
-            queryAdjacency(from,"f",to,"t")
-            .line("MATCH (f)-[r:before]->(t)")
+            ParameterizedQuery()
+            .line("MATCH (:Job {id:$fid})-[r:before]->(:Job {id:$tid})")
             .line("RETURN ID(r)")
+            .setInt("fid",from.id)
+            .setInt("tid",to.id)
             .execute(dbConnection)
         ){
             auto result = dbConnection->FetchAll();
@@ -231,8 +199,7 @@ public:
 
     fishnet::util::forward_range_of<Job> auto nodes() const noexcept {
         if(
-            ParameterizedQuery("MATCH (j:Job)<-[:contains]-(:Workflow {id:$wid})")
-            .setInt("wid",workflowInstanceID)
+            Query("MATCH (j:Job)")
             .line("RETURN j")
             .execute(dbConnection)
         ){
@@ -249,10 +216,7 @@ public:
     fishnet::util::forward_range_of<std::pair<Job,Job>> auto getAdjacencyPairs() const noexcept {
         std::vector<std::pair<Job,Job>> result;
         if(
-            ParameterizedQuery("MATCH (f:Job)<-[:contains]-(:Workflow {id:$wid})")
-            .line("MATCH (f:Job)<-[:contains]-(:Workflow {id:$wid})")
-            .setInt("wid",workflowInstanceID)
-            .line("MATCH (f)-[:before]->(t)")
+            Query("MATCH (f:Job)-[:before]->(t:Job)")
             .line("RETURN f,t")
             .execute(dbConnection)
         ){
