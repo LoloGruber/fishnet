@@ -38,10 +38,9 @@ public:
         auto clientPtr = mg::Client::Connect(params);
         if(not clientPtr){
             std::ostringstream connectionError;
-            connectionError << "Could not connect to memgraph database!" << std::endl;
+            connectionError << "Could not connect to memgraph database." << std::endl;
             connectionError << "\tHost: " <<params.host << std::endl;
             connectionError << "\tPort: " << std::to_string(params.port) << std::endl;
-            connectionError << "\tUsername: " << params.username << std::endl;
             return std::unexpected(connectionError.str());
         }
         return std::expected<MemgraphConnection,std::string>(MemgraphConnection(std::move(clientPtr),params));
