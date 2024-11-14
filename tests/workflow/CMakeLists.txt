@@ -1,6 +1,6 @@
 add_executable(workflowTest
 FilterTest.cpp
-MemgraphTest.cpp
+MemgraphAdjacencyTest.cpp
 JobAdjacencyTest.cpp
 PolygonDistanceTest.cpp
 )
