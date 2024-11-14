@@ -12,9 +12,7 @@
  */
 class CipherQuery{
 public:
-    enum class RelationshipDirection{
-        LEFT,RIGHT,NONE
-    };
+
 
     constexpr static uint8_t MAX_RETRIES = 1;
 
@@ -22,38 +20,27 @@ protected:
     std::unordered_map<std::string, mg::Value> params;
     std::ostringstream query {std::ios::ate};
 
-    constexpr void addVariables(char variable){
+    constexpr void addVariables(std::string_view variable){
         query << variable;
     }
 
     template<typename... Chars>
-    constexpr void addVariables(char variable, Chars... additional){
+    constexpr void addVariables(std::string_view variable, Chars... additional){
         query << variable << ",";
         addVariables(additional...);
     }
 
-    constexpr inline void prefixRelationship(RelationshipDirection direction){
-        switch(direction){
-            case RelationshipDirection::LEFT:
-                query << "<-";
-                break;
-            default:
-                query << "-";
-        }
-    }
-
-    constexpr inline void postfixRelationship(RelationshipDirection direction){
-        switch(direction){
-            case RelationshipDirection::RIGHT:
-                query << "->";
-                break;
-            default:
-                query << "-";
-        }
+    template<typename T>
+    constexpr void process(std::string_view keyword, T && entity) noexcept {
+        this->query << keyword << " " << std::forward<T>(entity)<<" ";
     }
 
 public:
     CipherQuery() = default;
+
+    CipherQuery(std::string_view statement){
+        append(statement);
+    }
 
     CipherQuery(CipherQuery && other):params(std::move(other.params)),query(std::move(other.query)) {}
 
@@ -63,135 +50,81 @@ public:
         return *this;
     }
 
-    constexpr CipherQuery &&  match() && noexcept {
-        query << "MATCH ";
+    template<typename T>
+    constexpr CipherQuery &&  match(T && entity) && noexcept {
+        process("MATCH",std::forward<T>(entity));
         return std::move(*this);
     }
 
-    constexpr CipherQuery &  match() & noexcept {
-        query << "MATCH ";
+    template<typename T>
+    constexpr CipherQuery &  match(T && entity) & noexcept {
+        process("MATCH",std::forward<T>(entity));
         return *this;
     }
 
-    constexpr CipherQuery && merge() && noexcept{
-        query << "MERGE ";
+    template<typename T>
+    constexpr CipherQuery && merge(T && entity) && noexcept{
+        process("MERGE",std::forward<T>(entity));
         return std::move(*this);
     }
 
-    constexpr CipherQuery & merge() & noexcept{
-        query << "MERGE ";
+    template<typename T>
+    constexpr CipherQuery & merge(T && entity) & noexcept{
+        process("MERGE",std::forward<T>(entity));
         return *this;
     }
 
-    constexpr CipherQuery && create() && noexcept{
-        query << "CREATE ";
+    template<typename T>
+    constexpr CipherQuery && create(T && entity) && noexcept{
+        process("CREATE",std::forward<T>(entity));
         return std::move(*this);
     }
 
-    constexpr CipherQuery & create() & noexcept{
-        query << "CREATE ";
+    template<typename T>
+    constexpr CipherQuery & create(T && entity) & noexcept{
+        process("CREATE",std::forward<T>(entity));
+        return *this;
+    }
+
+    template<typename T>
+    constexpr CipherQuery && where(T && entity) && noexcept{
+        process("WHERE",std::forward<T>(entity));
+        return std::move(*this);
+    }
+
+    template<typename T>
+    constexpr CipherQuery & where(T && entity) & noexcept{
+        process("WHERE",std::forward<T>(entity));
         return *this;
     }
 
     template<typename... Chars>
-    constexpr CipherQuery && ret(char variable, Chars... additional) && noexcept {
+    constexpr CipherQuery && ret(std::string_view variable, Chars... additional) && noexcept {
         query << "RETURN ";
         addVariables(variable,additional...);
         return std::move(*this);
     }
 
     template<typename... Chars>
-    constexpr CipherQuery & ret(char variable, Chars... additional) & noexcept {
+    constexpr CipherQuery & ret(std::string_view variable, Chars... additional) & noexcept {
         query << "RETURN ";
         addVariables(variable,additional...);
         return *this;
     }   
 
-    constexpr CipherQuery && node(char variable) && noexcept {
-        query << "(" <<variable<<")";
+    template<typename... Chars>
+    constexpr CipherQuery && del(std::string_view variable, Chars... additional) && noexcept {
+        query << "DETACH DELETE ";
+        addVariables(variable,additional...);
         return std::move(*this);
     }
 
-    constexpr CipherQuery & node(char variable) & noexcept {
-        query << "(" <<variable<<")";
+    template<typename... Chars>
+    constexpr CipherQuery & del(std::string_view variable, Chars... additional) & noexcept {
+        query << "DETACH DELETE ";
+        addVariables(variable,additional...);
         return *this;
-    }
-    constexpr CipherQuery && node(std::string_view label) && noexcept {
-        query << "(:" <<label << ")";
-        return std::move(*this);
-    }
-    constexpr CipherQuery & node(std::string_view label) & noexcept {
-        query << "(:" <<label << ")";
-        return *this;
-    }
-    constexpr CipherQuery && node(char variable, std::string_view label) && noexcept {
-        query << "(" << variable << ":" <<label << ")";
-        return std::move(*this);
-    }
-
-    constexpr CipherQuery & node(char variable, std::string_view label) & noexcept {
-        query << "(" << variable << ":" <<label << ")";
-        return *this;
-    }
-    constexpr CipherQuery && node(std::string_view label,std::string_view attributes) && noexcept {
-        query << "(:" << label << " {" << attributes <<"})" ;
-        return std::move(*this);
-    }
-    constexpr CipherQuery & node(std::string_view label,std::string_view attributes) & noexcept {
-        query << "(:" << label << " {" << attributes <<"})" ;
-        return *this;
-    }
-    constexpr CipherQuery && node(char variable, std::string_view label,std::string_view attributes) && noexcept {
-        query << "(" << variable << ":" << label << " {" << attributes <<"})" ;
-        return std::move(*this);
-    }
-
-    constexpr CipherQuery & node(char variable, std::string_view label,std::string_view attributes) & noexcept {
-        query << "(" << variable << ":" << label << " {" << attributes <<"})" ;
-        return *this;
-    }
-    
-    constexpr CipherQuery && edge(char variable, RelationshipDirection direction = RelationshipDirection::NONE) && noexcept {
-        prefixRelationship(direction);
-        query << "[" << variable << "]";
-        postfixRelationship(direction);
-        return std::move(*this);
-    }
-
-    constexpr CipherQuery & edge(char variable, RelationshipDirection direction = RelationshipDirection::NONE) & noexcept {
-        prefixRelationship(direction);
-        query << "[" << variable << "]";
-        postfixRelationship(direction);
-        return *this;
-    }
-
-    constexpr CipherQuery && edge(std::string_view label, char variable=' ',RelationshipDirection direction = RelationshipDirection::NONE) && noexcept {
-        prefixRelationship(direction);
-        query << "["<< variable << ":"<< label <<"]";
-        postfixRelationship(direction);
-        return std::move(*this);
-    }
-
-    constexpr CipherQuery & edge(std::string_view label, char variable=' ',RelationshipDirection direction = RelationshipDirection::NONE) & noexcept {
-        prefixRelationship(direction);
-        query << "["<< variable << ":"<< label <<"]";
-        postfixRelationship(direction);
-        return *this;
-    }
-
-    constexpr inline CipherQuery && edge(std::string_view label,RelationshipDirection direction,char variable=' ') && noexcept {
-        return std::move(edge(label,variable,direction));
-    }
-
-    constexpr inline CipherQuery & edge(std::string_view label,RelationshipDirection direction,char variable=' ') & noexcept {
-        return edge(label,variable,direction);
-    }
-
-    template<typename T>
-    constexpr CipherQuery & line(T && value) & noexcept {
-        query << std::forward<T>(value) << std::endl;
-        return *this;
-    }
+    }   
 
     constexpr CipherQuery & endl() & noexcept {
         query << std::endl;
@@ -213,10 +146,6 @@ public:
     constexpr CipherQuery & append(T && value) & noexcept {
         query << std::forward<T>(value);
         return *this;
-    }
-
-    constexpr CipherQuery & operator << (auto && value) & noexcept {
-        return append(std::forward<decltype(value)>(value));
     }
 
     constexpr CipherQuery & debug() & noexcept {
@@ -275,6 +204,20 @@ public:
         return this->query.str();
     }
 
+    constexpr CipherQuery && add(const CipherQuery & other) && noexcept {
+        for(const auto & [key,val]:other.params){
+            this->params.try_emplace(key,val);
+        }
+        return std::move(append(other.asString()));
+    }
+
+    constexpr CipherQuery & add(const CipherQuery & other) & noexcept {
+        for(const auto & [key,val]:other.params){
+            this->params.try_emplace(key,val);
+        }
+        return append(other.asString());
+    }
+
     constexpr bool execute(const MemgraphConnection & connection) {
         mg::Map mgParams {params.size()};
         for(auto && [key,mgValue]:params){
@@ -300,6 +243,6 @@ public:
     }
 
     constexpr static CipherQuery DELETE_ALL(){
-        return CipherQuery().match().node('n').append("DETACH DELETE ").node('n');
+        return CipherQuery("(n)").del("n");
     }
 };

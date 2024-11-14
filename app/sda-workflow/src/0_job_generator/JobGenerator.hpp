@@ -125,7 +125,7 @@ public:
             if(entry.is_regular_file()&& entry.path().extension() == ".json")
                 std::filesystem::remove(entry);
         }
-        Query("MATCH (n) DETACH DELETE n;").executeAndDiscard(jobDag.getAdjacencyContainer().getConnection());
+        CipherQuery::DELETE_ALL().executeAndDiscard(jobDag.getAdjacencyContainer().getConnection());
     }
 
     void generateWSFSplitJobs(const std::vector<std::filesystem::path> & inputs,const std::filesystem::path & outDir,JobDAG_t & jobDag)  {

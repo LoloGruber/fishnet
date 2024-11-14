@@ -1,5 +1,7 @@
 #pragma once
 #include "MemgraphConnection.hpp"
+#include "CipherQuery.hpp"
+#include "MemgraphModel.hpp"
 #include <unordered_map>
 #include <memory>
 #include <expected>
@@ -40,14 +42,6 @@ struct ComponentReference{
 class MemgraphClient{
 private:
     MemgraphConnection mgConnection;
-
-    static int64_t asInt(size_t value) {
-        return mg::Id::FromUint(value).AsInt();
-    }
-
-    static NodeIdType asNodeIdType(int64_t value) {
-        return mg::Id::FromInt(value).AsUint();
-    }
 public:
     explicit MemgraphClient(MemgraphConnection && clientPtr):mgConnection(std::move(clientPtr)){
         if(not createConstraints() || not createIndexes()) {
@@ -66,18 +60,18 @@ public:
 
 
     bool createConstraints()const noexcept {
-        return Query("CREATE CONSTRAINT ON (n:Node) ASSERT n.id IS UNIQUE").executeAndDiscard(mgConnection)
-            && Query("CREATE CONSTRAINT ON (f:File) ASSERT f.id IS UNIQUE").executeAndDiscard(mgConnection)
-            && Query("CREATE CONSTRAINT ON (f:File) ASSERT exists(f.path)").executeAndDiscard(mgConnection);
+        return CipherQuery("CREATE CONSTRAINT ON (n:Node) ASSERT n.id IS UNIQUE").executeAndDiscard(mgConnection)
+            && CipherQuery("CREATE CONSTRAINT ON (f:File) ASSERT f.id IS UNIQUE").executeAndDiscard(mgConnection)
+            && CipherQuery("CREATE CONSTRAINT ON (f:File) ASSERT exists(f.path)").executeAndDiscard(mgConnection);
     }
 
     bool createIndexes() const noexcept {
-        return Query("CREATE INDEX ON :Node(id)").executeAndDiscard(mgConnection)
-            && Query("CREATE INDEX ON :File").executeAndDiscard(mgConnection)
-            && Query("CREATE INDEX ON :Component").executeAndDiscard(mgConnection)
-            && Query("CREATE EDGE INDEX ON :stored").executeAndDiscard(mgConnection)
-            && Query("CREATE EDGE INDEX ON :adj").executeAndDiscard(mgConnection)
-            && Query("CREATE EDGE INDEX ON :part_of").executeAndDiscard(mgConnection);
+        return CipherQuery("CREATE INDEX ON :Node(id)").executeAndDiscard(mgConnection)
+            && CipherQuery("CREATE INDEX ON :File").executeAndDiscard(mgConnection)
+            && CipherQuery("CREATE INDEX ON :Component").executeAndDiscard(mgConnection)
+            && CipherQuery("CREATE EDGE INDEX ON :stored").executeAndDiscard(mgConnection)
+            && CipherQuery("CREATE EDGE INDEX ON :adj").executeAndDiscard(mgConnection)
+            && CipherQuery("CREATE EDGE INDEX ON :part_of").executeAndDiscard(mgConnection);
     }
 
     /**
@@ -91,10 +85,9 @@ public:
         if(std::filesystem::is_symlink(pathToFile)){
             path = std::filesystem::read_symlink(pathToFile);
         }
-        ParameterizedQuery query;
-        query.append("MERGE (f:File {path:$path})");
-        query.set("path",mg::Value(path.string()));
-        query.append("RETURN ID(f)");
+        CipherQuery query;
+        query.merge(Node("f",Label::File,"path:$path")).set("path",mg::Value(path.string())).ret("ID(f)");
+
         if(not query.execute(mgConnection)) {
             return std::nullopt;
         }
@@ -106,18 +99,17 @@ public:
     }
 
     bool insertEdge(NodeReference const & from, NodeReference const & to) const noexcept {
-        return ParameterizedQuery()
-            .line("MATCH (ff:File) WHERE ID(ff)=$fromFile")
+        return CipherQuery().match(Node{.name="ff",.label=Label::File}).where("ID(ff)=$fromFile")
             .setInt("fromFile",from.fileRef.fileId)
-            .line("MATCH (ft:File) WHERE ID(ft)=$toFile")
+            .match(Node{.name="ft",.label=Label::File}).where("ID(ft)=$toFile")
             .setInt("toFile",to.fileRef.fileId)
-            .line("MERGE (f:Node {id:$from})")
+            .merge(Node("f",Label::Settlement,"id:$from"))
             .setInt("from",from.nodeId)
-            .line("MERGE (t:Node {id:$to})")
+            .merge(Node("t",Label::Settlement,"id:$to"))
             .setInt("to",to.nodeId)
-            .line("MERGE (f)-[:adj]->(t)")
-            .line("MERGE (f)-[:stored]->(ff)")
-            .line("MERGE (t)-[:stored]->(ft)")
+            .merge(DirectedRelation{.from={.name="f"},.label=Label::neighbours,.to={.name="t"}})
+            .merge(DirectedRelation{.from={.name="f"},.label=Label::stored,.to={.name="ff"}})
+            .merge(DirectedRelation{.from={.name="t"},.label=Label::stored,.to={.name="ft"}})
             .executeAndDiscard(mgConnection);
     }
 
@@ -126,15 +118,14 @@ public:
     }
 
     bool insertEdges(fishnet::util::forward_range_of<std::pair<NodeReference,NodeReference>> auto && edges)const noexcept{
-        ParameterizedQuery query;
-        query.line("UNWIND $data AS edge");
-        query.line("MATCH (ff:File) WHERE ID(ff)=edge.fromFile");
-        query.line("MATCH (tf:File) WHERE ID(tf)=edge.toFile");
-        query.line("MERGE (f:Node {id:edge.from})");
-        query.line("MERGE (t:Node {id:edge.to})");
-        query.line("MERGE (f)-[:stored]->(ff)");
-        query.line("MERGE (t)-[:stored]->(tf)");
-        query.line("MERGE (f)-[:adj]->(t)");
+        CipherQuery query {"UNWIND $data AS edge "};
+        query.match(Node{.name="ff",.label=Label::File}).where("ID(ff)=edge.fromFile");
+        query.match(Node{.name="tf",.label=Label::File}).where("ID(tf)=edge.toFile");
+        query.merge(Node("f",Label::Settlement,"id:edge.from"));
+        query.merge(Node("t",Label::Settlement,"id:edge.to"));
+        query.merge(DirectedRelation{.from={.name="f"},.label=Label::neighbours,.to={.name="t"}});
+        query.merge(DirectedRelation{.from={.name="f"},.label=Label::stored,.to={.name="ff"}});
+        query.merge(DirectedRelation{.from={.name="t"},.label=Label::stored,.to={.name="ft"}});
         std::vector<mg::Value> data;
         for(auto && [from,to]:edges){
             mg::Map currentEdge{4};
@@ -149,21 +140,19 @@ public:
     }
 
     bool insertNode(NodeReference const & node) const noexcept{
-        return ParameterizedQuery()
-            .line("MATCH (f:File) WHERE ID(f)=$fid")
+        return CipherQuery().match(Node{.name="f",.label=Label::File}).where("ID(f)=$fid")
             .setInt("fid",node.fileRef.fileId)
-            .line("MERGE (n:Node {id:$nid})")
+            .merge(Node("n",Label::Settlement,"id:$nid"))
             .setInt("nid",node.nodeId)
-            .line("MERGE (n)-[:stored]->(f)")
+            .merge(DirectedRelation{.from={.name="n"},.label=Label::stored,.to={.name="f"}})
             .executeAndDiscard(mgConnection);
     }
 
     bool insertNodes(fishnet::util::forward_range_of<NodeReference> auto && nodes) const noexcept {
-        ParameterizedQuery query;
-        query.line("UNWIND $data AS node");
-        query.line("MATCH (f:File) WHERE ID(f) = node.fileId");
-        query.line("MERGE (n:Node {id:node.id})");
-        query.line("MERGE (n)-[:stored]->(f)");
+        CipherQuery query {"UNWIND $data AS node "};
+        query.match(Node{.name="f",.label=Label::File}).where("ID(f)=node.fileId");
+        query.merge(Node("n",Label::Settlement,"id:node.id"));
+        query.merge(DirectedRelation{.from={.name="n"},.label=Label::stored,.to={.name="f"}});
         std::vector<mg::Value> data;
         for(NodeReference const& node: nodes){
             mg::Map currentNode {2};
@@ -176,18 +165,15 @@ public:
     }
 
     bool removeNode(NodeReference const & node) const noexcept {
-        return ParameterizedQuery()
-            .line("MATCH (n:Node {id:$id})")
+        return CipherQuery().match(Node("n",Label::Settlement,"id:$id"))
             .setInt("id",node.nodeId)
-            .line("DETACH DELETE n")
+            .del("n")
             .executeAndDiscard(mgConnection);
     }
 
     bool removeNodes(fishnet::util::forward_range_of<NodeReference> auto && nodes) const noexcept {
-        ParameterizedQuery query;
-        query.line("UNWIND $data as node");
-        query.line("MATCH (n:Node {id:node.id})");
-        query.line("DETACH DELETE n");
+        CipherQuery query {"UNWIND $data as node "};
+        query.match(Node("n",Label::Settlement,"id:node.id")).del("n");
         std::vector<mg::Value> data;
         for(NodeReference const& node: nodes) {
             mg::Map currentNode {1};
@@ -199,19 +185,18 @@ public:
     }
 
     bool removeEdge(NodeReference const & from, NodeReference const & to) const noexcept {
-        return ParameterizedQuery()
-            .line("MATCH (f:Node {id:$fromId})-[a:adj]->(t:Node {id:$toId})")
+        return CipherQuery()
+            .match(DirectedRelation("a",Node("f",Label::Settlement,"id:$fromId"),Label::neighbours,Node("t",Label::Settlement,"id:$toId")))
             .setInt("fromId",from.nodeId)
             .setInt("toId",to.nodeId)
-            .line("DETACH DELETE a")
+            .del("a")
             .executeAndDiscard(mgConnection);
     }
 
     bool removeEdges(fishnet::util::forward_range_of<std::pair<NodeReference,NodeReference>> auto && edges) const noexcept {
-        ParameterizedQuery query;
-        query.line("UNWIND $data as edge");
-        query.line("MATCH (:Node {id:edge.from})-[a:adj]->(:Node {id:edge.to})");
-        query.line("DETACH DELETE a");
+        CipherQuery query {"UNWIND $data as edge "};
+        query.match(DirectedRelation("a",Node("f",Label::Settlement,"id:edge.from"),Label::neighbours,Node("t",Label::Settlement,"id:edge.to")));
+        query.del("a");
         std::vector<mg::Value> data;
         for(const auto & [from,to]: edges) {
             mg::Map currentEdge {2};
@@ -231,13 +216,13 @@ public:
         std::ranges::transform(nodesOfComponent,std::back_inserter(data),[](NodeIdType nodeId){
             return mg::Value(asInt(nodeId));
         });
-        if( ParameterizedQuery(1)
-            .line("CREATE")
-            .line("WITH $data as nodes")
-            .line("UNWIND nodes as nodeId")
-            .line("MATCH (n) WHERE n.id = nodeId")
-            .line("MERGE (n)-[:part_of]->(c)")
-            .line("RETURN ID(c)")
+        if( CipherQuery("CREATE ")
+            .create(Node{.name="c",.label=Label::Component}).endl()
+            .append("WITH $data as nodes").endl()
+            .append("UNWIND nodes as nodeId").endl()
+            .match(Node{.name="n",.label=Label::Settlement}).where("n.id=nodeId")
+            .merge(DirectedRelation{.from={.name="n"},.label=Label::part_of,.to={.name="c"}})
+            .ret("ID(c)")
             .execute(mgConnection)
         ){
             auto queryResult = mgConnection->FetchAll();
@@ -249,15 +234,14 @@ public:
     }
 
     std::vector<ComponentReference> createComponents(const std::vector<std::vector<NodeIdType>> & components) const noexcept {
-        ParameterizedQuery query;
-        query.line("WITH $data as components");
-        query.line("UNWIND range(0,size(components)-1) as index");
-        query.line("CREATE (c:Component)");
-        query.line("WITH components[index] as nodes,c");
-        query.line("UNWIND nodes as nodeId");
-        query.line("MATCH (n) WHERE n.id = nodeId");
-        query.line("MERGE (n)-[:part_of]->(c)");
-        query.line("RETURN DISTINCT ID(c)");
+        CipherQuery query {"WITH $data as components "};
+        query.append("UNWIND range(0,size(components)-1) as index").endl();
+        query.create(Node{.name="c",.label=Label::Component});
+        query.append("WITH components[index] as nodes,c").endl();
+        query.append("UNWIND nodes as nodeId").endl();
+        query.match(Node{.name="n",.label=Label::Settlement}).where("n.id=nodeId");
+        query.merge(DirectedRelation{.from={.name="n"},.label=Label::part_of,.to={.name="c"}});
+        query.ret("DISTINCT ID(c)");
         std::vector<mg::Value> data;
         data.reserve(components.size());
         for(const auto & component: components) {
@@ -282,7 +266,7 @@ public:
     }
 
     bool containsNode(size_t nodeId) const noexcept {
-        if(ParameterizedQuery().line("MATCH (n:Node {id:$id})").setInt("id",nodeId).line("RETURN ID(n)").execute(mgConnection)){
+        if(CipherQuery().match(Node{"n",Label::Settlement,"id:$id"}).setInt("id",nodeId).ret("ID(n)").execute(mgConnection)){
                 auto result =  mgConnection->FetchAll();
                 return result.has_value() && result->size() > 0;
         }
@@ -291,11 +275,12 @@ public:
 
     bool containsEdge(size_t from, size_t to) const noexcept {
         if(
-            ParameterizedQuery()
-            .line("MATCH (:Node {id:$fid})-[r:adj]->(:Node {id:$tid})")
-            .line("RETURN ID(r)")
-            .setInt("fid",from)
-            .setInt("tid",to)
+            CipherQuery().match(DirectedRelation{
+                .name="r",
+                .from={.label=Label::Settlement,.attributes="id:$fid"},
+                .label=Label::neighbours,
+                .to= {.label=Label::Settlement,.attributes="id:$tid"}
+            }).setInt("fid",from).setInt("tid",to).ret("ID(r)")
             .execute(mgConnection)
         ){
             auto result = mgConnection->FetchAll();
@@ -306,10 +291,11 @@ public:
 
     std::vector<NodeIdType> adjacency(const NodeReference & node) const noexcept {
         if(
-            ParameterizedQuery()
-            .line("MATCH (:Node {id:$id})-[:adj]->(x:Node)")
-            .setInt("id",node.nodeId)
-            .line("RETURN x.id")
+            CipherQuery().match(DirectedRelation{
+                .from={.label=Label::Settlement,.attributes="id:$id"},
+                .label=Label::neighbours,
+                .to={.name="x",.label=Label::Settlement}
+            }).setInt("id",node.nodeId).ret("x.id")
             .execute(mgConnection)
         ){
             std::vector<NodeIdType> output;
@@ -326,9 +312,11 @@ public:
 
     std::unordered_map<NodeIdType,std::vector<NodeIdType>> edges() const noexcept {
         if(
-            Query()
-            .line("MATCH (f:Node)-[:adj]->(t:Node)")
-            .line("RETURN f.id,t.id")
+            CipherQuery().match(DirectedRelation{
+                .from={.name="f",.label=Label::Settlement},
+                .label=Label::neighbours,
+                .to={.name="t",.label=Label::Settlement}
+            }).ret("f.id","t.id")
             .execute(mgConnection)
         ){
             std::unordered_map<NodeIdType,std::vector<NodeIdType>> output;
@@ -345,11 +333,7 @@ public:
     }
 
     std::vector<NodeIdType> nodes() const noexcept {
-        if(Query()
-            .line("MATCH (n:Node)")
-            .line("RETURN n.id")
-            .execute(mgConnection)
-        ){
+        if(CipherQuery().match(Node{.name="n",.label=Label::Settlement}).ret("n.id").execute(mgConnection)){
             std::vector<NodeIdType> output;
             while(auto currentRow = mgConnection->FetchOne()) {
                 output.push_back(asNodeIdType(currentRow->at(0).ValueInt()));
@@ -364,13 +348,12 @@ public:
         std::ranges::transform(componentIds,std::back_inserter(data),[](ComponentReference componentRef){
             return mg::Value(componentRef.componentId);
         });
-        if(ParameterizedQuery()
-            .line("WITH $data as components")
+        if(CipherQuery("WITH $data as components")
             .set("data",mg::Value(mg::List(std::move(data))))
-            .line("UNWIND components as component_id")
-            .line("MATCH (c:Component) WHERE ID(c)=component_id")
-            .line("MATCH (n:Node)-[:part_of]->(c)")
-            .line("RETURN n.id")
+            .append("UNWIND components as component_id").endl()
+            .match(Node{.name="c",.label=Label::Component}).where("ID(c)=component_id")
+            .match(DirectedRelation{.from={.name="n",.label=Label::Settlement},.label=Label::part_of,.to={.name="c"}})
+            .ret("n.id")
             .execute(mgConnection)
         ){
             std::vector<NodeIdType> result;
@@ -383,7 +366,7 @@ public:
     }
 
     bool clearAll() const noexcept{
-        return Query("MATCH (n)").line("DETACH DELETE n").executeAndDiscard(mgConnection);
+        return CipherQuery().match(Node{.name="n",.label=Label::Settlement}).del("n").executeAndDiscard(mgConnection);
     }
 };
 
