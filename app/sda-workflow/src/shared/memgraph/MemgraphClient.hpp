@@ -107,9 +107,9 @@ public:
             .setInt("from",from.nodeId)
             .merge(Node("t",Label::Settlement,"id:$to"))
             .setInt("to",to.nodeId)
-            .merge(DirectedRelation{.from={.name="f"},.label=Label::neighbours,.to={.name="t"}})
-            .merge(DirectedRelation{.from={.name="f"},.label=Label::stored,.to={.name="ff"}})
-            .merge(DirectedRelation{.from={.name="t"},.label=Label::stored,.to={.name="ft"}})
+            .merge(Relation{.from={.name="f"},.label=Label::neighbours,.to={.name="t"}})
+            .merge(Relation{.from={.name="f"},.label=Label::stored,.to={.name="ff"}})
+            .merge(Relation{.from={.name="t"},.label=Label::stored,.to={.name="ft"}})
             .executeAndDiscard(mgConnection);
     }
 
@@ -123,9 +123,9 @@ public:
         query.match(Node{.name="tf",.label=Label::File}).where("ID(tf)=edge.toFile");
         query.merge(Node("f",Label::Settlement,"id:edge.from"));
         query.merge(Node("t",Label::Settlement,"id:edge.to"));
-        query.merge(DirectedRelation{.from={.name="f"},.label=Label::neighbours,.to={.name="t"}});
-        query.merge(DirectedRelation{.from={.name="f"},.label=Label::stored,.to={.name="ff"}});
-        query.merge(DirectedRelation{.from={.name="t"},.label=Label::stored,.to={.name="ft"}});
+        query.merge(Relation{.from={.name="f"},.label=Label::neighbours,.to={.name="t"}});
+        query.merge(Relation{.from={.name="f"},.label=Label::stored,.to={.name="ff"}});
+        query.merge(Relation{.from={.name="t"},.label=Label::stored,.to={.name="ft"}});
         std::vector<mg::Value> data;
         for(auto && [from,to]:edges){
             mg::Map currentEdge{4};
@@ -144,7 +144,7 @@ public:
             .setInt("fid",node.fileRef.fileId)
             .merge(Node("n",Label::Settlement,"id:$nid"))
             .setInt("nid",node.nodeId)
-            .merge(DirectedRelation{.from={.name="n"},.label=Label::stored,.to={.name="f"}})
+            .merge(Relation{.from={.name="n"},.label=Label::stored,.to={.name="f"}})
             .executeAndDiscard(mgConnection);
     }
 
@@ -152,7 +152,7 @@ public:
         CipherQuery query {"UNWIND $data AS node "};
         query.match(Node{.name="f",.label=Label::File}).where("ID(f)=node.fileId");
         query.merge(Node("n",Label::Settlement,"id:node.id"));
-        query.merge(DirectedRelation{.from={.name="n"},.label=Label::stored,.to={.name="f"}});
+        query.merge(Relation{.from={.name="n"},.label=Label::stored,.to={.name="f"}});
         std::vector<mg::Value> data;
         for(NodeReference const& node: nodes){
             mg::Map currentNode {2};
@@ -186,7 +186,7 @@ public:
 
     bool removeEdge(NodeReference const & from, NodeReference const & to) const noexcept {
         return CipherQuery()
-            .match(DirectedRelation("a",Node("f",Label::Settlement,"id:$fromId"),Label::neighbours,Node("t",Label::Settlement,"id:$toId")))
+            .match(Relation("a",Node("f",Label::Settlement,"id:$fromId"),Label::neighbours,Node("t",Label::Settlement,"id:$toId")))
             .setInt("fromId",from.nodeId)
             .setInt("toId",to.nodeId)
             .del("a")
@@ -195,7 +195,7 @@ public:
 
     bool removeEdges(fishnet::util::forward_range_of<std::pair<NodeReference,NodeReference>> auto && edges) const noexcept {
         CipherQuery query {"UNWIND $data as edge "};
-        query.match(DirectedRelation("a",Node("f",Label::Settlement,"id:edge.from"),Label::neighbours,Node("t",Label::Settlement,"id:edge.to")));
+        query.match(Relation("a",Node("f",Label::Settlement,"id:edge.from"),Label::neighbours,Node("t",Label::Settlement,"id:edge.to")));
         query.del("a");
         std::vector<mg::Value> data;
         for(const auto & [from,to]: edges) {
@@ -221,7 +221,7 @@ public:
             .append("WITH $data as nodes").endl()
             .append("UNWIND nodes as nodeId").endl()
             .match(Node{.name="n",.label=Label::Settlement}).where("n.id=nodeId")
-            .merge(DirectedRelation{.from={.name="n"},.label=Label::part_of,.to={.name="c"}})
+            .merge(Relation{.from={.name="n"},.label=Label::part_of,.to={.name="c"}})
             .ret("ID(c)")
             .execute(mgConnection)
         ){
@@ -240,7 +240,7 @@ public:
         query.append("WITH components[index] as nodes,c").endl();
         query.append("UNWIND nodes as nodeId").endl();
         query.match(Node{.name="n",.label=Label::Settlement}).where("n.id=nodeId");
-        query.merge(DirectedRelation{.from={.name="n"},.label=Label::part_of,.to={.name="c"}});
+        query.merge(Relation{.from={.name="n"},.label=Label::part_of,.to={.name="c"}});
         query.ret("DISTINCT ID(c)");
         std::vector<mg::Value> data;
         data.reserve(components.size());
@@ -275,7 +275,7 @@ public:
 
     bool containsEdge(size_t from, size_t to) const noexcept {
         if(
-            CipherQuery().match(DirectedRelation{
+            CipherQuery().match(Relation{
                 .name="r",
                 .from={.label=Label::Settlement,.attributes="id:$fid"},
                 .label=Label::neighbours,
@@ -291,7 +291,7 @@ public:
 
     std::vector<NodeIdType> adjacency(const NodeReference & node) const noexcept {
         if(
-            CipherQuery().match(DirectedRelation{
+            CipherQuery().match(Relation{
                 .from={.label=Label::Settlement,.attributes="id:$id"},
                 .label=Label::neighbours,
                 .to={.name="x",.label=Label::Settlement}
@@ -312,7 +312,7 @@ public:
 
     std::unordered_map<NodeIdType,std::vector<NodeIdType>> edges() const noexcept {
         if(
-            CipherQuery().match(DirectedRelation{
+            CipherQuery().match(Relation{
                 .from={.name="f",.label=Label::Settlement},
                 .label=Label::neighbours,
                 .to={.name="t",.label=Label::Settlement}
@@ -352,7 +352,7 @@ public:
             .set("data",mg::Value(mg::List(std::move(data))))
             .append("UNWIND components as component_id").endl()
             .match(Node{.name="c",.label=Label::Component}).where("ID(c)=component_id")
-            .match(DirectedRelation{.from={.name="n",.label=Label::Settlement},.label=Label::part_of,.to={.name="c"}})
+            .match(Relation{.from={.name="n",.label=Label::Settlement},.label=Label::part_of,.to={.name="c"}})
             .ret("n.id")
             .execute(mgConnection)
         ){

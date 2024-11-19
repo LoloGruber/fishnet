@@ -100,7 +100,7 @@ public:
     bool addAdjacency(const Job & from, const Job & to)const noexcept {
        return queryJob(from,QueryType::MERGE,"f")
             .add(queryJob(to,QueryType::MERGE,"t"))
-            .merge(DirectedRelation{.from=Node("f"),.label=Label::before,.to=Node("t")})
+            .merge(Relation{.from=Node("f"),.label=Label::before,.to=Node("t")})
             .executeAndDiscard(dbConnection);
     }
 
@@ -136,7 +136,7 @@ public:
     }
 
     bool removeAdjacency(const Job & from, const Job & to) const noexcept {
-        return CipherQuery().match(DirectedRelation{
+        return CipherQuery().match(Relation{
                 .name="r",
                 .from=Node("f",Label::Job,"id:$fid"),
                 .label=Label::before,
@@ -170,7 +170,7 @@ public:
 
     bool hasAdjacency(const Job & from, const Job & to) const noexcept {
         if(
-            CipherQuery().match(DirectedRelation{
+            CipherQuery().match(Relation{
                 .name="r",
                 .from=Node("f",Label::Job,"id:$fid"),
                 .label=Label::before,
@@ -189,7 +189,7 @@ public:
 
     fishnet::util::forward_range_of<Job> auto adjacency(const Job & job) const noexcept {
         if(
-            CipherQuery().match(DirectedRelation{
+            CipherQuery().match(Relation{
                 .from=Node{.name="x",.label=Label::Job},
                 .label=Label::before,
                 .to=Node{.name="j",.label=Label::Job}
@@ -220,7 +220,7 @@ public:
     fishnet::util::forward_range_of<std::pair<Job,Job>> auto getAdjacencyPairs() const noexcept {
         std::vector<std::pair<Job,Job>> result;
         if(
-            CipherQuery().match(DirectedRelation{
+            CipherQuery().match(Relation{
                 .from = Node{.name="f",.label=Label::Job},
                 .label = Label::before,
                 .to = Node{.name="t",.label=Label::Job}

@@ -54,8 +54,8 @@ struct AbstractRelation{
     }
 };
 
-using DirectedRelation = AbstractRelation<true>;
-using Relation = AbstractRelation<false>;
+using Relation = AbstractRelation<true>;
+using BiRelation = AbstractRelation<false>;
 
 constexpr static inline int64_t asInt(size_t value) {
     return mg::Id::FromUint(value).AsInt();
@@ -67,7 +67,7 @@ constexpr static inline size_t asNodeIdType(int64_t value) {
 
 constexpr static inline void setSessionID(size_t sessionID){
     assert(sessionID != 0);
-    DirectedRelation::sessionID = sessionID;
+    Relation::sessionID = sessionID;
     Relation::sessionID = sessionID;
     Node::sessionID = sessionID;
 }

@@ -37,12 +37,19 @@ public:
         std::vector<mg::Value> componentValues;
         for(auto componentRef : componentIds)
             componentValues.push_back(mg::Value(componentRef.componentId));
-        if(not ParameterizedQuery()
-                .line("UNWIND $data as component_id")
-                .line("MATCH (c:Component)<-[:part_of]-(:Node)-[:stored]->(f:File)")
-                .line("WHERE ID(c)=component_id")
+        if(not CipherQuery("UNWIND $data as component_id").endl()
+                .match(Relation{
+                    .from={.name="n",.label=Label::Settlement},
+                    .label=Label::part_of,
+                    .to={.name="c",.label=Label::Component}
+                }).where("ID(c)=component_id")
+                .match(Relation{
+                    .from={.name="n"},
+                    .label=Label::stored,
+                    .to={.name="f",.label=Label::File}
+                })
                 .set("data",mg::Value(mg::List(componentValues)))
-                .line("RETURN DISTINCT component_id,f.path;")
+                .ret("DISTINCT component_id;f.path")
                 .execute(memgraphConnection)
         ) throw std::runtime_error("Could not execute query to find files part of a component");
         while(auto currentRow = memgraphConnection->FetchOne()){
