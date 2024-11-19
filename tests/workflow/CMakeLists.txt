@@ -4,6 +4,7 @@ MemgraphAdjacencyTest.cpp
 JobAdjacencyTest.cpp
 PolygonDistanceTest.cpp
 CipherQueryTest.cpp
+ConcurrentSessionsTest.cpp
 )
 gtest_discover_tests(workflowTest)
 target_link_libraries(workflowTest PRIVATE WorkflowLib testutil geometryTestUtils graph) 
