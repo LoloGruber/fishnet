@@ -26,7 +26,7 @@ static int jobTypeId(JobType jobType){
     }
 }
 
-bool operator<(JobType lhs, JobType rhs) noexcept {
+static bool operator<(JobType lhs, JobType rhs) noexcept {
     return jobTypeId(lhs) < jobTypeId(rhs);
 }
 
