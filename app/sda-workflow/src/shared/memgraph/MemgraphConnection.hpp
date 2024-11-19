@@ -4,6 +4,7 @@
 #include <expected>
 #include <sstream>
 #include <iostream>
+#include <fishnet/Either.hpp>
 
 class MemgraphConnection {
 private:
@@ -24,6 +25,13 @@ public:
         return *this;
     }
 
+    /**
+     * @brief Construct a new Memgraph Connection object from existing connection by copying the connection parameters
+     * @throws runtime error if connection can not be established
+     * @param other 
+     */
+    MemgraphConnection(const MemgraphConnection & other):MemgraphConnection(std::move(MemgraphConnection::create(other.parameters).value_or_throw())) {}
+
     const MemgraphConnection & retry() const {
         connection = mg::Client::Connect(this->parameters);
         return *this;
@@ -34,7 +42,7 @@ public:
      * @param params parameters for the database connection (e.g hostname, port,...)
      * @return std::expected<MemgraphClient,std::string>: Containing the MemgraphClient on success or a string explaining the error
      */
-    static std::expected<MemgraphConnection,std::string> create(const mg::Client::Params & params ) {
+    static fishnet::util::Either<MemgraphConnection,std::string> create(const mg::Client::Params & params ) {
         auto clientPtr = mg::Client::Connect(params);
         if(not clientPtr){
             std::ostringstream connectionError;
@@ -43,7 +51,7 @@ public:
             connectionError << "\tPort: " << std::to_string(params.port) << std::endl;
             return std::unexpected(connectionError.str());
         }
-        return std::expected<MemgraphConnection,std::string>(MemgraphConnection(std::move(clientPtr),params));
+        return fishnet::util::Either<MemgraphConnection,std::string>(MemgraphConnection(std::move(clientPtr),params));
     }
 
         /**
@@ -53,7 +61,7 @@ public:
      * @param port (e.g. 7687)
      * @return std::expected<MemgraphClient,std::string>: Containing the MemgraphClient on success or a string explaining the error
      */
-    static std::expected<MemgraphConnection ,std::string> create(std::string hostname, uint16_t port) {
+    static fishnet::util::Either<MemgraphConnection ,std::string> create(std::string hostname, uint16_t port) {
         mg::Client::Params params;
         params.host = hostname;
         params.port = port;
