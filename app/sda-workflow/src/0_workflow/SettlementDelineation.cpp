@@ -7,10 +7,10 @@
 
 int main(int argc, char * argv[]){
     CLI::App app {"SettlementDelineation Workload-Generator and Scheduler"};
-    std::string pathToCfg = "/home/lolo/Documents/fishnet/prod/local/cfg/sda-workflow.json";
+    std::string pathToCfg = "/home/lolo/Documents/fishnet/prod/local/sda-workflow-local.json";
     std::string inputDirectory = "/home/lolo/Documents/fishnet/data/WSF/2019/Punjab";
     std::string outputFilename;
-    std::string workingDirectory;
+    std::string workingDirectory = "/home/lolo/Documents/fishnet/tests/workflow/test/workingDirectory";
     std::vector<std::filesystem::path> inputFiles;
     app.add_option("-c,--config",pathToCfg,"Path to workflow configuration")->required()->check(CLI::ExistingFile);
     app.add_option("-i,--inputDirectory",inputDirectory,"Path to input directory")->required()->check(CLI::ExistingDirectory);

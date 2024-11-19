@@ -79,11 +79,7 @@ private:
     bool hasRunnableJobs() const noexcept {
         std::lock_guard lock {this->mutex};
         const MemgraphConnection & connection = this->dag.getAdjacencyContainer().getConnection();
-        if(
-            Query("MATCH (j:Job {state:\"RUNNABLE\"})")
-            .line("RETURN j.id")
-            .execute(connection)
-        ){
+        if(CipherQuery().match(Node{.name="j",.label=Label::Job,.attributes="state:\"RUNNABLE\""}).ret("j.id").execute(connection)){
             auto result = connection->FetchAll();
             return result.has_value() && result->size() > 0;
         }   
@@ -93,11 +89,7 @@ private:
     bool jobsAreRunning() const noexcept {
         std::lock_guard lock {this->mutex};
         const MemgraphConnection & connection = this->dag.getAdjacencyContainer().getConnection();
-        if(
-            Query("MATCH (j:Job {state:\"RUNNING\"})")
-            .line("RETURN j.id")
-            .execute(connection)
-        ){
+        if(CipherQuery().match(Node{.name="j",.label=Label::Job,.attributes="state:\"RUNNING\""}).ret("j.id").execute(connection)){
             auto result = connection->FetchAll();
             return result.has_value() && result->size() > 0;
         }   

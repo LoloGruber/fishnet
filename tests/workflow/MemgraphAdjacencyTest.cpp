@@ -43,7 +43,7 @@ protected:
         if(optFileRef){
             fileRef = optFileRef.value();
         }
-        else throw std::runtime_error("Coult not create file reference");
+        else throw std::runtime_error("Could not create file reference");
     }
 
     void TearDown() override {
