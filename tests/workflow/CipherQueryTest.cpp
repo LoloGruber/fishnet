@@ -39,9 +39,9 @@ TEST_F(MemgraphQueryTest, mergeAndMatchNode){
 TEST_F(MemgraphQueryTest, mergeAndMatchEdge){
     CipherQuery i = CipherQuery().merge(Node{.name="f",.label=Label::Settlement,.attributes="id:1"}).endl();
     i.merge(Node{.name="t",.label=Label::Settlement,.attributes="id:2"}).endl();
-    i.merge(Relation{.from={.name="f"},.label=Label::neighbours,.to={.name="t"}});
+    i.merge(Relation{.from=Var("f"),.label=Label::neighbours,.to=Var("t")});
     EXPECT_TRUE(i.executeAndDiscard(connection));
-    CipherQuery q = CipherQuery().match(Relation{.from={.name="f",.label=Label::Settlement},.to={.name="t",.label=Label::Settlement}}).ret("f","t");
+    CipherQuery q = CipherQuery().match(Relation{.from=Node{.name="f",.label=Label::Settlement},.to=Node{.name="t",.label=Label::Settlement}}).ret("f","t");
     EXPECT_TRUE(q.execute(connection));
     auto resultSize = connection->FetchAll().transform([](auto && v){return v.size();}).value_or(0);
     EXPECT_EQ(resultSize,1);
