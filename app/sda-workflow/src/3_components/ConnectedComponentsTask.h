@@ -39,14 +39,14 @@ public:
             componentValues.push_back(mg::Value(componentRef.componentId));
         if(not CipherQuery("UNWIND $data as component_id").endl()
                 .match(Relation{
-                    .from={.name="n",.label=Label::Settlement},
+                    .from=Node{.name="n",.label=Label::Settlement},
                     .label=Label::part_of,
-                    .to={.name="c",.label=Label::Component}
+                    .to=Node{.name="c",.label=Label::Component}
                 }).where("ID(c)=component_id")
                 .match(Relation{
-                    .from={.name="n"},
+                    .from=Var("n"),
                     .label=Label::stored,
-                    .to={.name="f",.label=Label::File}
+                    .to=Node{.name="f",.label=Label::File}
                 })
                 .set("data",mg::Value(mg::List(componentValues)))
                 .ret("DISTINCT component_id;f.path")
