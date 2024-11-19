@@ -114,14 +114,14 @@ public:
 
     template<typename... Chars>
     constexpr CipherQuery && del(std::string_view variable, Chars... additional) && noexcept {
-        query << "DETACH DELETE ";
+        query << std::endl <<"DETACH DELETE ";
         addVariables(variable,additional...);
         return std::move(*this);
     }
 
     template<typename... Chars>
     constexpr CipherQuery & del(std::string_view variable, Chars... additional) & noexcept {
-        query << "DETACH DELETE ";
+        query << std::endl <<"DETACH DELETE ";
         addVariables(variable,additional...);
         return *this;
     }   
@@ -227,6 +227,7 @@ public:
         int tries = 0;
         while(not result && tries < MAX_RETRIES){
             result = connection.retry()->Execute(query.str(),mgParams.AsConstMap());
+            tries++;
         }
         if(not result) {
             std::cerr << "Could not execute query:" << std::endl;
@@ -243,6 +244,16 @@ public:
     }
 
     constexpr static CipherQuery DELETE_ALL(){
-        return CipherQuery("(n)").del("n");
+        return CipherQuery("MATCH (n)").del("n");
     }
-};
+
+    template<typename T>
+    constexpr static CipherQuery CREATE_INDEX(T&& index){
+        return CipherQuery("CREATE INDEX ON ").append(std::forward<T>(index));
+    }
+
+    template<typename T>
+    constexpr static CipherQuery CREATE_EDGE_INDEX(T&& index){
+        return CipherQuery("CREATE EDGE INDEX ON ").append(std::forward<T>(index));
+    }
+}; 
