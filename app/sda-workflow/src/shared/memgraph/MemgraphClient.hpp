@@ -60,18 +60,18 @@ public:
 
 
     bool createConstraints()const noexcept {
-        return CipherQuery("CREATE CONSTRAINT ON (n:Node) ASSERT n.id IS UNIQUE").executeAndDiscard(mgConnection)
-            && CipherQuery("CREATE CONSTRAINT ON (f:File) ASSERT f.id IS UNIQUE").executeAndDiscard(mgConnection)
-            && CipherQuery("CREATE CONSTRAINT ON (f:File) ASSERT exists(f.path)").executeAndDiscard(mgConnection);
+        return CipherQuery("CREATE CONSTRAINT ON ").append(Node{.name="n",.label=Label::Settlement}).append(" ASSERT n.id IS UNIQUE").executeAndDiscard(mgConnection)
+            && CipherQuery("CREATE CONSTRAINT ON ").append(Node{.name="f",.label=Label::File}).append(" ASSERT f.id IS UNIQUE").executeAndDiscard(mgConnection)
+            && CipherQuery("CREATE CONSTRAINT ON ").append(Node{.name="f",.label=Label::File}).append(" ASSERT exists(f.path)").executeAndDiscard(mgConnection);
     }
 
     bool createIndexes() const noexcept {
-        return CipherQuery("CREATE INDEX ON :Node(id)").executeAndDiscard(mgConnection)
-            && CipherQuery("CREATE INDEX ON :File").executeAndDiscard(mgConnection)
-            && CipherQuery("CREATE INDEX ON :Component").executeAndDiscard(mgConnection)
-            && CipherQuery("CREATE EDGE INDEX ON :stored").executeAndDiscard(mgConnection)
-            && CipherQuery("CREATE EDGE INDEX ON :adj").executeAndDiscard(mgConnection)
-            && CipherQuery("CREATE EDGE INDEX ON :part_of").executeAndDiscard(mgConnection);
+        return CipherQuery::CREATE_INDEX(Index(Label::Settlement,"id")).executeAndDiscard(mgConnection)
+            && CipherQuery::CREATE_INDEX(Index{.label=Label::File}).executeAndDiscard(mgConnection)
+            && CipherQuery::CREATE_INDEX(Index{.label=Label::Component}).executeAndDiscard(mgConnection)
+            && CipherQuery::CREATE_EDGE_INDEX(Index(Label::stored)).executeAndDiscard(mgConnection)
+            && CipherQuery::CREATE_EDGE_INDEX(Index(Label::neighbours)).executeAndDiscard(mgConnection)
+            && CipherQuery::CREATE_EDGE_INDEX(Index(Label::part_of)).executeAndDiscard(mgConnection);
     }
 
     /**
@@ -107,9 +107,9 @@ public:
             .setInt("from",from.nodeId)
             .merge(Node("t",Label::Settlement,"id:$to"))
             .setInt("to",to.nodeId)
-            .merge(Relation{.from={.name="f"},.label=Label::neighbours,.to={.name="t"}})
-            .merge(Relation{.from={.name="f"},.label=Label::stored,.to={.name="ff"}})
-            .merge(Relation{.from={.name="t"},.label=Label::stored,.to={.name="ft"}})
+            .merge(Relation{.from=Var("f"),.label=Label::neighbours,.to=Var("t")})
+            .merge(Relation{.from=Var("f"),.label=Label::stored,.to=Var("ff")})
+            .merge(Relation{.from=Var("t"),.label=Label::stored,.to=Var("ft")})
             .executeAndDiscard(mgConnection);
     }
 
@@ -123,9 +123,9 @@ public:
         query.match(Node{.name="tf",.label=Label::File}).where("ID(tf)=edge.toFile");
         query.merge(Node("f",Label::Settlement,"id:edge.from"));
         query.merge(Node("t",Label::Settlement,"id:edge.to"));
-        query.merge(Relation{.from={.name="f"},.label=Label::neighbours,.to={.name="t"}});
-        query.merge(Relation{.from={.name="f"},.label=Label::stored,.to={.name="ff"}});
-        query.merge(Relation{.from={.name="t"},.label=Label::stored,.to={.name="ft"}});
+        query.merge(Relation{.from=Var("f"),.label=Label::neighbours,.to=Var("t")});
+        query.merge(Relation{.from=Var("f"),.label=Label::stored,.to=Var("ff")});
+        query.merge(Relation{.from=Var("t"),.label=Label::stored,.to=Var("tf")});
         std::vector<mg::Value> data;
         for(auto && [from,to]:edges){
             mg::Map currentEdge{4};
@@ -144,7 +144,7 @@ public:
             .setInt("fid",node.fileRef.fileId)
             .merge(Node("n",Label::Settlement,"id:$nid"))
             .setInt("nid",node.nodeId)
-            .merge(Relation{.from={.name="n"},.label=Label::stored,.to={.name="f"}})
+            .merge(Relation{.from=Var("n"),.label=Label::stored,.to=Var("f")})
             .executeAndDiscard(mgConnection);
     }
 
@@ -152,7 +152,7 @@ public:
         CipherQuery query {"UNWIND $data AS node "};
         query.match(Node{.name="f",.label=Label::File}).where("ID(f)=node.fileId");
         query.merge(Node("n",Label::Settlement,"id:node.id"));
-        query.merge(Relation{.from={.name="n"},.label=Label::stored,.to={.name="f"}});
+        query.merge(Relation{.from=Var("n"),.label=Label::stored,.to=Var("f")});
         std::vector<mg::Value> data;
         for(NodeReference const& node: nodes){
             mg::Map currentNode {2};
@@ -221,7 +221,7 @@ public:
             .append("WITH $data as nodes").endl()
             .append("UNWIND nodes as nodeId").endl()
             .match(Node{.name="n",.label=Label::Settlement}).where("n.id=nodeId")
-            .merge(Relation{.from={.name="n"},.label=Label::part_of,.to={.name="c"}})
+            .merge(Relation{.from=Var("n"),.label=Label::part_of,.to=Var("c")})
             .ret("ID(c)")
             .execute(mgConnection)
         ){
@@ -240,7 +240,7 @@ public:
         query.append("WITH components[index] as nodes,c").endl();
         query.append("UNWIND nodes as nodeId").endl();
         query.match(Node{.name="n",.label=Label::Settlement}).where("n.id=nodeId");
-        query.merge(Relation{.from={.name="n"},.label=Label::part_of,.to={.name="c"}});
+        query.merge(Relation{.from=Var("n"),.label=Label::part_of,.to=Var("c")});
         query.ret("DISTINCT ID(c)");
         std::vector<mg::Value> data;
         data.reserve(components.size());
@@ -277,9 +277,9 @@ public:
         if(
             CipherQuery().match(Relation{
                 .name="r",
-                .from={.label=Label::Settlement,.attributes="id:$fid"},
+                .from=Node{.label=Label::Settlement,.attributes="id:$fid"},
                 .label=Label::neighbours,
-                .to= {.label=Label::Settlement,.attributes="id:$tid"}
+                .to= Node{.label=Label::Settlement,.attributes="id:$tid"}
             }).setInt("fid",from).setInt("tid",to).ret("ID(r)")
             .execute(mgConnection)
         ){
@@ -292,9 +292,9 @@ public:
     std::vector<NodeIdType> adjacency(const NodeReference & node) const noexcept {
         if(
             CipherQuery().match(Relation{
-                .from={.label=Label::Settlement,.attributes="id:$id"},
+                .from=Node{.label=Label::Settlement,.attributes="id:$id"},
                 .label=Label::neighbours,
-                .to={.name="x",.label=Label::Settlement}
+                .to=Node{.name="x",.label=Label::Settlement}
             }).setInt("id",node.nodeId).ret("x.id")
             .execute(mgConnection)
         ){
@@ -313,9 +313,9 @@ public:
     std::unordered_map<NodeIdType,std::vector<NodeIdType>> edges() const noexcept {
         if(
             CipherQuery().match(Relation{
-                .from={.name="f",.label=Label::Settlement},
+                .from=Node{.name="f",.label=Label::Settlement},
                 .label=Label::neighbours,
-                .to={.name="t",.label=Label::Settlement}
+                .to=Node{.name="t",.label=Label::Settlement}
             }).ret("f.id","t.id")
             .execute(mgConnection)
         ){
@@ -352,7 +352,7 @@ public:
             .set("data",mg::Value(mg::List(std::move(data))))
             .append("UNWIND components as component_id").endl()
             .match(Node{.name="c",.label=Label::Component}).where("ID(c)=component_id")
-            .match(Relation{.from={.name="n",.label=Label::Settlement},.label=Label::part_of,.to={.name="c"}})
+            .match(Relation{.from=Node{.name="n",.label=Label::Settlement},.label=Label::part_of,.to=Var("c")})
             .ret("n.id")
             .execute(mgConnection)
         ){

@@ -22,12 +22,12 @@ private:
     JobAdjacency() = default;
 
     bool createConstraintsAndIndexes() const noexcept {
-        return CipherQuery("CREATE CONSTRAINT ON (j:Job) ASSERT j.id IS UNIQUE").executeAndDiscard(dbConnection)
-            && CipherQuery("CREATE CONSTRAINT ON (j:Job) ASSERT exists(j.file)").executeAndDiscard(dbConnection)
-            && CipherQuery("CREATE CONSTRAINT ON (j:Job) ASSERT exists(j.state)").executeAndDiscard(dbConnection)
-            && CipherQuery("CREATE CONSTRAINT ON (j:Job) ASSERT exists(j.type)").executeAndDiscard(dbConnection)
-            && CipherQuery("CREATE INDEX ON :Job(id)").executeAndDiscard(dbConnection)
-            && CipherQuery("CREATE EDGE INDEX ON :before").executeAndDiscard(dbConnection);
+        return CipherQuery("CREATE CONSTRAINT ON ").append(Node{.name="j",.label=Label::Job}).append(" ASSERT j.id IS UNIQUE").executeAndDiscard(dbConnection)
+            && CipherQuery("CREATE CONSTRAINT ON ").append(Node{.name="j",.label=Label::Job}).append(" ASSERT exists(j.file)").executeAndDiscard(dbConnection)
+            && CipherQuery("CREATE CONSTRAINT ON ").append(Node{.name="j",.label=Label::Job}).append(" ASSERT exists(j.state)").executeAndDiscard(dbConnection)
+            && CipherQuery("CREATE CONSTRAINT ON ").append(Node{.name="j",.label=Label::Job}).append(" ASSERT exists(j.type)").executeAndDiscard(dbConnection)
+            && CipherQuery::CREATE_INDEX(Index(Label::Job,"id")).executeAndDiscard(dbConnection)
+            && CipherQuery::CREATE_EDGE_INDEX(Index(Label::before)).executeAndDiscard(dbConnection);
     }
 
     enum class QueryType{
@@ -51,7 +51,7 @@ private:
                     .set(std::string(varName)+"state",mg::Value(magic_enum::enum_name(job.state)));
             }
             case QueryType::MATCH:
-                return CipherQuery().match(Node(varName,Label::Job,"id:$"+std::string(varName)+"id"));
+                return CipherQuery().match(Node(varName,Label::Job,"id:$"+std::string(varName)+"id")).setInt(std::string(varName)+"id",job.id);
             default:
                 return CipherQuery();
         }
@@ -100,7 +100,7 @@ public:
     bool addAdjacency(const Job & from, const Job & to)const noexcept {
        return queryJob(from,QueryType::MERGE,"f")
             .add(queryJob(to,QueryType::MERGE,"t"))
-            .merge(Relation{.from=Node("f"),.label=Label::before,.to=Node("t")})
+            .merge(Relation{.from=Var("f"),.label=Label::before,.to=Var("t")})
             .executeAndDiscard(dbConnection);
     }
 
@@ -189,9 +189,10 @@ public:
 
     fishnet::util::forward_range_of<Job> auto adjacency(const Job & job) const noexcept {
         if(
-            CipherQuery().match(Relation{
-                .from=Node{.name="x",.label=Label::Job},
-                .label=Label::before,
+            queryJob(job,QueryType::MATCH,"x")
+            .match(Relation{
+                .from=Var("x"),
+                .label= Label::before,
                 .to=Node{.name="j",.label=Label::Job}
             }).ret("j").execute(dbConnection)
         ){
