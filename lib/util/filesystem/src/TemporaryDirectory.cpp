@@ -26,6 +26,17 @@ std::optional<TemporaryDirectory> TemporaryDirectory::load(size_t id) noexcept{
     return std::nullopt;
 }
 
+bool TemporaryDirectory::setTmpPrefix(const std::filesystem::path & prefix)noexcept{
+    if(!std::filesystem::exists(prefix) || !std::filesystem::is_directory(prefix))
+        return false;
+    TMP_PREFIX = prefix;
+    return true;
+}
+
+const std::filesystem::path & TemporaryDirectory::getTmpPrefix() noexcept{
+    return TMP_PREFIX;
+}
+
 TemporaryDirectory::TemporaryDirectory() :identifier(randomUniqueID()),directory(fromID(identifier)){
     init();
 }

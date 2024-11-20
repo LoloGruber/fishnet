@@ -14,9 +14,11 @@ private:
     static std::filesystem::path fromID(size_t id) noexcept;
     static size_t randomUniqueID() noexcept;
     TemporaryDirectory(size_t identifier, std::filesystem::path directory):identifier(identifier),directory(std::move(directory)){}
+    static inline std::filesystem::path TMP_PREFIX = std::filesystem::temp_directory_path() / std::filesystem::path("fishnet/");
 public:
-    const static inline std::filesystem::path TMP_PREFIX = std::filesystem::temp_directory_path() / std::filesystem::path("fishnet/");
     static std::optional<TemporaryDirectory> load(size_t id) noexcept;
+    static bool setTmpPrefix(const std::filesystem::path & prefix)noexcept;
+    static const std::filesystem::path & getTmpPrefix() noexcept;
 
     TemporaryDirectory();
     operator const std::filesystem::path & () const noexcept;

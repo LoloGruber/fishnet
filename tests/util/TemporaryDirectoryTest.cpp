@@ -14,7 +14,7 @@ TEST(TemporaryDirectoryTest, init){
 TEST(TemporaryDirectoryTest, getter){
     TemporaryDirectory tmp;
     EXPECT_NO_FATAL_FAILURE(tmp.id());
-    EXPECT_EQ(tmp.get(),TemporaryDirectory::TMP_PREFIX / std::filesystem::path(std::to_string(tmp.id())+"/"));
+    EXPECT_EQ(tmp.get(),TemporaryDirectory::getTmpPrefix() / std::filesystem::path(std::to_string(tmp.id())+"/"));
     EXPECT_EQ(std::filesystem::path(tmp),tmp.get());
     tmp.clear();
 }
