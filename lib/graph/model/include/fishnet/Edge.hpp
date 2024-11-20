@@ -1,6 +1,8 @@
 #pragma once
 #include "NetworkConcepts.hpp"
+#include <sstream>
 #include <concepts>
+#include <fishnet/Printable.hpp>
 
 namespace fishnet::graph{
 
@@ -105,7 +107,20 @@ namespace fishnet::graph::__impl{
                     return hasher(from) ^ hasher(to);
                 }
             }
+
+            std::string toString() const noexcept requires fishnet::util::Printable<N>{
+                std::ostringstream oss;                    
+                oss << "(" << this->from.toString() << ")";
+                if constexpr(Directed){
+                    oss << "->";
+                }else {
+                    oss << "-";
+                }
+                oss << "(" << this->to.toString() << ")";
+                return oss.str();
+            }
     };
+
     /**
      * @brief Weighted edge decorator, inheriting from edge type
      * 

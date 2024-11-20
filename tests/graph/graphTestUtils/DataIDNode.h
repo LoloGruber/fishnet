@@ -3,6 +3,7 @@
 #include "IDNode.h"
 #include <functional>
 #include <string>
+#include <fishnet/Printable.hpp>
 
 template<typename T>
 class DataIDNode : public IDNode
@@ -14,6 +15,9 @@ public:
     ~DataIDNode() = default;
     T getData() const {
         return this->data;
+    }
+    std::string toString() const noexcept requires std::convertible_to<T,std::string>{
+        return std::string(data);
     }
 };
 
