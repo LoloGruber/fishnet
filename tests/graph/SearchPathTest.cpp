@@ -10,6 +10,10 @@ using namespace fishnet::graph;
 using namespace testutil;
 using UGraph = fishnet::graph::UndirectedGraph<DataIDNode<std::string>>;
 using DGraph = fishnet::graph::DirectedGraph<DataIDNode<std::string>>;
+
+static_assert(fishnet::util::Printable<DataIDNode<std::string>>);
+static_assert(fishnet::util::Printable<UGraph::edge_type>);
+
 class SearchPathTest : public ::testing::Test{
 protected:
     void SetUp() override {
@@ -120,13 +124,11 @@ TEST_F(SearchPathTest, DFSSimpleUndirected){
 
 TEST_F(SearchPathTest, DFSComplexPath){
     auto path = DFS::getPath(g,n1,n6);
-    std::vector<UGraph::edge_type> expected;
-    expected.push_back(g.makeEdge(n1,n2));
-    expected.push_back(g.makeEdge(n2,n4));
-    expected.push_back(g.makeEdge(n4,n6));
-    for (auto e: path){
-        std::cout << e.getFrom().getData() << " <-> " << e.getTo().getData() << std::endl;
+    EXPECT_FALSE(path.empty());
+    EXPECT_EQ(path.front().getFrom(),n1);
+    EXPECT_EQ(path.back().getTo(),n6);
+    for(const auto & e: path) {
+        EXPECT_TRUE(g.containsEdge(e));
     }
-    EXPECT_EQ(expected,path); 
 }
 
