@@ -4,6 +4,7 @@
 #include <memory>
 #include <concepts>
 #include <algorithm>
+#include <filesystem>
 #include <ranges>
 #include <fishnet/CollectionConcepts.hpp>
 #include <fishnet/NumericConcepts.hpp>
@@ -92,8 +93,6 @@ template<typename T>
 void EXPECT_NOT_CONTAINS( fishnet::util::input_range_of<T> auto && collection, const T & element){
     EXPECT_EQ(std::find(collection.begin(), collection.end(), element), collection.end());
 }
-
-
 
 template<typename T> 
 void EXPECT_CONTAINS(const  fishnet::util::input_range_of<std::unique_ptr<T>> auto & collection, const std::unique_ptr<T> & element){
@@ -279,6 +278,13 @@ void EXPECT_EMPTY(const OptionalOrExpected auto & opt){
     EXPECT_FALSE(opt.has_value());
 }
 
+static void EXPECT_EXISTS(const std::filesystem::path & path){
+    EXPECT_TRUE(std::filesystem::exists(path)) << "Expecting path "<<path<<" to exist";
+}
+
+static void EXPECT_NOT_EXISTS(const std::filesystem::path & path){
+    EXPECT_FALSE(std::filesystem::exists(path)) << "Expecting path "<<path<<" to not exist";
+}
 }
 
 #endif
