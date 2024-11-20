@@ -7,12 +7,13 @@ if (OpenSSL_FOUND)
   message(STATUS "Using OpenSSL libraries: ${OPENSSL_LIBRARIES}")
 endif()
 include(ExternalProject)
-
+# Setup installation location depending on build type
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   set(MGCLIENT_INSTALL_DIR ${CMAKE_BINARY_DIR}/mgclient)
 else()
   set(MGCLIENT_INSTALL_DIR ${CMAKE_INSTALL_PREFIX})
 endif()
+# Set runtime path for linkage
 set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_RPATH}:${MGCLIENT_INSTALL_DIR}/lib" CACHE STRING "Install Rpath")
 message(STATUS "Adding mgclient to rpath: ${CMAKE_INSTALL_RPATH}")
 
@@ -24,6 +25,8 @@ if (UNIX AND NOT APPLE)
 elseif (WIN32)
   set(MGCLIENT_LIBRARY_PATH ${MGCLIENT_INSTALL_DIR}/lib/mgclient.dll)
 endif()
+
+if(NOT EXISTS "${MGCLIENT_LIBRARY_PATH}")
 ExternalProject_Add(mgclient-proj
   PREFIX           mgclient-proj
   GIT_REPOSITORY   https://github.com/memgraph/mgclient.git
@@ -38,14 +41,16 @@ ExternalProject_Add(mgclient-proj
                   "-DOPENSSL_LIBRARIES=${OPENSSL_LIBRARIES}"
   BUILD_BYPRODUCTS "${MGCLIENT_LIBRARY_PATH}"
   INSTALL_DIR      "${PROJECT_BINARY_DIR}/mgclient"
+  BUILD_BYPRODUCTS "${MGCLIENT_LIBRARY_PATH}"
+  UPDATE_COMMAND ""
 )
+endif()
 add_library(${MGCLIENT_LIBRARY} SHARED IMPORTED)
 target_compile_definitions(${MGCLIENT_LIBRARY} INTERFACE mgclient_shared_EXPORTS)
 set_property(TARGET ${MGCLIENT_LIBRARY} PROPERTY IMPORTED_LOCATION ${MGCLIENT_LIBRARY_PATH})
 if (WIN32)
   set_property(TARGET ${MGCLIENT_LIBRARY} PROPERTY IMPORTED_IMPLIB ${MGCLIENT_INSTALL_DIR}/lib/mgclient.lib)
 endif()
-add_dependencies(${MGCLIENT_LIBRARY} mgclient-proj)
 target_include_directories(${MGCLIENT_LIBRARY} INTERFACE  ${MGCLIENT_INCLUDE_DIRS})
 
 # Apache License
