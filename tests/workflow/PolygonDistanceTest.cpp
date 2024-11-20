@@ -16,7 +16,7 @@ enum class ExecutionMode{
     BRUTE_FORCE, SWEEP_LINE_X, SWEEP_LINE_Y, DEFAULT
 };
 
-static inline std::ofstream benchmarkFile = std::ofstream(util::PathHelper::projectDirectory() / std::filesystem::path("doc/benchmarks/polygonDistance/polygon-complexity-distance-benchmark.csv"));
+static inline std::ofstream benchmarkFile = std::ofstream(util::PathHelper::projectDirectory() / std::filesystem::path("doc/benchmarks/tests/polygon-distance-benchmark.csv"));
 
 template<ExecutionMode ExecMode>
 static std::pair<geometry::Vec2DReal,geometry::Vec2DReal> runScenario(fishnet::geometry::IPolygon auto const & lhs, fishnet::geometry::IPolygon auto const & rhs, size_t repetitions, std::string_view filename){
