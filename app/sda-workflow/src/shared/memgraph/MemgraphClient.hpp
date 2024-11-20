@@ -348,7 +348,7 @@ public:
         std::ranges::transform(componentIds,std::back_inserter(data),[](ComponentReference componentRef){
             return mg::Value(componentRef.componentId);
         });
-        if(CipherQuery("WITH $data as components")
+        if(CipherQuery("WITH $data as components").endl()
             .set("data",mg::Value(mg::List(std::move(data))))
             .append("UNWIND components as component_id").endl()
             .match(Node{.name="c",.label=Label::Component}).where("ID(c)=component_id")

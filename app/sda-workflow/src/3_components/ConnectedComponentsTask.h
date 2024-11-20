@@ -49,7 +49,7 @@ public:
                     .to=Node{.name="f",.label=Label::File}
                 })
                 .set("data",mg::Value(mg::List(componentValues)))
-                .ret("DISTINCT component_id;f.path")
+                .ret("DISTINCT component_id","f.path")
                 .execute(memgraphConnection)
         ) throw std::runtime_error("Could not execute query to find files part of a component");
         while(auto currentRow = memgraphConnection->FetchOne()){
