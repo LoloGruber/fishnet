@@ -6,7 +6,7 @@ TEST(PathHelperTest, getCurrentPath) {
 }
 
 TEST(PathHelperTest, projectDirectory) {
-    EXPECT_EQ(PathHelper::projectDirectory("fishnet"),std::filesystem::path("/home/lolo/Documents/fishnet"));
+    EXPECT_EQ(PathHelper::projectDirectory("fishnet"),PathHelper::absoluteCanonical(std::filesystem::path("../../../")));
 }
 
 TEST(PathHelperTest, absoluteCanonical){
