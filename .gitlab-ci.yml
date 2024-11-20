@@ -27,5 +27,5 @@ test:
   script:
     - cd build
     - ls -la
-    - file build/tests/graph/graphTest
+    - file tests/graph/graphTest
     - ctest --output-on-failure
