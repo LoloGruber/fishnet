@@ -46,8 +46,7 @@ static void dfs(const G & g,SearchResult<SearchResultImpl> & searchResult, const
 
 namespace fishnet::graph::DFS{
 /**
- * @brief Find path between start and goal using depth-first search
- * 
+ * @brief Find (any, not necessarily the shortest ) path between start and goal using depth-first search
  * @tparam G graph type
  * @param g graph
  * @param start start node
@@ -55,7 +54,7 @@ namespace fishnet::graph::DFS{
  * @return util::input_range_of<typename G::edge_type> range of edges leading from start to goal
  */
 template<Graph G>
-static util::input_range_of<typename G::edge_type> auto getPath(const G & g,const typename G::node_type & start, const typename G::node_type & goal) {
+static std::vector<typename G::edge_type> getPath(const G & g,const typename G::node_type & start, const typename G::node_type & goal) {
     using N = typename G::node_type;
     using E = typename G::edge_type;
     using H = G::adj_container_type::hash_function;
