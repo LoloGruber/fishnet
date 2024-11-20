@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include "Testutil.h"
+#include <fstream>
 #include <fishnet/PathHelper.h>
 #include <fishnet/Shapefile.hpp>
 #include <fishnet/VectorLayer.hpp>
@@ -15,13 +16,15 @@ enum class ExecutionMode{
     BRUTE_FORCE, SWEEP_LINE_X, SWEEP_LINE_Y, DEFAULT
 };
 
+static inline std::ofstream benchmarkFile = std::ofstream(util::PathHelper::projectDirectory() / std::filesystem::path("doc/benchmarks/polygonDistance/polygon-complexity-distance-benchmark.csv"));
+
 template<ExecutionMode ExecMode>
 static std::pair<geometry::Vec2DReal,geometry::Vec2DReal> runScenario(fishnet::geometry::IPolygon auto const & lhs, fishnet::geometry::IPolygon auto const & rhs, size_t repetitions, std::string_view filename){
     assert(repetitions > 0 && lhs != rhs);
     std::pair<geometry::Vec2DReal,geometry::Vec2DReal> result;
     size_t numberOfSegments = fishnet::util::size(lhs.getBoundary().getSegments())*fishnet::util::size(rhs.getBoundary().getSegments());
-    std::cout << filename <<";"<< std::string(magic_enum::enum_name(ExecMode)) << ";";
-    std::cout << fishnet::util::size(lhs.getBoundary().getSegments()) <<";"<<fishnet::util::size(rhs.getBoundary().getSegments())<< ";"<<numberOfSegments <<";";
+    benchmarkFile << filename <<";"<< std::string(magic_enum::enum_name(ExecMode)) << ";";
+    benchmarkFile << fishnet::util::size(lhs.getBoundary().getSegments()) <<";"<<fishnet::util::size(rhs.getBoundary().getSegments())<< ";"<<numberOfSegments <<";";
     util::StopWatch timer;
 
     for([[maybe_unused]] auto _ : std::views::iota(0UL,repetitions)){
@@ -37,12 +40,12 @@ static std::pair<geometry::Vec2DReal,geometry::Vec2DReal> runScenario(fishnet::g
     }
     double time = timer.stop();
 
-    std::cout << time/double(repetitions) << std::endl;
+    benchmarkFile << time/double(repetitions) << std::endl;
     return result;
 }
 
 static void runScenarios(fishnet::geometry::IPolygon auto const & lhs, fishnet::geometry::IPolygon auto const & rhs, size_t repetitions, std::string_view filename){
-    std::cout << "Scenario; Type; N;M; NxM; AVG of "<< repetitions << " in [s]" << std::endl;
+    benchmarkFile << "Scenario; Type; N;M; NxM; AVG of "<< repetitions << " in [s]" << std::endl;
     auto [lForce,rForce] = runScenario<ExecutionMode::BRUTE_FORCE>(lhs,rhs,repetitions,filename);
     auto [lSweep,rSweep] = runScenario<ExecutionMode::SWEEP_LINE_X>(lhs,rhs,repetitions,filename);
     auto [lySweep, rySweep] = runScenario<ExecutionMode::SWEEP_LINE_Y>(lhs,rhs,repetitions,filename);
