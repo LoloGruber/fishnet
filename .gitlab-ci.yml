@@ -26,6 +26,4 @@ test:
     - apt update && apt -y install cmake libgdal-dev
   script:
     - cd build
-    - ls -la
-    - file tests/graph/graphTest
     - ctest --output-on-failure
