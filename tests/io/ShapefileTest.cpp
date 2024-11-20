@@ -17,7 +17,7 @@ TEST(ShapefileTest, exists){
 }
 
 TEST(ShapefileTest, copy){
-    auto tmp = util::TemporaryDirectory("/home/lolo/tmp/");
+    auto tmp = util::TemporaryDirectory("/tmp/fishnet");
     std::string filename = "myShape";
     Shapefile shp {example};
     shp.copy(tmp.getDirectory(),filename);
