@@ -106,7 +106,6 @@ private:
         job.state = JobState::RUNNABLE;
         job.type = JobType::COMPONENTS;
         job.config = cfgFile;
-        job.nextJobId = jobIdCounter;
         job.jobDirectory = jobDirectory;
         for(const auto & predecessor: predecessors){
             jobDag.addEdge(predecessor,job);
@@ -120,9 +119,9 @@ public:
                 cfgFile = std::filesystem::read_symlink(cfgFile);
             this->cfgFile = fishnet::util::PathHelper::absoluteCanonical(cfgFile);
             this->jobDirectory = this->workingDirectory / std::filesystem::path("jobs/");
-            assert(std::filesystem::exists(workingDirectory));
-            if(not std::filesystem::exists(jobDirectory)) {
-                std::filesystem::create_directory(jobDirectory);
+            assert(std::filesystem::exists(this->workingDirectory));
+            if(not std::filesystem::exists(this->jobDirectory)) {
+                std::filesystem::create_directory(this->jobDirectory);
             }
         }
 
