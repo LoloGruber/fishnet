@@ -4,7 +4,14 @@
 #include <unordered_map>
 #include <mgclient.hpp>
 #include <iostream>
-#include "MemgraphConnection.hpp"
+#include <mgclient.hpp>
+
+
+template<typename C>
+concept CipherConnection = requires(const C & constConnection){
+    {constConnection.operator->()} -> std::convertible_to<mg::Client *>;
+    {constConnection.retry()} -> std::convertible_to<C>;
+};
 
 /**
  * @brief Helper class to build cipher queries
@@ -218,7 +225,7 @@ public:
         return append(other.asString());
     }
 
-    constexpr bool execute(const MemgraphConnection & connection) {
+    constexpr bool execute(const CipherConnection auto & connection) {
         mg::Map mgParams {params.size()};
         for(auto && [key,mgValue]:params){
             mgParams.Insert(key,std::move(mgValue));
@@ -236,7 +243,7 @@ public:
         return result;
     }
 
-    constexpr bool executeAndDiscard(const MemgraphConnection & connection) {
+    constexpr bool executeAndDiscard(const CipherConnection auto & connection) {
         bool success = execute(connection);
         if(success)
             connection->DiscardAll();

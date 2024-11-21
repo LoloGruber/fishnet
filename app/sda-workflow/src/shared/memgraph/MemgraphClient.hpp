@@ -366,7 +366,11 @@ public:
     }
 
     bool clearAll() const noexcept{
-        return CipherQuery().match(Node{.name="n",.label=Label::Settlement}).del("n").executeAndDiscard(mgConnection);
+        bool result = true;
+        for(Label label: {Label::Settlement,Label::File,Label::Component}){
+            result &= CipherQuery().match(Node{.name="n",.label=label}).del("n").executeAndDiscard(mgConnection);
+        }
+        return result;
     }
 };
 

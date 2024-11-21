@@ -63,10 +63,6 @@ protected:
 public:
     explicit MemgraphAdjacency(MemgraphClient && client):client(std::move(client)){}
 
-    static std::expected<MemgraphAdjacency<N>,std::string> create(const mg::Client::Params & params ) {
-        return MemgraphConnection::create(params).transform([](auto && connection){return MemgraphAdjacency<N>(MemgraphClient(std::move(connection)));});
-    }
-
     bool addAdjacency(const N & from, const N & to) noexcept {
         N copyFrom  = from;
         N copyTo = to;
