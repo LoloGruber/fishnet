@@ -12,6 +12,7 @@ class JobGenerator{
 private:
     JobGeneratorConfig config;
     std::filesystem::path workingDirectory;
+    std::filesystem::path jobDirectory;
     std::filesystem::path cfgFile;
     size_t jobIdCounter = 0;
 private:
@@ -21,7 +22,7 @@ private:
             FilterJob job;
             job.id = jobIdCounter++;
             auto jobFilename = "Filter_"+input.stem().string()+".json";
-            job.file = config.jobDirectory / std::filesystem::path(jobFilename);
+            job.file = jobDirectory / std::filesystem::path(jobFilename);
             job.state = JobState::RUNNABLE;
             job.type = JobType::FILTER;
             job.input = input;
@@ -70,7 +71,7 @@ private:
             NeighboursJob job;
             job.id = jobIdCounter++;
             auto jobFilename = "Neighbour_"+input.stem().string()+".json";
-            job.file = config.jobDirectory / std::filesystem::path(jobFilename);
+            job.file = jobDirectory / std::filesystem::path(jobFilename);
             job.state = JobState::RUNNABLE;
             job.type = JobType::NEIGHBOURS;
             job.config = cfgFile;
@@ -101,12 +102,12 @@ private:
         ComponentsJob job;
         job.id = jobIdCounter++;
         auto jobFileName = "ComponentsJob.json";
-        job.file = config.jobDirectory / std::filesystem::path(jobFileName);
+        job.file = jobDirectory / std::filesystem::path(jobFileName);
         job.state = JobState::RUNNABLE;
         job.type = JobType::COMPONENTS;
         job.config = cfgFile;
         job.nextJobId = jobIdCounter;
-        job.jobDirectory = config.jobDirectory;
+        job.jobDirectory = jobDirectory;
         for(const auto & predecessor: predecessors){
             jobDag.addEdge(predecessor,job);
         }
@@ -117,16 +118,13 @@ public:
         :config(std::move(config)),workingDirectory(std::move(workingDirectory)){
             if(std::filesystem::is_symlink(cfgFile))
                 cfgFile = std::filesystem::read_symlink(cfgFile);
-            this->cfgFile = std::filesystem::absolute(cfgFile);
+            this->cfgFile = fishnet::util::PathHelper::absoluteCanonical(cfgFile);
+            this->jobDirectory = this->workingDirectory / std::filesystem::path("jobs/");
+            assert(std::filesystem::exists(workingDirectory));
+            if(not std::filesystem::exists(jobDirectory)) {
+                std::filesystem::create_directory(jobDirectory);
+            }
         }
-
-    void cleanup(JobDAG_t & jobDag){
-        for(const auto & entry: std::filesystem::directory_iterator(config.jobDirectory)){
-            if(entry.is_regular_file()&& entry.path().extension() == ".json")
-                std::filesystem::remove(entry);
-        }
-        CipherQuery::DELETE_ALL().executeAndDiscard(jobDag.getAdjacencyContainer().getConnection());
-    }
 
     void generateWSFSplitJobs(const std::vector<std::filesystem::path> & inputs,const std::filesystem::path & outDir,JobDAG_t & jobDag)  {
         assert(config.splits > 0);
@@ -142,7 +140,7 @@ public:
             SplitJob job;
             job.id = jobIdCounter++;
             auto jobFilename = "Split_"+file.stem().string()+".json";
-            job.file = config.jobDirectory / std::filesystem::path(jobFilename);
+            job.file = jobDirectory / std::filesystem::path(jobFilename);
             job.state = JobState::RUNNABLE;
             job.input = file;
             job.outDir = outDir;
@@ -157,8 +155,6 @@ public:
     }
 
     void generate(const std::vector<std::filesystem::path> & inputs,JobDAG_t & jobDag) noexcept{
-        if(config.cleanup)
-            cleanup(jobDag);
         std::unordered_map<std::filesystem::path,FilterJob> filterJobs;
         std::vector<NeighboursJob> neighboursJobs;
         if(config.lastJobType >= JobType::FILTER) {  
