@@ -2,7 +2,8 @@
     "job-directory":"/root/jobs",
     "neighbouring-files-predicate":"WSF",
     "splits":0,
-    "cleanup-first":true,
+    "cleanup":true,
+    "concurrent-runs":false,
     "last-job-type":"MERGE",
     "hardware-concurrency":0,
     "executor":{
