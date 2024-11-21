@@ -20,7 +20,6 @@ public:
         if (this != &other) {
             MemgraphTaskConfig::operator=(std::move(other));  // Move the base class explicitly
             this->lastJobType = other.lastJobType;
-            this->cleanup = other.cleanup;
             this->splits = other.splits;
             this->neighbouringFilesPredicateType = other.neighbouringFilesPredicateType;
             this->neighbouringFilesPredicate = std::move(other.neighbouringFilesPredicate);
