@@ -6,15 +6,17 @@
 #include "JobGeneratorConfig.hpp"
 #include "SchedulerConfig.hpp"
 
-class SettlementDelineationConfig:public  JobGeneratorConfig,public SchedulerConfig{
+class SettlementDelineationConfig{
 private:
     constexpr static const char * CLEANUP_KEY = "cleanup";    
     constexpr static const char * CONCURRENT_RUNS_KEY = "concurrent-runs";
 public:
+    JobGeneratorConfig jobGenerator;
+    SchedulerConfig scheduler;
     bool cleanup;
     bool concurrentRuns;
 
-    SettlementDelineationConfig(const json & config):JobGeneratorConfig(config),SchedulerConfig(config){
+    SettlementDelineationConfig(const json & config):jobGenerator(config),scheduler(config){
         config.at(CLEANUP_KEY).get_to(this->cleanup);
         config.at(CONCURRENT_RUNS_KEY).get_to(this->concurrentRuns);
     }

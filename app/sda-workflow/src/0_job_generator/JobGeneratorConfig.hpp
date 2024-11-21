@@ -5,7 +5,7 @@
 #include "fishnet/FunctionalConcepts.hpp"
 #include "NeighbouringFilesPredicates.hpp"
 
-class JobGeneratorConfig:public virtual MemgraphTaskConfig{
+class JobGeneratorConfig:public MemgraphTaskConfig{
 private:
     constexpr static const char * LAST_JOB_TYPE_KEY = "last-job-type";
     constexpr static const char * NEIGHBOURING_FILES_PREDICATE_KEY = "neighbouring-files-predicate";
@@ -15,19 +15,6 @@ public:
     u_int32_t splits = 0;
     fishnet::util::BiPredicate_t<std::filesystem::path> neighbouringFilesPredicate;
     NeighbouringFilesPredicateType neighbouringFilesPredicateType;
-
-    JobGeneratorConfig& operator=(JobGeneratorConfig&& other) noexcept {
-        if (this != &other) {
-            MemgraphTaskConfig::operator=(std::move(other));  // Move the base class explicitly
-            this->lastJobType = other.lastJobType;
-            this->splits = other.splits;
-            this->neighbouringFilesPredicateType = other.neighbouringFilesPredicateType;
-            this->neighbouringFilesPredicate = std::move(other.neighbouringFilesPredicate);
-        }
-        return *this;
-    }
-
-    JobGeneratorConfig(const JobGeneratorConfig &)=default;
 
     JobGeneratorConfig(const json & config):MemgraphTaskConfig(config){
         const auto & cfg = this->jsonDescription;
