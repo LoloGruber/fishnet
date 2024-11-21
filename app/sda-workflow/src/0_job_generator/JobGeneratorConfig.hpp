@@ -5,25 +5,33 @@
 #include "fishnet/FunctionalConcepts.hpp"
 #include "NeighbouringFilesPredicates.hpp"
 
-class JobGeneratorConfig:public MemgraphTaskConfig{
+class JobGeneratorConfig:public virtual MemgraphTaskConfig{
 private:
-    constexpr static const char * JOB_DIRECTORY_KEY = "job-directory";
     constexpr static const char * LAST_JOB_TYPE_KEY = "last-job-type";
     constexpr static const char * NEIGHBOURING_FILES_PREDICATE_KEY = "neighbouring-files-predicate";
-    constexpr static const char * CLEANUP_FIRST_KEY = "cleanup-first";
     constexpr static const char * SPLIT_KEY ="splits";
 public:
-    std::filesystem::path jobDirectory;
     JobType lastJobType;
-    bool cleanup;
     u_int32_t splits = 0;
     fishnet::util::BiPredicate_t<std::filesystem::path> neighbouringFilesPredicate;
     NeighbouringFilesPredicateType neighbouringFilesPredicateType;
 
+    JobGeneratorConfig& operator=(JobGeneratorConfig&& other) noexcept {
+        if (this != &other) {
+            MemgraphTaskConfig::operator=(std::move(other));  // Move the base class explicitly
+            this->lastJobType = other.lastJobType;
+            this->cleanup = other.cleanup;
+            this->splits = other.splits;
+            this->neighbouringFilesPredicateType = other.neighbouringFilesPredicateType;
+            this->neighbouringFilesPredicate = std::move(other.neighbouringFilesPredicate);
+        }
+        return *this;
+    }
+
+    JobGeneratorConfig(const JobGeneratorConfig &)=default;
+
     JobGeneratorConfig(const json & config):MemgraphTaskConfig(config){
         const auto & cfg = this->jsonDescription;
-        cfg.at(JOB_DIRECTORY_KEY).get_to(this->jobDirectory);
-        cfg.at(CLEANUP_FIRST_KEY).get_to(this->cleanup);
         std::string jobTypeName;
         cfg.at(LAST_JOB_TYPE_KEY).get_to(jobTypeName);
         auto asJobType = magic_enum::enum_cast<JobType>(jobTypeName);
