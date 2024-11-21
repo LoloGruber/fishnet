@@ -5,6 +5,7 @@
 #include "Job.hpp"
 #include "JobGeneratorConfig.hpp"
 #include "SchedulerConfig.hpp"
+#include "ConnectedComponentsConfig.hpp"
 
 class SettlementDelineationConfig{
 private:
@@ -13,10 +14,11 @@ private:
 public:
     JobGeneratorConfig jobGenerator;
     SchedulerConfig scheduler;
+    ConnectedComponentsConfig components;
     bool cleanup;
     bool concurrentRuns;
 
-    SettlementDelineationConfig(const json & config):jobGenerator(config),scheduler(config){
+    SettlementDelineationConfig(const json & config):jobGenerator(config),scheduler(config),components(config){
         config.at(CLEANUP_KEY).get_to(this->cleanup);
         config.at(CONCURRENT_RUNS_KEY).get_to(this->concurrentRuns);
     }
