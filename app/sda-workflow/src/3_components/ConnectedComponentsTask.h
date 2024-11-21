@@ -12,7 +12,6 @@ private:
     ConnectedComponentsConfig config;
     std::filesystem::path jobDirectory;
     std::filesystem::path cfgFile;
-    size_t nextJobID;
 
     struct ComponentFileJob{
         std::vector<std::string> files;
@@ -20,8 +19,8 @@ private:
     };
 
 public:
-    ConnectedComponentsTask(ConnectedComponentsConfig && config,std::filesystem::path && jobDirectory,std::filesystem::path && cfgFile,size_t nextJobID)
-    :config(std::move(config)),jobDirectory(std::move(jobDirectory)),nextJobID(nextJobID){
+    ConnectedComponentsTask(ConnectedComponentsConfig && config,std::filesystem::path && jobDirectory,std::filesystem::path && cfgFile,size_t workflowID)
+    :Task(workflowID),config(std::move(config)),jobDirectory(std::move(jobDirectory)){
         if(std::filesystem::is_symlink(cfgFile))
             cfgFile = std::filesystem::read_symlink(cfgFile);
         this->cfgFile = std::filesystem::absolute(cfgFile);
@@ -29,7 +28,6 @@ public:
         this->desc["config"]=this->config.jsonDescription;
         this->desc["job-directory"]=this->jobDirectory.string();
         this->desc["cfg-file"]=this->cfgFile.string();
-        this->desc["next-job-id"]=this->nextJobID;
     }
 
     std::unordered_map<uint64_t,std::vector<std::string>> queryPathsForComponent(const std::vector<ComponentReference> & componentIds, const MemgraphConnection & memgraphConnection){
@@ -62,11 +60,21 @@ public:
         return componentToFilesMap;
     }
 
+    size_t getBiggestJobID(const MemgraphConnection & memgraphConnection){
+        if(CipherQuery().match(Node{.name="j",.label=Label::Job}).append(" WITH MAX(j.id) AS maxId ").ret("maxId").execute(memgraphConnection)){
+            auto result = memgraphConnection->FetchAll();
+            if(result && result->front().front().type() == mg::Value::Type::Int){
+                size_t id = asNodeIdType(result->front().front().ValueInt());
+                return id;
+            }
+        }
+        throw std::runtime_error("Could not load biggest job id from database");
+    }
+
 
 
     void run() override {
-       auto ExpMemgraphConnection = MemgraphConnection::create(config.params).transform([](auto && connection){return MemgraphClient(std::move(connection));});
-        const auto & memgraphClient = getExpectedOrThrowError(ExpMemgraphConnection);
+        MemgraphClient memgraphClient = MemgraphClient(MemgraphConnection::create(config.params,workflowID).value_or_throw());
         auto nodesList = memgraphClient.nodes();
         auto adjMap = memgraphClient.edges();
         auto graph = fishnet::graph::GraphFactory::UndirectedGraph<size_t>();
@@ -103,7 +111,7 @@ public:
             std::ranges::for_each(files,[&paths](const auto & file){paths.emplace_back(file);});
             return paths;
         };
-        
+        size_t nextJobID = getBiggestJobID(memgraphClient.getMemgraphConnection())+1;
         for(auto && [files,componentIdList]: contractionJobs){
             ContractionJob contractionJob;
             contractionJob.id = nextJobID++;

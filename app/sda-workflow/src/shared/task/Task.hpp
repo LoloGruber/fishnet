@@ -18,7 +18,11 @@ class Task {
 protected:
     json desc;
     fishnet::util::StopWatch stopWatch;
+    size_t workflowID = 0;
 public:
+    Task()=default;
+    Task(size_t workflowID):workflowID(workflowID){}
+
     constexpr static std::string FISHNET_ID_FIELD = "FISHNET_ID";
 
     virtual void run() = 0;

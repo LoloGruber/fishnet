@@ -39,7 +39,7 @@ public:
      * @brief settlement type after the contraction
      */
     using ResultNodeType = SettlementPolygon<ResultGeometryType>;
-    ContractionTask(ContractionConfig<P> && config,std::vector<ComponentReference> && components,fishnet::Shapefile output):components(std::move(components)),config(std::move(config)),output(std::move(output)){
+    ContractionTask(ContractionConfig<P> && config,std::vector<ComponentReference> && components,fishnet::Shapefile output,size_t workflowID):Task(workflowID),components(std::move(components)),config(std::move(config)),output(std::move(output)){
         this->desc["type"]="CONTRACTION";
         this->desc["config"]=this->config.jsonDescription;
         std::vector<std::string> componentStrings;
@@ -97,19 +97,17 @@ public:
         if(inputs.empty()){
             throw std::runtime_error( "No input file provided");
         }
-        auto memgraphConnection = MemgraphConnection::create(config.params);
-        testExpectedOrThrowError(memgraphConnection);
-        auto memgraphAdjSrc = CachingMemgraphAdjacency<SourceNodeType>(memgraphConnection.transform([](auto && con){return MemgraphClient(std::move(con));}).value());
-        auto memgraphAdjRes = MemgraphAdjacency<ResultNodeType>::create(config.params);
+        MemgraphConnection memgraphConnection = MemgraphConnection::create(config.params,workflowID).value_or_throw();
+        auto memgraphAdjSrc = CachingMemgraphAdjacency<SourceNodeType>(MemgraphClient(MemgraphConnection(memgraphConnection)));
+        auto memgraphAdjRes = MemgraphAdjacency<ResultNodeType>(MemgraphClient(MemgraphConnection(memgraphConnection)));
         OGRSpatialReference ref; // set by readInputs function, used as spatial reference for output layer
-        testExpectedOrThrowError(memgraphAdjRes);
         auto settlements = readInputs(memgraphAdjSrc,ref);
         auto outputFileRef = memgraphAdjSrc.getDatabaseConnection().addFileReference(output.getPath());
         if(not outputFileRef)
             throw std::runtime_error( "Could not create file reference for output in Database: "+output.getPath().string());
         auto sourceGraph = fishnet::graph::GraphFactory::UndirectedGraph<SourceNodeType>(std::move(memgraphAdjSrc));
         this->desc["#Nodes-before-contraction"]=fishnet::util::size(sourceGraph.getNodes());
-        auto resultGraph = fishnet::graph::GraphFactory::UndirectedGraph<ResultNodeType>(std::move(memgraphAdjRes.value()));
+        auto resultGraph = fishnet::graph::GraphFactory::UndirectedGraph<ResultNodeType>(std::move(memgraphAdjRes));
         /*Reduce function used to merge a connected component of nodes (SourceNodeType), solely connected via to-be-contracted edges, into a single node of the ResultNodeType*/
         auto reduceFunction = IDReduceFunction(outputFileRef.value());
         auto contractionPredicate = fishnet::util::AllOfPredicate<SourceNodeType,SourceNodeType>();

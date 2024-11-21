@@ -7,12 +7,11 @@
 int main(int argc, char * argv[]){
     CLI::App schedulerApp {};
     std::string configFilename;
+    size_t workflowID = 0;
+    schedulerApp.add_option("-w,--workflowID",workflowID,"Unique workflow id (optional)")->check(CLI::PositiveNumber);
     schedulerApp.add_option("-c,--config",configFilename,"Path to scheduler / workflow configuration file")->required()->check(CLI::ExistingFile);
     CLI11_PARSE(schedulerApp,argc,argv);
     auto cfg = SchedulerConfig(nlohmann::json::parse(std::ifstream(configFilename)));
-    auto exp = MemgraphConnection::create(cfg.params).transform([](auto && conn){return JobAdjacency(std::move(conn));});
-    auto && jobAdj = getExpectedOrThrowError(exp);
-    auto jobDAG = loadDAG(std::move(jobAdj));
-    Scheduler scheduler = cfg.getSchedulerWithExecutorType(std::move(jobDAG));
+    Scheduler scheduler = cfg.getSchedulerWithExecutorType(loadDAG(JobAdjacency(MemgraphConnection::create(cfg.params,workflowID).value_or_throw())));
     scheduler.schedule();
 }

@@ -28,6 +28,12 @@ inputs:
             position: 2
             prefix: --outputStem 
         doc: "Output filename storing the merged polygons"
+    workflowId:
+        type: long?
+        inputBinding: 
+            position: 3
+            prefix: -w
+        doc: "Workflow id for isolated database sessions"
         
 outputs:
     standardOut:

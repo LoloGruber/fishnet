@@ -14,12 +14,12 @@ inputs:
       position: 2
       prefix: -j
     doc: "Path to directory where created jobs will be stored"
-  nextId:
-    type: long
-    inputBinding:
-      position: 4
-      prefix: -i
-    doc: "Next job valid job id"
+  workflowId:
+    type: long?
+    inputBinding: 
+      position: 3
+      prefix: -w
+    doc: "Workflow id for isolated database sessions"
 
 outputs:
   standardOut:

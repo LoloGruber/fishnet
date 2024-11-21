@@ -8,6 +8,8 @@ int main(int argc, char const *argv[]){
     std::string primaryInput;
     std::vector<std::string> additionalInputs;
     std::string configFilename;
+    size_t workflowID = 0;
+    app.add_option("-w,--workflowID",workflowID,"Unique workflow id (optional)")->check(CLI::PositiveNumber);
     app.add_option("-i,--input",primaryInput,"Primary input shapefile storing the settlements")->required()->check(CLI::ExistingFile);
     app.add_option("-a,--additional_input",additionalInputs,"Additional input shapefiles storing the settlements")->each([](const std::string & str){
         try{
@@ -20,7 +22,7 @@ int main(int argc, char const *argv[]){
     });
     app.add_option("-c,--config",configFilename,"Path to configuration file")->required()->check(CLI::ExistingFile);
     CLI11_PARSE(app,argc,argv);
-    FindNeighboursTask<GeometryType> task {FindNeighboursConfig<GeometryType>(json::parse(std::ifstream(configFilename))),fishnet::Shapefile(primaryInput)};
+    FindNeighboursTask<GeometryType> task {FindNeighboursConfig<GeometryType>(json::parse(std::ifstream(configFilename))),fishnet::Shapefile(primaryInput),workflowID};
     for(auto && filename : additionalInputs) {
         task.addShapefile(fishnet::Shapefile(filename));
     }

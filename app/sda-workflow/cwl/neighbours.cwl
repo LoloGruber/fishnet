@@ -22,6 +22,12 @@ inputs:
     taskID:
         type: long?
         doc: "Optional task id to distinguish log files"
+    workflowId:
+        type: long?
+        inputBinding: 
+            position: 3
+            prefix: -w
+        doc: "Workflow id for isolated database sessions"
 outputs:
     standardOut:
         type: stdout

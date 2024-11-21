@@ -22,7 +22,12 @@ inputs:
         inputBinding:
             prefix: --outputStem 
         doc: "Output filename stem"
-        
+    workflowId:
+        type: long?
+        inputBinding: 
+            position: 3
+            prefix: -w
+        doc: "Workflow id for isolated database sessions"        
 outputs:
     standardOut:
         type: stdout

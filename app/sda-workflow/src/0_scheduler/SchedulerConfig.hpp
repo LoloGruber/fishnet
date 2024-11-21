@@ -7,7 +7,7 @@
 #include "CwlToolExecutor.hpp"
 #include "Scheduler.hpp"
 
-class SchedulerConfig:public virtual MemgraphTaskConfig{
+class SchedulerConfig:public MemgraphTaskConfig{
 private:
     constexpr static const char * LAST_JOB_TYPE_KEY = "last-job-type";
     constexpr static const char * EXECUTOR_KEY = "executor";
@@ -18,16 +18,6 @@ public:
     json executorDesc;
     size_t concurrency;
 
-    SchedulerConfig& operator=(SchedulerConfig&& other) noexcept {
-        if (this != &other) {
-            MemgraphTaskConfig::operator=(std::move(other));  // Move the base class explicitly
-            this->lastJobType = other.lastJobType;
-            this->executorType = other.executorType;
-            this->executorDesc = std::move(other.executorDesc);
-            this->concurrency = other.concurrency;
-        }
-        return *this;
-    }
 
     SchedulerConfig(const json & config):MemgraphTaskConfig(config){
         const auto & cfg = this->jsonDescription;

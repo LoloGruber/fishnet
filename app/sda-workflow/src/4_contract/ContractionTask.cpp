@@ -12,6 +12,8 @@ int main(int argc, const char * argv[]){
     std::string configFilename;//="/home/lolo/Documents/fishnet/app/settlement_delineation_pattern_analysis/cfg/contraction.json";
     std::string outputStem;//="Test.shp";
     std::string outputDirectory;
+    size_t workflowID = 0;
+    app.add_option("-w,--workflowID",workflowID,"Unique workflow id (optional)")->check(CLI::PositiveNumber);
     app.add_option("-i,--inputs",inputFilenames,"Input Shapefiles storing the polygons with id for the contraction")->required()->each([](const std::string & str){
         try{
             auto file = fishnet::Shapefile(str);
@@ -38,7 +40,7 @@ int main(int argc, const char * argv[]){
     ContractionConfig<GeometryType> config {json::parse(std::ifstream(configFilename))};
     auto outputPath = std::filesystem::path(outputDirectory) / std::filesystem::path(outputStem+".shp");
     fishnet::Shapefile output {outputPath};
-    ContractionTask<GeometryType> task {std::move(config),std::move(components),output};
+    ContractionTask<GeometryType> task {std::move(config),std::move(components),output,workflowID};
     for(auto && input : inputFilenames) {
         task.addInput({input});
     }

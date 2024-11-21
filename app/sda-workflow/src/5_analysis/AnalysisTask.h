@@ -29,7 +29,7 @@ private:
 public:
     using NodeType = SettlementPolygon<ShapeType>;
 
-    AnalysisTask(AnalysisConfig && config, fishnet::Shapefile inputFile, fishnet::Shapefile outputFile):config(std::move(config)),inputFile(std::move(inputFile)),outputFile(std::move(outputFile)){
+    AnalysisTask(AnalysisConfig && config, fishnet::Shapefile inputFile, fishnet::Shapefile outputFile,size_t workflowID):Task(workflowID),config(std::move(config)),inputFile(std::move(inputFile)),outputFile(std::move(outputFile)){
         this->desc["type"]="ANALYSIS";
         this->desc["config"]=this->config.jsonDescription;
         this->desc["input"]=this->inputFile.getPath().filename().string();
@@ -85,9 +85,7 @@ public:
     }
 
     void run() override {
-        auto memgraphConnection = MemgraphConnection::create(config.params);
-        testExpectedOrThrowError(memgraphConnection);
-        auto memgraphAdj = CachingMemgraphAdjacency<NodeType>(MemgraphClient(std::move(memgraphConnection.value())));
+        auto memgraphAdj = CachingMemgraphAdjacency<NodeType>(MemgraphClient(MemgraphConnection::create(config.params,workflowID).value_or_throw()));
         OGRSpatialReference outputRef; // used for the ouput shapefile
         auto settlements = readInput(memgraphAdj,outputRef);
         if(settlements.empty()){

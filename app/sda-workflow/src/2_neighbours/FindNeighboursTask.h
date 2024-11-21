@@ -25,7 +25,6 @@ private:
     fishnet::Shapefile primaryInput;
     std::vector<fishnet::Shapefile> additionalInput;
 
-
     using number = typename P::numeric_type;
     struct PrimaryInputAABB{
         number left = std::numeric_limits<number>::max();
@@ -51,7 +50,7 @@ private:
     };
 
 public:
-    FindNeighboursTask(FindNeighboursConfig<P> && config,fishnet::Shapefile primaryInput):config(std::move(config)),primaryInput(std::move(primaryInput)){
+    FindNeighboursTask(FindNeighboursConfig<P> && config,fishnet::Shapefile primaryInput, size_t workflowID):Task(workflowID),config(std::move(config)),primaryInput(std::move(primaryInput)){
         this->desc["type"]="NEIGHBOURS";
         this->desc["config"]=this->config.jsonDescription;
         this->desc["primary-input"] = this->primaryInput.getPath().filename().string();
@@ -124,9 +123,9 @@ public:
         fishnet::util::AllOfPredicate<P,P> neighbouringPredicate;
         /* add all neighbouring predicates to composite predicate */
         std::ranges::for_each(config.neighbouringPredicates,[&neighbouringPredicate](const auto & predicate){neighbouringPredicate.add(predicate);});
-        auto expAdj = MemgraphAdjacency<SettlementPolygon<P>>::create(config.params);
-        testExpectedOrThrowError(expAdj);
-        auto graph = fishnet::graph::GraphFactory::UndirectedGraph<SettlementPolygon<P>>(std::move(expAdj.value()));   
+        auto graph = fishnet::graph::GraphFactory::UndirectedGraph<SettlementPolygon<P>>(
+            MemgraphAdjacency<SettlementPolygon<P>>(MemgraphClient(MemgraphConnection::create(config.params,workflowID).value_or_throw()))
+        );   
         std::vector<SettlementPolygon<P>> polygons = readInput(graph);
         double maxEdgeDistanceVar = config.maxEdgeDistance;
         auto boundingBoxPolygonWrapper = [maxEdgeDistanceVar](const SettlementPolygon<P> & settPolygon ){
