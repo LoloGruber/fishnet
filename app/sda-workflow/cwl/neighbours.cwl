@@ -22,7 +22,7 @@ inputs:
     taskID:
         type: long?
         doc: "Optional task id to distinguish log files"
-    workflowId:
+    workflowID:
         type: long?
         inputBinding: 
             position: 3

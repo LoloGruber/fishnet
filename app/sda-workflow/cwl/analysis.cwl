@@ -22,7 +22,7 @@ inputs:
         inputBinding:
             prefix: --outputStem 
         doc: "Output filename stem"
-    workflowId:
+    workflowID:
         type: long?
         inputBinding: 
             position: 3

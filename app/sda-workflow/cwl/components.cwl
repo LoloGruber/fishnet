@@ -14,7 +14,7 @@ inputs:
       position: 2
       prefix: -j
     doc: "Path to directory where created jobs will be stored"
-  workflowId:
+  workflowID:
     type: long?
     inputBinding: 
       position: 3

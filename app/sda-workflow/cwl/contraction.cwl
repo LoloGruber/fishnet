@@ -28,7 +28,7 @@ inputs:
             position: 2
             prefix: --outputStem 
         doc: "Output filename storing the merged polygons"
-    workflowId:
+    workflowID:
         type: long?
         inputBinding: 
             position: 3

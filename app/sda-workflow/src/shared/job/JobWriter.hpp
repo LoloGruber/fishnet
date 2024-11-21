@@ -4,6 +4,7 @@
 #include <fishnet/Shapefile.hpp>
 #include <fishnet/PathHelper.h>
 #include "Job.hpp"
+#include "MemgraphConnection.hpp"
 
 
 using json = nlohmann::json;
@@ -36,12 +37,9 @@ private:
         return output;
     }
 
-    static void writeJson(const json & jsonJob, const std::filesystem::path & path){
-        std::ofstream os {path.string()};
-        os << std::setw(4) << jsonJob << std::endl;
-    }
-
-    static void writeJson(const json & jsonJob, const Job & job){
+    static void writeJson(json & jsonJob, const Job & job){
+        if(MemgraphConnection::hasSession())
+            jsonJob["workflowID"] = MemgraphConnection::getSession().id();
         std::ofstream os {job.file.string()};
         os << std::setw(4) << jsonJob << std::endl;
     }
@@ -52,7 +50,7 @@ public:
         json output;
         output["shpFile"]= asFile(filterJob.input);
         output["config"] = asFile(filterJob.config);
-        writeJson(output,filterJob.file);
+        writeJson(output,filterJob);
     }
 
     static void write(const NeighboursJob & neighboursJob){
@@ -65,14 +63,13 @@ public:
         output["additionalInput"] = inputFiles;
         output["config"] = asFile(neighboursJob.config);
         output["taskID"] = neighboursJob.id;
-        writeJson(output,neighboursJob.file);
+        writeJson(output,neighboursJob);
     }
 
     static void write(const ComponentsJob & componentsJob){
         json output;
         output["config"] = asFile(componentsJob.config);
         output["jobDirectory"] = componentsJob.jobDirectory.string();
-        output["nextId"] = componentsJob.nextJobId;
         writeJson(output,componentsJob);
     }
 
@@ -87,7 +84,7 @@ public:
         output["config"] = asFile(contractionJob.config);
         output["taskID"] = contractionJob.id;
         output["outputStem"] = contractionJob.outputStem;
-        writeJson(output,contractionJob.file);
+        writeJson(output,contractionJob);
     }
 
    static void write(const AnalysisJob & analysisJob) {
