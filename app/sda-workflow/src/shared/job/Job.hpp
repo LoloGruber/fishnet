@@ -80,7 +80,6 @@ struct NeighboursJob: public ConfigurableJob {
 
 struct ComponentsJob:public ConfigurableJob {
     std::filesystem::path jobDirectory;
-    size_t nextJobId;
 };
 
 struct ContractionJob: public ConfigurableJob{
