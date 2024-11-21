@@ -26,8 +26,22 @@ struct MemgraphTaskConfig : public TaskConfig{
 
     mg::Client::Params params;
 
-    MemgraphTaskConfig() = default;
-    
+    MemgraphTaskConfig()=default;
+    MemgraphTaskConfig(const MemgraphTaskConfig&) = default;
+    MemgraphTaskConfig& operator=(const MemgraphTaskConfig&) = default;
+    virtual ~MemgraphTaskConfig() = default;
+
+    MemgraphTaskConfig(MemgraphTaskConfig&& other) noexcept
+        : TaskConfig(std::move(other)), params(std::move(other.params)) {}
+
+    MemgraphTaskConfig& operator=(MemgraphTaskConfig&& other) noexcept {
+        if (this != &other) {
+            TaskConfig::operator=(std::move(other));
+            params = std::move(other.params);
+        }
+        return *this;
+    }
+
     MemgraphTaskConfig(const json & configDescription):TaskConfig(configDescription){
         std::string hostname;
         u_int16_t port;
@@ -37,10 +51,8 @@ struct MemgraphTaskConfig : public TaskConfig{
     }
 
     void setMemgraphParams(std::string && hostname,uint16_t port) {
-        mg::Client::Params params;
-        params.host = std::move(hostname);
-        params.port = port;
-        this->params = std::move(params);
+        this->params.host = std::move(hostname);
+        this->params.port = port;
     }
 };
 
