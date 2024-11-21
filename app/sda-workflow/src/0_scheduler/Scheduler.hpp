@@ -132,4 +132,8 @@ public:
     const JobDAG_t & getDAG() const noexcept {
         return this->dag;
     }
+
+    const std::vector<Job> & failedJobs() const noexcept {
+        return this->log.failedJobs;
+    }
 };
