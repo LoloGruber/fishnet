@@ -8,24 +8,28 @@
 #include "JobGenerator.hpp"
 #include "SchedulerConfig.hpp"
 #include "ConnectedComponentsConfig.hpp"
+#include "SettlementDelineationConfig.hpp"
+#include "MemgraphClient.hpp"
 
 class SettlementDelineation: public Task{
 private:
-    SchedulerConfig schedulerConfig;
-    JobGeneratorConfig jobGeneratorConfig;
-    ConnectedComponentsConfig connectedComponentsConfig;
+    SettlementDelineationConfig config;
     std::vector<std::filesystem::path> inputFiles;
     std::filesystem::path cfgFile;
     std::filesystem::path outputPath;
     fishnet::util::TemporaryDirectory workingDirectory;
-
+    std::filesystem::path jobDirectory;
 public:
-    SettlementDelineation(const json & cfg,const std::filesystem::path & inputPath,std::filesystem::path outputPath, std::filesystem::path configPath)
-    :schedulerConfig(cfg),jobGeneratorConfig(cfg),connectedComponentsConfig(cfg),cfgFile(std::move(configPath)),outputPath(std::move(outputPath)){
+    SettlementDelineation(const json & jsonCfg,const std::filesystem::path & inputPath,std::filesystem::path outputPath, std::filesystem::path configPath)
+    :config(jsonCfg),cfgFile(std::move(configPath)),outputPath(std::move(outputPath)){
+        // Get input file(s) from path
         this->inputFiles = fishnet::GISFactory::getGISFiles(inputPath);
-        std::filesystem::current_path(workingDirectory); // set current path to working directory
+        // set current path to working directory / tmp directory
+        std::filesystem::current_path(workingDirectory); 
+        // Create job directory
+        this->jobDirectory = workingDirectory.get() / std::filesystem::path("jobs/");
         this->desc["type"]="Settlement Delineation Workload Generator & Scheduler";
-        this->desc["config"] = cfg;
+        this->desc["config"] = jsonCfg;
         this->desc["working-directory"]=this->workingDirectory.get().string();
         std::vector<std::string> inputStrings;
         std::ranges::for_each(this->inputFiles,[this,&inputStrings](const auto & file){inputStrings.push_back(file.string());});
@@ -33,18 +37,68 @@ public:
         this->desc["output"]=this->outputPath.string();
     }
 
+    
+
+    void mergeOutput(Scheduler & scheduler){
+        size_t maxID = std::ranges::max(scheduler.getDAG().getNodes(),{},&Job::id).id;
+        MergeJob mergeJob;
+        MergeJob mergeEdgesJob;
+        mergeJob.id=maxID+1;
+        mergeEdgesJob.id  = maxID+2;
+        mergeJob.file = jobDirectory / "Merge.json";
+        mergeEdgesJob.file = jobDirectory / "Merge_edges.json";
+        mergeJob.state = JobState::RUNNABLE;
+        mergeEdgesJob.state = JobState::RUNNABLE;
+        for(auto && path : fishnet::GISFactory::getGISFiles(workingDirectory)){
+            if(path.stem().string().starts_with(config.components.analysisOutputStem) && path.string().ends_with(".shp")){
+                if(path.string().ends_with("_edges.shp"))
+                    mergeEdgesJob.inputs.push_back(std::move(path));
+                else
+                    mergeJob.inputs.push_back(std::move(path));
+            }
+        }
+        mergeJob.output = outputPath;
+        mergeEdgesJob.output = fishnet::util::PathHelper::appendToFilename(outputPath,"_edges");
+        JobWriter::write(mergeJob);
+        scheduler.getDAG().addNode(mergeJob);
+        if(not mergeEdgesJob.inputs.empty()){
+            JobWriter::write(mergeEdgesJob);
+            scheduler.getDAG().addNode(mergeEdgesJob);
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        scheduler.schedule();
+    }
+
+    void writeConfig(){
+        json jsonCfg = json::parse(std::ifstream(cfgFile));
+        std::ofstream cfgStream {fishnet::util::PathHelper::appendToFilename(outputPath,"_cfg.json")};
+        cfgStream << jsonCfg.dump(4) << std::endl;
+    }
+
+    void cleanup(JobDAG_t & jobDag){
+        workingDirectory.clear();
+        jobDag.clear();
+        MemgraphClient(MemgraphConnection(jobDag.getAdjacencyContainer().getConnection())).clearAll();
+        if(MemgraphConnection::hasSession())
+            CipherQuery().match("(s:Session{id:$sid})").setInt("sid",MemgraphConnection::getSession().id()).del("s").debug().executeAndDiscard(MemgraphConnection(jobDag.getAdjacencyContainer().getConnection()));
+    }
+
     void run() override {
         if(inputFiles.empty())
             throw std::runtime_error("No input files provided");
         if(not std::filesystem::is_empty(workingDirectory))
             throw std::runtime_error("Working directory is not empty");
-        Scheduler scheduler = schedulerConfig.getSchedulerWithExecutorType(loadDAG(JobAdjacency(MemgraphConnection::create(schedulerConfig.params).value_or_throw())));
+        MemgraphConnection connection = MemgraphConnection::create(config.scheduler.params).value_or_throw();
+        Session workflowSession;
+        if(config.concurrentRuns){
+            workflowSession = Session::makeUnique(connection); // create label-isolated session, save id for later stages
+            MemgraphConnection::setSession(workflowSession);
+        }
+        Scheduler scheduler = config.scheduler.getSchedulerWithExecutorType(loadDAG(JobAdjacency(std::move(connection))));
         auto & jobDag = scheduler.getDAG();
-        JobGenerator jobGenerator {JobGeneratorConfig(jobGeneratorConfig),workingDirectory,cfgFile};
+        JobGenerator jobGenerator {JobGeneratorConfig(config.jobGenerator),workingDirectory,cfgFile};
         fishnet::util::AutomaticTemporaryDirectory tmp;
-        if(jobGeneratorConfig.cleanup)
-            jobGenerator.cleanup(jobDag);
-        if(jobGeneratorConfig.splits > 0){
+        if(config.jobGenerator.splits > 0){
             jobGenerator.generateWSFSplitJobs(inputFiles,tmp,jobDag);
             scheduler.schedule();
             jobGenerator.generate(fishnet::GISFactory::getGISFiles(tmp),jobDag);
@@ -52,37 +106,11 @@ public:
             jobGenerator.generate(inputFiles,jobDag);
         }
         scheduler.schedule();
-        if(schedulerConfig.lastJobType >= JobType::MERGE){
-            MergeJob mergeJob;
-            MergeJob mergeEdgesJob;
-            mergeJob.id=1000000000000;
-            mergeEdgesJob.id  = 99999999999;
-            mergeJob.file = jobGeneratorConfig.jobDirectory / "Merge.json";
-            mergeEdgesJob.file = jobGeneratorConfig.jobDirectory / "Merge_edges.json";
-            mergeJob.state = JobState::RUNNABLE;
-            mergeEdgesJob.state = JobState::RUNNABLE;
-            for(auto && path : fishnet::GISFactory::getGISFiles(workingDirectory)){
-                if(path.stem().string().starts_with(connectedComponentsConfig.analysisOutputStem) && path.string().ends_with(".shp")){
-                    if(path.string().ends_with("_edges.shp"))
-                        mergeEdgesJob.inputs.push_back(std::move(path));
-                    else
-                        mergeJob.inputs.push_back(std::move(path));
-                }
-            }
-            mergeJob.output = outputPath;
-            mergeEdgesJob.output = fishnet::util::PathHelper::appendToFilename(outputPath,"_edges");
-            JobWriter::write(mergeJob);
-            scheduler.getDAG().addNode(mergeJob);
-            if(not mergeEdgesJob.inputs.empty()){
-                JobWriter::write(mergeEdgesJob);
-                scheduler.getDAG().addNode(mergeEdgesJob);
-            }
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            scheduler.schedule();
+        if(config.scheduler.lastJobType >= JobType::MERGE){
+            mergeOutput(scheduler);
         }
-        //TODO clear workingdirectory if cfg enables and no failed jobs
-        json cfg = json::parse(std::ifstream(cfgFile));
-        std::ofstream cfgStream {fishnet::util::PathHelper::appendToFilename(outputPath,"_cfg.json")};
-        cfgStream << cfg.dump(4) << std::endl;
+        writeConfig();
+        if(config.cleanup && scheduler.failedJobs().empty())
+            cleanup(scheduler.getDAG());
     }
 };
