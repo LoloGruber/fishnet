@@ -6,6 +6,5 @@
 /uni_kassel
 /extern/json/
 /extern/CLI11/
-tests/workflow/test/
 data/WSF
 prod/terrabyte/charliecloud/fishnet-image.tar.gz
