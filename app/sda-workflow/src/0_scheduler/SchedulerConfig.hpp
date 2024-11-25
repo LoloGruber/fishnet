@@ -53,7 +53,9 @@ public:
             case ExecutorType::CWLTOOL:{
                 std::string cwlDir;
                 executorDesc.at("cwl-directory").get_to(cwlDir);
-                return Scheduler(std::move(dag),CwlToolExecutor(std::move(cwlDir)),lastJobType,concurrency);
+                std::string flags;
+                executorDesc.at("flags").get_to(flags);
+                return Scheduler(std::move(dag),CwlToolExecutor(std::move(cwlDir),std::move(flags)),lastJobType,concurrency);
             }
             default:
                 throw std::runtime_error("Could not create scheduler from executor type.\n"+this->jsonDescription.dump());
