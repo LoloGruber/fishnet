@@ -90,10 +90,10 @@ public:
 
     void cleanup(JobDAG_t & jobDag){
         workingDirectory.clear();
-        jobDag.clear();
+        jobDag.getAdjacencyContainer().clearAll();
         MemgraphClient(MemgraphConnection(jobDag.getAdjacencyContainer().getConnection())).clearAll();
         if(MemgraphConnection::hasSession())
-            CipherQuery().match("(s:Session{id:$sid})").setInt("sid",MemgraphConnection::getSession().id()).del("s").debug().executeAndDiscard(MemgraphConnection(jobDag.getAdjacencyContainer().getConnection()));
+            CipherQuery().match("(s:Session{id:$sid})").setInt("sid",MemgraphConnection::getSession().id()).del("s").executeAndDiscard(MemgraphConnection(jobDag.getAdjacencyContainer().getConnection()));
     }
 
     void run() override {

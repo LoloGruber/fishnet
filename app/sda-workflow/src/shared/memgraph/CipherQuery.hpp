@@ -263,4 +263,14 @@ public:
     constexpr static CipherQuery CREATE_EDGE_INDEX(T&& index){
         return CipherQuery("CREATE EDGE INDEX ON ").append(std::forward<T>(index));
     }
+
+    template<typename T>
+    constexpr static CipherQuery DROP_INDEX(T&& index){
+        return CipherQuery("DROP INDEX ON ").append(std::forward<T>(index));
+    }
+
+    template<typename T>
+    constexpr static CipherQuery DROP_EDGE_INDEX(T&& index){
+        return CipherQuery("DROP EDGE INDEX ON ").append(std::forward<T>(index));
+    }
 }; 

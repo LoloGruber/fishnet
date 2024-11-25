@@ -30,6 +30,15 @@ private:
             && CipherQuery::CREATE_EDGE_INDEX(Index(Label::before)).executeAndDiscard(dbConnection);
     }
 
+    bool dropConstraintsAndIndexes() const noexcept {
+        return CipherQuery("DROP CONSTRAINT ON ").append(Node{.name="j",.label=Label::Job}).append(" ASSERT j.id IS UNIQUE").executeAndDiscard(dbConnection)
+            && CipherQuery("DROP CONSTRAINT ON ").append(Node{.name="j",.label=Label::Job}).append(" ASSERT exists(j.file)").executeAndDiscard(dbConnection)
+            && CipherQuery("DROP CONSTRAINT ON ").append(Node{.name="j",.label=Label::Job}).append(" ASSERT exists(j.state)").executeAndDiscard(dbConnection)
+            && CipherQuery("DROP CONSTRAINT ON ").append(Node{.name="j",.label=Label::Job}).append(" ASSERT exists(j.type)").executeAndDiscard(dbConnection)
+            && CipherQuery::DROP_INDEX(Index(Label::Job,"id")).executeAndDiscard(dbConnection)
+            && CipherQuery::DROP_EDGE_INDEX(Index(Label::before)).executeAndDiscard(dbConnection);
+    }
+
     enum class QueryType{
         MERGE,MATCH
     };
@@ -157,6 +166,10 @@ public:
 
     bool clear() const noexcept {
         return CipherQuery().match(Node{.name="j",.label=Label::Job}).del("j").executeAndDiscard(dbConnection);
+    }
+
+    bool clearAll() const noexcept {
+        return clear() && dropConstraintsAndIndexes();
     }
 
     bool contains(const Job & job) const noexcept {

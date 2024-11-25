@@ -65,6 +65,12 @@ public:
             && CipherQuery("CREATE CONSTRAINT ON ").append(Node{.name="f",.label=Label::File}).append(" ASSERT exists(f.path)").executeAndDiscard(mgConnection);
     }
 
+    bool dropConstraints() const noexcept {
+        return CipherQuery("DROP CONSTRAINT ON ").append(Node{.name="n",.label=Label::Settlement}).append(" ASSERT n.id IS UNIQUE").executeAndDiscard(mgConnection)
+            && CipherQuery("DROP CONSTRAINT ON ").append(Node{.name="f",.label=Label::File}).append(" ASSERT f.id IS UNIQUE").executeAndDiscard(mgConnection)
+            && CipherQuery("DROP CONSTRAINT ON ").append(Node{.name="f",.label=Label::File}).append(" ASSERT exists(f.path)").executeAndDiscard(mgConnection);
+    }
+
     bool createIndexes() const noexcept {
         return CipherQuery::CREATE_INDEX(Index(Label::Settlement,"id")).executeAndDiscard(mgConnection)
             && CipherQuery::CREATE_INDEX(Index{.label=Label::File}).executeAndDiscard(mgConnection)
@@ -72,6 +78,15 @@ public:
             && CipherQuery::CREATE_EDGE_INDEX(Index(Label::stored)).executeAndDiscard(mgConnection)
             && CipherQuery::CREATE_EDGE_INDEX(Index(Label::neighbours)).executeAndDiscard(mgConnection)
             && CipherQuery::CREATE_EDGE_INDEX(Index(Label::part_of)).executeAndDiscard(mgConnection);
+    }
+
+    bool dropIndexes() const noexcept {
+        return CipherQuery::DROP_INDEX(Index(Label::Settlement,"id")).executeAndDiscard(mgConnection)
+            && CipherQuery::DROP_INDEX(Index{.label=Label::File}).executeAndDiscard(mgConnection)
+            && CipherQuery::DROP_INDEX(Index{.label=Label::Component}).executeAndDiscard(mgConnection)
+            && CipherQuery::DROP_EDGE_INDEX(Index(Label::stored)).executeAndDiscard(mgConnection)
+            && CipherQuery::DROP_EDGE_INDEX(Index(Label::neighbours)).executeAndDiscard(mgConnection)
+            && CipherQuery::DROP_EDGE_INDEX(Index(Label::part_of)).executeAndDiscard(mgConnection);
     }
 
     /**
@@ -370,7 +385,7 @@ public:
         for(Label label: {Label::Settlement,Label::File,Label::Component}){
             result &= CipherQuery().match(Node{.name="n",.label=label}).del("n").executeAndDiscard(mgConnection);
         }
-        return result;
+        return result && dropConstraints() && dropIndexes();
     }
 };
 
