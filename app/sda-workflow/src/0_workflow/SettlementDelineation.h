@@ -49,6 +49,8 @@ public:
         mergeEdgesJob.file = jobDirectory / "Merge_edges.json";
         mergeJob.state = JobState::RUNNABLE;
         mergeEdgesJob.state = JobState::RUNNABLE;
+        mergeJob.output = outputPath;
+        mergeEdgesJob.output = fishnet::util::PathHelper::appendToFilename(outputPath,"_edges");
         for(auto && path : fishnet::GISFactory::getGISFiles(workingDirectory)){
             if(path.stem().string().starts_with(config.components.analysisOutputStem) && path.string().ends_with(".shp")){
                 if(path.string().ends_with("_edges.shp"))
@@ -57,8 +59,19 @@ public:
                     mergeJob.inputs.push_back(std::move(path));
             }
         }
-        mergeJob.output = outputPath;
-        mergeEdgesJob.output = fishnet::util::PathHelper::appendToFilename(outputPath,"_edges");
+        if(mergeJob.inputs.size() == 1){
+            fishnet::Shapefile analysisOutput {mergeJob.inputs.front()};
+            fishnet::Shapefile output {mergeJob.output};
+            output.remove();
+            analysisOutput.copy(output.getPath());
+            if(mergeEdgesJob.inputs.size() == 1){
+                fishnet::Shapefile analysisEdgeOutput {mergeEdgesJob.inputs.front()};
+                fishnet::Shapefile edgeOutput {mergeEdgesJob.output};
+                edgeOutput.remove();
+                analysisEdgeOutput.copy(edgeOutput.getPath());
+            }
+            return;
+        }
         JobWriter::write(mergeJob);
         scheduler.getDAG().addNode(mergeJob);
         if(not mergeEdgesJob.inputs.empty()){
