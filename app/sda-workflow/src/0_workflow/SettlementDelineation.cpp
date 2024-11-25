@@ -9,10 +9,12 @@ int main(int argc, char * argv[]){
     std::string inputPath = "/home/lolo/Documents/fishnet/data/samples/Corvara_IT.tiff";
     std::string outputFilename = "/home/lolo/Desktop/CorvaraAnalysis.shp";
     std::string workingDirectoryName /* = "/home/lolo/Documents/fishnet/tests/workflow/test/workingDirectory" */;
+    std::string observerFilename = "/home/lolo/Desktop/sda-observer.json";
     std::vector<std::filesystem::path> inputFiles;
     app.add_option("-c,--config",pathToCfg,"Path to workflow configuration")->required()->check(CLI::ExistingFile);
     app.add_option("-i,--input",inputPath,"Path to input directory")->required()->check(CLI::ExistingDirectory | CLI::ExistingFile);
     app.add_option("-d,--workingDirectory",workingDirectoryName,"Path to working directory [default: temporary directory]")->check(CLI::ExistingDirectory);
+    app.add_option("--listener",observerFilename,"Path to json file observing the DAG of the workflow");
     app.add_option("-o,--output",outputFilename,"Path where merged output will be stored (only applied if last job type is at least MERGE)")->required()->check([](const std::string & str){
         try{
             auto file = fishnet::Shapefile(str); // try to create shapefile to ensure the correct extension
@@ -39,11 +41,15 @@ int main(int argc, char * argv[]){
             return std::string("Invalid output path:\n"+str+"\n")+ fsError.what();
         }
     });
-    CLI11_PARSE(app,argc,argv);
+    // CLI11_PARSE(app,argc,argv);
     if(not workingDirectoryName.empty()){
         fishnet::util::TemporaryDirectory::setTmpPrefix(fishnet::util::PathHelper::absoluteCanonical(workingDirectoryName)); // change prefix for tmp directory
     }
-    SettlementDelineation task {json::parse(std::ifstream(pathToCfg)),{inputPath},{outputFilename},{pathToCfg}};
+    std::optional<std::filesystem::path> observerFile {};
+    if(not observerFilename.empty()) {
+        observerFile = {observerFilename};
+    }
+    SettlementDelineation task {json::parse(std::ifstream(pathToCfg)),{inputPath},{outputFilename},{pathToCfg},observerFile};
     task.run();
     return 0;
 }

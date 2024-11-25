@@ -17,11 +17,13 @@ private:
     std::vector<std::filesystem::path> inputFiles;
     std::filesystem::path cfgFile;
     std::filesystem::path outputPath;
+    std::optional<std::filesystem::path> listenerFile;
     fishnet::util::TemporaryDirectory workingDirectory;
     std::filesystem::path jobDirectory;
+
 public:
-    SettlementDelineation(const json & jsonCfg,const std::filesystem::path & inputPath,std::filesystem::path outputPath, std::filesystem::path configPath)
-    :config(jsonCfg),cfgFile(std::move(configPath)),outputPath(std::move(outputPath)){
+    SettlementDelineation(const json & jsonCfg,const std::filesystem::path & inputPath,std::filesystem::path outputPath, std::filesystem::path configPath,  std::optional<std::filesystem::path> listenerFile = std::nullopt )
+    :config(jsonCfg),cfgFile(std::move(configPath)),outputPath(std::move(outputPath)),listenerFile(std::move(listenerFile)){
         // Get input file(s) from path
         this->inputFiles = fishnet::GISFactory::getGISFiles(inputPath);
         // set current path to working directory / tmp directory
@@ -96,6 +98,20 @@ public:
             CipherQuery().match("(s:Session{id:$sid})").setInt("sid",MemgraphConnection::getSession().id()).del("s").executeAndDiscard(MemgraphConnection(jobDag.getAdjacencyContainer().getConnection()));
     }
 
+    SchedulerObserver_t DAGListener() const noexcept {
+        assert(listenerFile.has_value());
+        return [this](const Scheduler & scheduler){
+            json output;
+            auto nodes = scheduler.getDAG().getNodes();
+            output["ALL"] = fishnet::util::size(nodes);
+            for(JobState state: {JobState::RUNNABLE, JobState::RUNNING,JobState::SUCCEED, JobState::FAILED, JobState::ABORTED}) {
+                output[magic_enum::enum_name(state)] = std::ranges::count_if(nodes,[&state]( const Job & job){return job.state == state;});
+            }
+            std::ofstream os {listenerFile.value()};
+            os << std::setw(4) << output << std::endl;
+        };
+    }
+
     void run() override {
         if(inputFiles.empty())
             throw std::runtime_error("No input files provided");
@@ -108,6 +124,9 @@ public:
             MemgraphConnection::setSession(workflowSession);
         }
         Scheduler scheduler = config.scheduler.getSchedulerWithExecutorType(loadDAG(JobAdjacency(std::move(connection))));
+        if(listenerFile){
+            scheduler.addListener(DAGListener());
+        }
         auto & jobDag = scheduler.getDAG();
         JobGenerator jobGenerator {JobGeneratorConfig(config.jobGenerator),workingDirectory,cfgFile};
         fishnet::util::AutomaticTemporaryDirectory tmp;

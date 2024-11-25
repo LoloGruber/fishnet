@@ -24,6 +24,10 @@ struct SchedulerLog {
     }
 };
 
+class Scheduler;
+
+using SchedulerObserver_t = std::function<void(const Scheduler &)>;
+
 class Scheduler {
 private:
     friend class SchedulerLog;
@@ -34,6 +38,8 @@ private:
     std::atomic_uint16_t activeThreads = 0;
     SchedulerLog log;
     size_t threadConcurrency;
+    std::vector<SchedulerObserver_t> listener = {};
+
 
     bool isFinished(const Job & job) const noexcept {
         return job.state == JobState::FAILED || job.state == JobState::SUCCEED;
@@ -121,8 +127,13 @@ public:
             for(const auto & job: jobsToRun) {
                 executor(job);
             }
+            std::ranges::for_each(this->listener,[this](auto && o){o(*this);});
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
+    }
+
+    void addListener(SchedulerObserver_t && schedulerObserver){
+        this->listener.push_back(std::move(schedulerObserver));
     }
 
     JobDAG_t & getDAG() noexcept {
