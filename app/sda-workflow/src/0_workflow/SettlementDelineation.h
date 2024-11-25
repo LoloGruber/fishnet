@@ -22,16 +22,21 @@ private:
     std::filesystem::path jobDirectory;
 
 public:
-    SettlementDelineation(const json & jsonCfg,const std::filesystem::path & inputPath,std::filesystem::path outputPath, std::filesystem::path configPath,  std::optional<std::filesystem::path> listenerFile = std::nullopt )
-    :config(jsonCfg),cfgFile(std::move(configPath)),outputPath(std::move(outputPath)),listenerFile(std::move(listenerFile)){
+    SettlementDelineation(SettlementDelineationConfig && config,const std::filesystem::path & inputPath,std::filesystem::path outputPath, std::filesystem::path configPath,  std::optional<std::filesystem::path> listenerFile = std::nullopt )
+    :config(std::move(config)),cfgFile(std::move(configPath)),outputPath(std::move(outputPath)),listenerFile(std::move(listenerFile)){
         // Get input file(s) from path
         this->inputFiles = fishnet::GISFactory::getGISFiles(inputPath);
         // set current path to working directory / tmp directory
         std::filesystem::current_path(workingDirectory); 
         // Create job directory
         this->jobDirectory = workingDirectory.get() / std::filesystem::path("jobs/");
+        // add working directory to config
+        json updateCfg = this->config.scheduler.jsonDescription;
+        updateCfg[TaskConfig::WORKING_DIRECTORY_KEY] = workingDirectory.get();
+        std::ofstream os {cfgFile};
+        os << updateCfg.dump(4) << std::endl;
         this->desc["type"]="Settlement Delineation Workload Generator & Scheduler";
-        this->desc["config"] = jsonCfg;
+        this->desc["config"] = updateCfg;
         this->desc["working-directory"]=this->workingDirectory.get().string();
         std::vector<std::string> inputStrings;
         std::ranges::for_each(this->inputFiles,[this,&inputStrings](const auto & file){inputStrings.push_back(file.string());});
@@ -61,6 +66,8 @@ public:
                     mergeJob.inputs.push_back(std::move(path));
             }
         }
+        if(mergeJob.inputs.empty())
+            return;
         if(mergeJob.inputs.size() == 1){
             fishnet::Shapefile analysisOutput {mergeJob.inputs.front()};
             fishnet::Shapefile output {mergeJob.output};
