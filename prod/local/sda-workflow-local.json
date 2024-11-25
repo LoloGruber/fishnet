@@ -1,5 +1,4 @@
 {
-    "job-directory":"/home/lolo/Documents/fishnet/tests/workflow/test/jobs",
     "neighbouring-files-predicate":"WSF",
     "splits":0,
     "cleanup":true,
