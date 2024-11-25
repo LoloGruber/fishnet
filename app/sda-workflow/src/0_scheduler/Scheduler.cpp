@@ -13,5 +13,10 @@ int main(int argc, char * argv[]){
     CLI11_PARSE(schedulerApp,argc,argv);
     auto cfg = SchedulerConfig(nlohmann::json::parse(std::ifstream(configFilename)));
     Scheduler scheduler = cfg.getSchedulerWithExecutorType(loadDAG(JobAdjacency(MemgraphConnection::create(cfg.params,workflowID).value_or_throw())));
+    auto runningJobs = scheduler.getDAG().getNodes() | std::views::filter([](const Job & job){return job.state == JobState::RUNNING || job.state == JobState::FAILED;});
+    std::ranges::for_each(runningJobs,[&scheduler](Job & job){
+        job.state = JobState::RUNNABLE;
+        scheduler.getDAG().getAdjacencyContainer().updateJobState(job);
+    });
     scheduler.schedule();
 }
