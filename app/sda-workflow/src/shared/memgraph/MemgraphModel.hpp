@@ -71,6 +71,8 @@ struct Index{
     constexpr friend std::ostream & operator<<(std::ostream & oss, const Index & index) noexcept{
         assert(index.label != Label::Undefined);
         oss << ":" << magic_enum::enum_name(index.label);
+        if(MemgraphConnection::hasSession())
+                oss << "_" << MemgraphConnection::getSession().id();
         if(not index.fields.empty())
             oss << "("<< index.fields <<")";
         return oss;
