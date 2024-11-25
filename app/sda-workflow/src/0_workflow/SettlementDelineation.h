@@ -86,11 +86,13 @@ public:
 
     void writeConfig(){
         json jsonCfg = json::parse(std::ifstream(cfgFile));
-        std::ofstream cfgStream {fishnet::util::PathHelper::appendToFilename(outputPath,"_cfg.json")};
+        std::ofstream cfgStream {fishnet::util::PathHelper::appendToFilename(outputPath,"_Config.json")};
         cfgStream << jsonCfg.dump(4) << std::endl;
     }
 
     void cleanup(JobDAG_t & jobDag){
+        std::filesystem::remove_all(jobDirectory);
+        std::filesystem::remove(jobDirectory);
         workingDirectory.clear();
         jobDag.getAdjacencyContainer().clearAll();
         MemgraphClient(MemgraphConnection(jobDag.getAdjacencyContainer().getConnection())).clearAll();
