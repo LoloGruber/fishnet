@@ -29,5 +29,5 @@ outputs:
       glob: "$(inputs.shpFile.nameroot)_filtered.*"
     doc: "Filtered output file"
 
-stdout: $(inputs.shpFile.nameroot)_filter_stdout.log
-stderr: $(inputs.shpFile.nameroot)_filter_stderr.log
+stdout: Filter_$(inputs.shpFile.nameroot)_stdout.log
+stderr: Filter_$(inputs.shpFile.nameroot)_stderr.log
