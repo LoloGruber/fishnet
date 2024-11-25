@@ -9,7 +9,7 @@ int main(int argc, char * argv[]){
     std::string inputPath = "/home/lolo/Documents/fishnet/data/samples/Corvara_IT.tiff";
     std::string outputFilename = "/home/lolo/Desktop/CorvaraAnalysis.shp";
     std::string workingDirectoryName /* = "/home/lolo/Documents/fishnet/tests/workflow/test/workingDirectory" */;
-    std::string observerFilename = "/home/lolo/Desktop/sda-observer.json";
+    std::string observerFilename /* = "/home/lolo/Desktop/sda-observer.json" */;
     std::vector<std::filesystem::path> inputFiles;
     app.add_option("-c,--config",pathToCfg,"Path to workflow configuration")->required()->check(CLI::ExistingFile);
     app.add_option("-i,--input",inputPath,"Path to input directory")->required()->check(CLI::ExistingDirectory | CLI::ExistingFile);
@@ -41,7 +41,7 @@ int main(int argc, char * argv[]){
             return std::string("Invalid output path:\n"+str+"\n")+ fsError.what();
         }
     });
-    // CLI11_PARSE(app,argc,argv);
+    CLI11_PARSE(app,argc,argv);
     if(not workingDirectoryName.empty()){
         fishnet::util::TemporaryDirectory::setTmpPrefix(fishnet::util::PathHelper::absoluteCanonical(workingDirectoryName)); // change prefix for tmp directory
     }
