@@ -15,7 +15,7 @@ class SettlementDelineation: public Task{
 private:
     SettlementDelineationConfig config;
     std::vector<std::filesystem::path> inputFiles;
-    std::filesystem::path cfgFile;
+    std::filesystem::path userConfig;
     std::filesystem::path outputPath;
     std::optional<std::filesystem::path> listenerFile;
     fishnet::util::TemporaryDirectory workingDirectory;
@@ -23,20 +23,15 @@ private:
 
 public:
     SettlementDelineation(SettlementDelineationConfig && config,const std::filesystem::path & inputPath,std::filesystem::path outputPath, std::filesystem::path configPath,  std::optional<std::filesystem::path> listenerFile = std::nullopt )
-    :config(std::move(config)),cfgFile(std::move(configPath)),outputPath(std::move(outputPath)),listenerFile(std::move(listenerFile)){
+    :config(std::move(config)),userConfig(std::move(configPath)),outputPath(std::move(outputPath)),listenerFile(std::move(listenerFile)){
         // Get input file(s) from path
         this->inputFiles = fishnet::GISFactory::getGISFiles(inputPath);
         // set current path to working directory / tmp directory
         std::filesystem::current_path(workingDirectory); 
         // Create job directory
         this->jobDirectory = workingDirectory.get() / std::filesystem::path("jobs/");
-        // add working directory to config
-        json updateCfg = this->config.scheduler.jsonDescription;
-        updateCfg[TaskConfig::WORKING_DIRECTORY_KEY] = workingDirectory.get();
-        std::ofstream os {cfgFile};
-        os << updateCfg.dump(4) << std::endl;
         this->desc["type"]="Settlement Delineation Workload Generator & Scheduler";
-        this->desc["config"] = updateCfg;
+        this->desc["config"] = this->config.components.jsonDescription;
         this->desc["working-directory"]=this->workingDirectory.get().string();
         std::vector<std::string> inputStrings;
         std::ranges::for_each(this->inputFiles,[this,&inputStrings](const auto & file){inputStrings.push_back(file.string());});
@@ -92,7 +87,8 @@ public:
     }
 
     void writeConfig(){
-        json jsonCfg = json::parse(std::ifstream(cfgFile));
+        json jsonCfg = json::parse(std::ifstream(userConfig));
+        jsonCfg["working-directory"] = this->workingDirectory.get();
         std::ofstream cfgStream {fishnet::util::PathHelper::appendToFilename(outputPath,"_Config.json")};
         cfgStream << jsonCfg.dump(4) << std::endl;
     }
@@ -126,6 +122,12 @@ public:
             throw std::runtime_error("No input files provided");
         if(not std::filesystem::is_empty(workingDirectory))
             throw std::runtime_error("Working directory is not empty");
+        // add working directory to config
+        auto workflowConfigPath = workingDirectory.get() / std::filesystem::path("cfg.json");
+        json updateCfg = this->config.scheduler.jsonDescription;
+        updateCfg[TaskConfig::WORKING_DIRECTORY_KEY] = workingDirectory.get();
+        std::ofstream os {workflowConfigPath};
+        os << updateCfg.dump(4) << std::endl;
         MemgraphConnection connection = MemgraphConnection::create(config.scheduler.params).value_or_throw();
         Session workflowSession;
         if(config.concurrentRuns){
@@ -137,7 +139,7 @@ public:
             scheduler.addListener(DAGListener());
         }
         auto & jobDag = scheduler.getDAG();
-        JobGenerator jobGenerator {JobGeneratorConfig(config.jobGenerator),workingDirectory,cfgFile};
+        JobGenerator jobGenerator {JobGeneratorConfig(config.jobGenerator),workingDirectory,workflowConfigPath};
         fishnet::util::AutomaticTemporaryDirectory tmp;
         if(config.jobGenerator.splits > 0){
             jobGenerator.generateWSFSplitJobs(inputFiles,tmp,jobDag);
