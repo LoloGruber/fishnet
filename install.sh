@@ -1,6 +1,7 @@
 #!/bin/bash
 
 BUILD_DIRECTORY="build-release"
+INSTALL_PREFIX=$HOME/.local
 CACHE_BUILD=0
 # Parse arguments
 for arg in "$@"; do
@@ -21,7 +22,7 @@ fi
 
 mkdir -p $BUILD_DIRECTORY
 cd $BUILD_DIRECTORY
-cmake -DCMAKE_BUILD_TYPE=Release -DFISHNET_TEST=OFF -DFISHNET_APPS=ON -DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_INSTALL_PREFIX=$HOME/.local ..
+cmake -DCMAKE_BUILD_TYPE=Release -DFISHNET_TEST=OFF -DFISHNET_APPS=ON -DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX ..
 cmake --build . --config Release -j 16
 cmake --install .
 cd ..

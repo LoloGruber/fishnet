@@ -5,7 +5,7 @@ A framework for graph-based computations and analysis of GIS data.
 ### System Installation
 Before the library can be build using *cmake*, the **GDAL** and **SSL** libraries have to be installed on the machine. On Ubuntu-based system this can be achieved using the following command:
 ```shell
-sudo apt install -y libgdal-dev libssl-dev
+sudo apt-get install -y libgdal-dev libssl-dev
 ``` 
 Then the project can be build as follows:
 ```shell
@@ -14,14 +14,45 @@ cd build
 cmake ..
 cmake --build . <add custom cmake parameters here>
 ```
-When utilizing the **Memgraph** client, a running instance of the **Memgraph** database can be obtained using docker compose:
-```shell
-cd prod/memgraph
-sudo docker compose up -d
-```
+## SDA Workflow
+To run the Settlement Delineation and Analysis workflow, the easiest way is to use the docker-compose. 
 ### Docker
+- The [fishnet/base](/prod/docker/base/Dockerfile) image contains the required dependencies to build the project. 
+- To execute the **sda workflow** the [fishnet/sda](app/sda-workflow/Dockerfile) image builds the required binaries. 
 
-## Usage
+Since the workflow requires a running memgraph instance, the [docker-compose](app/sda-workflow/compose.yaml) file joins both the memgraph database and the **fishnet/sda** image.
+```shell
+cd app/sda-workflow
+docker compose up -d
+```
+Then change your directory to the mounted directory, specified in the [docker-compose](app/sda-workflow/compose.yaml), by default: **~/fishnet**. The workflow can then be executed using the *docker exec*, specifying the inputs/config/outputs as relative paths from the mounted directory.
+```docker
+docker exec fishnet SettlementDelineation -i <input> -c <cfg> -o <output>
+
+For example:
+
+docker exec fishnet SettlementDelineation -i input/Astana_KAZ.tiff -c cfg/sda-workflow.json -o output/AstanaAnalysis.shp
+```
+
+### System
+Alternatively the sda workflow can be installed on the system using the [install](install.sh) script. Make sure that the install prefix location is referenced in *PATH* (e.g. *usr/local/bin*). 
+```shell
+./install.sh
+```
+Additionally, a cwl runner must be installed to execute the individual stages of the workflow. The reference executor [cwltool](https://cwltool.readthedocs.io/en/latest/cli.html#cwltool) is recommended and can be installed as follows:
+```shell
+sudo apt-get install cwltool
+```
+Furthermore, a running instance of the **Memgraph** database joined with the **Memgraph Lab** web interface can be obtained using docker compose:
+```shell
+cd prod/local
+docker compose up -d
+```
+The workflow can then be executed as follows:
+```shell
+SettlementDelineation -i <path-to-input> -c <path-to-cfg> -o <path-to-output.shp>
+```
+## Framework Usage
 The following example shows how to store polygons, obtained from a Shapefile, in a graph. Thereafter, the degree centrality measures is calculated on the graph and the results stored as features in the output shapefile.
 ```cpp
 #include <fishnet/Fishnet.hpp>
