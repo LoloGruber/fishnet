@@ -46,9 +46,9 @@ int main(int argc, char * argv[]){
     }
     std::optional<std::filesystem::path> observerFile {};
     if(not observerFilename.empty()) {
-        observerFile = {observerFilename};
+        observerFile = fishnet::util::PathHelper::absoluteCanonical({observerFilename});
     }
-    SettlementDelineation task {std::move(cfg),{inputPath},{outputFilename},{pathToCfg},observerFile};
+    SettlementDelineation task {std::move(cfg),fishnet::util::PathHelper::absoluteCanonical({inputPath}),fishnet::util::PathHelper::absoluteCanonical({outputFilename}),fishnet::util::PathHelper::absoluteCanonical({pathToCfg}),observerFile};
     task.run();
     return 0;
 }
