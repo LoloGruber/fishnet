@@ -17,8 +17,8 @@ cmake --build . <add custom cmake parameters here>
 ## SDA Workflow
 To run the Settlement Delineation and Analysis workflow, the easiest way is to use the docker-compose. 
 ### Docker
-- The [fishnet/base](/prod/docker/base/Dockerfile) image contains the required dependencies to build the project. 
-- To execute the **sda workflow** the [fishnet/sda](app/sda-workflow/Dockerfile) image builds the required binaries. 
+- The [logru/fishnet:base](/prod/docker/base/Dockerfile) image contains the required dependencies to build the project. 
+- To execute the **sda workflow** the [logru/fishnet:sda](app/sda-workflow/Dockerfile) image builds the required binaries. 
 
 Since the workflow requires a running memgraph instance, the [docker-compose](app/sda-workflow/compose.yaml) file joins both the memgraph database and the **fishnet/sda** image.
 ```shell
