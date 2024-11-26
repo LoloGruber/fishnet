@@ -1,4 +1,8 @@
-FROM fishnet/cwl:latest
+FROM fishnet/base:latest
+RUN apt-get update && apt-get install -y \
+    libssl-dev \
+    cwltool \
+    && apt-get clean
 # Clone Repository
 RUN git clone https://gitlab2.informatik.uni-wuerzburg.de/log66jr/fishnet
 # Build the project
