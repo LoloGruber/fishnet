@@ -130,6 +130,7 @@ public:
             std::ranges::for_each(this->listener,[this](auto && o){o(*this);});
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
+        std::ranges::for_each(this->listener,[this](auto && o){o(*this);});
     }
 
     void addListener(SchedulerObserver_t && schedulerObserver){
