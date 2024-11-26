@@ -1,13 +1,13 @@
 {
-    "neighbouring-files-predicate":"WSF",
+    "neighbouring-files-predicate":"TILES",
     "splits":0,
     "cleanup":true,
-    "concurrent-runs":false,
+    "concurrent-runs":true,
     "last-job-type":"MERGE",
     "hardware-concurrency":0,
     "executor":{
         "name":"CWLTOOL",
-        "flags":"--log-dir ~/fishnet/logs --no-container",
+        "flags":"--log-dir /data/logs --no-container",
         "cwl-directory":"/fishnet/app/sda-workflow/cwl"
     },
     "contraction-output-stem":"Contraction",
