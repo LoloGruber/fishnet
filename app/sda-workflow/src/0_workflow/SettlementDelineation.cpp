@@ -39,7 +39,7 @@ int main(int argc, char * argv[]){
             return std::string("Invalid output path:\n"+str+"\n")+ fsError.what();
         }
     });
-    // CLI11_PARSE(app,argc,argv);
+    CLI11_PARSE(app,argc,argv);
     SettlementDelineationConfig cfg {json::parse(std::ifstream(pathToCfg))};
     if(std::filesystem::exists(cfg.scheduler.workingDirectory)){
         fishnet::util::TemporaryDirectory::setTmpPrefix(cfg.scheduler.workingDirectory); // change prefix for tmp directory
