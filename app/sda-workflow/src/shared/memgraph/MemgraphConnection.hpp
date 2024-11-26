@@ -57,7 +57,7 @@ public:
     static std::optional<Session> of(const CipherConnection auto & connection, size_t id){
         if(CipherQuery("MATCH (s:Session {id:$sid})").setInt("sid",id).ret("s.id").execute(connection)) {
             auto result = connection->FetchAll();
-            if(result && result->front().front().type() == mg::Value::Type::Int){
+            if(result && not result.value().empty() &&  result->front().front().type() == mg::Value::Type::Int){
                 size_t id = asNodeIdType(result->front().front().ValueInt());
                 return std::optional<Session>(Session(id));
             }
@@ -135,7 +135,7 @@ public:
             if(optSession) {
                 MemgraphConnection::setSession(optSession.value());
             } else{
-                return std::unexpected("Could not load database session with ID: "+sessionID);
+                return std::unexpected(std::string("Could not load database session with ID: ")+std::to_string(sessionID));
             }
         }
         return eitherConnection;
