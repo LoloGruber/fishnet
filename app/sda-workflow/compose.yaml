@@ -10,7 +10,7 @@ services:
       - memgraph-logs:/var/log/memgraph
  
   fishnet-sda:
-    image: fishnet/sda
+    image: logru/fishnet:sda
     container_name: fishnet
     volumes:
       - ${HOME}/fishnet:/data

@@ -1,0 +1,4 @@
+#!/bin/bash
+docker build -t logru/fishnet:sda . --no-cache
+docker login
+docker push logru/fishnet:sda
