@@ -17,11 +17,11 @@ TEST(ShapefileTest, exists){
 }
 
 TEST(ShapefileTest, copy){
-    auto tmp = util::TemporaryDirectory("/home/lolo/tmp/");
+    auto tmp = util::AutomaticTemporaryDirectory();
     std::string filename = "myShape";
     Shapefile shp {example};
-    shp.copy(tmp.getDirectory(),filename);
-    EXPECT_TRUE(std::filesystem::exists(tmp.getDirectory() / (std::filesystem::path(filename+".shp"))));
+    shp.copy(tmp.get(),filename);
+    EXPECT_TRUE(std::filesystem::exists(tmp.get() / (std::filesystem::path(filename+".shp"))));
 }
 
 TEST(ShapefileTest, incrementFileVersion) {

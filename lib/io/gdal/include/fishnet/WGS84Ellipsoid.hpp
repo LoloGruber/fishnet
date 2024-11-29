@@ -119,10 +119,22 @@ public:
                 ring);})).area();
     }
 
+    /**
+     * @brief 
+     * @deprecated
+     * @param ring 
+     * @return double 
+     */
     static double area(geometry::IRing auto const & ring) noexcept {
         return projectToEckertIV(ring).area();
     }
-
+    
+    /**
+     * @brief 
+     * @deprecated
+     * @param ring 
+     * @return double 
+     */
     template<typename T>
     static double area(geometry::SimplePolygon<T> const & polygon) noexcept {
         return area(polygon.getBoundary());

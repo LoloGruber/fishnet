@@ -4,6 +4,7 @@
 #include <memory>
 #include <concepts>
 #include <algorithm>
+#include <filesystem>
 #include <ranges>
 #include <fishnet/CollectionConcepts.hpp>
 #include <fishnet/NumericConcepts.hpp>
@@ -92,8 +93,6 @@ template<typename T>
 void EXPECT_NOT_CONTAINS( fishnet::util::input_range_of<T> auto && collection, const T & element){
     EXPECT_EQ(std::find(collection.begin(), collection.end(), element), collection.end());
 }
-
-
 
 template<typename T> 
 void EXPECT_CONTAINS(const  fishnet::util::input_range_of<std::unique_ptr<T>> auto & collection, const std::unique_ptr<T> & element){
@@ -209,18 +208,6 @@ void EXPECT_RANGE_EQ(const std::ranges::input_range auto &  lhs, const std::rang
     if(actual != std::ranges::cend(lhs) or expected != std::ranges::cend(rhs)) FAIL() << "Ranges have a different size!";
 }
 
-// template<typename T>
-// void EXPECT_CONTAINS_ALL(const  fishnet::util::input_range_of<std::unique_ptr<T>> auto & collection, const  fishnet::util::input_range_of<std::unique_ptr<T>> auto & toBeContained){
-//     bool result = containsAll<T>(collection,toBeContained);
-//     EXPECT_TRUE(result);
-// }
-
-// template<typename T>
-// void EXPECT_CONTAINS_ALL(const fishnet::util::input_range_of<std::shared_ptr<T>> auto & collection, const fishnet::util::input_range_of<std::shared_ptr<T>> auto & toBeContained){
-//     bool result = containsAll<T>(collection,toBeContained);
-//     EXPECT_TRUE(result);
-// }
-
 template<typename T, typename U> requires std::derived_from<U,T>
 void EXPECT_CONTAINS_ALL(const fishnet::util::input_range_of<T> auto & collection, const fishnet::util::input_range_of<U> auto & toBeContained){
     bool result = containsAll<T,U>(collection,toBeContained);
@@ -255,19 +242,8 @@ void EXPECT_REF_EQ(const  fishnet::util::input_range_of<std::unique_ptr<T>> auto
 }
 
 template<std::ranges::range R>
-void EXPECT_SIZE(R & container, size_t size) {
-    auto actual = 0UL;
-    if constexpr(std::ranges::sized_range<R>){
-        actual = std::ranges::distance(container);
-    }else{
-        actual = std::ranges::count_if(container,[](const auto & e){return true;});
-    }
-    EXPECT_EQ(actual,size);
-}
-
-template<std::ranges::range R>
-void EXPECT_SIZE(R && container, size_t size) {
-    EXPECT_EQ(fishnet::util::size(container),size);
+void EXPECT_SIZE(R && container, size_t expectedSize) {
+    EXPECT_EQ(fishnet::util::size(container),expectedSize);
 }
 
 void EXPECT_EMPTY(std::ranges::range auto && container){
@@ -302,6 +278,13 @@ void EXPECT_EMPTY(const OptionalOrExpected auto & opt){
     EXPECT_FALSE(opt.has_value());
 }
 
+static void EXPECT_EXISTS(const std::filesystem::path & path){
+    EXPECT_TRUE(std::filesystem::exists(path)) << "Expecting path "<<path<<" to exist";
+}
+
+static void EXPECT_NOT_EXISTS(const std::filesystem::path & path){
+    EXPECT_FALSE(std::filesystem::exists(path)) << "Expecting path "<<path<<" to not exist";
+}
 }
 
 #endif

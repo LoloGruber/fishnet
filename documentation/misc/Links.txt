@@ -1,3 +1,0 @@
-https://ahelpme.com/linux/ubuntu/install-and-make-gnu-gcc-10-default-in-ubuntu-20-04-focal/
-https://gcc.gnu.org/projects/cxx-status.html#cxx11
-https://stackoverflow.com/questions/66975491/how-to-use-c-20-in-g

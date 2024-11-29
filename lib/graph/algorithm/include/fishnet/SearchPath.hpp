@@ -38,7 +38,7 @@ public:
     }
 
     void onEdge(const N & from, const N & to){
-        predecessor.try_emplace(to,from);
+        predecessor.insert_or_assign(to,from);
     }
 
     bool stop() const {

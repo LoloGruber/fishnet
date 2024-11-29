@@ -12,7 +12,7 @@ if(FISHNET_APPS)
 endif()
 if(FISHNET_COVERAGE)
     # Add coverage compile flags
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 --coverage")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 --coverage -fprofile-update=atomic")
     link_libraries(gcov)
 endif()
 if(FISHNET_TEST)

@@ -33,18 +33,20 @@ public:
     }
 
     /**
-     * @brief Get all GIS files in a directory
+     * @brief Get all GIS files in a directory/ or a single file from a path
      * 
      * @param directory search directory
      * @return std::vector<std::filesystem::path> list of gis files in that directory
      */
-    static std::vector<std::filesystem::path> getGISFiles(const std::filesystem::path & directory){
+    static std::vector<std::filesystem::path> getGISFiles(const std::filesystem::path & path){
         std::vector<std::filesystem::path> gisFiles;
-        auto dir = directory;
-        if(std::filesystem::is_symlink(directory))
-            dir = std::filesystem::read_symlink(directory);
-        if(not std::filesystem::is_directory(dir))
-            return {};
+        auto dir = path;
+        if(std::filesystem::is_symlink(path))
+            dir = std::filesystem::read_symlink(path);
+        if(not std::filesystem::is_directory(dir) && std::filesystem::is_regular_file(path) && getType(path).has_value()){
+            gisFiles.emplace_back(path);
+            return gisFiles;
+        }
         for(auto && file: std::filesystem::directory_iterator(dir)){
             if(file.is_regular_file() && getType(file).has_value()){
                 gisFiles.push_back(std::move(file));

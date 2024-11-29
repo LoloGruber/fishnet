@@ -13,16 +13,15 @@ TEST(FilterTest, ApproxAreaFilter) {
     ApproxAreaFilter squareKilometerFilter {SQUARE_KILOMETER_IN_SQM};
     EXPECT_EQ(ApproxAreaFilter::type(),UnaryFilterType::ApproxAreaFilter);
     auto polygon = SimplePolygonSamples::SQUARE_KILOMETER;
-    // for(const auto & seg : polygon.getSegments()) {
-    //     std::cout << WGS84Ellipsoid::distance(seg.p(),seg.q()) << std::endl;
-    // }
     EXPECT_TRUE(squareKilometerFilter(polygon));
 }
 
 TEST(FilterTest, ProjectedAreaFilter) {
-    ProjectedAreaFilter squareKilometerFilter {SQUARE_KILOMETER_IN_SQM};
-    EXPECT_EQ(ProjectedAreaFilter::type(), UnaryFilterType::ProjectedAreaFilter);
-    EXPECT_TRUE(squareKilometerFilter(SimplePolygonSamples::SQUARE_KILOMETER));
+    // Implementation Deprecated
+
+    // ProjectedAreaFilter squareKilometerFilter {SQUARE_KILOMETER_IN_SQM};
+    // EXPECT_EQ(ProjectedAreaFilter::type(), UnaryFilterType::ProjectedAreaFilter);
+    // EXPECT_TRUE(squareKilometerFilter(SimplePolygonSamples::SQUARE_KILOMETER));
 }
 
 TEST(FilterTest, InsideBoundaryFilter) {

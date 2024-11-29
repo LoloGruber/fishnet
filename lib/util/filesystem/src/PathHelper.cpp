@@ -28,4 +28,8 @@ std::filesystem::path PathHelper::changeFilename(const std::filesystem::path & p
         return result.replace_extension(ext);
     return result;
 }
+
+std::filesystem::path PathHelper::absoluteCanonical(const std::filesystem::path & path) noexcept{
+    return std::filesystem::absolute(std::filesystem::weakly_canonical(path));
+}
 }

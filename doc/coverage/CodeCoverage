@@ -1,0 +1,14 @@
+#!/bin/bash
+cd ../..
+rm -rf build
+mkdir build
+cd build
+cmake -DFISHNET_COVERAGE=ON -DCMAKE_INSTALL_PREFIX=$HOME/.local ..
+make -j 16
+ctest
+lcov --gcov-tool /usr/bin/gcov-13 --capture --directory . --output-file ../doc/coverage/coverage.info --rc geninfo_unexecuted_blocks=1 --ignore-errors mismatch
+cd ../doc/coverage
+lcov --remove coverage.info '/usr/*' --output-file coverage.info
+lcov --remove coverage.info '*googletest-src*' --output-file coverage.info
+lcov --remove coverage.info '*.local*' --output-file coverage.info
+lcov --remove coverage.info '*_deps/*' --output-file coverage.info

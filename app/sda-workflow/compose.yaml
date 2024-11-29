@@ -1,0 +1,20 @@
+services:
+  memgraph:
+    image: memgraph/memgraph
+    container_name: memgraphDB
+    ports:
+      - "7687:7687"
+      - "7444:7444"
+    command: ["--log-level=TRACE","--query-execution-timeout-sec=0"]
+    volumes:
+      - memgraph-logs:/var/log/memgraph
+ 
+  fishnet-sda:
+    image: logru/fishnet:sda
+    container_name: fishnet
+    volumes:
+      - ${HOME}/fishnet:/data
+volumes:
+  memgraph-logs:
+    driver: local
+  

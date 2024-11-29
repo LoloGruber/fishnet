@@ -171,8 +171,8 @@ TEST_F(VectorLayerTest, getField) {
 }
 
 TEST_F(VectorLayerTest, write) {
-    util::TemporaryDirectory tmp {pathToSample.getPath().parent_path() / std::filesystem::path("tmp/")};
-    Shapefile outputFile = {tmp.getDirectory() / std::filesystem::path(pathToSample.getPath().stem().string()+".shp")};
+    util::AutomaticTemporaryDirectory tmp {};
+    Shapefile outputFile = {tmp / std::filesystem::path(pathToSample.getPath().stem().string()+".shp")};
     EXPECT_FALSE(std::filesystem::exists(outputFile.getPath()));
     sampleLayer.write(outputFile);
     EXPECT_TRUE(std::filesystem::exists(outputFile.getPath()));
@@ -183,8 +183,8 @@ TEST_F(VectorLayerTest, write) {
 }
 
 TEST_F(VectorLayerTest, overwrite) {
-    util::TemporaryDirectory tmp {pathToSample.getPath().parent_path() / std::filesystem::path("tmp/")}; 
-    Shapefile outputFile = {tmp.getDirectory() / std::filesystem::path(pathToSample.getPath().stem().string()+".shp")};  
+    util::AutomaticTemporaryDirectory tmp {}; 
+    Shapefile outputFile = {tmp / std::filesystem::path(pathToSample.getPath().stem().string()+".shp")};  
     EXPECT_FALSE(std::filesystem::exists(outputFile.getPath()));
     sampleLayer.overwrite(outputFile);
     EXPECT_TRUE(std::filesystem::exists(outputFile.getPath()));

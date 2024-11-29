@@ -39,15 +39,16 @@ TEST(WGS84EllipsoidTest, TokioBerlinApprox){
     EXPECT_DOUBLE_EQ(WGS84Ellipsoid::distance(lambdaBerlin,phiBerlin,lambdaTokio,phiTokio, false),distanceTokioBerlinInMeters);
 }
 
-TEST(WGS84EllipsoidTest, SquareKilometerArea){
+/* TEST(WGS84EllipsoidTest, SquareKilometerArea){
     auto layer = fishnet::VectorLayer<geometry::Polygon<double>>::read({util::PathHelper::projectDirectory() / std::filesystem::path("data/testing/Punjab_Small/Punjab_Small.shp")});
     geometry::Polygon<double> min = {Ring(std::vector<Vec2DReal>{{100.0,0.0},{100.0,100.0},{0.0,0.0}})};
     for(const auto & p : layer.getGeometries()){
         if(p.area() < min.area())
             min = p;
     }
+    Deprecated
     std::cout << min.area() << std::endl;
     std::cout << WGS84Ellipsoid::area(min) << std::endl;
     std::cout << min << std::endl;
     testutil::TODO();
-}
+} */

@@ -19,13 +19,6 @@ services:
     environment:
       - QUICK_CONNECT_MG_HOST=memgraph
       - QUICK_CONNECT_MG_PORT=7687
-
-  fishnet:
-    image: fishnet:1.0
-    container_name: fishnet-container
-    depends_on:
-      - memgraph
-
 volumes:
   memgraph-logs:
     driver: local
