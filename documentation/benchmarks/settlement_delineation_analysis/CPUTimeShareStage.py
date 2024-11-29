@@ -53,16 +53,18 @@ def plot_runtime_log(results:List[WorkflowResult]):
             return f'{value / 86400:.0f}d'  # Days
     ax.xaxis.set_major_formatter(plt.FuncFormatter(time_formatter))
     ax.xaxis.set_minor_formatter(plt.FuncFormatter(minor_formatter))  # Hide minor tick labels
+    ax.tick_params(axis='x', which='major', labelsize=14)  # Major ticks
+    ax.tick_params(axis='x', which='minor', labelsize=14)
     # Y Axis
-    colors = plt.cm.Paired(np.linspace(0, 1, len(x)))
+    colors = plt.cm.Greys(np.linspace(0, 1, len(x)))
     for i, (val, color) in enumerate(zip(x, colors)):
-        ax.barh(i, val, color=color,zorder=3)
+        ax.barh(i, val, color="black",zorder=3)
     ax.set_yticks(np.arange(len(results)))
-    ax.set_yticklabels([r.name +f"\n({r.report.run_time})" for r in results])
+    ax.set_yticklabels([r.name +f"\n({r.report.run_time})" for r in results],fontsize=14)
 
     # # Adding labels and title
-    ax.set_ylabel('Input Region', fontsize=16)
-    ax.set_xlabel('Time to Result (log)',fontsize=16)
+    ax.set_ylabel('Input Region', fontsize=18)
+    ax.set_xlabel('Time to Result (log)',fontsize=18)
     # # ax.set_title('CPU Times by Run for Different Workflow Steps')
 
     # Add a grid
@@ -197,13 +199,13 @@ def get_graph_properties_as_latex_table(results: List[WorkflowResult], delimiter
     return output
 
 def evaluate_input_regions( plot_distributions_file = None):
-    input = "C:\\Users\\Lolo\\OneDrive\\Dokumente\\Master Informatik\\5_WS23\\2024_MA_Lorenz_Gruber\\Results\\Settlement Distribution"
+    input = "C:\\Users\\Lorenz\\OneDrive\\Dokumente\\Master Informatik\\5_WS23\\2024_MA_Lorenz_Gruber\\Results\\Settlement Distribution"
     workflows = load_directory(input)
     workflows.sort(key=lambda x: x.report.run_time.total_seconds())
     tab = get_graph_properties_as_latex_table(workflows)
     print(tab)
     fig = plot_runtime_log(workflows)
-    fig.savefig("ttr-different-input.pdf")
+    fig.savefig("ttr-different-input-zoomed-bw.pdf")
 
 def evaluate_different_cfg():
     cfg = "C:\\Users\\Lolo\\OneDrive\\Dokumente\\Master Informatik\\5_WS23\\2024_MA_Lorenz_Gruber\\Results\\Parameter Impact"
@@ -235,5 +237,5 @@ def create_custom_table(directory:str):
 
 
 if __name__ == '__main__':
-    evaluate_different_cfg()
-    # evaluate_input_regions("percentage-workflow-stages-different-inputs.pdf")
+    # evaluate_different_cfg()
+    evaluate_input_regions()

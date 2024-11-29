@@ -1,3 +1,5 @@
+from matplotlib.lines import Line2D
+
 from WorkflowResult import *
 import numpy as np
 import matplotlib.pyplot as plt
@@ -45,10 +47,13 @@ def plot_min_avg_max_computation_sorted(workflow_results: List[WorkflowResult]):
     colors = plt.cm.viridis(np.linspace(0, 1, len(durations_per_stage)))
 
     for i, pc in enumerate(parts['bodies']):
-        pc.set_facecolor(colors[i])
+        pc.set_facecolor('black')
         pc.set_edgecolor('black')
         pc.set_alpha(0.7)
-
+    MIN_COLOR = 'red'
+    MAX_COLOR = 'blue'
+    AVG_COLOR = 'orange'
+    MED_COLOR = 'lightgreen'
     # Plotting medians, averages, min, and max manually
     for i, data in enumerate(durations_per_stage):
         min_val = np.min(data)
@@ -56,10 +61,10 @@ def plot_min_avg_max_computation_sorted(workflow_results: List[WorkflowResult]):
         median_val = np.median(data)
         mean_val = np.mean(data)
 
-        plt.scatter([i + 1], [min_val], color='red', marker='o', label='Min' if i == 0 else "",zorder=3)
-        plt.scatter([i + 1], [max_val], color='blue', marker='o', label='Max' if i == 0 else "",zorder=3)
-        plt.scatter([i + 1], [median_val], color='green', marker='D', label='Median' if i == 0 else "",zorder=3)
-        plt.scatter([i + 1], [mean_val], color='orange', marker='s', label='Mean' if i == 0 else "",zorder=3)
+        plt.scatter([i + 1], [min_val], color=MIN_COLOR, marker='o', label='Min' if i == 0 else "",zorder=3)
+        plt.scatter([i + 1], [max_val], color=MAX_COLOR, marker='o', label='Max' if i == 0 else "",zorder=3)
+        plt.scatter([i + 1], [median_val], color=MED_COLOR, marker='D', label='Median' if i == 0 else "",zorder=3)
+        plt.scatter([i + 1], [mean_val], color=AVG_COLOR, marker='s', label='Mean' if i == 0 else "",zorder=3)
 
     # plt.bar(x - width, min_durations, width, label='Min', color='lightgreen', zorder=3)
     # plt.bar(x, avg_durations, width, label='Avg', color='skyblue', zorder=3)
@@ -74,17 +79,18 @@ def plot_min_avg_max_computation_sorted(workflow_results: List[WorkflowResult]):
     # plt.title('Min, Avg, and Max Computation Time per Job Type')
     plt.xticks(np.arange(1, len(job_type_names) + 1), job_type_names, rotation=45, fontsize=14)
     # Custom legend for points
-    handles = [
-        Patch(color='red', label='Min'),
-        Patch(color='blue', label='Max'),
-        Patch(color='orange', label='Average'),
-        Patch(color='green', label='Median')
+    legend_elements = [
+        Line2D([0], [0], marker='o', color='w', label='Min', markerfacecolor=MIN_COLOR, markersize=10),
+        Line2D([0], [0], marker='o', color='w', label='Max', markerfacecolor=MAX_COLOR, markersize=10),
+        Line2D([0], [0], marker='s', color='w', label='Mean', markerfacecolor=AVG_COLOR, markersize=10),
+        Line2D([0], [0], marker='D', color='w', label='Median', markerfacecolor=MED_COLOR, markersize=10)
     ]
-    plt.legend(handles=handles, fontsize=14)
+
+    plt.legend(handles=legend_elements, fontsize=14)
 
     # Show the plot
     plt.tight_layout()
-    plt.savefig("workflow-stage-execution-time.pdf")
+    plt.savefig("workflow-stage-execution-time-bw.pdf")
     plt.show()
 
 def get_resource_stats(workflows: List[WorkflowResult], delimiter = ' & ', newline = ' \\\\\n'):
@@ -113,8 +119,9 @@ def get_resource_stats(workflows: List[WorkflowResult], delimiter = ' & ', newli
 
 
 if __name__ == '__main__':
-    rootDir = "C:\\Users\\Lolo\\OneDrive\\Dokumente\\Master Informatik\\5_WS23\\2024_MA_Lorenz_Gruber\\Results\\Settlement Distribution"
-    varyingConfig ="C:\\Users\\Lolo\\OneDrive\\Dokumente\\Master Informatik\\5_WS23\\2024_MA_Lorenz_Gruber\\Results\\Parameter Impact"
+    USER = "Lorenz"
+    rootDir = f"C:\\Users\\{USER}\\OneDrive\\Dokumente\\Master Informatik\\5_WS23\\2024_MA_Lorenz_Gruber\\Results\\Settlement Distribution"
+    varyingConfig =f"C:\\Users\\{USER}\\OneDrive\\Dokumente\\Master Informatik\\5_WS23\\2024_MA_Lorenz_Gruber\\Results\\Parameter Impact"
     workflows = load_directory(rootDir) + load_directory(varyingConfig)
     for r in workflows:
         if r.name == "Baseline":
