@@ -1,4 +1,4 @@
-include(${CMAKE_SOURCE_DIR}/extern/memgraph.cmake)
+include(${FISHNET_SOURCE_DIR}/extern/memgraph.cmake)
 add_library(memgraphAdapter INTERFACE)
 add_dependencies(memgraphAdapter mgclient-proj)
 target_include_directories(memgraphAdapter INTERFACE ${CMAKE_CURRENT_LIST_DIR})
