@@ -41,10 +41,11 @@ public:
                 .append(SimpleRelation{.label=Label::part_of,.direction=SimpleRelation::Direction::LEFT})
                 .append(Node{.label=Label::Settlement})
                 .append(SimpleRelation{.label=Label::stored,.direction=SimpleRelation::Direction::RIGHT})
-                .append(Node{.name="f",.label=Label::File})
+                .append(Node{.name="f",.label=Label::File}).endl()
                 .where("ID(c)=component_id")
                 .set("data",mg::Value(mg::List(componentValues)))
-                .ret("DISTINCT component_id","f.path"))
+                .ret("DISTINCT component_id","f.path").debug())
+      
         ) throw std::runtime_error("Could not execute query to find files part of a component");
         while(auto currentRow = memgraphConnection->FetchOne()){
             auto id = currentRow->at(0).ValueInt();
@@ -55,6 +56,7 @@ public:
         }
         return componentToFilesMap;
     }
+
 
     size_t getBiggestJobID(const MemgraphConnection & memgraphConnection){
         if(memgraphConnection.execute(CipherQuery().match(Node{.name="j",.label=Label::Job}).append(" WITH MAX(j.id) AS maxId ").ret("maxId"))){
@@ -83,6 +85,16 @@ public:
         auto components = fishnet::graph::BFS::connectedComponents(graph).get();
         this->desc["Connected Components"]=components.size();
         auto componentIds = memgraphClient.createComponents(components);
+    /**
+     * WITH $data as components UNWIND range(0,size(components)-1) as index
+CREATE (c:Component) WITH components[index] as nodes,c
+UNWIND nodes as nodeId
+MATCH (n:Settlement) WHERE n.id=nodeId MERGE (n)-[:part_of]->(c) 
+Nodes: 6922201
+UNWIND $data as component_id
+MATCH (c:Component)<-[:part_of]-(:Settlement)-[:stored]->(f:File)WHERE ID(c)=component_id 
+     */
+        // Out of memory error seems to appear here:
         std::unordered_map<uint64_t,std::vector<std::string>> componentToFilesMap = queryPathsForComponent(componentIds,memgraphClient.getMemgraphConnection());
         std::unordered_map<std::string,std::vector<uint64_t>> fileToComponentsMap;
         std::vector<ComponentFileJob> contractionJobs;

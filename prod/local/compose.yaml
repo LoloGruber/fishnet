@@ -5,7 +5,7 @@ services:
     ports:
       - "7687:7687"
       - "7444:7444"
-    command: ["--log-level=TRACE","--query-execution-timeout-sec=0"]
+    command: ["--log-level=TRACE","--query-execution-timeout-sec=0","--storage-mode=IN_MEMORY_ANALYTICAL"]
     volumes:
       - memgraph-logs:/var/log/memgraph
  
