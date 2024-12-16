@@ -16,7 +16,7 @@ protected:
     }
 
     void TearDown() override {
-        CipherQuery::DELETE_ALL().executeAndDiscard(connection);
+        connection.executeAndDiscard(CipherQuery::DELETE_ALL());
     }
 
     u_int16_t port = 7687;
@@ -29,9 +29,9 @@ TEST_F(MemgraphQueryTest, init){
 }
 
 TEST_F(MemgraphQueryTest, mergeAndMatchNode){
-    EXPECT_TRUE(CipherQuery().merge(Node{.label=Label::Settlement,.attributes="id:1,value:\"Test\""}).executeAndDiscard(connection));
-    EXPECT_TRUE(CipherQuery().merge(Node{.label=Label::Settlement,.attributes="id:2"}).executeAndDiscard(connection));
-    EXPECT_TRUE(CipherQuery().match(Node{.name="n",.label=Label::Settlement,.attributes="id:1,value:\"Test\""}).ret("n").execute(connection));
+    EXPECT_TRUE(connection.executeAndDiscard(CipherQuery().merge(Node{.label=Label::Settlement,.attributes="id:1,value:\"Test\""})));
+    EXPECT_TRUE(connection.executeAndDiscard(CipherQuery().merge(Node{.label=Label::Settlement,.attributes="id:2"})));
+    EXPECT_TRUE(connection.execute(CipherQuery().match(Node{.name="n",.label=Label::Settlement,.attributes="id:1,value:\"Test\""}).ret("n")));
     auto resultSize = connection->FetchAll().transform([](auto && v){return v.size();}).value_or(0);
     EXPECT_EQ(resultSize,1); //only one node expected with id 1
 }
@@ -40,9 +40,9 @@ TEST_F(MemgraphQueryTest, mergeAndMatchEdge){
     CipherQuery i = CipherQuery().merge(Node{.name="f",.label=Label::Settlement,.attributes="id:1"}).endl();
     i.merge(Node{.name="t",.label=Label::Settlement,.attributes="id:2"}).endl();
     i.merge(Relation{.from=Var("f"),.label=Label::neighbours,.to=Var("t")});
-    EXPECT_TRUE(i.executeAndDiscard(connection));
+    EXPECT_TRUE(connection.executeAndDiscard(i));
     CipherQuery q = CipherQuery().match(Relation{.from=Node{.name="f",.label=Label::Settlement},.to=Node{.name="t",.label=Label::Settlement}}).ret("f","t");
-    EXPECT_TRUE(q.execute(connection));
+    EXPECT_TRUE(connection.execute(q));
     auto resultSize = connection->FetchAll().transform([](auto && v){return v.size();}).value_or(0);
     EXPECT_EQ(resultSize,1);
 }
@@ -51,13 +51,13 @@ TEST_F(MemgraphQueryTest, parameterizedQuery){
     size_t nodeID = 5;
     CipherQuery i = CipherQuery().merge(Node{.label=Label::Settlement,.attributes="id:$nodeID"}).setInt("nodeID",nodeID);
     i.merge(Node{.name="n",.label=Label::Settlement,.attributes="id:-1"});
-    EXPECT_TRUE(i.executeAndDiscard(connection));
+    EXPECT_TRUE(connection.executeAndDiscard(i));
     CipherQuery getById = CipherQuery().match(Node{"n",Label::Settlement,"id:$nodeID"}).setInt("nodeID",nodeID).ret("n");
-    EXPECT_TRUE(getById.execute(connection));
+    EXPECT_TRUE(connection.execute(getById));
     auto resultSize = connection->FetchAll().transform([](auto && v){return v.size();}).value_or(0);
     EXPECT_EQ(resultSize,1);
     CipherQuery getAll = CipherQuery().match(Node{"n",Label::Settlement}).ret("n");
-    EXPECT_TRUE(getAll.execute(connection));
+    EXPECT_TRUE(connection.execute(getAll));
     resultSize = connection->FetchAll().transform([](auto && v){return v.size();}).value_or(0);
     EXPECT_EQ(resultSize,2);
 }
