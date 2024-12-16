@@ -61,3 +61,27 @@ TEST_F(MemgraphQueryTest, parameterizedQuery){
     resultSize = connection->FetchAll().transform([](auto && v){return v.size();}).value_or(0);
     EXPECT_EQ(resultSize,2);
 }
+
+TEST_F(MemgraphQueryTest, compositeEdge) {
+    CipherQuery i = CipherQuery().merge(Node{.name="n",.label=Label::Settlement,.attributes="id:1"}).endl();
+    i.merge(Node{.name="f",.label=Label::File,.attributes="path:\"Test.shp\""}).endl();
+    i.merge(Node{.name="c",.label=Label::Component}).endl();
+    i.merge(Relation{.from=Var("n"),.label=Label::stored,.to=Var("f")});
+    i.merge(Relation{.from=Var("n"),.label=Label::part_of,.to=Var("c")});
+    EXPECT_TRUE(connection.executeAndDiscard(i));
+    CipherQuery query = CipherQuery()
+                .append("MATCH ")
+                .append(Node{.name="c",.label=Label::Component})
+                .append(SimpleRelation{.label=Label::part_of,.direction=SimpleRelation::Direction::LEFT})
+                .append(Node{.label=Label::Settlement})
+                .append(SimpleRelation{.label=Label::stored,.direction=SimpleRelation::Direction::RIGHT})
+                .append(Node{.name="f",.label=Label::File}).endl()
+                .ret("DISTINCT ID(c),f.path");
+    EXPECT_TRUE(connection.execute(query));
+    auto result = connection->FetchAll();
+    EXPECT_VALUE(result);
+    if(result && not result.value().empty()) {
+        auto row = result.value().front();
+        EXPECT_EQ(row.at(1).ValueString(),"Test.shp");
+    }
+}

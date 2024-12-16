@@ -64,6 +64,33 @@ struct AbstractRelation{
     }
 };
 
+using Relation = AbstractRelation<true>;
+using BiRelation = AbstractRelation<false>;
+
+struct SimpleRelation{
+    enum class Direction {
+        LEFT,RIGHT,BOTH
+    };
+    std::string_view name = "";
+    Label label;
+    Direction direction;
+
+    constexpr friend std::ostream & operator<<(std::ostream & oss, const SimpleRelation & edge) noexcept{
+        if(edge.direction == SimpleRelation::Direction::LEFT)
+            oss << "<";
+        oss << "-[" << edge.name;
+        if(edge.label != Label::Undefined){
+            oss << ":" << magic_enum::enum_name(edge.label);
+            if(MemgraphConnection::hasSession())
+                oss << "_" << MemgraphConnection::getSession().id();
+        }
+        oss << "]-";
+        if(edge.direction == SimpleRelation::Direction::RIGHT)
+            oss << ">" ;
+        return oss;
+    }
+};
+
 struct Index{
     Label label;
     std::string_view fields="";
@@ -78,6 +105,3 @@ struct Index{
         return oss;
     }
 };
-
-using Relation = AbstractRelation<true>;
-using BiRelation = AbstractRelation<false>;

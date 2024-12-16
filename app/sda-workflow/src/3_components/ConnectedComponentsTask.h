@@ -36,16 +36,13 @@ public:
         for(auto componentRef : componentIds)
             componentValues.push_back(mg::Value(componentRef.componentId));
         if(not memgraphConnection.execute(CipherQuery("UNWIND $data as component_id").endl()
-                .match(Relation{
-                    .from=Node{.name="n",.label=Label::Settlement},
-                    .label=Label::part_of,
-                    .to=Node{.name="c",.label=Label::Component}
-                }).where("ID(c)=component_id")
-                .match(Relation{
-                    .from=Var("n"),
-                    .label=Label::stored,
-                    .to=Node{.name="f",.label=Label::File}
-                })
+                .append("MATCH ")
+                .append(Node{.name="c",.label=Label::Component})
+                .append(SimpleRelation{.label=Label::part_of,.direction=SimpleRelation::Direction::LEFT})
+                .append(Node{.label=Label::Settlement})
+                .append(SimpleRelation{.label=Label::stored,.direction=SimpleRelation::Direction::RIGHT})
+                .append(Node{.name="f",.label=Label::File})
+                .where("ID(c)=component_id")
                 .set("data",mg::Value(mg::List(componentValues)))
                 .ret("DISTINCT component_id","f.path"))
         ) throw std::runtime_error("Could not execute query to find files part of a component");
