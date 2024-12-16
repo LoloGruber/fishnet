@@ -100,7 +100,7 @@ public:
         jobDag.getAdjacencyContainer().clearAll();
         MemgraphClient(MemgraphConnection(jobDag.getAdjacencyContainer().getConnection())).clearAll();
         if(MemgraphConnection::hasSession())
-            CipherQuery().match("(s:Session{id:$sid})").setInt("sid",MemgraphConnection::getSession().id()).del("s").executeAndDiscard(MemgraphConnection(jobDag.getAdjacencyContainer().getConnection()));
+            jobDag.getAdjacencyContainer().getConnection().executeAndDiscard(CipherQuery().match("(s:Session{id:$sid})").setInt("sid",MemgraphConnection::getSession().id()).del("s"));
     }
 
     SchedulerObserver_t DAGListener() const noexcept {

@@ -22,21 +22,23 @@ private:
     JobAdjacency() = default;
 
     bool createConstraintsAndIndexes() const noexcept {
-        return CipherQuery("CREATE CONSTRAINT ON ").append(Node{.name="j",.label=Label::Job}).append(" ASSERT j.id IS UNIQUE").executeAndDiscard(dbConnection)
-            && CipherQuery("CREATE CONSTRAINT ON ").append(Node{.name="j",.label=Label::Job}).append(" ASSERT exists(j.file)").executeAndDiscard(dbConnection)
-            && CipherQuery("CREATE CONSTRAINT ON ").append(Node{.name="j",.label=Label::Job}).append(" ASSERT exists(j.state)").executeAndDiscard(dbConnection)
-            && CipherQuery("CREATE CONSTRAINT ON ").append(Node{.name="j",.label=Label::Job}).append(" ASSERT exists(j.type)").executeAndDiscard(dbConnection)
-            && CipherQuery::CREATE_INDEX(Index(Label::Job,"id")).executeAndDiscard(dbConnection)
-            && CipherQuery::CREATE_EDGE_INDEX(Index(Label::before)).executeAndDiscard(dbConnection);
+        return dbConnection.executeAndDiscard( 
+            CipherQuery("CREATE CONSTRAINT ON ").append(Node{.name="j",.label=Label::Job}).append(" ASSERT j.id IS UNIQUE"),
+            CipherQuery("CREATE CONSTRAINT ON ").append(Node{.name="j",.label=Label::Job}).append(" ASSERT exists(j.file)"),
+            CipherQuery("CREATE CONSTRAINT ON ").append(Node{.name="j",.label=Label::Job}).append(" ASSERT exists(j.state)"),
+            CipherQuery("CREATE CONSTRAINT ON ").append(Node{.name="j",.label=Label::Job}).append(" ASSERT exists(j.type)"),
+            CipherQuery::CREATE_INDEX(Index(Label::Job,"id")),
+            CipherQuery::CREATE_EDGE_INDEX(Index(Label::before)));
     }
 
     bool dropConstraintsAndIndexes() const noexcept {
-        return CipherQuery("DROP CONSTRAINT ON ").append(Node{.name="j",.label=Label::Job}).append(" ASSERT j.id IS UNIQUE").executeAndDiscard(dbConnection)
-            && CipherQuery("DROP CONSTRAINT ON ").append(Node{.name="j",.label=Label::Job}).append(" ASSERT exists(j.file)").executeAndDiscard(dbConnection)
-            && CipherQuery("DROP CONSTRAINT ON ").append(Node{.name="j",.label=Label::Job}).append(" ASSERT exists(j.state)").executeAndDiscard(dbConnection)
-            && CipherQuery("DROP CONSTRAINT ON ").append(Node{.name="j",.label=Label::Job}).append(" ASSERT exists(j.type)").executeAndDiscard(dbConnection)
-            && CipherQuery::DROP_INDEX(Index(Label::Job,"id")).executeAndDiscard(dbConnection)
-            && CipherQuery::DROP_EDGE_INDEX(Index(Label::before)).executeAndDiscard(dbConnection);
+        return dbConnection.executeAndDiscard(
+            CipherQuery("DROP CONSTRAINT ON ").append(Node{.name="j",.label=Label::Job}).append(" ASSERT j.id IS UNIQUE"),
+            CipherQuery("DROP CONSTRAINT ON ").append(Node{.name="j",.label=Label::Job}).append(" ASSERT exists(j.file)"),
+            CipherQuery("DROP CONSTRAINT ON ").append(Node{.name="j",.label=Label::Job}).append(" ASSERT exists(j.state)"),
+            CipherQuery("DROP CONSTRAINT ON ").append(Node{.name="j",.label=Label::Job}).append(" ASSERT exists(j.type)"),
+            CipherQuery::DROP_INDEX(Index(Label::Job,"id")),
+            CipherQuery::DROP_EDGE_INDEX(Index(Label::before)));
     }
 
     enum class QueryType{
@@ -107,10 +109,9 @@ public:
     }
 
     bool addAdjacency(const Job & from, const Job & to)const noexcept {
-       return queryJob(from,QueryType::MERGE,"f")
+       return dbConnection.executeAndDiscard(queryJob(from,QueryType::MERGE,"f")
             .add(queryJob(to,QueryType::MERGE,"t"))
-            .merge(Relation{.from=Var("f"),.label=Label::before,.to=Var("t")})
-            .executeAndDiscard(dbConnection);
+            .merge(Relation{.from=Var("f"),.label=Label::before,.to=Var("t")}));
     }
 
     bool addAdjacencies(fishnet::util::forward_range_of<std::pair<Job,Job>> auto && jobRelationships)const noexcept {
@@ -121,7 +122,7 @@ public:
     }
 
     bool addNode(const Job & job) const noexcept {
-        return queryJob(job,QueryType::MERGE).executeAndDiscard(dbConnection);
+        return dbConnection.executeAndDiscard(queryJob(job,QueryType::MERGE));
     }
 
     bool addNodes(fishnet::util::forward_range_of<Job> auto && jobs) const noexcept{
@@ -131,11 +132,11 @@ public:
     }
 
     bool updateJobState(const Job & job) const noexcept {
-        return queryJob(job,QueryType::MATCH,"j").append("SET j.state=$state").set("state",mg::Value(magic_enum::enum_name(job.state))).executeAndDiscard(dbConnection);
+        return dbConnection.executeAndDiscard(queryJob(job,QueryType::MATCH,"j").append("SET j.state=$state").set("state",mg::Value(magic_enum::enum_name(job.state))));
     }
 
     bool removeNode(const Job & job) const noexcept{
-        return queryJob(job,QueryType::MATCH,"j").append("DETACH DELETE j;").executeAndDiscard(dbConnection);
+        return dbConnection.executeAndDiscard(queryJob(job,QueryType::MATCH,"j").append("DETACH DELETE j;"));
     }
 
     bool removeNodes(fishnet::util::forward_range_of<Job> auto && jobs) const noexcept {
@@ -145,7 +146,8 @@ public:
     }
 
     bool removeAdjacency(const Job & from, const Job & to) const noexcept {
-        return CipherQuery().match(Relation{
+        return dbConnection.executeAndDiscard(
+            CipherQuery().match(Relation{
                 .name="r",
                 .from=Node("f",Label::Job,"id:$fid"),
                 .label=Label::before,
@@ -153,8 +155,7 @@ public:
             })
             .setInt("fid",from.id)
             .setInt("tid",to.id)
-            .del("r")
-            .executeAndDiscard(dbConnection);
+            .del("r"));
     }
 
     bool removeAdjacencies(fishnet::util::forward_range_of<std::pair<Job,Job>> auto && jobRelationships) const noexcept {
@@ -165,7 +166,7 @@ public:
     }
 
     bool clear() const noexcept {
-        return CipherQuery().match(Node{.name="j",.label=Label::Job}).del("j").executeAndDiscard(dbConnection);
+        return dbConnection.executeAndDiscard(CipherQuery().match(Node{.name="j",.label=Label::Job}).del("j"));
     }
 
     bool clearAll() const noexcept {
@@ -174,7 +175,7 @@ public:
 
     bool contains(const Job & job) const noexcept {
         CipherQuery q = queryJob(job,QueryType::MATCH,"j").ret("j.id");
-        if(q.execute(dbConnection)){
+        if(dbConnection.execute(q)){
             auto result = dbConnection->FetchAll();
             return result.has_value() && result->size() > 0;
         }   
@@ -182,7 +183,7 @@ public:
     }
 
     bool hasAdjacency(const Job & from, const Job & to) const noexcept {
-        if(
+        if(dbConnection.execute(
             CipherQuery().match(Relation{
                 .name="r",
                 .from=Node("f",Label::Job,"id:$fid"),
@@ -191,8 +192,7 @@ public:
             })
             .setInt("fid",from.id)
             .setInt("tid",to.id)
-            .ret("ID(r)")
-            .execute(dbConnection)
+            .ret("ID(r)"))
         ){
             auto result = dbConnection->FetchAll();
             return result.has_value() && result->size() > 0;
@@ -201,13 +201,13 @@ public:
     }
 
     fishnet::util::forward_range_of<Job> auto adjacency(const Job & job) const noexcept {
-        if(
+        if(dbConnection.execute(
             queryJob(job,QueryType::MATCH,"x")
             .match(Relation{
                 .from=Var("x"),
                 .label= Label::before,
                 .to=Node{.name="j",.label=Label::Job}
-            }).ret("j").execute(dbConnection)
+            }).ret("j"))
         ){
             std::vector<Job> result;
             while(auto currentRow = dbConnection->FetchOne()){
@@ -220,7 +220,7 @@ public:
     }
 
     fishnet::util::forward_range_of<Job> auto nodes() const noexcept {
-        if(CipherQuery().match(Node{.name="n",.label=Label::Job}).ret("n").execute(dbConnection)){
+        if(dbConnection.execute(CipherQuery().match(Node{.name="n",.label=Label::Job}).ret("n"))){
             std::vector<Job> result;
             while(auto currentRow = dbConnection->FetchOne()){
                 result.push_back(fromQueryResult(currentRow->at(0).ValueNode()));
@@ -233,12 +233,12 @@ public:
 
     fishnet::util::forward_range_of<std::pair<Job,Job>> auto getAdjacencyPairs() const noexcept {
         std::vector<std::pair<Job,Job>> result;
-        if(
+        if(dbConnection.execute(
             CipherQuery().match(Relation{
                 .from = Node{.name="f",.label=Label::Job},
                 .label = Label::before,
                 .to = Node{.name="t",.label=Label::Job}
-            }).ret("f","t").execute(dbConnection)
+            }).ret("f","t"))
         ){
             while(auto currentRow = dbConnection->FetchOne()){
                 result.emplace_back(fromQueryResult(currentRow->at(0).ValueNode()),fromQueryResult(currentRow->at(1).ValueNode()));

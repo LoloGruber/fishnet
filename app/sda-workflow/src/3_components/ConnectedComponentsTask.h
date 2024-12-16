@@ -35,7 +35,7 @@ public:
         std::vector<mg::Value> componentValues;
         for(auto componentRef : componentIds)
             componentValues.push_back(mg::Value(componentRef.componentId));
-        if(not CipherQuery("UNWIND $data as component_id").endl()
+        if(not memgraphConnection.execute(CipherQuery("UNWIND $data as component_id").endl()
                 .match(Relation{
                     .from=Node{.name="n",.label=Label::Settlement},
                     .label=Label::part_of,
@@ -47,8 +47,7 @@ public:
                     .to=Node{.name="f",.label=Label::File}
                 })
                 .set("data",mg::Value(mg::List(componentValues)))
-                .ret("DISTINCT component_id","f.path")
-                .execute(memgraphConnection)
+                .ret("DISTINCT component_id","f.path"))
         ) throw std::runtime_error("Could not execute query to find files part of a component");
         while(auto currentRow = memgraphConnection->FetchOne()){
             auto id = currentRow->at(0).ValueInt();
@@ -61,7 +60,7 @@ public:
     }
 
     size_t getBiggestJobID(const MemgraphConnection & memgraphConnection){
-        if(CipherQuery().match(Node{.name="j",.label=Label::Job}).append(" WITH MAX(j.id) AS maxId ").ret("maxId").execute(memgraphConnection)){
+        if(memgraphConnection.execute(CipherQuery().match(Node{.name="j",.label=Label::Job}).append(" WITH MAX(j.id) AS maxId ").ret("maxId"))){
             auto result = memgraphConnection->FetchAll();
             if(result && result->front().front().type() == mg::Value::Type::Int){
                 size_t id = asNodeIdType(result->front().front().ValueInt());

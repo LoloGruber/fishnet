@@ -60,33 +60,37 @@ public:
 
 
     bool createConstraints()const noexcept {
-        return CipherQuery("CREATE CONSTRAINT ON ").append(Node{.name="n",.label=Label::Settlement}).append(" ASSERT n.id IS UNIQUE").executeAndDiscard(mgConnection)
-            && CipherQuery("CREATE CONSTRAINT ON ").append(Node{.name="f",.label=Label::File}).append(" ASSERT f.id IS UNIQUE").executeAndDiscard(mgConnection)
-            && CipherQuery("CREATE CONSTRAINT ON ").append(Node{.name="f",.label=Label::File}).append(" ASSERT exists(f.path)").executeAndDiscard(mgConnection);
+        return mgConnection.executeAndDiscard(
+            CipherQuery("CREATE CONSTRAINT ON ").append(Node{.name="n",.label=Label::Settlement}).append(" ASSERT n.id IS UNIQUE"),
+            CipherQuery("CREATE CONSTRAINT ON ").append(Node{.name="f",.label=Label::File}).append(" ASSERT f.id IS UNIQUE"),
+            CipherQuery("CREATE CONSTRAINT ON ").append(Node{.name="f",.label=Label::File}).append(" ASSERT exists(f.path)"));
     }
 
     bool dropConstraints() const noexcept {
-        return CipherQuery("DROP CONSTRAINT ON ").append(Node{.name="n",.label=Label::Settlement}).append(" ASSERT n.id IS UNIQUE").executeAndDiscard(mgConnection)
-            && CipherQuery("DROP CONSTRAINT ON ").append(Node{.name="f",.label=Label::File}).append(" ASSERT f.id IS UNIQUE").executeAndDiscard(mgConnection)
-            && CipherQuery("DROP CONSTRAINT ON ").append(Node{.name="f",.label=Label::File}).append(" ASSERT exists(f.path)").executeAndDiscard(mgConnection);
+        return mgConnection.executeAndDiscard(
+            CipherQuery("DROP CONSTRAINT ON ").append(Node{.name="n",.label=Label::Settlement}).append(" ASSERT n.id IS UNIQUE"),
+            CipherQuery("DROP CONSTRAINT ON ").append(Node{.name="f",.label=Label::File}).append(" ASSERT f.id IS UNIQUE"),
+            CipherQuery("DROP CONSTRAINT ON ").append(Node{.name="f",.label=Label::File}).append(" ASSERT exists(f.path)"));
     }
 
     bool createIndexes() const noexcept {
-        return CipherQuery::CREATE_INDEX(Index(Label::Settlement,"id")).executeAndDiscard(mgConnection)
-            && CipherQuery::CREATE_INDEX(Index{.label=Label::File}).executeAndDiscard(mgConnection)
-            && CipherQuery::CREATE_INDEX(Index{.label=Label::Component}).executeAndDiscard(mgConnection)
-            && CipherQuery::CREATE_EDGE_INDEX(Index(Label::stored)).executeAndDiscard(mgConnection)
-            && CipherQuery::CREATE_EDGE_INDEX(Index(Label::neighbours)).executeAndDiscard(mgConnection)
-            && CipherQuery::CREATE_EDGE_INDEX(Index(Label::part_of)).executeAndDiscard(mgConnection);
+        return mgConnection.executeAndDiscard(
+            CipherQuery::CREATE_INDEX(Index(Label::Settlement,"id")),
+            CipherQuery::CREATE_INDEX(Index{.label=Label::File}),
+            CipherQuery::CREATE_INDEX(Index{.label=Label::Component}),
+            CipherQuery::CREATE_EDGE_INDEX(Index(Label::stored)),
+            CipherQuery::CREATE_EDGE_INDEX(Index(Label::neighbours)),
+            CipherQuery::CREATE_EDGE_INDEX(Index(Label::part_of)));
     }
 
     bool dropIndexes() const noexcept {
-        return CipherQuery::DROP_INDEX(Index(Label::Settlement,"id")).executeAndDiscard(mgConnection)
-            && CipherQuery::DROP_INDEX(Index{.label=Label::File}).executeAndDiscard(mgConnection)
-            && CipherQuery::DROP_INDEX(Index{.label=Label::Component}).executeAndDiscard(mgConnection)
-            && CipherQuery::DROP_EDGE_INDEX(Index(Label::stored)).executeAndDiscard(mgConnection)
-            && CipherQuery::DROP_EDGE_INDEX(Index(Label::neighbours)).executeAndDiscard(mgConnection)
-            && CipherQuery::DROP_EDGE_INDEX(Index(Label::part_of)).executeAndDiscard(mgConnection);
+        return mgConnection.executeAndDiscard(
+            CipherQuery::DROP_INDEX(Index(Label::Settlement,"id")),
+            CipherQuery::DROP_INDEX(Index{.label=Label::File}),
+            CipherQuery::DROP_INDEX(Index{.label=Label::Component}),
+            CipherQuery::DROP_EDGE_INDEX(Index(Label::stored)),
+            CipherQuery::DROP_EDGE_INDEX(Index(Label::neighbours)),
+            CipherQuery::DROP_EDGE_INDEX(Index(Label::part_of)));
     }
 
     /**
@@ -103,7 +107,7 @@ public:
         CipherQuery query;
         query.merge(Node("f",Label::File,"path:$path")).set("path",mg::Value(path.string())).ret("ID(f)");
 
-        if(not query.execute(mgConnection)) {
+        if(not mgConnection.execute(query)) {
             return std::nullopt;
         }
         auto queryResult = mgConnection->FetchAll();
@@ -114,7 +118,8 @@ public:
     }
 
     bool insertEdge(NodeReference const & from, NodeReference const & to) const noexcept {
-        return CipherQuery().match(Node{.name="ff",.label=Label::File}).where("ID(ff)=$fromFile")
+        return mgConnection.executeAndDiscard(
+            CipherQuery().match(Node{.name="ff",.label=Label::File}).where("ID(ff)=$fromFile")
             .setInt("fromFile",from.fileRef.fileId)
             .match(Node{.name="ft",.label=Label::File}).where("ID(ft)=$toFile")
             .setInt("toFile",to.fileRef.fileId)
@@ -125,7 +130,7 @@ public:
             .merge(Relation{.from=Var("f"),.label=Label::neighbours,.to=Var("t")})
             .merge(Relation{.from=Var("f"),.label=Label::stored,.to=Var("ff")})
             .merge(Relation{.from=Var("t"),.label=Label::stored,.to=Var("ft")})
-            .executeAndDiscard(mgConnection);
+        );
     }
 
     bool insertEdge(NodeIdType from, NodeIdType to,FileReference const & fileRef) const noexcept {
@@ -151,16 +156,16 @@ public:
             data.push_back(mg::Value(std::move(currentEdge)));
         }
         query.set("data",mg::Value(mg::List(std::move(data))));
-        return query.executeAndDiscard(mgConnection);
+        return mgConnection.executeAndDiscard(query);
     }
 
     bool insertNode(NodeReference const & node) const noexcept{
-        return CipherQuery().match(Node{.name="f",.label=Label::File}).where("ID(f)=$fid")
+        return mgConnection.executeAndDiscard(
+            CipherQuery().match(Node{.name="f",.label=Label::File}).where("ID(f)=$fid")
             .setInt("fid",node.fileRef.fileId)
             .merge(Node("n",Label::Settlement,"id:$nid"))
             .setInt("nid",node.nodeId)
-            .merge(Relation{.from=Var("n"),.label=Label::stored,.to=Var("f")})
-            .executeAndDiscard(mgConnection);
+            .merge(Relation{.from=Var("n"),.label=Label::stored,.to=Var("f")}));
     }
 
     bool insertNodes(fishnet::util::forward_range_of<NodeReference> auto && nodes) const noexcept {
@@ -176,14 +181,14 @@ public:
             data.push_back(mg::Value(std::move(currentNode)));
         }
         query.set("data",mg::Value(mg::List(std::move(data))));
-        return query.executeAndDiscard(mgConnection);
+        return mgConnection.executeAndDiscard(query);
     }
 
     bool removeNode(NodeReference const & node) const noexcept {
-        return CipherQuery().match(Node("n",Label::Settlement,"id:$id"))
+        return mgConnection.executeAndDiscard(
+            CipherQuery().match(Node("n",Label::Settlement,"id:$id"))
             .setInt("id",node.nodeId)
-            .del("n")
-            .executeAndDiscard(mgConnection);
+            .del("n"));
     }
 
     bool removeNodes(fishnet::util::forward_range_of<NodeReference> auto && nodes) const noexcept {
@@ -196,16 +201,15 @@ public:
             data.push_back(mg::Value(std::move(currentNode)));
         }
         query.set("data",mg::Value(mg::List(std::move(data))));
-        return query.executeAndDiscard(mgConnection);
+        return mgConnection.executeAndDiscard(query);
     }
 
     bool removeEdge(NodeReference const & from, NodeReference const & to) const noexcept {
-        return CipherQuery()
-            .match(Relation("a",Node("f",Label::Settlement,"id:$fromId"),Label::neighbours,Node("t",Label::Settlement,"id:$toId")))
+        return mgConnection.executeAndDiscard(
+            CipherQuery::MATCH(Relation("a",Node("f",Label::Settlement,"id:$fromId"),Label::neighbours,Node("t",Label::Settlement,"id:$toId")))
             .setInt("fromId",from.nodeId)
             .setInt("toId",to.nodeId)
-            .del("a")
-            .executeAndDiscard(mgConnection);
+            .del("a"));
     }
 
     bool removeEdges(fishnet::util::forward_range_of<std::pair<NodeReference,NodeReference>> auto && edges) const noexcept {
@@ -220,7 +224,7 @@ public:
             data.push_back(mg::Value(std::move(currentEdge)));
         }
         query.set("data",mg::Value(mg::List(std::move(data))));
-        return query.executeAndDiscard(mgConnection);
+        return mgConnection.executeAndDiscard(query);
     }
 
     std::optional<ComponentReference> createComponent(fishnet::util::forward_range_of<NodeIdType> auto && nodesOfComponent) const noexcept {
@@ -231,14 +235,13 @@ public:
         std::ranges::transform(nodesOfComponent,std::back_inserter(data),[](NodeIdType nodeId){
             return mg::Value(asInt(nodeId));
         });
-        if( CipherQuery("CREATE ")
+        if( mgConnection.execute(CipherQuery("CREATE ")
             .create(Node{.name="c",.label=Label::Component}).endl()
             .append("WITH $data as nodes").endl()
             .append("UNWIND nodes as nodeId").endl()
             .match(Node{.name="n",.label=Label::Settlement}).where("n.id=nodeId")
             .merge(Relation{.from=Var("n"),.label=Label::part_of,.to=Var("c")})
-            .ret("ID(c)")
-            .execute(mgConnection)
+            .ret("ID(c)"))
         ){
             auto queryResult = mgConnection->FetchAll();
             if(queryResult && queryResult->front().front().type() == mg::Value::Type::Int) {
@@ -268,7 +271,7 @@ public:
             data.push_back(mg::Value(mg::List(std::move(current))));
         }
         query.set("data",mg::Value(mg::List(std::move(data))));
-        if(query.execute(mgConnection)) {
+        if(mgConnection.execute(query)) {
             std::vector<ComponentReference> result;
             while(auto currentRow = mgConnection->FetchOne()) {
                 if(currentRow->front().type() == mg::Value::Type::Int){
@@ -281,7 +284,7 @@ public:
     }
 
     bool containsNode(size_t nodeId) const noexcept {
-        if(CipherQuery().match(Node{"n",Label::Settlement,"id:$id"}).setInt("id",nodeId).ret("ID(n)").execute(mgConnection)){
+        if(mgConnection.execute(CipherQuery().match(Node{"n",Label::Settlement,"id:$id"}).setInt("id",nodeId).ret("ID(n)"))){
                 auto result =  mgConnection->FetchAll();
                 return result.has_value() && result->size() > 0;
         }
@@ -289,14 +292,13 @@ public:
     }
 
     bool containsEdge(size_t from, size_t to) const noexcept {
-        if(
+        if(mgConnection.execute(
             CipherQuery().match(Relation{
                 .name="r",
                 .from=Node{.label=Label::Settlement,.attributes="id:$fid"},
                 .label=Label::neighbours,
                 .to= Node{.label=Label::Settlement,.attributes="id:$tid"}
-            }).setInt("fid",from).setInt("tid",to).ret("ID(r)")
-            .execute(mgConnection)
+            }).setInt("fid",from).setInt("tid",to).ret("ID(r)"))
         ){
             auto result = mgConnection->FetchAll();
             return result.has_value() && result->size() > 0;
@@ -305,13 +307,12 @@ public:
     }
 
     std::vector<NodeIdType> adjacency(const NodeReference & node) const noexcept {
-        if(
+        if(mgConnection.execute(
             CipherQuery().match(Relation{
                 .from=Node{.label=Label::Settlement,.attributes="id:$id"},
                 .label=Label::neighbours,
                 .to=Node{.name="x",.label=Label::Settlement}
-            }).setInt("id",node.nodeId).ret("x.id")
-            .execute(mgConnection)
+            }).setInt("id",node.nodeId).ret("x.id"))
         ){
             std::vector<NodeIdType> output;
             while(auto currentRow = mgConnection->FetchOne()){
@@ -326,13 +327,12 @@ public:
     }
 
     std::unordered_map<NodeIdType,std::vector<NodeIdType>> edges() const noexcept {
-        if(
+        if(mgConnection.execute(
             CipherQuery().match(Relation{
                 .from=Node{.name="f",.label=Label::Settlement},
                 .label=Label::neighbours,
                 .to=Node{.name="t",.label=Label::Settlement}
-            }).ret("f.id","t.id")
-            .execute(mgConnection)
+            }).ret("f.id","t.id"))
         ){
             std::unordered_map<NodeIdType,std::vector<NodeIdType>> output;
             while(auto currentRow = mgConnection->FetchOne()) {
@@ -348,7 +348,7 @@ public:
     }
 
     std::vector<NodeIdType> nodes() const noexcept {
-        if(CipherQuery().match(Node{.name="n",.label=Label::Settlement}).ret("n.id").execute(mgConnection)){
+        if(mgConnection.execute(CipherQuery().match(Node{.name="n",.label=Label::Settlement}).ret("n.id"))){
             std::vector<NodeIdType> output;
             while(auto currentRow = mgConnection->FetchOne()) {
                 output.push_back(asNodeIdType(currentRow->at(0).ValueInt()));
@@ -363,13 +363,12 @@ public:
         std::ranges::transform(componentIds,std::back_inserter(data),[](ComponentReference componentRef){
             return mg::Value(componentRef.componentId);
         });
-        if(CipherQuery("WITH $data as components").endl()
+        if(mgConnection.execute(CipherQuery("WITH $data as components").endl()
             .set("data",mg::Value(mg::List(std::move(data))))
             .append("UNWIND components as component_id").endl()
             .match(Node{.name="c",.label=Label::Component}).where("ID(c)=component_id")
             .match(Relation{.from=Node{.name="n",.label=Label::Settlement},.label=Label::part_of,.to=Var("c")})
-            .ret("n.id")
-            .execute(mgConnection)
+            .ret("n.id"))
         ){
             std::vector<NodeIdType> result;
             while(auto currentRow = mgConnection->FetchOne()) {
@@ -383,7 +382,7 @@ public:
     bool clearAll() const noexcept{
         bool result = true;
         for(Label label: {Label::Settlement,Label::File,Label::Component}){
-            result &= CipherQuery().match(Node{.name="n",.label=label}).del("n").executeAndDiscard(mgConnection);
+            result &= mgConnection.executeAndDiscard(CipherQuery().match(Node{.name="n",.label=label}).del("n"));
         }
         return result && dropConstraints() && dropIndexes();
     }
