@@ -2,6 +2,8 @@
 import os
 from pathlib import Path
 
+configFileRelativePath = "prod/local/sda-workflow-local.json"
+
 def get_project_directory() -> str:
     current_dir = Path(os.path.abspath(os.path.curdir))
     while(not str(current_dir.name) in ("/","fishnet")):
@@ -23,7 +25,7 @@ def createFilterExample(project_dir: Path)->str:
     }},
     "config": {{
         "class": "File",
-        "path": "{project_dir}/prod/local/cfg/sda-workflow.json"
+        "path": "{project_dir}/{configFileRelativePath}"
     }}
 }}'''
 
@@ -43,7 +45,7 @@ def createNeighboursExample(project_dir: Path)->str:
     ],
     "config":{{
         "class":"File",
-        "path": "{project_dir}/prod/local/cfg/sda-workflow.json"
+        "path": "{project_dir}/{configFileRelativePath}"
     }},
     "taskID":1
 }}'''
@@ -61,7 +63,7 @@ def createContractionExample(project_dir:Path)->str:
     }}],
     "config":{{
         "class":"File",
-        "path": "{project_dir}/prod/local/cfg/sda-workflow.json"
+        "path": "{project_dir}/{configFileRelativePath}"
     }},
     "outputStem": "Punjab_Small_merged",
     "taskID":1 
@@ -80,7 +82,7 @@ def createAnalysisExample(project_dir:Path)->str:
     }},
     "config":{{
         "class":"File",
-        "path": "{project_dir}/prod/local/cfg/sda-workflow.json"
+        "path": "{project_dir}/{configFileRelativePath}"
     }},
     "outputStem": "Punjab_Small_Analysis"
 }}'''
