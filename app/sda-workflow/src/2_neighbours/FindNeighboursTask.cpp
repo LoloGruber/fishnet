@@ -22,7 +22,7 @@ int main(int argc, char const *argv[]){
     });
     app.add_option("-c,--config",configFilename,"Path to configuration file")->required()->check(CLI::ExistingFile);
     CLI11_PARSE(app,argc,argv);
-    FindNeighboursTask<GeometryType> task {FindNeighboursConfig<GeometryType>(json::parse(std::ifstream(configFilename))),fishnet::Shapefile(primaryInput),workflowID};
+    FindNeighboursTask<GeometryType> task {FindNeighboursConfig(json::parse(std::ifstream(configFilename))),fishnet::Shapefile(primaryInput),workflowID};
     for(auto && filename : additionalInputs) {
         task.addShapefile(fishnet::Shapefile(filename));
     }

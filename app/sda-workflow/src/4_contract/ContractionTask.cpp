@@ -37,7 +37,7 @@ int main(int argc, const char * argv[]){
     CLI11_PARSE(app,argc,argv);
     if(inputFilenames.size() < 1)
         throw std::runtime_error("No input files provided");
-    ContractionConfig<GeometryType> config {json::parse(std::ifstream(configFilename))};
+    ContractionConfig config {json::parse(std::ifstream(configFilename))};
     auto outputPath = std::filesystem::path(outputDirectory) / std::filesystem::path(outputStem+".shp");
     fishnet::Shapefile output {outputPath};
     ContractionTask<GeometryType> task {std::move(config),std::move(components),output,workflowID};

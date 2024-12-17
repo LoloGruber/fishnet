@@ -21,9 +21,10 @@
 template<fishnet::geometry::IPolygon P>
 class FindNeighboursTask : public Task{
 private:
-    FindNeighboursConfig<P> config;
+    FindNeighboursConfig config;
     fishnet::Shapefile primaryInput;
     std::vector<fishnet::Shapefile> additionalInput;
+    DistanceFunction distanceFunction;
 
     using number = typename P::numeric_type;
     struct PrimaryInputAABB{
@@ -50,7 +51,7 @@ private:
     };
 
 public:
-    FindNeighboursTask(FindNeighboursConfig<P> && config,fishnet::Shapefile primaryInput, size_t workflowID):Task(workflowID),config(std::move(config)),primaryInput(std::move(primaryInput)){
+    FindNeighboursTask(FindNeighboursConfig && config,fishnet::Shapefile primaryInput, size_t workflowID):Task(workflowID),config(std::move(config)),primaryInput(std::move(primaryInput)){
         this->desc["type"]="NEIGHBOURS";
         this->desc["config"]=this->config.jsonDescription;
         this->desc["primary-input"] = this->primaryInput.getPath().filename().string();
@@ -61,15 +62,10 @@ public:
         return *this;
     }
 
-    template<fishnet::util::BiPredicate<P> NeighbourBiPredicate>
-    FindNeighboursTask<P> & addNeighbouringPredicate(NeighbourBiPredicate && predicate) noexcept {
-        config.neighbouringPredicates.push_back(std::forward<NeighbourBiPredicate>(predicate));
-        return *this;
-    }
-
     std::vector<SettlementPolygon<P>> readInput(auto const & graph)  {
         std::vector<SettlementPolygon<P>> polygons;
         auto layer = fishnet::VectorLayer<P>::read(primaryInput); // load polygons from primary shapefile
+        distanceFunction = distanceFunctionForSpatialReference(layer.getSpatialReference());
         if(layer.isEmpty()){
             return polygons;
         }
@@ -90,13 +86,15 @@ public:
             inputBoundingBox.update(feature.getGeometry());
             polygons.emplace_back(optId.value(),primaryFileRef.value(),std::move(feature.getGeometry())); // create settlement wrapper containing its unique id and geometry
         }
-        DistanceBiPredicate distanceToPrimaryInput {config.maxEdgeDistance};
+        DistanceBiPredicate distanceToPrimaryInput {distanceFunction,config.maxEdgeDistance};
         fishnet::geometry::Rectangle<number> primaryInputAABB = inputBoundingBox.asShape();
         std::vector<std::string> additionalInputStrings;
         std::ranges::for_each(additionalInput,[&additionalInputStrings](auto const & file){additionalInputStrings.push_back(file.getPath().filename().string());});
         this->desc["additional-inputs"]=additionalInputStrings;
         for(const auto & shp : additionalInput) {
             auto neighbourLayer = fishnet::VectorLayer<P>::read(shp); // load polygons from shapefile
+            if(not layer.getSpatialReference().IsSame(&neighbourLayer.getSpatialReference()))
+                throw std::runtime_error("Spatial reference of neighbouring file does not match!\nExpecting: "+std::string(layer.getSpatialReference().GetName())+"\nActual: "+neighbourLayer.getSpatialReference().GetName());
             if(neighbourLayer.isEmpty())
                 continue;
             auto fileRef = graph.getAdjacencyContainer().getDatabaseConnection().addFileReference(shp.getPath()); // load file reference from database
@@ -120,21 +118,22 @@ public:
     }
 
     void run() override{
-        fishnet::util::AllOfPredicate<P,P> neighbouringPredicate;
-        /* add all neighbouring predicates to composite predicate */
-        std::ranges::for_each(config.neighbouringPredicates,[&neighbouringPredicate](const auto & predicate){neighbouringPredicate.add(predicate);});
         auto graph = fishnet::graph::GraphFactory::UndirectedGraph<SettlementPolygon<P>>(
             MemgraphAdjacency<SettlementPolygon<P>>(MemgraphClient(MemgraphConnection::create(config.params,workflowID).value_or_throw()))
         );   
         std::vector<SettlementPolygon<P>> polygons = readInput(graph);
         double maxEdgeDistanceVar = config.maxEdgeDistance;
-        auto boundingBoxPolygonWrapper = [maxEdgeDistanceVar](const SettlementPolygon<P> & settPolygon ){
+        auto boundingBoxPolygonWrapper = [maxEdgeDistanceVar,this](const SettlementPolygon<P> & settPolygon ){
             /* Create scaled aaBB containing at least all points reachable from the polygon within the maximum edge distance*/
             auto aaBB = fishnet::geometry::Rectangle<fishnet::math::DEFAULT_NUMERIC>(settPolygon);
-            double distanceMetersTopLeftBotLeft = fishnet::WGS84Ellipsoid::distance(aaBB.left(),aaBB.top(),aaBB.left(),aaBB.bottom());
+            double distanceMetersTopLeftBotLeft = distanceFunction({aaBB.left(),aaBB.top()},{aaBB.left(),aaBB.bottom()});
             double scale = (maxEdgeDistanceVar / distanceMetersTopLeftBotLeft) +1;
             return fishnet::geometry::BoundingBoxPolygon(settPolygon,aaBB.scale(scale));
         };
+        fishnet::util::AllOfPredicate<P,P> neighbouringPredicate;
+        /* add all neighbouring predicates to composite predicate */
+        neighbouringPredicate.add(DistanceBiPredicate(distanceFunction,config.maxEdgeDistance));
+        std::ranges::for_each(config.initNeighbouringPredicates<P>(),[&neighbouringPredicate](const auto & predicate){neighbouringPredicate.add(predicate);});
         auto shortCircuitPredicate = [neighbouringPredicate= std::move(neighbouringPredicate)](const fishnet::geometry::BoundingBoxPolygon<SettlementPolygon<P>> & lhs, const fishnet::geometry::BoundingBoxPolygon<SettlementPolygon<P>> & rhs){
             return lhs.getBoundingBox().overlap(rhs.getBoundingBox()) && neighbouringPredicate(lhs.getPolygon(),rhs.getPolygon());
         };
