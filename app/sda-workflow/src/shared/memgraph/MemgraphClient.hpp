@@ -251,7 +251,7 @@ public:
         return std::nullopt;
     }
 
-    std::vector<ComponentReference> createComponents(const std::vector<std::vector<NodeIdType>> & components) const noexcept {
+    std::vector<ComponentReference> createComponents(const fishnet::util::forward_range_of<std::vector<NodeIdType>> auto & components) const noexcept {
         CipherQuery query {"WITH $data as components "};
         query.append("UNWIND range(0,size(components)-1) as index").endl();
         query.create(Node{.name="c",.label=Label::Component});
