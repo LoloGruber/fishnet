@@ -124,15 +124,32 @@ def plot_stacked_step_times(results: List[WorkflowResult]):
         ax.barh(y,cpu_time_of_stages,left=total_times, label=stage.name, zorder=3)
         total_times += cpu_time_of_stages
     # Plot text with background and ensure it is on top
+    labels = {
+        "baseline":"Baseline",
+        "edge distance 1000":"Edge Distance 1km",
+        "edge distance 3000":"Edge Distance 3km",
+        "edge distance 5000":"Edge Distance 5km",
+        "max neighbours 1": "Max Neighbors 1",
+        "max neighbours 3": "Max Neighbors 3",
+        "max neighbours 5": "Max Neighbors 5",
+        "max neighbours 10": "Max Neighbors 10",
+        "contraction distance 200":"Contraction Distance 200m",
+        "contraction distance 500":"Contraction Distance 500m",
+        "contraction distance 1000": "Contraction Distance 1000m",
+        "required area 10k":"Required Area 10.000 m²",
+        "required area 25k":"Required Area 25.000 m²"
+    }
+
+
     for i,r in enumerate(results):
         accumulated_time = total_times[i]  # Total time for the run in seconds
         ax.text(
-            accumulated_time,
+            30000 if accumulated_time >ax.get_xlim()[1]/2 else accumulated_time +500 ,
             y[i],  # y position (center of the bar)
-            f'{timedelta(seconds=accumulated_time)}',  # text (accumulated time in HH:MM:SS format)
+            f'{labels[r.name]} ({timedelta(seconds=accumulated_time)})',  # text (accumulated time in HH:MM:SS format)
             ha='left',  # horizontal alignment
             va='center',  # vertical alignment
-            fontsize=10,
+            fontsize=14,
             fontweight='bold',  # Make the text bold
             color='black',
             bbox=dict(facecolor='white', edgecolor='none', alpha=0.7),  # Background for readability
@@ -151,7 +168,7 @@ def plot_stacked_step_times(results: List[WorkflowResult]):
 
     # Set the y-tick labels to the names of the runs
     ax.set_yticks(y)
-    ax.set_yticklabels([r.name for r in results])
+    ax.set_yticklabels([''] * len(results))
     # Adding labels and title
     ax.set_ylabel('Workflow Runs', fontsize=16)
     ax.set_xlabel('Accumulated CPU Time',fontsize=16)
@@ -208,7 +225,7 @@ def evaluate_input_regions( plot_distributions_file = None):
     fig.savefig("ttr-different-input-zoomed-bw.pdf")
 
 def evaluate_different_cfg():
-    cfg = "C:\\Users\\Lolo\\OneDrive\\Dokumente\\Master Informatik\\5_WS23\\2024_MA_Lorenz_Gruber\\Results\\Parameter Impact"
+    cfg = "C:\\Users\\Lorenz\\OneDrive\\Dokumente\\Master Informatik\\5_WS23\\2024_MA_Lorenz_Gruber\\Results\\Parameter Impact"
     workflows = load_directory(cfg)
     workflows.sort(key=lambda x: x.report.cpu_time.total_seconds())
     create_custom_table(cfg)
@@ -237,5 +254,5 @@ def create_custom_table(directory:str):
 
 
 if __name__ == '__main__':
-    # evaluate_different_cfg()
-    evaluate_input_regions()
+    evaluate_different_cfg()
+    # evaluate_input_regions()
