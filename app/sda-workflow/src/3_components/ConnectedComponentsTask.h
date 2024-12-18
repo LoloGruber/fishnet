@@ -30,25 +30,22 @@ public:
         this->desc["cfg-file"]=this->cfgFile.string();
     }
 
-    std::unordered_map<uint64_t,std::vector<std::string>> queryPathsForComponent(const std::vector<ComponentReference> & componentIds, const MemgraphConnection & memgraphConnection){
+    std::unordered_map<uint64_t,std::vector<std::string>> queryPathsForComponent(fishnet::util::forward_range_of<ComponentReference> auto & componentIds, const MemgraphConnection & memgraphConnection){
         std::unordered_map<uint64_t,std::vector<std::string>> componentToFilesMap;
         std::vector<mg::Value> componentValues;
         for(auto componentRef : componentIds)
             componentValues.push_back(mg::Value(componentRef.componentId));
-        if(not CipherQuery("UNWIND $data as component_id").endl()
-                .match(Relation{
-                    .from=Node{.name="n",.label=Label::Settlement},
-                    .label=Label::part_of,
-                    .to=Node{.name="c",.label=Label::Component}
-                }).where("ID(c)=component_id")
-                .match(Relation{
-                    .from=Var("n"),
-                    .label=Label::stored,
-                    .to=Node{.name="f",.label=Label::File}
-                })
+        if(not memgraphConnection.execute(CipherQuery("UNWIND $data as component_id").endl()
+                .append("MATCH ")
+                .append(Node{.name="c",.label=Label::Component})
+                .append(SimpleRelation{.label=Label::part_of,.direction=SimpleRelation::Direction::LEFT})
+                .append(Node{.label=Label::Settlement})
+                .append(SimpleRelation{.label=Label::stored,.direction=SimpleRelation::Direction::RIGHT})
+                .append(Node{.name="f",.label=Label::File}).endl()
+                .where("ID(c)=component_id")
                 .set("data",mg::Value(mg::List(componentValues)))
-                .ret("DISTINCT component_id","f.path")
-                .execute(memgraphConnection)
+                .ret("DISTINCT component_id","f.path").debug())
+      
         ) throw std::runtime_error("Could not execute query to find files part of a component");
         while(auto currentRow = memgraphConnection->FetchOne()){
             auto id = currentRow->at(0).ValueInt();
@@ -60,8 +57,9 @@ public:
         return componentToFilesMap;
     }
 
+
     size_t getBiggestJobID(const MemgraphConnection & memgraphConnection){
-        if(CipherQuery().match(Node{.name="j",.label=Label::Job}).append(" WITH MAX(j.id) AS maxId ").ret("maxId").execute(memgraphConnection)){
+        if(memgraphConnection.execute(CipherQuery().match(Node{.name="j",.label=Label::Job}).append(" WITH MAX(j.id) AS maxId ").ret("maxId"))){
             auto result = memgraphConnection->FetchAll();
             if(result && result->front().front().type() == mg::Value::Type::Int){
                 size_t id = asNodeIdType(result->front().front().ValueInt());
@@ -86,7 +84,10 @@ public:
         }
         auto components = fishnet::graph::BFS::connectedComponents(graph).get();
         this->desc["Connected Components"]=components.size();
-        auto componentIds = memgraphClient.createComponents(components);
+        auto componentIds = components
+                            | std::views::transform([&memgraphClient](const auto & nodesOfComponent){return memgraphClient.createComponent(nodesOfComponent);})
+                            | std::views::filter([](const std::optional<ComponentReference> & opt){return opt.has_value();})
+                            | std::views::transform([](const std::optional<ComponentReference> & opt){return opt.value();});
         std::unordered_map<uint64_t,std::vector<std::string>> componentToFilesMap = queryPathsForComponent(componentIds,memgraphClient.getMemgraphConnection());
         std::unordered_map<std::string,std::vector<uint64_t>> fileToComponentsMap;
         std::vector<ComponentFileJob> contractionJobs;

@@ -24,7 +24,7 @@ class ContractionTask:public Task{
 private:
     std::vector<fishnet::Shapefile> inputs;
     std::vector<ComponentReference> components;
-    ContractionConfig<P> config;
+    ContractionConfig config;
     fishnet::Shapefile output;
 public:
     /**
@@ -39,7 +39,7 @@ public:
      * @brief settlement type after the contraction
      */
     using ResultNodeType = SettlementPolygon<ResultGeometryType>;
-    ContractionTask(ContractionConfig<P> && config,std::vector<ComponentReference> && components,fishnet::Shapefile output,size_t workflowID):Task(workflowID),components(std::move(components)),config(std::move(config)),output(std::move(output)){
+    ContractionTask(ContractionConfig && config,std::vector<ComponentReference> && components,fishnet::Shapefile output,size_t workflowID):Task(workflowID),components(std::move(components)),config(std::move(config)),output(std::move(output)){
         this->desc["type"]="CONTRACTION";
         this->desc["config"]=this->config.jsonDescription;
         std::vector<std::string> componentStrings;
@@ -68,6 +68,10 @@ public:
         this->desc["inputs"]=inputStrings;
         for(const auto & shp : inputs) {
             auto layer = fishnet::VectorLayer<P>::read(shp);
+            if(spatialRef.IsEmpty())
+                spatialRef = layer.getSpatialReference();
+            if(not spatialRef.IsSame(&layer.getSpatialReference()))
+                throw std::runtime_error("Spatial reference of files do not match!\nExpecting: "+std::string(spatialRef.GetName())+"\nActual: "+layer.getSpatialReference().GetName());
             if(layer.isEmpty())
                 continue;
             auto fileRef = adj.getDatabaseConnection().addFileReference(shp.getPath());
@@ -75,7 +79,6 @@ public:
                 throw std::runtime_error("Could not read file reference for shp file:\n"+shp.getPath().string());
             }
             auto optFishnetIdField = layer.getSizeField(Task::FISHNET_ID_FIELD);
-            spatialRef = layer.getSpatialReference();
             if(not optFishnetIdField) {
                 throw std::runtime_error("Could not find FISHNET_ID field in shp file: \n"+shp.getPath().string());
             }
@@ -112,8 +115,8 @@ public:
         auto reduceFunction = IDReduceFunction(outputFileRef.value());
         auto contractionPredicate = fishnet::util::AllOfPredicate<SourceNodeType,SourceNodeType>();
         /* Load all contraction predicates into a single composite contraction predicate */
-        std::ranges::for_each(config.contractBiPredicates,[&contractionPredicate](const auto & predicate){contractionPredicate.add(
-            [&predicate](const SourceNodeType & lhs, const SourceNodeType & rhs){return predicate(static_cast<P>(lhs),static_cast<P>(rhs));});
+        std::ranges::for_each(config.initContractionPredicates<P>(distanceFunctionForSpatialReference(ref)),[&contractionPredicate](auto && p){contractionPredicate.add(
+            [predicate=std::move(p)](const SourceNodeType & lhs, const SourceNodeType & rhs){return predicate(static_cast<P>(lhs),static_cast<P>(rhs));});
         });
         /* Contract the graph according to the composite contraction predicate. Done in place, to remove old adjacencies from the database as well to allow the reuse of ids, while remaining consistency*/
         fishnet::graph::contractInPlace(sourceGraph,contractionPredicate,reduceFunction,resultGraph,config.workers);

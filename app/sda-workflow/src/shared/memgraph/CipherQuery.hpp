@@ -6,23 +6,11 @@
 #include <iostream>
 #include <mgclient.hpp>
 
-
-template<typename C>
-concept CipherConnection = requires(const C & constConnection){
-    {constConnection.operator->()} -> std::convertible_to<mg::Client *>;
-    {constConnection.retry()} -> std::convertible_to<C>;
-};
-
 /**
  * @brief Helper class to build cipher queries
  * 
  */
 class CipherQuery{
-public:
-
-
-    constexpr static uint8_t MAX_RETRIES = 1;
-
 protected:
     std::unordered_map<std::string, mg::Value> params;
     std::ostringstream query {std::ios::ate};
@@ -225,31 +213,6 @@ public:
         return append(other.asString());
     }
 
-    constexpr bool execute(const CipherConnection auto & connection) {
-        mg::Map mgParams {params.size()};
-        for(auto && [key,mgValue]:params){
-            mgParams.Insert(key,std::move(mgValue));
-        }
-        bool result = connection->Execute(query.str(),mgParams.AsConstMap());
-        int tries = 0;
-        while(not result && tries < MAX_RETRIES){
-            result = connection.retry()->Execute(query.str(),mgParams.AsConstMap());
-            tries++;
-        }
-        if(not result) {
-            std::cerr << "Could not execute query:" << std::endl;
-            std::cerr << query.str() << std::endl;
-        }
-        return result;
-    }
-
-    constexpr bool executeAndDiscard(const CipherConnection auto & connection) {
-        bool success = execute(connection);
-        if(success)
-            connection->DiscardAll();
-        return success;
-    }
-
     constexpr static CipherQuery DELETE_ALL(){
         return CipherQuery("MATCH (n)").del("n");
     }
@@ -272,5 +235,20 @@ public:
     template<typename T>
     constexpr static CipherQuery DROP_EDGE_INDEX(T&& index){
         return CipherQuery("DROP EDGE INDEX ON ").append(std::forward<T>(index));
+    }
+
+    template<typename T>
+    constexpr static CipherQuery MERGE(T && value){
+        return CipherQuery().merge(std::forward<T>(value));
+    }
+
+    template<typename T>
+    constexpr static CipherQuery MATCH(T && value){
+        return CipherQuery().match(std::forward<T>(value));
+    }
+
+    template<typename T>
+    constexpr static CipherQuery CREATE(T && value){
+        return CipherQuery().create(std::forward<T>(value));
     }
 }; 

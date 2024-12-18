@@ -16,6 +16,13 @@ constexpr static inline size_t asNodeIdType(int64_t value) {
     return mg::Id::FromInt(value).AsUint();
 } 
 
+template<typename C>
+concept CipherConnection = requires(const C & constConnection, const CipherQuery & query){
+    {constConnection.execute(query)} -> std::same_as<bool>;
+    {constConnection.executeAndDiscard(query)} -> std::same_as<bool>;
+    {constConnection.retry()} -> std::convertible_to<C>;
+};
+
 /**
  * @brief Stores an unique ID for every memgraph session (e.g. for different concurrent workflow runs)
  * 
@@ -37,7 +44,7 @@ public:
      * 
      */
     static Session makeUnique(const CipherConnection auto & connection) {
-        if(CipherQuery("MATCH (s:Session) WITH MAX(s.id) AS maxId ").merge("(n:Session {id: coalesce(maxId,0)+1})").ret("n.id").execute(connection)){
+        if(connection.execute(CipherQuery("MATCH (s:Session) WITH MAX(s.id) AS maxId ").merge("(n:Session {id: coalesce(maxId,0)+1})").ret("n.id"))){
             auto result = connection->FetchAll();
             if(result && result->front().front().type() == mg::Value::Type::Int){
                 size_t id = asNodeIdType(result->front().front().ValueInt());
@@ -55,7 +62,7 @@ public:
      * @return std::optional<Session> 
      */
     static std::optional<Session> of(const CipherConnection auto & connection, size_t id){
-        if(CipherQuery("MATCH (s:Session {id:$sid})").setInt("sid",id).ret("s.id").execute(connection)) {
+        if(connection.execute(CipherQuery("MATCH (s:Session {id:$sid})").setInt("sid",id).ret("s.id"))) {
             auto result = connection->FetchAll();
             if(result && not result.value().empty() &&  result->front().front().type() == mg::Value::Type::Int){
                 size_t id = asNodeIdType(result->front().front().ValueInt());
@@ -76,6 +83,7 @@ private:
     :connection(std::move(connection)),params(params){}
 
 public:
+    constexpr static uint8_t MAX_RETRIES = 1;
     MemgraphConnection()=default;
 
     MemgraphConnection(MemgraphConnection && other)noexcept{
@@ -96,10 +104,6 @@ public:
      */
     MemgraphConnection(const MemgraphConnection & other):MemgraphConnection(std::move(MemgraphConnection::create(other.params).value_or_throw())) {}
 
-    const MemgraphConnection & retry() const {
-        connection = mg::Client::Connect(this->params);
-        return *this;
-    }
     /**
      * @brief Factory Method to create a Memgraph Connection from Memgraph params
      * 
@@ -156,6 +160,42 @@ public:
         return create(params);
     }
 
+    const MemgraphConnection & retry() const {
+        connection = mg::Client::Connect(this->params);
+        return *this;
+    }
+
+    bool execute(const CipherQuery & query) const {
+        mg::Map mgParams {query.getParameters().size()};
+        for(auto && [key,mgValue]:query.getParameters()){
+            mgParams.Insert(key,std::move(mgValue));
+        }
+        auto queryString = query.asString();
+        bool result = connection->Execute(queryString,mgParams.AsConstMap());
+        int tries = 0;
+        while(not result && tries < MAX_RETRIES){
+            result = this->retry()->Execute(queryString,mgParams.AsConstMap());
+            tries++;
+        }
+        if(not result) {
+            std::cerr << "Could not execute query:" << std::endl;
+            std::cerr << queryString << std::endl;
+        }
+        return result;
+    }
+
+    bool executeAndDiscard(const CipherQuery & query) const {
+        bool success = execute(query);
+        if(success)
+            this->get()->DiscardAll();
+        return success;
+    }
+
+    template<typename... Qs>
+    bool executeAndDiscard(const CipherQuery & query, Qs... queries) const {
+        return executeAndDiscard(query) && executeAndDiscard(std::forward<Qs>(queries)...);
+    }
+
     const std::unique_ptr<mg::Client> & get() const noexcept {
         return this->connection;
     }
@@ -191,3 +231,4 @@ public:
         mg::Client::Finalize();
     }
 };
+static_assert(CipherConnection<MemgraphConnection>);
