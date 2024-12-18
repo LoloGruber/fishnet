@@ -213,31 +213,6 @@ public:
         return append(other.asString());
     }
 
-    // constexpr bool execute(const CipherConnection auto & connection) {
-    //     mg::Map mgParams {params.size()};
-    //     for(auto && [key,mgValue]:params){
-    //         mgParams.Insert(key,std::move(mgValue));
-    //     }
-    //     bool result = connection->Execute(query.str(),mgParams.AsConstMap());
-    //     int tries = 0;
-    //     while(not result && tries < MAX_RETRIES){
-    //         result = connection.retry()->Execute(query.str(),mgParams.AsConstMap());
-    //         tries++;
-    //     }
-    //     if(not result) {
-    //         std::cerr << "Could not execute query:" << std::endl;
-    //         std::cerr << query.str() << std::endl;
-    //     }
-    //     return result;
-    // }
-
-    // constexpr bool executeAndDiscard(const CipherConnection auto & connection) {
-    //     bool success = execute(connection);
-    //     if(success)
-    //         connection->DiscardAll();
-    //     return success;
-    // }
-
     constexpr static CipherQuery DELETE_ALL(){
         return CipherQuery("MATCH (n)").del("n");
     }
