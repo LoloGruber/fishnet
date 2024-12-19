@@ -30,7 +30,7 @@ public:
         this->desc["cfg-file"]=this->cfgFile.string();
     }
 
-    std::unordered_map<uint64_t,std::vector<std::string>> queryPathsForComponent(fishnet::util::forward_range_of<ComponentReference> auto & componentIds, const MemgraphConnection & memgraphConnection){
+    std::unordered_map<uint64_t,std::vector<std::string>> queryPathsForComponent(fishnet::util::forward_range_of<ComponentReference> auto && componentIds, const MemgraphConnection & memgraphConnection){
         std::unordered_map<uint64_t,std::vector<std::string>> componentToFilesMap;
         std::vector<mg::Value> componentValues;
         for(auto componentRef : componentIds)
@@ -84,10 +84,18 @@ public:
         }
         auto components = fishnet::graph::BFS::connectedComponents(graph).get();
         this->desc["Connected Components"]=components.size();
-        auto componentIds = components
-                            | std::views::transform([&memgraphClient](const auto & nodesOfComponent){return memgraphClient.createComponent(nodesOfComponent);})
-                            | std::views::filter([](const std::optional<ComponentReference> & opt){return opt.has_value();})
-                            | std::views::transform([](const std::optional<ComponentReference> & opt){return opt.value();});
+        std::vector<ComponentReference> componentIds;
+        for (const auto & nodesOfComponent : components) {
+            auto optComponent = memgraphClient.createComponent(nodesOfComponent);
+            if (optComponent.has_value()) {
+                componentIds.push_back(optComponent.value());
+            }
+        }
+        // auto componentIds = components
+        //                     | std::views::transform([&memgraphClient](const auto & nodesOfComponent){return memgraphClient.createComponent(nodesOfComponent);})
+        //                     | std::views::filter([](const std::optional<ComponentReference> & opt){return opt.has_value();})
+        //                     | std::views::transform([](const std::optional<ComponentReference> & opt){return opt.value();}); 
+        //                     | std::ranges::to<...> not supported yet
         std::unordered_map<uint64_t,std::vector<std::string>> componentToFilesMap = queryPathsForComponent(componentIds,memgraphClient.getMemgraphConnection());
         std::unordered_map<std::string,std::vector<uint64_t>> fileToComponentsMap;
         std::vector<ComponentFileJob> contractionJobs;
