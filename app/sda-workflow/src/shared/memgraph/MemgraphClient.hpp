@@ -235,12 +235,13 @@ public:
         std::ranges::transform(nodesOfComponent,std::back_inserter(data),[](NodeIdType nodeId){
             return mg::Value(asInt(nodeId));
         });
-        if( mgConnection.execute(CipherQuery("CREATE ")
+        if( mgConnection.execute(CipherQuery()
             .create(Node{.name="c",.label=Label::Component}).endl()
-            .append("WITH $data as nodes").endl()
+            .append("WITH $data as nodes,c").endl()
             .append("UNWIND nodes as nodeId").endl()
             .match(Node{.name="n",.label=Label::Settlement}).where("n.id=nodeId")
             .merge(Relation{.from=Var("n"),.label=Label::part_of,.to=Var("c")})
+            .set("data",mg::Value(mg::List(std::move(data))))
             .ret("ID(c)"))
         ){
             auto queryResult = mgConnection->FetchAll();
