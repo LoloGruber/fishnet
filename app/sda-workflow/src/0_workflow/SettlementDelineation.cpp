@@ -5,10 +5,10 @@
 
 int main(int argc, char * argv[]){
     CLI::App app {"SettlementDelineation Workload-Generator and Scheduler"};
-    std::string pathToCfg = "/home/lolo/Documents/fishnet/prod/local/sda-workflow-local.json";
-    std::string inputPath = "/home/lolo/Documents/fishnet/data/samples/Corvara_IT.tiff";
-    std::string outputFilename = "/home/lolo/Desktop/CorvaraAnalysis.shp";
-    std::string observerFilename /* = "/home/lolo/Desktop/sda-observer.json" */;
+    std::string pathToCfg = "/home/lolo/Projects/fishnet/prod/local/sda-workflow-local.json";
+    std::string inputPath = "/home/lolo/Projects/fishnet/data/samples/Corvara_IT.tiff";
+    std::string outputFilename = "/home/lolo/fishnet/output/CorvaraAnalysis.shp";
+    std::string observerFilename = "/home/lolo/fishnet/jobs.json";
     std::vector<std::filesystem::path> inputFiles;
     app.add_option("-c,--config",pathToCfg,"Path to workflow configuration")->required()->check(CLI::ExistingFile);
     app.add_option("-i,--input",inputPath,"Path to input directory")->required()->check(CLI::ExistingDirectory | CLI::ExistingFile);
