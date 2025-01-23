@@ -192,7 +192,7 @@ public:
     }
 
     template<typename... Qs>
-    bool executeAndDiscard(const CipherQuery & query, Qs... queries) const {
+    bool executeAndDiscard(const CipherQuery & query, Qs&&...  queries) const {
         return executeAndDiscard(query) && executeAndDiscard(std::forward<Qs>(queries)...);
     }
 
