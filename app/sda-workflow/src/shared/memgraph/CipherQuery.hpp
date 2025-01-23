@@ -37,13 +37,9 @@ public:
         append(statement);
     }
 
-    CipherQuery(CipherQuery && other):params(std::move(other.params)),query(std::move(other.query)) {}
+    CipherQuery(CipherQuery &&) noexcept=default;
 
-    CipherQuery & operator=(CipherQuery && other)noexcept {
-        this->params = std::move(other.params);
-        this->query = std::move(other.query);
-        return *this;
-    }
+    CipherQuery & operator=(CipherQuery && other)noexcept = default;
 
     template<typename T>
     constexpr CipherQuery &&  match(T && entity) && noexcept {
@@ -214,41 +210,57 @@ public:
     }
 
     constexpr static CipherQuery DELETE_ALL(){
-        return CipherQuery("MATCH (n)").del("n");
+        CipherQuery q {"MATCH (n)"};
+        q.del("n");
+        return q;
     }
 
     template<typename T>
     constexpr static CipherQuery CREATE_INDEX(T&& index){
-        return CipherQuery("CREATE INDEX ON ").append(std::forward<T>(index));
+        CipherQuery q {"CREATE INDEX ON "};
+        q.append(std::forward<T>(index));
+        return q;
     }
 
     template<typename T>
     constexpr static CipherQuery CREATE_EDGE_INDEX(T&& index){
-        return CipherQuery("CREATE EDGE INDEX ON ").append(std::forward<T>(index));
+        CipherQuery q {"CREATE EDGE INDEX ON "};
+        q.append(std::forward<T>(index));
+        return q;
     }
 
     template<typename T>
     constexpr static CipherQuery DROP_INDEX(T&& index){
-        return CipherQuery("DROP INDEX ON ").append(std::forward<T>(index));
+        CipherQuery q {"DROP INDEX ON "};
+        q.append(std::forward<T>(index));
+        return q;
     }
 
     template<typename T>
     constexpr static CipherQuery DROP_EDGE_INDEX(T&& index){
-        return CipherQuery("DROP EDGE INDEX ON ").append(std::forward<T>(index));
+        CipherQuery q {"DROP EDGE INDEX ON "};
+        q.append(std::forward<T>(index));
+        return q;
     }
 
     template<typename T>
     constexpr static CipherQuery MERGE(T && value){
-        return CipherQuery().merge(std::forward<T>(value));
+        CipherQuery q;
+        q.merge(std::forward<T>(value));
+        return q;
     }
 
     template<typename T>
     constexpr static CipherQuery MATCH(T && value){
-        return CipherQuery().match(std::forward<T>(value));
+        CipherQuery q;
+        q.match(std::forward<T>(value));
+        return q;
     }
 
     template<typename T>
     constexpr static CipherQuery CREATE(T && value){
-        return CipherQuery().create(std::forward<T>(value));
+        CipherQuery q;
+        q.create(std::forward<T>(value));
+        return q;
     }
 }; 
