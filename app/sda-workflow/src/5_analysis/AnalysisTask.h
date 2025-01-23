@@ -95,10 +95,11 @@ public:
         memgraphAdj.loadNodes(settlements); //load settlement relationships
         auto graph = fishnet::graph::GraphFactory::UndirectedGraph<NodeType>(std::move(memgraphAdj));
         std::future<void> edgesTask;
-        if(config.visualizeEdges) {
+        if(config.visualizeEdges) { 
             edgesTask = std::async(std::launch::async,[this,&graph,&outputRef]{
                 this->visualizeEdges(graph,outputRef);
             });
+        }
         std::unordered_map<size_t,fishnet::Feature<ShapeType>> centralityMeasureResults; // result map, which stores: Fishnet_ID -> <Feature of the settlement stored in output>
         std::ranges::for_each(settlements,[&centralityMeasureResults](auto && settlement){
             centralityMeasureResults.try_emplace(settlement.key(),fishnet::Feature<ShapeType>(std::move(static_cast<ShapeType>(settlement))));
@@ -118,7 +119,6 @@ public:
             outputLayer.addFeature(std::move(feature));
         }
         outputLayer.overwrite(outputFile);
-        }
         if(edgesTask.valid())
             edgesTask.get();
     }
