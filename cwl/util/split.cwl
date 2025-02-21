@@ -12,6 +12,7 @@ inputs:
     doc: "Input shapefiles for the filter step"  
   outputDir:
     type: string
+    default: "./"
     inputBinding:
       position: 3
       prefix: -o
@@ -24,11 +25,13 @@ inputs:
     doc: "Number of horizontal/vertical splits"
   xOffset:
     type: int
+    default: 0
     inputBinding:
         prefix: -x
     doc: "X offset for the naming of the output tiles"
   yOffset:
     type: int
+    default: 0
     inputBinding:
         prefix: -y
     doc: "Y offset for the naming of the output tiles"

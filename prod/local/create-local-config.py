@@ -31,7 +31,7 @@ def config_template() -> dict:
             }
         ],
         "executor": {
-            "cwl-directory": "/home/lolo/Projects/fishnet/app/sda-workflow/cwl",
+            "cwl-directory": "/home/lolo/Projects/fishnet/cwl/sda/",
             "flags": "--quiet --no-container",
             "name": "CWLTOOL"
         },
@@ -55,7 +55,7 @@ def config_template() -> dict:
     }
 
 configFileRelativePath = "prod/local/sda-workflow-local.json"
-cwlRelativePath = "app/sda-workflow/cwl"
+cwlRelativePath = "cwl/sda"
 
 def get_project_directory() -> str:
     current_dir = Path(os.path.abspath(os.path.curdir))

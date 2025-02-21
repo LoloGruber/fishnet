@@ -8,7 +8,7 @@
     "executor":{
         "name":"CWLTOOL",
         "flags":"--log-dir /data/logs --no-container",
-        "cwl-directory":"/fishnet/app/sda-workflow/cwl"
+        "cwl-directory":"/fishnet/cwl/sda/"
     },
     "contraction-output-stem":"Contraction",
     "analysis-output-stem":"Analysis",
