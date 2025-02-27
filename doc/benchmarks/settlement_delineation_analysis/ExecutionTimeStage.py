@@ -74,10 +74,11 @@ def plot_min_avg_max_computation_sorted(workflow_results: List[WorkflowResult]):
     plt.yscale('log')
     plt.minorticks_on()
     # Add labels, title, and legend
-    plt.xlabel('Job Type (#Samples)', fontsize=16)
-    plt.ylabel('Computation time log(s)', fontsize=16)
+    plt.xlabel('Job Type (#Samples)', fontsize=18)
+    plt.ylabel('Computation time log(s)', fontsize=18)
     # plt.title('Min, Avg, and Max Computation Time per Job Type')
     plt.xticks(np.arange(1, len(job_type_names) + 1), job_type_names, rotation=45, fontsize=14)
+    plt.yticks(fontsize=16)
     # Custom legend for points
     legend_elements = [
         Line2D([0], [0], marker='o', color='w', label='Min', markerfacecolor=MIN_COLOR, markersize=10),
@@ -119,7 +120,7 @@ def get_resource_stats(workflows: List[WorkflowResult], delimiter = ' & ', newli
 
 
 if __name__ == '__main__':
-    USER = "Lorenz"
+    USER = "Lolo"
     rootDir = f"C:\\Users\\{USER}\\OneDrive\\Dokumente\\Master Informatik\\5_WS23\\2024_MA_Lorenz_Gruber\\Results\\Settlement Distribution"
     varyingConfig =f"C:\\Users\\{USER}\\OneDrive\\Dokumente\\Master Informatik\\5_WS23\\2024_MA_Lorenz_Gruber\\Results\\Parameter Impact"
     workflows = load_directory(rootDir) + load_directory(varyingConfig)
