@@ -25,28 +25,26 @@ outputs:
     type: stdout
   errorOut:
     type: stderr
-  outFile:
+  filtered_shapefile:
     type: ../GIS.yml#Shapefile
     outputBinding:
-      glob: "*_filtered.shp"  # Ensure we find the shapefile output
+      glob: "*_filtered.*"  # Gather all files associate with the shapefile
       outputEval: |
         ${  
           if (self.length === 0) {
             throw new Error("No filtered shapefile found.");
           }
-          
-          var shpFile = self[0];  // The matched .shp file
-          var baseName = shpFile.nameroot;  // Remove .shp extension
-
+          function findAssociatedFiles(ext){
+              return self.find(function(f){return f.basename === self[0].nameroot + ext;}) || null;
+          }
           return {
-            "shp": shpFile,
-            "shx": self.find(function(f) { return f.basename === baseName + ".shx"; }) || null,
-            "dbf": self.find(function(f) { return f.basename === baseName + ".dbf"; }) || null,
-            "prj": self.find(function(f) { return f.basename === baseName + ".prj"; }) || null,
-            "cpg": self.find(function(f) { return f.basename === baseName + ".cpg"; }) || null,
-            "qpj": self.find(function(f) { return f.basename === baseName + ".qpj"; }) || null
+            "shp": findAssociatedFiles(".shp"),
+            "shx": findAssociatedFiles(".shx"),
+            "dbf": findAssociatedFiles(".dbf"),
+            "prj": findAssociatedFiles(".prj"),
+            "cpg": findAssociatedFiles(".cpg"),
+            "qpj": findAssociatedFiles(".qpj")
           };
         }
-
-
-stderr: Filter_stderr.log
+stdout: Filter_$(inputs.gisFile.file.nameroot)_stdout.log
+stderr: Filter_$(inputs.gisFile.file.nameroot)_stderr.log

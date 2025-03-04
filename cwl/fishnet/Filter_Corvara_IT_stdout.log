@@ -49,7 +49,7 @@
         ],
         "visualize-edges": true
     },
-    "duration[s]": 0.032306679,
+    "duration[s]": 0.03136779,
     "input": "Corvara_IT.shp",
     "output": "Corvara_IT_filtered.shp",
     "polygon count": 26,
