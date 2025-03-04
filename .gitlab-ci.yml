@@ -1,5 +1,13 @@
 image: gcc:13.2
 
+workflow:
+  rules:
+    - changes:
+        - app/** 
+        - lib/** 
+        - tests/** 
+        - CMakeLists.txt
+        
 stages:
   - build
   - test
