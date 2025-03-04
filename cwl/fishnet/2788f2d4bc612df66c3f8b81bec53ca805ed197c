@@ -1,0 +1,57 @@
+{
+    "config": {
+        "analysis-output-stem": "Analysis",
+        "binary-filters": [
+            {
+                "name": "InsidePolygonFilter"
+            }
+        ],
+        "centrality-measures": [
+            {
+                "name": "DegreeCentrality"
+            },
+            {
+                "name": "MeanLocalSignificance"
+            },
+            {
+                "name": "SmallerNeighboursRatio"
+            }
+        ],
+        "cleanup": true,
+        "concurrent-runs": true,
+        "contraction-output-stem": "Contraction",
+        "contraction-predicates": [
+            {
+                "distance": 500.0,
+                "name": "DistanceBiPredicate"
+            }
+        ],
+        "executor": {
+            "cwl-directory": "/home/lolo/Documents/fishnet/cwl/sda",
+            "flags": "--quiet --no-container",
+            "name": "CWLTOOL"
+        },
+        "hardware-concurrency": 0,
+        "last-job-type": "MERGE",
+        "maxDistanceMeters": 3000.0,
+        "maxNeighbours": 5,
+        "memgraph-host": "localhost",
+        "memgraph-port": 7687,
+        "merge-workers": 2,
+        "neighbouring-files-predicate": "WSF",
+        "neighbouring-predicates": [],
+        "splits": 0,
+        "unary-filters": [
+            {
+                "name": "ApproxAreaFilter",
+                "requiredArea": 5000.0
+            }
+        ],
+        "visualize-edges": true
+    },
+    "duration[s]": 0.032306679,
+    "input": "Corvara_IT.shp",
+    "output": "Corvara_IT_filtered.shp",
+    "polygon count": 26,
+    "type": "FILTER"
+}
