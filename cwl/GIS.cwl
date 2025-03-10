@@ -1,15 +1,14 @@
-cwlVersion: v1.2
-
+class: SchemaDefRequirement
 types:
   - name: GeoTIFF
-    type: record  # Must be a record type
+    type: record
     fields:
       - name: file
         type: File
   - name: Shapefile
     type: record
     fields:
-      - name: shp
+      - name: file
         type: File
         doc: "The main Shapefile (.shp)"
       - name: shx
