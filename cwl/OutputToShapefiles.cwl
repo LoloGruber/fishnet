@@ -2,6 +2,7 @@ cwlVersion: v1.2
 class: ExpressionTool
 requirements:
 - $import: GIS.cwl
+- class: InlineJavascriptRequirement
 inputs:
   files:
     type: File[]
@@ -59,5 +60,5 @@ expression: |
         "cpg": group.cpg,
         "qpj": group.qpj
       };
-    });
+    }).filter(group => group.shp !== null);
   }

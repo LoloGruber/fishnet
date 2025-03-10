@@ -22,7 +22,7 @@ inputs:
     doc: "Configuration file for Africapolis workflow"
   partitions:
     type: int
-    default: 4
+    default: 1
     doc: "Number of partitions created on the input for parallel computation"
 outputs:
   vector_output:
