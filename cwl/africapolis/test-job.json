@@ -1,7 +1,9 @@
 {
     "vector_input":{
-        "class": "File",
-        "path": "/home/lolo/Documents/fishnet/data/samples/Corvara_IT.tiff"
+        "file":{
+            "class": "File",
+            "path": "/home/lolo/Documents/fishnet/data/samples/Corvara_IT.tiff"
+        }
     },
     "config":{
         "class":"File",

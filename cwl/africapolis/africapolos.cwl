@@ -1,17 +1,21 @@
 cwlVersion: v1.2
 class: Workflow
 requirements:
-  - class: InitialWorkDirRequirement
-    listing:
-      - entryname: fishnet
-        writable: true
-        entry: ""
-  - class: ScatterFeatureRequirement
-  - class: StepInputExpressionRequirement
-  - class: InlineJavascriptRequirement
+- class: InitialWorkDirRequirement
+  listing:
+    - entryname: fishnet
+      writable: true
+      entry: ""
+- class: ScatterFeatureRequirement
+- class: StepInputExpressionRequirement
+- class: InlineJavascriptRequirement
+- class: SubworkflowFeatureRequirement
+- $import: ../GIS.cwl
 inputs:
   vector_input:
-    type: File
+    type: 
+      - ../GIS.cwl#Shapefile
+      - ../GIS.cwl#GeoTIFF
     doc: "Input vector file to Africapolis workflow"
   config:
     type: File
@@ -22,48 +26,42 @@ inputs:
     doc: "Number of partitions created on the input for parallel computation"
 outputs:
   vector_output:
-    type: File[]
-    outputSource: flatten/flatFiles
+    type: ../GIS.cwl#Shapefile[]
+    outputSource: filter/filtered_shapefile
 steps:
   split:
-    run: ../util/split.cwl
+    run: ../fishnet/split.cwl
     in:
-      shpFile: vector_input
+      gisFile: vector_input
       # Pass the relative path "fishnet", which will resolve to the directory created by the InitialWorkDirRequirement.
       splits: partitions
-    out: [outFile]
+    out: [split_shapefiles]
   filter:
-    run: ../sda/filter.cwl
+    run: ../fishnet/filter.cwl
     in:
-      shpFile:
-        source: split/outFile
-        valueFrom: >
-          $(
-            // self is an array of Files for one shapefile group.
-            // Filter to get those with a basename ending with ".shp" and select the first one.
-            (self.filter(file => file.basename && file.basename.endsWith('.shp')))[0]
-          )
+      gisFile:
+        source: split/split_shapefiles
       config: config
-    scatter: [shpFile]
-    out: [outFile]
-  flatten:
-    run:
-      class: ExpressionTool
-      cwlVersion: v1.2
-      requirements:
-        - class: InlineJavascriptRequirement
-      inputs:
-        files:
-          type:
-            type: array
-            items: 
-              type: array
-              items: File
-      outputs:
-        flatFiles:
-          type: File[]
-      expression: "$( [].concat.apply([], inputs.files) )"
+    scatter: [gisFile]
+    out: [filtered_shapefile]
+  # flatten:
+  #   run:
+  #     class: ExpressionTool
+  #     cwlVersion: v1.2
+  #     requirements:
+  #       - class: InlineJavascriptRequirement
+  #     inputs:
+  #       files:
+  #         type:
+  #           type: array
+  #           items: 
+  #             type: array
+  #             items: File
+  #     outputs:
+  #       flatFiles:
+  #         type: File[]
+  #     expression: "$( [].concat.apply([], inputs.files) )"
 
-    in:
-      files: filter/outFile
-    out: [flatFiles]
+  #   in:
+  #     files: filter/filtered_shapefile
+  #   out: [flatFiles]
