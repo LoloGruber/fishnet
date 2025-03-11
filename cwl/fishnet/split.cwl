@@ -2,10 +2,11 @@ cwlVersion: v1.2
 class: Workflow
 requirements:
 - $import: ../GIS.cwl
+- class: InlineJavascriptRequirement
 inputs:
   gisFile:
     type: 
-      - ../GIS.cwl#Shapefile
+      # - ../GIS.cwl#Shapefile
       - ../GIS.cwl#GeoTIFF
     doc: "Input shapefiles for the filter step"  
   splits:
@@ -17,7 +18,7 @@ outputs:
     type: ../GIS.cwl#Shapefile[]
     outputSource: groupToShapefiles/shapefiles
 steps:
-  split:
+  split_task:
     run:
       class: CommandLineTool
       baseCommand: [FishnetShapefileSplitter]
@@ -26,7 +27,7 @@ steps:
       inputs:
         input_file:
           type: 
-            - ../GIS.cwl#Shapefile
+            # - ../GIS.cwl#Shapefile
             - ../GIS.cwl#GeoTIFF
           inputBinding:
             position: 1
@@ -78,7 +79,6 @@ steps:
   groupToShapefiles:
     run: ../OutputToShapefiles.cwl
     in: 
-      files:
-        source: split/raw_output_files
+      files: split_task/raw_output_files
     out: [shapefiles]
     

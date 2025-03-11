@@ -1,0 +1,13 @@
+{
+    "gisFile":{
+        "file":{
+            "class": "File",
+            "path": "/home/lolo/Documents/fishnet/data/samples/Corvara_IT.tiff"
+        }
+    },
+    "config":{
+        "class":"File",
+        "path": "/home/lolo/Documents/fishnet/prod/local/sda-workflow-local.json"
+    },
+    "splits": 1
+}

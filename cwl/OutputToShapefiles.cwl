@@ -6,11 +6,9 @@ requirements:
 inputs:
   files:
     type: File[]
-
 outputs:
   shapefiles:
       type: GIS.cwl#Shapefile[]
-
 expression: |
   ${
     if (inputs.files.length === 0) {
@@ -19,10 +17,10 @@ expression: |
 
     // Helper function to group files by nameroot
     function groupByNameroot(files) {
-      const grouped = {};
+      var grouped = {};
 
-      files.forEach(f => {
-        const nameroot = f.nameroot;
+      files.forEach(function(f) {
+        var nameroot = f.nameroot;
 
         if (!grouped[nameroot]) {
           grouped[nameroot] = {
@@ -46,19 +44,15 @@ expression: |
 
       return grouped;
     }
-
-    // Group files by nameroot
-    const groupedFiles = groupByNameroot(inputs.files);
-
-    // Convert grouped files into the desired output format
-    return Object.values(groupedFiles).map(group => {
+    var result = Object.values(groupByNameroot(inputs.files)).map(function(group){
       return {
-        "shp": group.shp,
-        "shx": group.shx,
-        "dbf": group.dbf,
-        "prj": group.prj,
-        "cpg": group.cpg,
-        "qpj": group.qpj
-      };
-    }).filter(group => group.shp !== null);
+        "file": {
+          "class": "File",
+          "path": group.shp,
+          "secondaryFiles": [
+              group.shx, group.dbf,group.prj
+          ]
+      }
+    };}).filter(function(g){return g.file !== null});
+    return {"shapefiles": result};
   }

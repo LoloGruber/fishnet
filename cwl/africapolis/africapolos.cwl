@@ -14,7 +14,7 @@ requirements:
 inputs:
   vector_input:
     type: 
-      - ../GIS.cwl#Shapefile
+      # - ../GIS.cwl#Shapefile
       - ../GIS.cwl#GeoTIFF
     doc: "Input vector file to Africapolis workflow"
   config:

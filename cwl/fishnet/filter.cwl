@@ -5,7 +5,7 @@ requirements:
 inputs:
   gisFile:
     type: 
-      - ../GIS.cwl#GeoTIFF
+      # - ../GIS.cwl#GeoTIFF
       - ../GIS.cwl#Shapefile
 
   config:
@@ -18,13 +18,13 @@ outputs:
     outputSource: outputToShp/shapefile
   standardOut:
     type: File
-    outputSource: filter/standardOut
+    outputSource: filter_task/standardOut
   errorOut:
     type: File
-    outputSource: filter/errorOut
+    outputSource: filter_task/errorOut
 
 steps:
-  filter:
+  filter_task:
     run:
       class: CommandLineTool
       baseCommand: [SettlementDelineationFilter]
@@ -33,7 +33,7 @@ steps:
       inputs:
         gisFile:
           type: 
-            - ../GIS.cwl#GeoTIFF
+            # - ../GIS.cwl#GeoTIFF
             - ../GIS.cwl#Shapefile
           inputBinding:
             position: 1
@@ -65,6 +65,6 @@ steps:
     run: ../OutputToShapefile.cwl
     in: 
       files: 
-        source: filter/raw_output_files
+        source: filter_task/raw_output_files
     out: [shapefile]
       
