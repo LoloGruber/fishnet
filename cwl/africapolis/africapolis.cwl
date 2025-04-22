@@ -44,24 +44,10 @@ steps:
       config: config
     scatter: [gisFile]
     out: [filtered_shapefile]
-  # flatten:
-  #   run:
-  #     class: ExpressionTool
-  #     cwlVersion: v1.2
-  #     requirements:
-  #       - class: InlineJavascriptRequirement
-  #     inputs:
-  #       files:
-  #         type:
-  #           type: array
-  #           items: 
-  #             type: array
-  #             items: File
-  #     outputs:
-  #       flatFiles:
-  #         type: File[]
-  #     expression: "$( [].concat.apply([], inputs.files) )"
+  prepare_graph_construction:
+    run: PrepareGraphConstruction.cwl
+    in:
+      shapefiles: filter/filtered_shapefile
+      vector_input: vector_input
+    out: [graph_construction_workload]
 
-  #   in:
-  #     files: filter/filtered_shapefile
-  #   out: [flatFiles]

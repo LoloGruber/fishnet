@@ -1,84 +1,58 @@
 cwlVersion: v1.2
-class: Workflow
+class: CommandLineTool
 requirements:
 - $import: ../GIS.cwl
 - class: InlineJavascriptRequirement
+baseCommand: [FishnetShapefileSplitter]
+
 inputs:
-  gisFile:
-    type: 
-      # - ../GIS.cwl#Shapefile
-      - ../GIS.cwl#GeoTIFF
-    doc: "Input shapefiles for the filter step"  
-  splits:
-    type: int
-    doc: "Number of horizontal/vertical splits"
-    
-outputs:
-  split_shapefiles:
-    type: ../GIS.cwl#Shapefile[]
-    outputSource: groupToShapefiles/shapefiles
-steps:
-  split_task:
-    run:
-      class: CommandLineTool
-      baseCommand: [FishnetShapefileSplitter]
-      requirements:
-        - class: InlineJavascriptRequirement
-      inputs:
-        input_file:
-          type: 
-            # - ../GIS.cwl#Shapefile
-            - ../GIS.cwl#GeoTIFF
-          inputBinding:
+    gisFile:
+        type: 
+        # - ../GIS.cwl#Shapefile
+        - ../GIS.cwl#GeoTIFF
+        inputBinding:
             position: 1
             prefix: --input 
             valueFrom: $(self.file)
-        outputDir:
-          type: string
-          default: "./"
-          inputBinding:
+    outputDir:
+        type: string
+        default: "./"
+        inputBinding:
             position: 3
             prefix: -o
-          doc: "Output directory"
-        splits:
-          type: int
-          inputBinding:
+        doc: "Output directory"
+    splits:
+        type: int
+        inputBinding:
             position: 2
             prefix: -s
-        xOffset:
-          type: int
-          default: 0
-          inputBinding:
-              prefix: -x
-          doc: "X offset for the naming of the output tiles"
-        yOffset:
-          type: int
-          default: 0
-          inputBinding:
-              prefix: -y
-          doc: "Y offset for the naming of the output tiles"
+    xOffset:
+        type: int
+        default: 0
+        inputBinding:
+            prefix: -x
+        doc: "X offset for the naming of the output tiles"
+    yOffset:
+        type: int
+        default: 0
+        inputBinding:
+            prefix: -y
+        doc: "Y offset for the naming of the output tiles"
 
-      outputs:
-        standardOut:
-          type: stdout
-        errorOut:
-          type: stderr
-        raw_output_files:
-          type: File[]
-          outputBinding:
-            glob: "$(inputs.input_file.file.nameroot)*"
-          doc: "Split output files"
+outputs:
+    standardOut:
+        type: stdout
+    errorOut:
+        type: stderr
+    split_shapefiles:
+        type: ../GIS.cwl#Shapefile[]
+        outputBinding:
+            glob: "$(inputs.gisFile.file.nameroot)*"
+            outputEval:
+                $include: ../utils/groupToShapefile.js
+        doc: "Split output files"
 
-      stdout: $(inputs.input_file.file.nameroot)_split_stdout.log
-      stderr: $(inputs.input_file.file.nameroot)_split_stderr.log
-    in:
-      input_file: gisFile
-      splits: splits
 
-    out: [raw_output_files,standardOut,errorOut]
-  groupToShapefiles:
-    run: ../OutputToShapefiles.cwl
-    in: 
-      files: split_task/raw_output_files
-    out: [shapefiles]
+stdout: $(inputs.gisFile.file.nameroot)_split_stdout.log
+stderr: $(inputs.gisFile.file.nameroot)_split_stderr.log
     
