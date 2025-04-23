@@ -1,0 +1,8 @@
+types:
+  - name: GraphConstructionWorkload
+    type: record
+    fields:
+      - name: primaryInput
+        type: ../GIS.cwl#Shapefile
+      - name: additionalInput
+        type: ../GIS.cwl#Shapefile[]

@@ -31,5 +31,5 @@ outputs:
       glob: "*_filtered.*"  # Gather all files associate with the shapefile
       outputEval:
         $include: ../utils/groupToShapefile.js 
-stdout: Filter_$(inputs.gisFile.file.nameroot)_stdout.log
-stderr: Filter_$(inputs.gisFile.file.nameroot)_stderr.log
+stdout: FILTER_$(inputs.gisFile.file.nameroot)_stdout.log
+stderr: FILTER_$(inputs.gisFile.file.nameroot)_stderr.log

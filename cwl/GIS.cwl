@@ -11,10 +11,10 @@ types:
       - name: file
         type: File
         secondaryFiles:
-          - .shx
-          - .dbf
-          - .prj
-          - .cpg?
-          - .qpj?
+          - ^.shx
+          - ^.dbf
+          - ^.prj
+          - ^.cpg?
+          - ^.qpj?
         doc: "The main Shapefile (.shp)"
 

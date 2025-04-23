@@ -53,6 +53,6 @@ outputs:
         doc: "Split output files"
 
 
-stdout: $(inputs.gisFile.file.nameroot)_split_stdout.log
-stderr: $(inputs.gisFile.file.nameroot)_split_stderr.log
+stdout: SPLIT_$(inputs.gisFile.file.nameroot)_stdout.log
+stderr: SPLIT_$(inputs.gisFile.file.nameroot)_stderr.log
     

@@ -1,5 +1,7 @@
 cwlVersion: v1.2
 class: ExpressionTool
+requirements:
+  - $import: ../GIS.cwl
 inputs:
     shapefiles: ../GIS.cwl#Shapefile[]
     vector_input: ../GIS.cwl#GeoTIFF
@@ -23,11 +25,11 @@ expression: |
             this.y = y;
         }
         infinityDistance(other) {
-            Math.max(Math.abs(this.x-other.x),Math.abs(this.y-other.y));
+            return Math.max(Math.abs(this.x-other.x),Math.abs(this.y-other.y));
         }
 
         toString() {
-            return "("+x+","+y+")";
+            return this.x+","+this.y;
         }
     };
 
@@ -39,16 +41,15 @@ expression: |
         const regex = new RegExp(`${prefix}_(\\d+)_(\\d+)_.*`);
         const match = filename.match(regex);
         if (match) {
-            return Coordinate(parseInt(match[1]), parseInt(match[2]));
+            return new Coordinate(parseInt(match[1]), parseInt(match[2]));
         }
-        return null;
+        throw new Error("Could not parse grid coordinates from filename \""+filename+"\" with prefix \""+prefix+"\"");
     }
-
-
     function neighbouringShapefiles(shapefiles, prefix){
         const shapefileCoordinateMap = {};
         shapefiles.forEach(s => {
-            const coordinate = shapefileObjectToCoordinate(s.file.nameroot,prefix);
+            const nameroot = s.file.nameroot;
+            const coordinate = shapefileObjectToCoordinate(nameroot,prefix);
             shapefileCoordinateMap[coordinate] = s;
         });
         return Object.keys(shapefileCoordinateMap).map(coordinate => {
@@ -64,5 +65,6 @@ expression: |
             };
         });
     }
-    return {"graph_construction_workload":neighbouringShapefiles(inputs.shapefiles,inputs.vector_input.nameroot)};
+    const result = neighbouringShapefiles(inputs.shapefiles,inputs.vector_input.file.nameroot);
+    return {"graph_construction_workload":result};
     }

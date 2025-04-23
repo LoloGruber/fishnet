@@ -50,4 +50,13 @@ steps:
       shapefiles: filter/filtered_shapefile
       vector_input: vector_input
     out: [graph_construction_workload]
+  graph_construction:
+    run:
+     
+    in: 
+      graph_construction_workload: prepare_graph_construction/graph_construction_workload
+      config: config
+    scatter: graph_construction_workload
+    scatterMethod: dotproduct
+    out: [standardOut]
 

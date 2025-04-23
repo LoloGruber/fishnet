@@ -2,11 +2,11 @@
     "vector_input":{
         "file":{
             "class": "File",
-            "path": "/home/lolo/Documents/fishnet/data/samples/Corvara_IT.tiff"
+            "path": "/home/lolo/Projects/fishnet/data/samples/Corvara_IT.tiff"
         }
     },
     "config":{
         "class":"File",
-        "path": "/home/lolo/Documents/fishnet/prod/local/sda-workflow-local.json"
+        "path": "/home/lolo/Projects/fishnet/prod/local/sda-workflow-local.json"
     }
 }
