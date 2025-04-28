@@ -1,5 +1,5 @@
 {
-    "vector_input":{
+    "gisInput":{
         "file":{
             "class": "File",
             "path": "/home/lolo/Projects/fishnet/data/samples/Corvara_IT.tiff"

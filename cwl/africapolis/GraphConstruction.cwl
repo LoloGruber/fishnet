@@ -1,18 +1,22 @@
 cwlVersion: v1.2
 class: Workflow
 requirements:
-  - $import: ../GIS.cwl
-  - $import: AfricapolisTypes.cwl
+  - class: SchemaDefRequirement
+    types: 
+      - $import: ../types/Shapefile.yaml
+      - $import: GraphConstructionWorkload.yaml
+  - class: StepInputExpressionRequirement
+  - class: ScatterFeatureRequirement
+  - class: InlineJavascriptRequirement
 inputs:
-  graph_construction_workload:
-    type: AfricapolisTypes.cwl#GraphConstructionWorkload
-        # name: GraphConstructionWorkload 
-        # type: record
-        # fields:
-        # - name: primaryInput
-        #   type: ../GIS.cwl#Shapefile
-        # - name: additionalInput
-        #   type: ../GIS.cwl#Shapefile[]
+  shapefiles:
+    type: ../types/Shapefile.yaml#Shapefile[]
+    doc: "List of shapefiles to be used for graph construction. Each polygon must be associated with a unique FISHNET ID."
+  filenamePrefix:
+    type: string?
+    doc: "Prefix used to identify the shapefiles. The prefix is used to extract the grid coordinates from the filenames."
+  # graph_construction_workload:
+  #   type: GraphConstructionWorkload.yaml#GraphConstructionWorkload
   config:
     type: File
 outputs: 
@@ -20,29 +24,38 @@ outputs:
         type: boolean
         outputSource: done/trigger
 steps:
-    generate_graph:
-        run: ../fishnet/generate_graph.cwl
-        in:
-          primaryInput: 
-            source: graph_construction_workload
-            valueFrom: $(self.primaryInput)
-          additionalInput:
-            source: graph_construction_workload
-            valueFrom: $(self.additionalInput)
-          config: config
-        out: [standardOut]
-    done:
-      run:
-        class: ExpressionTool
-        cwlVersion: v1.2
-        inputs:
-            dummy:
-              type: File
-        outputs:
-            trigger:
-              type: boolean
-        expression: |
-            ${ return { trigger: true }; }
-      in:
-        dummy: generate_graph/standardOut
-      out: [trigger]
+  prepare_workload:
+    run: PrepareGraphConstruction.cwl
+    in:
+      shapefiles: shapefiles
+      filenamePrefix: filenamePrefix
+    out: [graph_construction_workload]
+  generate_graph:
+    run: ../fishnet/generateGraph.cwl
+    in:
+      graph_construction_workload: prepare_workload/graph_construction_workload
+      primaryInput: 
+        source: prepare_workload/graph_construction_workload
+        valueFrom: $(inputs.graph_construction_workload.primaryInput)
+      additionalInput:
+        source: prepare_workload/graph_construction_workload
+        valueFrom: $(inputs.graph_construction_workload.additionalInput)
+      config: config
+    scatter: graph_construction_workload
+    scatterMethod: dotproduct
+    out: [standardOut]
+  done:
+    run:
+      class: ExpressionTool
+      cwlVersion: v1.2
+      inputs:
+          dummy:
+            type: File[]
+      outputs:
+          trigger:
+            type: boolean
+      expression: |
+          ${ return { trigger: true }; }
+    in:
+      dummy: generate_graph/standardOut
+    out: [trigger]

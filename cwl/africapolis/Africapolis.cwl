@@ -10,12 +10,15 @@ requirements:
 - class: StepInputExpressionRequirement
 - class: InlineJavascriptRequirement
 - class: SubworkflowFeatureRequirement
-- $import: ../GIS.cwl
+- class: SchemaDefRequirement
+  types: 
+    - $import: ../types/Shapefile.yaml
+    - $import: ../types/GeoTIFF.yaml
 inputs:
-  vector_input:
+  gisInput:
     type: 
       # - ../GIS.cwl#Shapefile
-      - ../GIS.cwl#GeoTIFF
+      - ../types/GeoTIFF.yaml#GeoTIFF
     doc: "Input vector file to Africapolis workflow"
   config:
     type: File
@@ -26,13 +29,13 @@ inputs:
     doc: "Number of partitions created on the input for parallel computation"
 outputs:
   vector_output:
-    type: ../GIS.cwl#Shapefile[]
+    type: ../types/Shapefile.yaml#Shapefile[]
     outputSource: filter/filtered_shapefile
 steps:
   split:
     run: ../fishnet/split.cwl
     in:
-      gisFile: vector_input
+      gisFile: gisInput
       # Pass the relative path "fishnet", which will resolve to the directory created by the InitialWorkDirRequirement.
       splits: partitions
     out: [split_shapefiles]
@@ -44,19 +47,14 @@ steps:
       config: config
     scatter: [gisFile]
     out: [filtered_shapefile]
-  prepare_graph_construction:
-    run: PrepareGraphConstruction.cwl
-    in:
-      shapefiles: filter/filtered_shapefile
-      vector_input: vector_input
-    out: [graph_construction_workload]
   graph_construction:
-    run:
-     
+    run: GraphConstruction.cwl
     in: 
-      graph_construction_workload: prepare_graph_construction/graph_construction_workload
+      shapefiles: filter/filtered_shapefile
+      filenamePrefix: 
+        source: gisInput
+        valueFrom: $(self.file.nameroot)
       config: config
-    scatter: graph_construction_workload
-    scatterMethod: dotproduct
     out: [standardOut]
+  
 

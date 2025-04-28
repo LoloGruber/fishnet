@@ -1,22 +1,17 @@
 cwlVersion: v1.2
 class: ExpressionTool
 requirements:
-  - $import: ../GIS.cwl
+  - class: SchemaDefRequirement
+    types: 
+    - $import: ../types/Shapefile.yaml
+    - $import: ../types/GeoTIFF.yaml
+    - $import: GraphConstructionWorkload.yaml
 inputs:
-    shapefiles: ../GIS.cwl#Shapefile[]
-    vector_input: ../GIS.cwl#GeoTIFF
+    shapefiles: ../types/Shapefile.yaml#Shapefile[]
+    filenamePrefix: string?
 outputs: 
     graph_construction_workload:
-      type: 
-        type: array
-        items:
-            name: GraphConstructionWorkload 
-            type: record
-            fields:
-              - name: primaryInput
-                type: ../GIS.cwl#Shapefile
-              - name: additionalInput
-                type: ../GIS.cwl#Shapefile[]
+      type: GraphConstructionWorkload.yaml#GraphConstructionWorkload[]
 expression: | 
     ${
     class Coordinate{
@@ -59,12 +54,19 @@ expression: |
                 const distance = stringToCoordinate(other).infinityDistance(currentCoordinate);
                 return distance > 0 && distance <=1;
             }).map(c => shapefileCoordinateMap[c]);
-            return {
+            if(additionalInput.length == 0){
+                return {
+                    "primaryInput":primaryInput,
+                    "additionalInput":null
+                };
+            }
+            else return {
                 "primaryInput":primaryInput,
                 "additionalInput":additionalInput
             };
         });
     }
-    const result = neighbouringShapefiles(inputs.shapefiles,inputs.vector_input.file.nameroot);
+    // TODO make it work even when no prefix is given
+    const result = neighbouringShapefiles(inputs.shapefiles,inputs.filenamePrefix);
     return {"graph_construction_workload":result};
     }
