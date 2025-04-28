@@ -1,15 +1,18 @@
 cwlVersion: v1.2
 class: Workflow
+requirements:
+  - $import: ../GIS.cwl
+  - $import: AfricapolisTypes.cwl
 inputs:
   graph_construction_workload:
-    type: 
-        name: GraphConstructionWorkload 
-        type: record
-        fields:
-        - name: primaryInput
-            type: ../GIS.cwl#Shapefile
-        - name: additionalInput
-            type: ../GIS.cwl#Shapefile[]
+    type: AfricapolisTypes.cwl#GraphConstructionWorkload
+        # name: GraphConstructionWorkload 
+        # type: record
+        # fields:
+        # - name: primaryInput
+        #   type: ../GIS.cwl#Shapefile
+        # - name: additionalInput
+        #   type: ../GIS.cwl#Shapefile[]
   config:
     type: File
 outputs: 
@@ -20,13 +23,13 @@ steps:
     generate_graph:
         run: ../fishnet/generate_graph.cwl
         in:
-        primaryInput: 
+          primaryInput: 
             source: graph_construction_workload
             valueFrom: $(self.primaryInput)
-        additionalInput:
+          additionalInput:
             source: graph_construction_workload
             valueFrom: $(self.additionalInput)
-        config: config
+          config: config
         out: [standardOut]
     done:
       run:
@@ -34,10 +37,10 @@ steps:
         cwlVersion: v1.2
         inputs:
             dummy:
-            type: File
+              type: File
         outputs:
             trigger:
-            type: boolean
+              type: boolean
         expression: |
             ${ return { trigger: true }; }
       in:
