@@ -1,14 +1,16 @@
 cwlVersion: v1.2
 class: CommandLineTool
 requirements:
-  - $import: ../GIS.cwl
+  - class: SchemaDefRequirement
+    types:
+    - $import: ../types/Shapefile.yaml
   - class: InlineJavascriptRequirement
 baseCommand: [SettlementDelineationFilter]
 inputs:
   gisFile:
     type: 
       # - ../GIS.cwl#GeoTIFF
-      - ../GIS.cwl#Shapefile
+      - ../types/Shapefile.yaml#Shapefile
     inputBinding:
       position: 1
       prefix: --input
@@ -26,7 +28,7 @@ outputs:
   errorOut:
     type: stderr
   filtered_shapefile:
-    type: ../GIS.cwl#Shapefile
+    type: ../types/Shapefile.yaml#Shapefile
     outputBinding:
       glob: "*_filtered.*"  # Gather all files associate with the shapefile
       outputEval:

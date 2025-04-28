@@ -2,17 +2,19 @@ cwlVersion: v1.2
 class: CommandLineTool
 baseCommand: [SettlementDelineationNeighbours]
 requirements:
-    - $import: ../GIS.cwl
+    - class: SchemaDefRequirement
+      types: 
+        - $import: ../types/Shapefile.yaml
     - class: InlineJavascriptRequirement
 inputs:
   primaryInput:
-    type: ../GIS.cwl#Shapefile
+    type: ../types/Shapefile.yaml#Shapefile
     inputBinding:
         prefix: -i
         valueFrom: $(self.file)
     doc: "Primary input, supplied as shapefile object"
   additionalInput:
-    type: ../GIS.cwl#Shapefile[]
+    type: ../types/Shapefile.yaml#Shapefile[]?
     inputBinding:
         prefix: -a
         valueFrom: ${return self ? self.map(s=>s.file):[]}

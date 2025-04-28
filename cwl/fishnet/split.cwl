@@ -1,7 +1,10 @@
 cwlVersion: v1.2
 class: CommandLineTool
 requirements:
-- $import: ../GIS.cwl
+- class: SchemaDefRequirement
+  types:
+    - $import: ../types/GeoTIFF.yaml
+    - $import: ../types/Shapefile.yaml
 - class: InlineJavascriptRequirement
 baseCommand: [FishnetShapefileSplitter]
 
@@ -9,7 +12,7 @@ inputs:
     gisFile:
         type: 
         # - ../GIS.cwl#Shapefile
-        - ../GIS.cwl#GeoTIFF
+        - ../types/GeoTIFF.yaml#GeoTIFF
         inputBinding:
             position: 1
             prefix: --input 
@@ -45,7 +48,7 @@ outputs:
     errorOut:
         type: stderr
     split_shapefiles:
-        type: ../GIS.cwl#Shapefile[]
+        type: ../types/Shapefile.yaml#Shapefile[]
         outputBinding:
             glob: "$(inputs.gisFile.file.nameroot)*"
             outputEval:
