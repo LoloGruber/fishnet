@@ -1,5 +1,0 @@
-include(${FISHNET_SOURCE_DIR}/extern/memgraph.cmake)
-add_library(memgraphAdapter INTERFACE)
-add_dependencies(memgraphAdapter mgclient-proj)
-target_include_directories(memgraphAdapter INTERFACE ${CMAKE_CURRENT_LIST_DIR})
-target_link_libraries(memgraphAdapter INTERFACE ${MGCLIENT_LIBRARY} graph)
