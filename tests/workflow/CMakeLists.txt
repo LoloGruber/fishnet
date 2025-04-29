@@ -1,10 +1,8 @@
+add_subdirectory(sda-workflow)
 add_executable(workflowTest
-FilterTest.cpp
 MemgraphAdjacencyTest.cpp
-JobAdjacencyTest.cpp
 PolygonDistanceTest.cpp
 CipherQueryTest.cpp
-ConcurrentSessionsTest.cpp
 )
 gtest_discover_tests(workflowTest)
-target_link_libraries(workflowTest PRIVATE WorkflowLib testutil geometryTestUtils graph) 
+target_link_libraries(workflowTest PRIVATE Fishnet::Workflow testutil geometryTestUtils graph io) 
