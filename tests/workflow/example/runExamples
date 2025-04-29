@@ -1,9 +1,0 @@
-#!/bin/bash
-rm -rf workingDir
-./createJobs.py
-mkdir workingDir
-cd workingDir
-cwltool ../../../../app/sda-workflow/cwl/filter.cwl ../jobs/filterExample.json
-cwltool ../../../../app/sda-workflow/cwl/neighbours.cwl ../jobs/neighboursExample.json
-cwltool ../../../../app/sda-workflow/cwl/contraction.cwl ../jobs/contractionExample.json
-cwltool ../../../../app/sda-workflow/cwl/analysis.cwl ../jobs/analysisExample.json 
