@@ -1,0 +1,3 @@
+add_library(util_collections INTERFACE)
+target_include_directories(util_collections INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
+target_link_libraries(util_collections INTERFACE util_functional util_hashing)

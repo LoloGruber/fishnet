@@ -1,0 +1,11 @@
+add_library(io_gdal_adapter INTERFACE)
+find_package(GDAL  REQUIRED)
+find_package(GDAL REQUIRED)
+if (GDAL_FOUND)
+  message(STATUS "Found GDAL: ${GDAL_VERSION}")
+  message(STATUS "Using GDAL include dir: ${GDAL_INCLUDE_DIR}")
+  message(STATUS "Using GDAL libraries: ${GDAL_LIBRARIES}")
+endif()
+target_include_directories(io_gdal_adapter INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
+target_link_libraries(io_gdal_adapter INTERFACE geometry_objects GDAL::GDAL)
+

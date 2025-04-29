@@ -1,0 +1,5 @@
+add_subdirectory(gdal)
+add_subdirectory(gis)
+add_subdirectory(vector)
+add_library(io INTERFACE)
+target_link_libraries(io INTERFACE io_gis io_gdal_adapter io_vector )

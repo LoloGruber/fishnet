@@ -1,0 +1,3 @@
+add_library(geometry_linear_features INTERFACE)
+target_include_directories(geometry_linear_features INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
+target_link_libraries(geometry_linear_features INTERFACE math util_hashing geometry_objects_base geometry_algo )
