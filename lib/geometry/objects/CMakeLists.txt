@@ -1,6 +1,0 @@
-add_subdirectory(linear)
-add_subdirectory(shapes)
-add_subdirectory(compound)
-add_subdirectory(base)
-add_library(geometry_objects INTERFACE)
-target_link_libraries(geometry_objects INTERFACE geometry_linear_features geometry_shape_features geometry_compound_features geometry_objects_base)

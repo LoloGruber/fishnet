@@ -1,5 +1,0 @@
-add_subdirectory(adjacency)
-add_subdirectory(model)
-add_subdirectory(algorithm)
-add_subdirectory(centrality)
-add_subdirectory(graph)

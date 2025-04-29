@@ -1,3 +1,0 @@
-add_library(graph_adjacency INTERFACE)
-target_include_directories(graph_adjacency INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
-target_link_libraries(graph_adjacency INTERFACE util)

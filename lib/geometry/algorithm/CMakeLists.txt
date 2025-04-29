@@ -1,6 +1,0 @@
-# include(${CMAKE_SOURCE_DIR}/extern/quadtree.cmake)
-add_library(geometry_algo INTERFACE)
-# ExternalProject_Get_Property(Quadtree SOURCE_DIR)
-# target_include_directories(geometry_algo INTERFACE ${SOURCE_DIR}/include)
-target_include_directories(geometry_algo INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
-target_link_libraries(geometry_algo INTERFACE util geometry_objects)
