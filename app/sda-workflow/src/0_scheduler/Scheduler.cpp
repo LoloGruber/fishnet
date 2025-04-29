@@ -1,8 +1,8 @@
 #include <CLI/CLI.hpp>
+#include <fishnet/Task.hpp>
+#include <fishnet/MemgraphConnection.hpp>
 #include "Scheduler.hpp"
 #include "SchedulerConfig.hpp"
-#include "Task.hpp"
-#include "MemgraphConnection.hpp"
 
 int main(int argc, char * argv[]){
     CLI::App schedulerApp {};

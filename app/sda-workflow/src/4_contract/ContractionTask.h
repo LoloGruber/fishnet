@@ -6,11 +6,11 @@
 #include <fishnet/Contraction.hpp>
 #include <fishnet/CompositePredicate.hpp>
 
-#include "CachingMemgraphAdjacency.hpp"
-#include "MemgraphAdjacency.hpp"
+#include <fishnet/CachingMemgraphAdjacency.hpp>
+#include <fishnet/MemgraphAdjacency.hpp>
+#include <fishnet/Task.hpp>
 #include "SettlementPolygon.hpp"
 #include "ContractionConfig.hpp"
-#include "Task.hpp"
 #include "IDReduceFunction.hpp"
 
 /**

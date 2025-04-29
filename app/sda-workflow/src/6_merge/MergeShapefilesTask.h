@@ -1,7 +1,7 @@
 #include <future>
 #include <fishnet/VectorLayer.hpp>
 #include <fishnet/GeometryObject.hpp>
-#include "Task.hpp"
+#include <fishnet/Task.hpp>
 #include "SettlementPolygon.hpp"
 
 template<fishnet::geometry::Shape ShapeType>

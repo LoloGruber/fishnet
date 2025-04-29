@@ -1,7 +1,7 @@
 #pragma once
 #include <magic_enum.hpp>
 #include <fishnet/FunctionalConcepts.hpp>
-#include "TaskConfig.hpp"
+#include <fishnet/TaskConfig.hpp>
 #include "Job.hpp"
 #include "CwlToilExecutor.hpp"
 #include "CwlToolExecutor.hpp"

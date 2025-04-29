@@ -1,7 +1,7 @@
 #pragma once
 #include <fishnet/FunctionalConcepts.hpp>
 #include <magic_enum.hpp>
-#include "TaskConfig.hpp"
+#include <fishnet/TaskConfig.hpp>
 #include "Job.hpp"
 #include "JobGeneratorConfig.hpp"
 #include "SchedulerConfig.hpp"

@@ -7,7 +7,7 @@
 #include "ApproxAreaFilter.hpp"
 #include "ProjectedAreaFilter.hpp"
 #include "InsidePolygonFilter.hpp"
-#include "TaskConfig.hpp"
+#include <fishnet/TaskConfig.hpp>
 
 using json = nlohmann::json;
 

@@ -1,5 +1,5 @@
 #pragma once
-#include "TaskConfig.hpp"
+#include <fishnet/TaskConfig.hpp>
 
 class ConnectedComponentsConfig : public MemgraphTaskConfig {
 public:

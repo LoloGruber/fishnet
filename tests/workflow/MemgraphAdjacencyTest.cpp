@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include "Testutil.h"
-#include "MemgraphAdjacency.hpp"
-#include "CachingMemgraphAdjacency.hpp"
+#include <fishnet/MemgraphAdjacency.hpp>
+#include <fishnet/CachingMemgraphAdjacency.hpp>
 #include <fishnet/GraphFactory.hpp>
 using namespace testutil;
 using namespace fishnet::graph;

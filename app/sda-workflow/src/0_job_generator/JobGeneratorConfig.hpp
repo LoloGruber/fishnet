@@ -1,8 +1,8 @@
 #pragma once
 #include <magic_enum.hpp>
-#include "TaskConfig.hpp"
+#include <fishnet/FunctionalConcepts.hpp>
+#include <fishnet/TaskConfig.hpp>
 #include "Job.hpp"
-#include "fishnet/FunctionalConcepts.hpp"
 #include "NeighbouringFilesPredicates.hpp"
 
 class JobGeneratorConfig:public MemgraphTaskConfig{

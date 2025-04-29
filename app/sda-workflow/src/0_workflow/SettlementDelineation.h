@@ -2,14 +2,13 @@
 #include <vector>
 #include <filesystem>
 #include <fishnet/GISFactory.hpp>
-#include "Task.hpp"
+#include <fishnet/Task.hpp>
+#include <fishnet/MemgraphClient.hpp>
 #include "JobDAG.hpp"
-
 #include "JobGenerator.hpp"
 #include "SchedulerConfig.hpp"
 #include "ConnectedComponentsConfig.hpp"
 #include "SettlementDelineationConfig.hpp"
-#include "MemgraphClient.hpp"
 
 class SettlementDelineation: public Task{
 private:

@@ -4,10 +4,10 @@
 #include <fishnet/Shapefile.hpp>
 #include <fishnet/GraphFactory.hpp>
 #include <future>
-#include "Task.hpp"
+#include <fishnet/Task.hpp>
+#include <fishnet/CachingMemgraphAdjacency.hpp>
 #include "AnalysisConfig.cpp"
 #include "CentralityMeasureJsonReader.hpp"
-#include "CachingMemgraphAdjacency.hpp"
 #include "SettlementPolygon.hpp"
 #include "EdgeVisualizer.hpp"
 

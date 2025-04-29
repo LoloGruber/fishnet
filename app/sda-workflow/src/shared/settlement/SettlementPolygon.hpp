@@ -1,6 +1,6 @@
 #pragma once
 #include <fishnet/ShapeGeometry.hpp>
-#include "MemgraphAdjacency.hpp"
+#include <fishnet/MemgraphAdjacency.hpp>
 
 /**
  * @brief Settlement Object, which fulfills the requirements of a Polygon and for a Node stored in the Memgraph DB.

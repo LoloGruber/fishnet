@@ -6,7 +6,7 @@
 #include <iostream>
 #include <cassert>
 #include <fishnet/Either.hpp>
-#include <CipherQuery.hpp>
+#include "CipherQuery.hpp"
 
 constexpr static inline int64_t asInt(size_t value) {
     return mg::Id::FromUint(value).AsInt();

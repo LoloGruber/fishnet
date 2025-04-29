@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include "Testutil.h"
-#include "MemgraphClient.hpp"
+#include <fishnet/MemgraphClient.hpp>
 #include "JobAdjacency.hpp"
 using namespace testutil;
 class ConcurrentSessionsTest: public ::testing::Test {

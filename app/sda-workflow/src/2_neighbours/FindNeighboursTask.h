@@ -8,9 +8,9 @@
 #include <fishnet/CompositePredicate.hpp>
 #include <fishnet/Rectangle.hpp>
 #include <fishnet/WGS84Ellipsoid.hpp>
-#include "MemgraphAdjacency.hpp"
+#include <fishnet/MemgraphAdjacency.hpp>
+#include <fishnet/Task.hpp>
 #include "SettlementPolygon.hpp"
-#include "Task.hpp"
 #include "FindNeighboursConfig.hpp"
 
 /**

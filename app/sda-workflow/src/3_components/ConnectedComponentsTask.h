@@ -1,8 +1,8 @@
 #include <fishnet/GraphFactory.hpp>
 #include <fishnet/BFSAlgorithm.hpp>
 #include <fishnet/PathHelper.h>
-#include "MemgraphClient.hpp"
-#include "Task.hpp"
+#include <fishnet/MemgraphClient.hpp>
+#include <fishnet/Task.hpp>
 #include "ConnectedComponentsConfig.hpp"
 #include "JobWriter.hpp"
 #include "JobDAG.hpp"

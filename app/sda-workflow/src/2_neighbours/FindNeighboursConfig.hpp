@@ -2,7 +2,7 @@
 #include <vector>
 #include <nlohmann/json.hpp> //MIT License Copyright (c) 2013-2022 Niels Lohmann
 #include <magic_enum.hpp> //Copyright (c) 2019 - 2024 Daniil Goncharov
-#include "TaskConfig.hpp"
+#include <fishnet/TaskConfig.hpp>
 #include "NeighbourPredicateJsonReader.hpp"
 
 using json = nlohmann::json;

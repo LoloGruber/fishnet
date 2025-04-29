@@ -2,7 +2,7 @@
 #include <fishnet/MultiPolygon.hpp>
 #include <fishnet/Polygon.hpp>
 #include "SettlementPolygon.hpp"
-#include "Task.hpp"
+#include <fishnet/Task.hpp>
 
 /**
  * @brief Reduce function Functor that merges a set of settlements polygons into a single settlement multi-polygon.

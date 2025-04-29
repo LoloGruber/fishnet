@@ -8,7 +8,7 @@
 
 #include <sstream>
 
-#include "Task.hpp"
+#include <fishnet/Task.hpp>
 #include "FilterConfig.hpp"
 
 /**
