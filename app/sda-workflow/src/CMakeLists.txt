@@ -1,4 +1,5 @@
 set(WORKFLOW_NAME "SettlementDelineation")
+set(SDA_WORKFLOW_LIB SDA_Workflow_Lib)
 add_subdirectory(shared)
 add_subdirectory(0_scheduler)
 add_subdirectory(0_job_generator)
