@@ -1,6 +1,7 @@
 include(${FISHNET_SOURCE_DIR}/extern/memgraph.cmake)
+include(${FISHNET_SOURCE_DIR}/extern/magic_enum.cmake)
 SET(MEMGRAPH_ADAPTER ${FISHNET_WORKFLOW_LIBRARY}-memgraphAdapter)
 add_library(${MEMGRAPH_ADAPTER} INTERFACE)
 add_dependencies(${MEMGRAPH_ADAPTER} mgclient-proj)
 target_include_directories(${MEMGRAPH_ADAPTER} INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
-target_link_libraries(${MEMGRAPH_ADAPTER} INTERFACE ${MGCLIENT_LIBRARY} graph)
+target_link_libraries(${MEMGRAPH_ADAPTER} INTERFACE ${MGCLIENT_LIBRARY} graph magic_enum::magic_enum)
