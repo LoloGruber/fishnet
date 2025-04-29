@@ -1,4 +1,3 @@
-add_subdirectory(memgraph)
 add_subdirectory(settlement)
 add_subdirectory(filters)
 add_subdirectory(neighbourPredicates)
