@@ -28,9 +28,9 @@ inputs:
     default: 1
     doc: "Number of partitions created on the input for parallel computation"
 outputs:
-  vector_output:
-    type: ../types/Shapefile.yaml#Shapefile[]
-    outputSource: filter/filtered_shapefile
+  components:
+    type: File
+    outputSource: graph_components/components
 steps:
   split:
     run: ../fishnet/split.cwl
@@ -55,6 +55,12 @@ steps:
         source: gisInput
         valueFrom: $(self.file.nameroot)
       config: config
-    out: [standardOut]
+    out: [trigger]
+  graph_components:
+    run: GraphComponents.cwl
+    in:
+      trigger: graph_construction/trigger
+      config: config
+    out: [components]
   
 

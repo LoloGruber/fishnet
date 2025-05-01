@@ -20,7 +20,7 @@ inputs:
   config:
     type: File
 outputs: 
-    standardOut:
+    trigger:
         type: boolean
         outputSource: done/trigger
 steps:

@@ -1,0 +1,23 @@
+[
+    {
+        "components": [
+            2078,
+            2077,
+            2076
+        ],
+        "files": [
+            "/tmp/b9div0h0/Corvara_IT_1_1_filtered.shp"
+        ],
+        "nodes": 13
+    },
+    {
+        "components": [
+            2079,
+            2080
+        ],
+        "files": [
+            "/tmp/54en95qd/Corvara_IT_0_0_filtered.shp"
+        ],
+        "nodes": 13
+    }
+]
