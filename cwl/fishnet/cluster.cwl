@@ -8,10 +8,13 @@ requirements:
       - $import: ../types/Shapefile.yaml
 inputs:
     shpFiles:
-        type: ../types/Shapefile.yaml#Shapefile[]
+        type: 
+          type: array 
+          items: ../types/Shapefile.yaml#Shapefile
+          inputBinding: 
+            valueFrom: $(self.file)
         inputBinding:
             prefix: -i
-            valueFrom: $(self.map(shp => shp.file.path).join(" "))
         doc: "List of input shapefiles, with their required secondary files (.dbf, .shx, .prj)"
     config:
         type: File
