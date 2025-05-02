@@ -175,16 +175,19 @@ int main(int argc, char *argv[]){
         ->required()
         ->check(CLI::ExistingFile);
     app.add_option("-o,--outputComponentFileBasename", componentJsonFilename, "Basename for component output file storing the components in json format")->required();
-    // CLI11_PARSE(app, argc, argv);
+    CLI11_PARSE(app, argc, argv);
     MemgraphTaskConfig config{json::parse(std::ifstream(configFilename))};
     MemgraphClient mgClient = MemgraphClient(MemgraphConnection::create(config.params).value_or_throw());
     clearComponents(mgClient.getMemgraphConnection());
     auto graph = loadIDGraph(mgClient);
     auto components = findAndStoreComponents(graph, mgClient);
     std::vector<ClusterWorkload> workloads = distributeComponentsWorkload(components, mgClient);
-    nlohmann::json jsonComponents = workloads;
-    std::ofstream outputFile(componentJsonFilename+".json");
-    outputFile << jsonComponents.dump(4) << std::endl;
-    outputFile.close();
+
+    for(auto && workload: workloads){
+        nlohmann::json jsonComponent = workload;
+        std::ofstream outputFile(componentJsonFilename+std::to_string(workload.components.front())+".json");
+        outputFile << jsonComponent.dump(4) << std::endl;
+        outputFile.close();
+    }
     return 0;
 }

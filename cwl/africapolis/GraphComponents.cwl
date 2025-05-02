@@ -38,11 +38,9 @@ steps:
             prefix: -o
       outputs:
         components:
-          type: string
+          type: File[]
           outputBinding:
-            glob: "$(inputs.componentOutputBasename).json"
-            loadContents: true
-            outputEval: $(self[0].contents)
+            glob: "$(inputs.componentOutputBasename)*.json"
           doc: "Output file containing the components of the graph"
         standardOut:
           type: stdout
@@ -57,8 +55,9 @@ steps:
     run:
       class: ExpressionTool
       inputs:
-        components:
-          type: string
+        component:
+          type: File?
+          loadContents: true
           doc: "String in json format containing the list of cluster workloads derived from the components of the graph"
         files: 
           type: ../types/Shapefile.yaml#Shapefile[]
@@ -66,30 +65,27 @@ steps:
 
       outputs:
         clusterWorkload:
-          type: ClusterWorkload.yaml#ClusterWorkload[]
+          type: ClusterWorkload.yaml#ClusterWorkload
           doc: "Parsed ClusterWorkload object"
       expression: |
         ${
-            const json = JSON.parse(inputs.components);
-            let workloads = [];
-            for(const workloadJson of json){
-              if(workloadJson.components.length == 0){
-                continue;
-              }
+              let workloadJson = JSON.parse(inputs.component.contents);
               let fileNames = [...new Set(workloadJson.files.map(file => file.split("/").pop()))];
               let files = fileNames.map(fileName => {
                   let fileObject = inputs.files.find(f => f.file.basename == fileName);
                   return fileObject;
                 });
-              let workload = {
+              let result = {
                 components: workloadJson.components,
                 files: files
               };
-              workloads.push(workload);
-            }
-            return { clusterWorkload: workloads};
+              return {
+                clusterWorkload: result,
+              };
         }
     in:
-      components: graph_components/components
+      component: graph_components/components
       files: files
     out: [clusterWorkload]
+    scatter: [component]
+    scatterMethod: dotproduct
