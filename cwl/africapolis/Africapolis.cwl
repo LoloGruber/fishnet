@@ -14,6 +14,7 @@ requirements:
   types: 
     - $import: ../types/Shapefile.yaml
     - $import: ../types/GeoTIFF.yaml
+    - $import: ClusterWorkload.yaml
 inputs:
   gisInput:
     type: 
@@ -28,10 +29,24 @@ inputs:
     default: 1
     doc: "Number of partitions created on the input for parallel computation"
 outputs:
-  components:
-    type: File
-    outputSource: graph_components/components
+  result:
+    type: ../types/Shapefile.yaml#Shapefile[]
+    outputSource: clustering/clusteredOutput
 steps:
+  clearDatabase:
+    run:
+      class: CommandLineTool
+      baseCommand: [AfricapolisClearDatabase]
+      inputs:
+        config:
+          type: File
+          inputBinding:
+            position: 1
+            prefix: -c
+      outputs: []
+    in:
+      config: config
+    out: []
   split:
     run: ../fishnet/split.cwl
     in:
@@ -61,6 +76,23 @@ steps:
     in:
       trigger: graph_construction/trigger
       config: config
-    out: [components]
+      files: filter/filtered_shapefile
+    out: [clusterWorkload]
+  clustering:
+    run: ../fishnet/cluster.cwl
+    in: 
+      clusterWorkload: graph_components/clusterWorkload
+      config: config
+      components:
+        source: graph_components/clusterWorkload
+        valueFrom: $(inputs.clusterWorkload.components)
+      shpFiles: 
+        source: graph_components/clusterWorkload
+        valueFrom: $(inputs.clusterWorkload.files)
+    scatter: clusterWorkload
+    scatterMethod: dotproduct
+    out: [clusteredOutput]
+
+
   
 

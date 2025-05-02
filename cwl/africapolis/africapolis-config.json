@@ -17,7 +17,7 @@
     },
     "hardware-concurrency": 0,
     "last-job-type": "MERGE",
-    "maxDistanceMeters": 500.0,
+    "maxDistanceMeters": 400.0,
     "maxNeighbours": 5,
     "memgraph-host": "localhost",
     "memgraph-port": 7687,
