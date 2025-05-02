@@ -25,7 +25,6 @@ inputs:
         doc: "List of connected components to be processed by this job"
     outputStem:
         type: string
-        default: "Clustered"
         inputBinding:
             position: 2
             prefix: --outputStem 

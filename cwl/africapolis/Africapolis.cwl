@@ -30,8 +30,8 @@ inputs:
     doc: "Number of partitions created on the input for parallel computation"
 outputs:
   result:
-    type: ../types/Shapefile.yaml#Shapefile[]
-    outputSource: clustering/clusteredOutput
+    type: ../types/Shapefile.yaml#Shapefile
+    outputSource: merge/mergedOutput
 steps:
   clearDatabase:
     run:
@@ -89,9 +89,21 @@ steps:
       shpFiles: 
         source: graph_components/clusterWorkload
         valueFrom: $(inputs.clusterWorkload.files)
+      outputStem:
+        source: graph_components/clusterWorkload
+        valueFrom: $("Clustered_"+ inputs.clusterWorkload.files.map(f => f.file.nameroot).join("_"))
     scatter: clusterWorkload
     scatterMethod: dotproduct
     out: [clusteredOutput]
+  merge:
+    run: ../fishnet/mergeShapefiles.cwl
+    in:
+      gisInput: gisInput
+      shpFiles: clustering/clusteredOutput
+      outputPath:
+        source: gisInput
+        valueFrom: $("./"+self.file.nameroot+"_Africapolis")
+    out: [mergedOutput]
 
 
   
