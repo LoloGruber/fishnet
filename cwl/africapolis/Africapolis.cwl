@@ -91,7 +91,7 @@ steps:
         valueFrom: $(inputs.clusterWorkload.files)
       outputStem:
         source: graph_components/clusterWorkload
-        valueFrom: $("Clustered_"+ inputs.clusterWorkload.files.map(f => f.file.nameroot).join("_"))
+        valueFrom: $("Clustered_"+ inputs.clusterWorkload.components[0])
     scatter: clusterWorkload
     scatterMethod: dotproduct
     out: [clusteredOutput]

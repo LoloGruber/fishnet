@@ -11,7 +11,7 @@
         }
     ],
     "maxDistanceMeters": 200.0,
-    "maxNeighbours": 10,
+    "maxNeighbours": 5,
     "memgraph-host": "localhost",
     "memgraph-port": 7687,
     "merge-workers": 2,
