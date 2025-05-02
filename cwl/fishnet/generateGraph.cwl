@@ -14,10 +14,13 @@ inputs:
         valueFrom: $(self.file)
     doc: "Primary input, supplied as shapefile object"
   additionalInput:
-    type: ../types/Shapefile.yaml#Shapefile[]?
+    type: 
+      type: array
+      items: ../types/Shapefile.yaml#Shapefile
+      inputBinding:
+        valueFrom: $(self.file)
     inputBinding:
         prefix: -a
-        valueFrom: ${return self ? self.map(s=>s.file):[]}
     doc: "List of additional input shapefiles in proximity to the primary input, with their required secondary files (.dbf, .shx, .prj)"
   config:
     type: File
