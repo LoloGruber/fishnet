@@ -8,6 +8,14 @@
 
 #include <CLI/CLI.hpp>
 
+void clearComponents(MemgraphConnection const & connection){
+    connection.executeAndDiscard(
+        CipherQuery::MATCH(Node{
+            .name = "c",
+            .label = Label::Component
+        }).del("c"));
+}
+
 auto loadIDGraph( MemgraphClient const & mgClient) {
     auto nodesList = mgClient.nodes();
     auto adjMap = mgClient.edges();
@@ -71,10 +79,6 @@ void to_json(nlohmann::json & j, const ClusterWorkload & workload) {
         {"files", workload.files},
         {"components", workload.components}
     };
-}
-
-auto getFiles(MemgraphConnection const & dbConnection){
-    return 0;
 }
 
 auto componentIDToFileID(MemgraphConnection const & mgConnection, ComponentMap const & componentMap) {
@@ -174,6 +178,7 @@ int main(int argc, char *argv[]){
     // CLI11_PARSE(app, argc, argv);
     MemgraphTaskConfig config{json::parse(std::ifstream(configFilename))};
     MemgraphClient mgClient = MemgraphClient(MemgraphConnection::create(config.params).value_or_throw());
+    clearComponents(mgClient.getMemgraphConnection());
     auto graph = loadIDGraph(mgClient);
     auto components = findAndStoreComponents(graph, mgClient);
     std::vector<ClusterWorkload> workloads = distributeComponentsWorkload(components, mgClient);
