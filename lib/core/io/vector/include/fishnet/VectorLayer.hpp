@@ -162,7 +162,8 @@ private:
         GDALDriver * driver = GetGDALDriverManager()->GetDriverByName("ESRI Shapefile");
         destination.remove(); // delete already existing files, if present
         GDALDataset * outputDataset = driver->Create(destination.getPath().c_str(),0,0,0,GDT_Unknown,0);
-        OGRLayer * outputLayer = outputDataset->CreateLayer(destination.getPath().c_str(),this->getSpatialReference().Clone(),GeometryTypeWKBAdapter::toWKB(G::type),0);
+        const char * const options[] = {"SPATIAL_INDEX=YES",nullptr};
+        OGRLayer * outputLayer = outputDataset->CreateLayer(destination.getPath().c_str(),this->getSpatialReference().Clone(),GeometryTypeWKBAdapter::toWKB(G::type),const_cast<char **>(options));
         for(const auto & [fieldName,fieldDefinition] :  fields) {
             OGRFieldType fieldType;
             // get OGRFieldType from FieldDefinition<T> type -> T
