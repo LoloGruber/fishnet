@@ -1,7 +1,2 @@
-if (MSVC)
-    add_compile_options(/W4)
-else()
-    add_compile_options(-Wall -Wextra -Wpedantic -Wconversion -Wno-unused-parameter -Wno-unused-function -fconcepts-diagnostics-depth=4)
-endif()
 add_subdirectory(core)
 add_subdirectory(workflow)
