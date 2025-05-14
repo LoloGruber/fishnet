@@ -2,6 +2,7 @@
 import os
 import shutil
 from pathlib import Path
+import runpy
 
 configFileRelativePath = "prod/local/sda-workflow-local.json"
 WORKING_DIR_NAME = "workingDir"
@@ -97,6 +98,9 @@ def writeJSONFile(content:str, filename: str):
         f.write(content)
 
 def createJobs(project_dir: Path, working_dir: Path):
+    local_config = project_dir / configFileRelativePath
+    if (not os.path.exists(local_config)):
+        runpy.run_path(str(local_config.parent / "create-local-config.py"))
     writeJSONFile(createFilterExample(project_dir),"filterExample")
     writeJSONFile(createNeighboursExample(project_dir,working_dir),"neighboursExample")
     writeJSONFile(createContractionExample(project_dir,working_dir),"contractionExample")
@@ -114,6 +118,8 @@ def runExample(project_dir: Path, working_dir: Path):
 def main():
     current_dir = Path(os.path.abspath(__file__)).parent
     working_dir = current_dir / WORKING_DIR_NAME
+    if (not os.path.exists(working_dir)):
+        os.mkdir(working_dir)
     job_dir = current_dir / "jobs"
     if(not os.path.exists(job_dir)):
         os.mkdir(job_dir)
