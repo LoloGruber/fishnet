@@ -61,7 +61,11 @@ SimplePolygon(std::initializer_list<Vec2D<T>> && points)->SimplePolygon<T>;
 
 template<std::ranges::random_access_range R>
 SimplePolygon(const R & )->SimplePolygon<typename std::ranges::range_value_t<R>::numeric_type>;
+
+// Explicit template instantiation
+template class SimplePolygon<fishnet::math::DEFAULT_NUMERIC>;
 }
+
 namespace std{
     template<typename T>
     struct hash<fishnet::geometry::SimplePolygon<T>>{

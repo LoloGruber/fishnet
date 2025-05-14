@@ -229,7 +229,12 @@ Polygon(const Ring<T> &, auto) -> Polygon<T>;
 
 template<math::Number T>
 Polygon(const SimplePolygon<T> &, auto) -> Polygon<T>;
+
+// Explicit template instantiation
+template class Polygon<fishnet::math::DEFAULT_NUMERIC>;
 }
+
+
 namespace std{
     template<typename T>
     struct hash<fishnet::geometry::Polygon<T>>{

@@ -182,6 +182,9 @@ public:
 };
 static_assert(ISegment<Segment<double>>);
 static_assert(LinearGeometry<Segment<double>>);
+
+// Explicit template instantiation
+template class Segment<fishnet::math::DEFAULT_NUMERIC>;
 }
 namespace std{
     template<typename T>

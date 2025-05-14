@@ -102,6 +102,9 @@ public:
     }
 };
 static_assert(LinearGeometry<Ray<double>>);
+
+// Explicit template instantiation for the default numeric type
+template class Ray<fishnet::math::DEFAULT_NUMERIC>;
 }
 namespace std{
     template<typename T>

@@ -91,6 +91,9 @@ public:
 //Deduction guide:
 template<Shape S>
 Rectangle(const S &) -> Rectangle<typename S::numeric_type>;
+
+// Explicit template instantiation
+template class Rectangle<fishnet::math::DEFAULT_NUMERIC>;
 }
 
 

@@ -396,6 +396,8 @@ Ring(const R &) -> Ring<typename std::ranges::range_value_t<R>::numeric_type>;
 template<typename T>
 Ring(std::initializer_list<Vec2D<T>> && points)->Ring<T>;
 
+// Explicit template instantiation
+template class Ring<fishnet::math::DEFAULT_NUMERIC>;
 }
 namespace std{
     template<typename T>

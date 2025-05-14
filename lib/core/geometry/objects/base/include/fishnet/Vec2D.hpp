@@ -195,6 +195,9 @@ constexpr auto operator*(U scalar,Vec2D<T> vector)  noexcept{
     return vector * scalar;
 }
 
+// Explicit template instantiation for the default numeric type
+template class fishnet::geometry::Vec2D<fishnet::math::DEFAULT_NUMERIC>;  
+
 /**
  * @brief Comparator for lexigraphically-ordering of Vec2D objects
  * Compares first the x-Coordinate and then the y-Coordinate
