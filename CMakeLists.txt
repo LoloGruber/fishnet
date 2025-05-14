@@ -5,7 +5,7 @@ project(fishnet_project VERSION 1.0.0 LANGUAGES CXX)
 option(FISHNET_TEST "Enable unit tests for Fishnet components" ON)
 option(FISHNET_APPS "Build applications" ON)
 option(FISHNET_COVERAGE "Enable coverage reporting" OFF)
-option(FISHNET_COMPILE_TIME_TRACE "Enable compile time tracing" ON)
+option(FISHNET_COMPILE_TIME_TRACE "Enable compile time tracing" OFF)
 
 # Variables
 set(FISHNET_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR} CACHE INTERNAL "Build applications")
