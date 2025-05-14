@@ -56,6 +56,12 @@ static std::vector<std::pair<int,N>> mergeWorker(QueuePtr<N> queue, util::Reduce
     return mergeWorker(queue, reduceFunction,util::Identity());
 }
 
+template<typename N,typename E>
+struct ContractionResult {
+    std::vector<N> nodes;
+    std::unordered_set<E> edges;
+};
+
 /**
  * @brief Generic contract implementation. Edges between nodes fulfilling the contractBiPredicate get contracted. 
  * The incident nodes get merge by reducing a vector of nodes from the source graph to a single node of the target graph
@@ -72,7 +78,7 @@ static std::vector<std::pair<int,N>> mergeWorker(QueuePtr<N> queue, util::Reduce
  * @return TargetGraphType resulting graph after contracting edges and merging nodes using the target graph node type
  */
 template<Graph SourceGraphType, Graph TargetGraphType>
-auto contract(const SourceGraphType & source,
+auto contractImpl(const SourceGraphType & source,
     util::BiPredicate<typename SourceGraphType::node_type> auto const & contractBiPredicate,
     util::ReduceFunction<std::vector<typename SourceGraphType::node_type>,typename TargetGraphType::node_type> auto const & reduceFunction,
     util::UnaryFunction<typename SourceGraphType::node_type,typename TargetGraphType::node_type> auto const & mapper,
@@ -98,12 +104,14 @@ auto contract(const SourceGraphType & source,
             result.try_emplace(merged.first,merged.second);
         }
     }
-    std::vector<R> disconnectedNodes;
+    std::vector<R> nodes;
     for(const auto & node: source.getNodes()){
         if(util::size(source.getNeighbours(node))==0 && util::size(source.getReachableFrom(node))==0){
-            disconnectedNodes.emplace_back(mapper(node));
+            nodes.emplace_back(mapper(node));
         }
     }
+    nodes.insert(nodes.end(), std::views::values(result).begin(), std::views::values(result).end());
+
     std::unordered_set<typename TargetGraphType::edge_type> edges;
     for(const auto & edge: source.getEdges()){
         if(componentsMap.at(edge.getFrom()) != componentsMap.at(edge.getTo())){
@@ -112,9 +120,35 @@ auto contract(const SourceGraphType & source,
             );
         }
     }
-    output.clear();
-    output.addNodes(disconnectedNodes);
-    output.addNodes(std::views::values(result)); // ensure that all nodes are added, even disconnected nodes after the merge
+    return ContractionResult<R,typename TargetGraphType::edge_type>{std::move(nodes), std::move(edges)};
+}
+
+
+template<Graph SourceGraphType, Graph TargetGraphType>
+void contract(const SourceGraphType & source,
+    util::BiPredicate<typename SourceGraphType::node_type> auto const & contractBiPredicate,
+    util::ReduceFunction<std::vector<typename SourceGraphType::node_type>,typename TargetGraphType::node_type> auto const & reduceFunction,
+    util::UnaryFunction<typename SourceGraphType::node_type,typename TargetGraphType::node_type> auto const & mapper,
+    TargetGraphType & output,  
+    u_int8_t workers = 1)
+{
+    auto [nodes, edges] = contractImpl(source,contractBiPredicate,reduceFunction,mapper,output,workers);
+    output.addNodes(nodes);
+    output.addEdges(edges);
+}
+
+
+template<Graph SourceGraphType, Graph TargetGraphType>
+void contractInPlace(SourceGraphType & source,
+    util::BiPredicate<typename SourceGraphType::node_type> auto const & contractBiPredicate,
+    util::ReduceFunction<std::vector<typename SourceGraphType::node_type>,typename TargetGraphType::node_type> auto const & reduceFunction,
+    util::UnaryFunction<typename SourceGraphType::node_type,typename TargetGraphType::node_type> auto const & mapper,
+    TargetGraphType & output,  
+    u_int8_t workers = 1)
+{
+    auto [nodes, edges] = contractImpl(source,contractBiPredicate,reduceFunction,mapper,output,workers);
+    source.clear();
+    output.addNodes(nodes);
     output.addEdges(edges);
 }
 
@@ -174,7 +208,31 @@ void contract( const SourceGraphType & source, util::BiPredicate<typename Source
 {
     using N = SourceGraphType::node_type;
     auto mapper = [&reduceFunction](const N & node){return reduceFunction(std::vector<N>({node}));};
-    __impl::contract<SourceGraphType,TargetGraphType>(source,contractBiPredicate,reduceFunction,mapper,output,workers);
+    __impl::contract(source,contractBiPredicate,reduceFunction,mapper,output,workers);
+}
+
+
+/**
+ * @brief Performs edge contraction algorithm. Edges between nodes fulfilling the contractBiPredicate get contracted. 
+ * The incident nodes get merge by reducing a vector of nodes from the source graph to a single node of the target graph.
+ * Source graph is not changed, target graph is cleared before inserting the contraction result.
+ * 
+ * @tparam SourceGraphType source graph type
+ * @tparam TargetGraphType target graph type
+ * @param source source graph (gets cleared)
+ * @param contractBiPredicate specifies when an edge between two nodes from source graph shall be contracted
+ * @param reduceFunction specifies how a vector of nodes from the source graph get combined to a single node of the target graph
+ * @param output mutable reference to the target graph
+ * @param workers amount of concurrent works
+ * @return TargetGraphType resulting graph after contracting edges and merging nodes using the target graph node type
+ */
+template<Graph SourceGraphType, Graph TargetGraphType>
+void contractInPlace( SourceGraphType & source, util::BiPredicate<typename SourceGraphType::node_type> auto const & contractBiPredicate,
+    util::ReduceFunction<std::vector<typename SourceGraphType::node_type>,typename TargetGraphType::node_type> auto const & reduceFunction, TargetGraphType & output,  u_int8_t workers = 1)
+{
+    using N = SourceGraphType::node_type;
+    auto mapper = [&reduceFunction](const N & node){return reduceFunction(std::vector<N>({node}));};
+    __impl::contractInPlace(source,contractBiPredicate,reduceFunction,mapper,output,workers);
 }
 
 /**
@@ -196,7 +254,7 @@ void contractInPlace( SourceGraphType & graph, util::BiPredicate<typename Source
 {
     using N = SourceGraphType::node_type;
     auto mapper = [&reduceFunction](const N & node){return reduceFunction(std::vector<N>({node}));};
-    __impl::contract(graph,contractBiPredicate,reduceFunction,mapper,graph,workers);
+    __impl::contractInPlace(graph,contractBiPredicate,reduceFunction,mapper,graph,workers);
 }
 
 /**
