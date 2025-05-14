@@ -118,8 +118,8 @@ public:
         std::ranges::for_each(config.initContractionPredicates<P>(distanceFunctionForSpatialReference(ref)),[&contractionPredicate](auto && p){contractionPredicate.add(
             [predicate=std::move(p)](const SourceNodeType & lhs, const SourceNodeType & rhs){return predicate(static_cast<P>(lhs),static_cast<P>(rhs));});
         });
-        /* Contract the graph according to the composite contraction predicate. Done in place, to remove old adjacencies from the database as well to allow the reuse of ids, while remaining consistency*/
-        fishnet::graph::contractInPlace(sourceGraph,contractionPredicate,reduceFunction,resultGraph,config.workers);
+        /* Contract the graph according to the composite contraction predicate. Old adjacencies are removed from the database as well to allow the reuse of ids, while remaining consistency. */
+        fishnet::graph::contract(sourceGraph,contractionPredicate,reduceFunction,resultGraph,config.workers);
         auto outputLayer = fishnet::VectorLayer<ResultGeometryType>::empty(ref);
         auto idFieldExp = outputLayer.addSizeField(Task::FISHNET_ID_FIELD); // add id field to output as well
         if(not idFieldExp)
