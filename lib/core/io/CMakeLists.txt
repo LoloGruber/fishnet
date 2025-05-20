@@ -1,5 +1,6 @@
 add_subdirectory(gdal)
-add_subdirectory(gis)
-add_subdirectory(vector)
+add_subdirectory(gisFiles)
+add_subdirectory(vectorLayer)
 add_library(io INTERFACE)
+target_include_directories(io INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
 target_link_libraries(io INTERFACE io_gis io_gdal_adapter io_vector )

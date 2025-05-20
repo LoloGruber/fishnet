@@ -10,6 +10,7 @@
 #include <fishnet/GeometryObject.hpp>
 #include <fishnet/CollectionConcepts.hpp>
 #include <fishnet/FunctionalConcepts.hpp>
+#include <fishnet/GISFile.hpp>
 #include <fishnet/Shapefile.hpp>
 
 #include <fishnet/GDALInitializer.hpp>
@@ -27,6 +28,22 @@
 #include <gdal/ogr_core.h>
 
 namespace fishnet {
+
+template<geometry::GeometryObject G>
+class VectorLayer;
+
+/**
+ * @brief Interface for reading a VectorLayer from a file
+ * 
+ * @tparam R reader type
+ * @tparam F gis file type
+ * @tparam G geometry type of layer
+ */
+template<typename R, typename F, typename G>
+concept VectorLayerReader = util::UnaryFunction<R,F,VectorLayer<G>> && VectorGISFile<F>;
+
+template<typename W, typename G, typename F>
+concept VectorLayerWriter = util::UnaryFunction<W,VectorLayer<G>,F> && VectorGISFile<F>;
 
 /**
  * @brief Stores the geometries, wrapped in features (which hold the field values / attributes)
@@ -247,6 +264,17 @@ public:
         return VectorLayer(shapefile);
     }
 
+        /**
+     * @brief Factory to construct vector layer by reading shapefile
+     * 
+     * @param shapefile data source
+     * @return VectorLayer<G> instance with features extracted from the shape file
+     */
+    template<VectorGISFile F>
+    static VectorLayer<G> read(const VectorLayerReader<F,VectorLayer<G>> auto & reader) {
+        // TODO
+    }
+
     constexpr size_t size() const noexcept {
         return this->features.size();
     }
@@ -404,6 +432,11 @@ public:
         }else {
              this->writeToDisk(destination);
         }
+    }
+
+    template<VectorGISFile F>
+    constexpr void write(const VectorLayerWriter<VectorLayer<G>,F> auto & writer) const noexcept {
+        writer(*this);
     }
 
     constexpr void overwrite(const Shapefile & destination) const noexcept {
