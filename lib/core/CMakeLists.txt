@@ -2,6 +2,7 @@ add_subdirectory(util)
 add_subdirectory(geometry)
 add_subdirectory(graph)
 add_subdirectory(math)
+add_subdirectory(vector)
 add_subdirectory(io)
 set(FISHNET_TARGETS
         util
@@ -9,6 +10,7 @@ set(FISHNET_TARGETS
         geometry
         io
         math
+        io_vector
 )
 add_library(${FISHNET_NAME} INTERFACE)
 target_include_directories(${FISHNET_NAME} INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
