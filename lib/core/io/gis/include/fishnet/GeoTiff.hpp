@@ -5,14 +5,18 @@ namespace fishnet {
  * @brief GeoTiff handle implementation
  * 
  */
-class GeoTiff:public AbstractGISFile{
+class GeoTiff:public AbstractRasterFile{
 public:
-    GeoTiff(std::filesystem::path path):AbstractGISFile(path){}
+    GeoTiff(std::filesystem::path path):AbstractRasterFile(path){
+        if(not supports(path)){
+            throw std::invalid_argument("Not a GeoTiff file: "+ path.string());
+        }
+    }
 
-    bool remove() const;
+    bool remove() const noexcept override;
 
-    constexpr static GISFileType type()  noexcept{
-        return GISFileType::TIFF;
+    constexpr GISFileType type() const noexcept override {
+        return GISFileType::GEOTIFF;
     }
 
     GeoTiff & move(std::filesystem::path const & path);
@@ -23,4 +27,6 @@ public:
 };
 
 static_assert(GISFile<GeoTiff>);
+static_assert(!VectorGISFile<GeoTiff>);
+static_assert(RasterGISFile<GeoTiff>);
 }

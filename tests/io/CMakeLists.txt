@@ -2,6 +2,7 @@ add_executable(ioTest
         VectorLayerTest.cpp
         OGRAdapterTest.cpp
         ShapefileTest.cpp
+        GeotiffTest.cpp
         FeatureTest.cpp
         FieldDefinitionTestFactory.hpp
         WGS84Test.cpp

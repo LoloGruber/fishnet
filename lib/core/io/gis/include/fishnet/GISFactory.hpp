@@ -18,13 +18,13 @@ public:
      * @return std::expected<Shapefile,std::string>: Containing a shapefile on success or the error as a string
      */
     static std::expected<Shapefile,std::string> asShapefile(const std::filesystem::path& path){
-        auto fileType = getType(path);
+        auto fileType = getGISFileType(path);
         if (not fileType)
             return std::unexpected("Unsupported File Type");
         switch (fileType.value()) {
-            case GISFileType::SHP:
+            case GISFileType::SHAPEFILE:
                 return Shapefile(path);
-            case GISFileType::TIFF:
+            case GISFileType::GEOTIFF:
                 if(std::filesystem::exists(path))
                     return GISConverter::convert(GeoTiff(path));
                 else return Shapefile(path.parent_path() /path.stem().replace_extension(".shp"));
@@ -43,26 +43,16 @@ public:
         auto dir = path;
         if(std::filesystem::is_symlink(path))
             dir = std::filesystem::read_symlink(path);
-        if(not std::filesystem::is_directory(dir) && std::filesystem::is_regular_file(path) && getType(path).has_value()){
+        if(not std::filesystem::is_directory(dir) && std::filesystem::is_regular_file(path) && getGISFileType(path).has_value()){
             gisFiles.emplace_back(path);
             return gisFiles;
         }
         for(auto && file: std::filesystem::directory_iterator(dir)){
-            if(file.is_regular_file() && getType(file).has_value()){
+            if(file.is_regular_file() && getGISFileType(file).has_value()){
                 gisFiles.push_back(std::move(file));
             }
         }
         return gisFiles;
-    }
-
-    static std::optional<GISFileType> getType(const std::filesystem::path & path) {
-        const auto & ext = path.extension().string();
-        if(ext == ".shp" )
-            return GISFileType::SHP;
-        else if (ext  == ".tif" || ext  == ".tiff") {
-            return GISFileType::TIFF;
-        }
-        return std::nullopt;
     }
 };
 }

@@ -11,7 +11,7 @@ namespace fishnet{
  * @brief  Shapefile handle implementation
  * 
  */
-class Shapefile: public AbstractGISFile{
+class Shapefile: public AbstractVectorFile{
 public:
 
     [[nodiscard]] std::vector<std::filesystem::path> getAssociatedFiles()const;
@@ -32,13 +32,13 @@ public:
         return std::ranges::all_of(REQUIRED_FILES,[&path](const auto & ext){return std::filesystem::exists(path.parent_path() / std::filesystem::path(path.stem().string()+ext));});
     }
 
-    Shapefile(const std::filesystem::path & path):AbstractGISFile(path){
+    Shapefile(const std::filesystem::path & path):AbstractVectorFile(path){
         if(not supportsExtension(path))
             throw std::invalid_argument("Not a shapefile!");
     };
 
     [[nodiscard]] bool exists() const noexcept{
-        return AbstractGISFile::exists() && isValid(this->pathToFile);
+        return AbstractVectorFile::exists() && isValid(this->pathToFile);
     }
 
     operator bool() const noexcept {
@@ -51,15 +51,15 @@ public:
 
     [[nodiscard]] Shapefile incrementFileVersion() const noexcept;
 
-    bool remove() const noexcept;
+    bool remove() const noexcept override;
 
-    [[nodiscard]]constexpr static GISFileType type()  noexcept{
-        return GISFileType::SHP;
+    GISFileType type() const noexcept override {
+        return GISFileType::SHAPEFILE;
     }
 
     Shapefile & move(const std::filesystem::path & path);
 
-    Shapefile & move(const std::filesystem::path & rootPath, std::string filename) ;
+    Shapefile & move(const std::filesystem::path & rootPath, std::string filename);
 
     Shapefile copy(const std::filesystem::path & path) const;
 
@@ -69,4 +69,6 @@ public:
 
 };
 static_assert(GISFile<Shapefile>);
+static_assert(VectorGISFile<Shapefile>);
+static_assert(!RasterGISFile<Shapefile>);
 }
