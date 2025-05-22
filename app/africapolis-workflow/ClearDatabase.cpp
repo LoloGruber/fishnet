@@ -14,6 +14,6 @@ int main(int argc, char const *argv[])
     CLI11_PARSE(app, argc, argv);
     MemgraphTaskConfig config{json::parse(std::ifstream(configFilename))};
     MemgraphConnection connection = MemgraphConnection::create(config.params).value_or_throw();
-    connection.executeAndDiscard(CipherQuery::DELETE_ALL().debug());
+    connection.executeAndDiscard(CipherQuery::DELETE_ALL());
     return 0;
 }
