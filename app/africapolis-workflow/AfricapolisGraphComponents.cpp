@@ -125,6 +125,7 @@ auto fileIDToPath(MemgraphConnection const & mgConnection){
 }
 
 auto distributeComponentsWorkload(ComponentMap const& componentMap, MemgraphClient const & mgClient) {
+    constexpr static size_t MAX_COMPONENTS_PER_WORKLOAD = 5000;
     auto [componentToFilesMap,fileToComponentsMap] = componentIDToFileID(mgClient.getMemgraphConnection(),componentMap);
     auto fileToPathMap = fileIDToPath(mgClient.getMemgraphConnection());
     auto multiFileComponents = std::views::filter(componentToFilesMap, [&](auto && pair) {
@@ -149,7 +150,30 @@ auto distributeComponentsWorkload(ComponentMap const& componentMap, MemgraphClie
             .files = filePath,
             .components = componentIdsOfFile
         };
-        workloads.push_back(workload);
+        // Postprocessing to limit the maximum number of each workload
+        if(workload.components.size() > MAX_COMPONENTS_PER_WORKLOAD){
+            size_t splitCount = (workload.components.size() + MAX_COMPONENTS_PER_WORKLOAD - 1) / MAX_COMPONENTS_PER_WORKLOAD;
+            size_t componentsPerSplit = workload.components.size() / splitCount;
+            auto it = workload.components.begin();
+            for (size_t i = 0; i < splitCount; ++i) {
+                size_t currentSplitSize = (i == splitCount - 1) ? workload.components.size() - (componentsPerSplit * i) : componentsPerSplit;
+                std::vector<size_t> splitComponents(it, it + currentSplitSize);
+                it += currentSplitSize;
+
+                workloads.push_back(ClusterWorkload{
+                    .nodes = 0, // Will calculate nodes for this split
+                    .files = workload.files,
+                    .components = splitComponents
+                });
+
+                for (auto && componentRef : splitComponents) {
+                    workloads.back().nodes += componentMap.at(ComponentReference(asInt(componentRef))).size();
+                }
+            }
+            continue; // Skip adding the original workload
+        }else {
+            workloads.push_back(workload);
+        }
     }
     // insert multi file component workloads
     for(const auto & [componentRef, files]: multiFileComponents){
@@ -163,7 +187,6 @@ auto distributeComponentsWorkload(ComponentMap const& componentMap, MemgraphClie
         });
         workloads.push_back(workload);
     }
-    
     return workloads;
 }
 
@@ -186,7 +209,7 @@ int main(int argc, char *argv[]){
     for(auto && workload: workloads){
         nlohmann::json jsonComponent = workload;
         std::ofstream outputFile(componentJsonFilename+std::to_string(workload.components.front())+".json");
-        outputFile << jsonComponent.dump(4) << std::endl;
+        outputFile << jsonComponent.dump() << std::endl;
         outputFile.close();
     }
     return 0;
