@@ -6,6 +6,8 @@ workflow:
         - lib/** 
         - tests/** 
         - CMakeLists.txt    
+only:
+  - main
 stages:
   - build
   - test
