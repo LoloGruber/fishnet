@@ -1,16 +1,139 @@
 #pragma once
-#include <fishnet/VectorLayer.hpp>
+#include <fishnet/IOConcepts.hpp>
 #include <fishnet/Shapefile.hpp>
+
+#include <fishnet/GDALInitializer.hpp>
+#include <fishnet/GeometryTypeWKBAdapter.hpp>
+#include <fishnet/OGRFieldAdapter.hpp>
+#include <fishnet/OGRGeometryAdapter.hpp>
+
+#include <gdal/ogr_spatialref.h>
+#include <gdal/gdal.h>
+#include <gdal/gdal_priv.h>
+#include <gdal/ogr_core.h>
 
 namespace fishnet {
 
-class ShapefileIO {
-public:
-    template<typename G>
-    VectorLayer<G> operator(const Shapefile & shapefile) const {
+template<geometry::GeometryObject G>
+class ShapefileReader {
+private:
+    constexpr static const char * DEFAULT_OPEN_OPTIONS[] = { "ADJUST_TYPE=YES", nullptr };
+    std::vector<std::string> gdalOpenOptions;
+
+    /**
+     * @brief Adaptor function the add fishnet fields to the layer from a OGRFieldDefinition
+     * 
+     * @param fieldDef pointer to the OGRFieldDefinition
+     * @param id field ID for the FieldDefinition
+     */
+    static void addOGRField(VectorLayer<G> & layer,OGRFieldDefn * fieldDef,int id){
+        std::string fieldName = fieldDef->GetNameRef();
+        switch (fieldDef->GetType()){
+        case OFTReal:
+            layer.addDoubleField(fieldName,id);
+            break;
+        case OFTInteger:
+             layer.addIntegerField(fieldName,id);
+            break;
+        case OFTInteger64:
+             layer.addSizeField(fieldName,id);
+            break;
+        case OFTString:
+            layer.addTextField(fieldName,id);
+            break;
+        default:
+            break;
+        }
+    }
+
+    /**
+     * @brief Variant-Visitor to add attributes to features when reading a shapefile
+     * 
+     */
+    struct AddAttributeVisitor{
+        Feature<G> * feature;
+        OGRFeature * ogrFeature;
+
+        template<typename T>
+        bool operator()(FieldDefinition<T> const & fieldDef) {
+            if constexpr(std::same_as<T,int>)
+                return feature->addAttribute(fieldDef,ogrFeature->GetFieldAsInteger(fieldDef.getFieldID()));
+                
+            else if constexpr(std::integral<T>)
+                return feature->addAttribute(fieldDef,T(ogrFeature->GetFieldAsInteger64(fieldDef.getFieldID())));
         
+            else if constexpr(std::floating_point<T>)
+                return feature->addAttribute(fieldDef,T(ogrFeature->GetFieldAsDouble(fieldDef.getFieldID())));
+            
+            else if constexpr(std::convertible_to<T,std::string>)
+                return feature->addAttribute(fieldDef,ogrFeature->GetFieldAsString(fieldDef.getFieldID()));
+        }
+    };
+
+public:
+    ShapefileReader() = default;
+
+    ShapefileReader(const char * openOptions[]) {
+        if(openOptions != nullptr) {
+            this->openOptions = openOptions;
+        }
+    }
+
+    util::Either<VectorLayer<G>,std::string> operator()(const Shapefile & shapefile) const {
+        VectorLayer<G> layer {};
+        GDALInitializer::init();
+        if(not shapefile.exists())
+            return std::unexpected("Shapefile does not exists, could not read from File: \"" + shapefile.getPath().string() + "\"");
+        // Prepare GDAL open options
+        std::vector<const char*> openOptionsVec;
+        for (const auto& opt : gdalOpenOptions) {
+            openOptionsVec.push_back(opt.c_str());
+        }
+        openOptionsVec.push_back(nullptr);
+        const char** openOptions =  gdalOpenOptions.empty() ? DEFAULT_OPEN_OPTIONS : openOptionsVec.data();
+        auto * ds = (GDALDataset *) GDALOpenEx(shapefile.getPath().c_str(), GDAL_OF_VECTOR,nullptr, openOptions,nullptr);
+        OGRLayer * ogrLayer = ds->GetLayer(0);
+        OGRFeatureDefn * layerDef = ogrLayer->GetLayerDefn();
+        for(int i = 0; i < layerDef->GetFieldCount();i++) {
+            addOGRField(layer, layerDef->GetFieldDefn(i),i);
+        }
+        for(const auto & ogrFeature: ogrLayer){
+            auto geo = ogrFeature->GetGeometryRef();
+            if constexpr(G::type == fishnet::geometry::GeometryType::MULTIPOLYGON){
+                if(geo && wkbFlatten(geo->getGeometryType()) == GeometryTypeWKBAdapter::toWKB(G::polygon_type::type)) {
+                    auto converted = OGRGeometryAdapter::fromOGR<G::polygon_type::type>(*geo);
+                    if (not converted) 
+                        continue;
+                    Feature<G> f {{converted.value()}};
+                    for(const auto & [_,fieldDefinition]: this->fields){
+                        std::visit(AddAttributeVisitor(&f,ogrFeature.get()),fieldDefinition);
+                    }
+                    layer.addFeature(std::move(f));
+                }                
+            }
+            if(geo && wkbFlatten(geo->getGeometryType()) == GeometryTypeWKBAdapter::toWKB(G::type)) {
+                auto converted = OGRGeometryAdapter::fromOGR<G::type>(*geo);
+                if (not converted) 
+                    continue;
+                Feature<G> f {converted.value()};
+                for(const auto & [_,fieldDefinition]: this->fields){
+                    std::visit(AddAttributeVisitor(&f,ogrFeature.get()),fieldDefinition);
+                }
+                layer.addFeature(std::move(f));
+            }
+        }
+        this->spatialRef = *ogrLayer->GetSpatialRef()->Clone();
+        GDALClose(ds);
+    }
+
+    Shapefile operator()(const VectorLayer<G> & layer) const {
+        Shapefile destination {layer.getSpatialReference()};
+        layer.writeToDisk(destination);
+        return destination;
     }
 
 };
 
+static_assert(VectorLayerReader<ShapefileReader<geometry::Polygon<double>>, Shapefile, geometry::Polygon<double>>, "ShapefileIO must satisfy VectorLayerReader concept");
+//static_assert(VectorLayerWriter<ShapefileIO<geometry::Polygon<double>>, geometry::Polygon<double>, Shapefile>, "ShapefileIO must satisfy VectorLayerWriter concept");
 } // namespace fishnet

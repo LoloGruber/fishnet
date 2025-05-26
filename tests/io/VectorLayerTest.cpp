@@ -5,6 +5,7 @@
 #include "Testutil.h"
 #include <fishnet/PathHelper.h>
 #include <fishnet/TemporaryDirectiory.h>
+#include <fishnet/VectorIO.hpp>
 
 using namespace testutil;
 using namespace fishnet;
@@ -25,6 +26,10 @@ protected:
     std::vector<Vec2DReal> points {p1,p2};
 };
 
+TEST_F(VectorLayerTest, read){
+    EXPECT_TRUE(std::filesystem::exists(pathToSample.getPath()));
+    auto layer = VectorIO::read<geometry::Polygon<double>>(pathToSample);
+}
 
 TEST_F(VectorLayerTest, init){
     EXPECT_TRUE(std::filesystem::exists(pathToSample.getPath()));
