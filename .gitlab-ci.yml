@@ -1,17 +1,14 @@
 image: gcc:13.2
-
 workflow:
   rules:
     - changes:
         - app/** 
         - lib/** 
         - tests/** 
-        - CMakeLists.txt
-        
+        - CMakeLists.txt    
 stages:
   - build
   - test
-
 build:
   stage: build
   before_script:
@@ -25,7 +22,6 @@ build:
     paths:
       - build/ # Preserving the build artifacts for the test stage
     expire_in: 1 hour
-
 test:
   stage: test
   dependencies:
