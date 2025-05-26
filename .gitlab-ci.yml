@@ -6,8 +6,7 @@ workflow:
         - lib/** 
         - tests/** 
         - CMakeLists.txt    
-only:
-  - main
+    - if: $CI_COMMIT_BRANCH == "main"
 stages:
   - build
   - test
