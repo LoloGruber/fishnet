@@ -1,4 +1,5 @@
 #include <future>
+#include <fishnet/GDALInitializer.hpp>
 #include <fishnet/VectorLayer.hpp>
 #include <fishnet/GeometryObject.hpp>
 #include <fishnet/Task.hpp>

@@ -1,3 +1,4 @@
+#include <fishnet/Polygon.hpp>
 #include <fishnet/VectorLayer.hpp>
 #include <fishnet/PathHelper.h>
 #include <fishnet/GISFactory.hpp>
