@@ -27,8 +27,10 @@ protected:
 };
 
 TEST_F(VectorLayerTest, read){
-    EXPECT_TRUE(std::filesystem::exists(pathToSample.getPath()));
+    EXPECT_TRUE(std::filesystem::exists(pathToSample.getPath())) << "Path to testcase sample does not exist: " << pathToSample.getPath();
     auto layer = VectorIO::read<geometry::Polygon<double>>(pathToSample);
+    EXPECT_TYPE<VectorLayer<geometry::Polygon<double>>>(layer);
+    EXPECT_FALSE(layer.isEmpty()) << "Layer should not be empty after successful read";
 }
 
 TEST_F(VectorLayerTest, init){
@@ -179,6 +181,7 @@ TEST_F(VectorLayerTest, write) {
     util::AutomaticTemporaryDirectory tmp {};
     Shapefile outputFile = {tmp / std::filesystem::path(pathToSample.getPath().stem().string()+".shp")};
     EXPECT_FALSE(std::filesystem::exists(outputFile.getPath()));
+    EXPECT_NO_FATAL_FAILURE(outputFile = VectorIO::write(sampleLayer, outputFile));
     sampleLayer.write(outputFile);
     EXPECT_TRUE(std::filesystem::exists(outputFile.getPath()));
     EXPECT_UNSORTED_RANGE_EQ(sampleLayer.getGeometries(),VectorLayer<geometry::Polygon<double>>::read(outputFile).getGeometries());

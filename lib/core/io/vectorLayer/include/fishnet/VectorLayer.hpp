@@ -48,7 +48,7 @@ private:
 
     using error_type = std::string; // error type for std::expected
 
-    constexpr static const char * openOptions[] = { "ADJUST_TYPE=YES", nullptr };
+    // constexpr static const char * openOptions[] = { "ADJUST_TYPE=YES", nullptr };
 
     /**
      * @brief Construct a new Vector Layer object
@@ -361,6 +361,10 @@ public:
 
     constexpr std::optional<FieldDefinition<std::string>> getTestField(const std::string  & fieldName) const noexcept {
         return getField<std::string>(fieldName);
+    }
+
+    constexpr const std::unordered_map<std::string,FieldDefinitionVariant> & getFieldsMap() const noexcept {
+        return this->fields;
     }
 
     constexpr void write(const Shapefile & destination) const noexcept {
