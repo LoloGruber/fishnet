@@ -16,5 +16,5 @@ template<typename R, typename F, typename G>
 concept VectorLayerReader = util::UnaryFunction<R,F,util::Either<VectorLayer<G>,std::string>> && VectorGISFile<F>;
 
 template<typename W, typename G, typename F>
-concept VectorLayerWriter = util::UnaryFunction<W,VectorLayer<G>,F> && VectorGISFile<F>;   
+concept VectorLayerWriter = util::BiFunction<W,VectorLayer<G>,F,util::Either<F,std::string>> && VectorGISFile<F>;   
 } // namespace fishnet
