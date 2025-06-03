@@ -17,7 +17,7 @@ namespace fishnet {
 template<geometry::GeometryObject G>
 class ShapefileReader {
 private:
-    constexpr static const char * DEFAULT_OPEN_OPTIONS[] = { "ADJUST_TYPE=YES", nullptr };
+    constexpr static std::array<const char *, 1> DEFAULT_OPEN_OPTIONS = { "ADJUST_TYPE=YES"};
     std::vector<std::string> gdalOpenOptions;
 
     /**
@@ -71,11 +71,15 @@ private:
     };
 
 public:
-    ShapefileReader() = default;
+    ShapefileReader() {
+        for(const auto & opt : DEFAULT_OPEN_OPTIONS) {
+            this->gdalOpenOptions.push_back(opt);
+        }
+    }
 
-    ShapefileReader(const char * openOptions[]) {
-        if(openOptions != nullptr) {
-            this->openOptions = openOptions;
+    ShapefileReader(fishnet::util::forward_range_of<std::string> auto && openOptions) {
+        for(auto && opt : openOptions) {
+            this->gdalOpenOptions.push_back(std::move(opt));
         }
     }
 
@@ -90,7 +94,7 @@ public:
             openOptionsVec.push_back(opt.c_str());
         }
         openOptionsVec.push_back(nullptr);
-        const char** openOptions =  gdalOpenOptions.empty() ? DEFAULT_OPEN_OPTIONS : openOptionsVec.data();
+        const char** openOptions = openOptionsVec.data();
         auto * ds = (GDALDataset *) GDALOpenEx(shapefile.getPath().c_str(), GDAL_OF_VECTOR,nullptr, openOptions,nullptr);
         OGRLayer * ogrLayer = ds->GetLayer(0);
         OGRFeatureDefn * layerDef = ogrLayer->GetLayerDefn();
@@ -105,7 +109,7 @@ public:
                     if (not converted) 
                         continue;
                     Feature<G> f {{converted.value()}};
-                    for(const auto & [_,fieldDefinition]: this->fields){
+                    for(const auto & [_,fieldDefinition]: layer.getFieldsMap()){
                         std::visit(AddAttributeVisitor(&f,ogrFeature.get()),fieldDefinition);
                     }
                     layer.addFeature(std::move(f));
@@ -116,24 +120,84 @@ public:
                 if (not converted) 
                     continue;
                 Feature<G> f {converted.value()};
-                for(const auto & [_,fieldDefinition]: this->fields){
+                for(const auto & [_,fieldDefinition]: layer.getFieldsMap()){
                     std::visit(AddAttributeVisitor(&f,ogrFeature.get()),fieldDefinition);
                 }
                 layer.addFeature(std::move(f));
             }
         }
-        this->spatialRef = *ogrLayer->GetSpatialRef()->Clone();
+        layer.setSpatialReference(*ogrLayer->GetSpatialRef()->Clone());
         GDALClose(ds);
+        return layer;
     }
-
-    Shapefile operator()(const VectorLayer<G> & layer) const {
-        Shapefile destination {layer.getSpatialReference()};
-        layer.writeToDisk(destination);
-        return destination;
-    }
-
 };
 
-static_assert(VectorLayerReader<ShapefileReader<geometry::Polygon<double>>, Shapefile, geometry::Polygon<double>>, "ShapefileIO must satisfy VectorLayerReader concept");
-//static_assert(VectorLayerWriter<ShapefileIO<geometry::Polygon<double>>, geometry::Polygon<double>, Shapefile>, "ShapefileIO must satisfy VectorLayerWriter concept");
+template<geometry::GeometryObject G>
+class ShapefileWriter { 
+private:
+    bool overwrite = false;
+    std::vector<std::string> options;
+public:
+    ShapefileWriter() = default;
+
+    ShapefileWriter(bool overwrite) : overwrite(overwrite) {}
+
+    ShapefileWriter(bool overwrite, fishnet::util::forward_range_of<std::string> auto && options) : overwrite(overwrite) {
+        for(auto && opt : options) {
+            this->options.push_back(std::move(opt));
+        }
+    }
+    util::Either<Shapefile,std::string> operator()(const VectorLayer<G> & layer, const Shapefile & destination) const {
+        GDALInitializer::init();
+        GDALDriver * driver = GetGDALDriverManager()->GetDriverByName("ESRI Shapefile");
+        if (driver == nullptr) {
+            return std::unexpected("Could not find GDAL driver for ESRI Shapefile");
+        }
+        Shapefile output = destination;
+        if(destination.exists() && !overwrite) {
+            output = destination.incrementFileVersion();
+        }
+        output.remove(); // delete already existing files, if present
+        GDALDataset * outputDataset = driver->Create(output.getPath().c_str(),0,0,0,GDT_Unknown,0);
+        const char * const options[] = {"SPATIAL_INDEX=YES",nullptr};
+        OGRLayer * outputLayer = outputDataset->CreateLayer(output.getPath().c_str(),this->getSpatialReference().Clone(),GeometryTypeWKBAdapter::toWKB(G::type),const_cast<char **>(options));
+        for(const auto & [fieldName,fieldDefinition] :  layer.getFieldsMap()) {
+            OGRFieldType fieldType;
+            // get OGRFieldType from FieldDefinition<T> type -> T
+            std::visit([&fieldType](auto && fieldVariant){
+                using T = typename  std::decay_t<decltype(fieldVariant)>::value_type;
+                fieldType = OGRFieldAdapter::fromTypeIndex(typeid(T));
+            },fieldDefinition);
+            auto fieldDefn = OGRFieldDefn(fieldName.c_str(),fieldType);
+            fieldDefn.SetPrecision(20);
+            outputLayer->CreateField(&fieldDefn); // add OGRFieldDefinition to output layer
+        }
+        for(const auto & f : this->features){
+            auto * feature = new OGRFeature(outputLayer->GetLayerDefn());
+            feature->SetGeometry(OGRGeometryAdapter::toOGR(f.getGeometry()).get());
+
+            for(const auto & [fieldName,fieldDefinition]: this->fields){
+                // visitor to set attributes for OGRFeature
+                std::visit([&fieldName,&f,feature]( auto && var){
+                    auto optionalAttribute = f.getAttribute(var);
+                    if(optionalAttribute)
+                        OGRFieldAdapter::setFieldValue(feature, fieldName, optionalAttribute.value());
+                },fieldDefinition);
+
+            }
+            OGRErr success = outputLayer->CreateFeature(feature);
+            if(success != 0){
+                std::cerr << "Could not write Geometry: "+f.getGeometry().toString() << std::endl;
+            }
+        }
+        outputLayer->SyncToDisk();
+        GDALClose(outputDataset);
+        // Shapefile destination {layer.getSpatialReference()};
+        // layer.writeToDisk(destination);
+        return output;
+    }
+};
+
+static_assert(VectorLayerReader<ShapefileReader<geometry::Polygon<double>>, Shapefile, geometry::Polygon<double>>, "ShapefileReader must satisfy VectorLayerReader concept");
+static_assert(VectorLayerWriter<ShapefileWriter<geometry::Polygon<double>>, geometry::Polygon<double>, Shapefile>, "ShapefileWriter must satisfy VectorLayerWriter concept");
 } // namespace fishnet
