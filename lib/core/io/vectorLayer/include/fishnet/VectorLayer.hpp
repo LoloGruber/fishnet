@@ -6,26 +6,15 @@
 #include <expected>
 #include <iostream>
 
-
 #include <fishnet/GeometryObject.hpp>
 #include <fishnet/CollectionConcepts.hpp>
 #include <fishnet/FunctionalConcepts.hpp>
-#include <fishnet/GISFile.hpp>
-#include <fishnet/Shapefile.hpp>
-
-// #include <fishnet/GDALInitializer.hpp>
-// #include <fishnet/GeometryTypeWKBAdapter.hpp>
-// #include <fishnet/OGRFieldAdapter.hpp>
-// #include <fishnet/OGRGeometryAdapter.hpp>
 
 #include "FieldType.hpp"
 #include "Feature.hpp"
 
-
 #include <gdal/ogr_spatialref.h>
-// #include <gdal/gdal.h>
-// #include <gdal/gdal_priv.h>
-// #include <gdal/ogr_core.h>
+
 
 namespace fishnet {
 /**
@@ -48,104 +37,7 @@ private:
 
     using error_type = std::string; // error type for std::expected
 
-    // constexpr static const char * openOptions[] = { "ADJUST_TYPE=YES", nullptr };
 
-    /**
-     * @brief Construct a new Vector Layer object
-     * 
-     * @param shapefile keeps track of file location of the shapefile, features will be read from said file
-     */
-    explicit VectorLayer(const Shapefile & shapefile){
-        // GDALInitializer::init();
-        // if(not shapefile.exists())
-        //     return;
-        // auto * ds = (GDALDataset *) GDALOpenEx(shapefile.getPath().c_str(), GDAL_OF_VECTOR,nullptr, openOptions,nullptr);
-        // OGRLayer * layer = ds->GetLayer(0);
-        // OGRFeatureDefn * layerDef = layer->GetLayerDefn();
-        // for(int i = 0; i < layerDef->GetFieldCount();i++) {
-        //     addOGRField(layerDef->GetFieldDefn(i),i);
-        // }
-        // for(const auto & ogrFeature: layer){
-        //     auto geo = ogrFeature->GetGeometryRef();
-        //     if constexpr(G::type == fishnet::geometry::GeometryType::MULTIPOLYGON){
-        //         if(geo && wkbFlatten(geo->getGeometryType()) == GeometryTypeWKBAdapter::toWKB(G::polygon_type::type)) {
-        //             auto converted = OGRGeometryAdapter::fromOGR<G::polygon_type::type>(*geo);
-        //             if (not converted) 
-        //                 continue;
-        //             Feature<G> f {{converted.value()}};
-        //             for(const auto & [_,fieldDefinition]: this->fields){
-        //                 std::visit(AddAttributeVisitor(&f,ogrFeature.get()),fieldDefinition);
-        //             }
-        //             addFeature(std::move(f));
-        //         }                
-        //     }
-        //     if(geo && wkbFlatten(geo->getGeometryType()) == GeometryTypeWKBAdapter::toWKB(G::type)) {
-        //         auto converted = OGRGeometryAdapter::fromOGR<G::type>(*geo);
-        //         if (not converted) 
-        //             continue;
-        //         Feature<G> f {converted.value()};
-        //         for(const auto & [_,fieldDefinition]: this->fields){
-        //             std::visit(AddAttributeVisitor(&f,ogrFeature.get()),fieldDefinition);
-        //         }
-        //         addFeature(std::move(f));
-        //     }
-        // }
-        // this->spatialRef = *layer->GetSpatialRef()->Clone();
-        // GDALClose(ds);
-    }
-
-    /**
-     * @brief Construct a new empty Vector Layer object
-     * 
-     * @param spatialReference spatial reference which is required to write a GIS-Shapefile to the disk
-     */
-    explicit VectorLayer(OGRSpatialReference spatialReference):spatialRef(std::move(spatialReference)){
-        // GDALInitializer::init();
-    }
-
-    /**
-     * @brief Private member function to write the features to a file
-     * 
-     * @param destination location of the output
-     */
-    constexpr void writeToDisk(const Shapefile & destination) const noexcept{
-        // GDALDriver * driver = GetGDALDriverManager()->GetDriverByName("ESRI Shapefile");
-        // destination.remove(); // delete already existing files, if present
-        // GDALDataset * outputDataset = driver->Create(destination.getPath().c_str(),0,0,0,GDT_Unknown,0);
-        // const char * const options[] = {"SPATIAL_INDEX=YES",nullptr};
-        // OGRLayer * outputLayer = outputDataset->CreateLayer(destination.getPath().c_str(),this->getSpatialReference().Clone(),GeometryTypeWKBAdapter::toWKB(G::type),const_cast<char **>(options));
-        // for(const auto & [fieldName,fieldDefinition] :  fields) {
-        //     OGRFieldType fieldType;
-        //     // get OGRFieldType from FieldDefinition<T> type -> T
-        //     std::visit([&fieldType](auto && fieldVariant){
-        //         using T = typename  std::decay_t<decltype(fieldVariant)>::value_type;
-        //         fieldType = OGRFieldAdapter::fromTypeIndex(typeid(T));
-        //     },fieldDefinition);
-        //     auto fieldDefn = OGRFieldDefn(fieldName.c_str(),fieldType);
-        //     fieldDefn.SetPrecision(20);
-        //     outputLayer->CreateField(&fieldDefn); // add OGRFieldDefinition to output layer
-        // }
-        // for(const auto & f : this->features){
-        //     auto * feature = new OGRFeature(outputLayer->GetLayerDefn());
-        //     feature->SetGeometry(OGRGeometryAdapter::toOGR(f.getGeometry()).get());
-
-        //     for(const auto & [fieldName,fieldDefinition]: this->fields){
-        //         // visitor to set attributes for OGRFeature
-        //         std::visit([&fieldName,&f,feature]( auto && var){
-        //             auto optionalAttribute = f.getAttribute(var);
-        //             if(optionalAttribute)
-        //                 OGRFieldAdapter::setFieldValue(feature, fieldName, optionalAttribute.value());
-        //         },fieldDefinition);
-
-        //     }
-        //     OGRErr success = outputLayer->CreateFeature(feature);
-        //     if(success != 0){
-        //         std::cerr << "Could not write Geometry: "+f.getGeometry().toString() << std::endl;
-        //     }
-        // }
-        // outputLayer->SyncToDisk();
-        // GDALClose(outputDataset);
-    }
 
     /**
      * @brief Helper function to remove certain features. 
@@ -168,14 +60,11 @@ public:
     VectorLayer() = default;
 
     /**
-     * @brief Factory to construct empty vector layer 
+     * @brief Construct a new empty Vector Layer object
      * 
-     * @param spatialReference reference system for the geometries
-     * @return empty VectorLayer<G> instance
+     * @param spatialReference spatial reference which is required to write a GIS-Shapefile to the disk
      */
-    static VectorLayer<G> empty(const OGRSpatialReference & spatialReference){
-        return VectorLayer(spatialReference);
-    }
+    explicit VectorLayer(OGRSpatialReference spatialReference):spatialRef(std::move(spatialReference)){}
 
     /**
      * @brief Factory to construct empty vector layer with initalized fields
@@ -189,18 +78,6 @@ public:
         auto layer = empty(source.getSpatialReference());
         source.copyFields(layer);
         return layer;
-    }
-
-    /**
-     * @brief Factory to construct vector layer by reading shapefile
-     * 
-     * @param shapefile data source
-     * @return VectorLayer<G> instance with features extracted from the shape file
-     */
-    static VectorLayer<G> read(const Shapefile & shapefile) {
-        if(not shapefile.exists())
-            throw std::invalid_argument("Shapefile does not exists, could not read from File: \""+shapefile.getPath().string()+"\"");
-        return VectorLayer(shapefile);
     }
 
     constexpr size_t size() const noexcept {
@@ -365,18 +242,6 @@ public:
 
     constexpr const std::unordered_map<std::string,FieldDefinitionVariant> & getFieldsMap() const noexcept {
         return this->fields;
-    }
-
-    constexpr void write(const Shapefile & destination) const noexcept {
-        if(destination.exists()){
-            this->writeToDisk(destination.incrementFileVersion());
-        }else {
-             this->writeToDisk(destination);
-        }
-    }
-
-    constexpr void overwrite(const Shapefile & destination) const noexcept {
-        this->writeToDisk(destination);
     }
 };
 }
