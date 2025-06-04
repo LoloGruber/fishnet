@@ -8,14 +8,26 @@ namespace fishnet::util{
 template<typename F, typename T, typename R>
 concept UnaryFunction = std::convertible_to<F,std::function<R(const T &)>>;
 
+template<typename T,typename R>
+using UnaryFunction_t = std::function<R(const T &)>;
+
 template<typename F, typename T, typename U,typename R>
 concept BiFunction = std::convertible_to<F,std::function<R(const T &, const U &)>>;
+
+template<typename T, typename U, typename R>
+using BiFunction_t = std::function<R(const T &, const U &)>;
 
 template<typename F, typename T>
 concept UnaryOperator = UnaryFunction<F,T,T>;
 
+template<typename T>
+using UnaryOperator_t = std::function<T(const T &)>;
+
 template<typename F, typename T>
 concept BiOperator = BiFunction<F,T,T,T>;
+
+template<typename T>
+using BiOperator_t = std::function<T(const T &, const T &)>;
 
 template<typename T>
 using BiOperator_t = std::function<T(const T &, const T &)>;

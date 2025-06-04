@@ -1,5 +1,6 @@
 #include "MergeShapefilesTask.h"
 #include <CLI/CLI.hpp>
+#include <fishnet/Polygon.hpp>
 #include <fishnet/MultiPolygon.hpp>
 
 int main(int argc, char * argv[]){

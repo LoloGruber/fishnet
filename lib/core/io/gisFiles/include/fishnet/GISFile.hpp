@@ -49,17 +49,62 @@ public:
         return this->exists();
     }
 
+    /**
+     * @brief Tests if the GISFile exists on the filesystem.
+     * 
+     * @return true 
+     * @return false 
+     */
     [[nodiscard]] bool exists() const noexcept {
         return std::filesystem::exists(this->pathToFile);
     }
 
+    /**
+     * @brief Checks if the supplied path is supported by the concrete GISFile implementation.
+     * 
+     * @param path 
+     * @return true 
+     * @return false 
+     */
     [[nodiscard]] bool supports(const std::filesystem::path & path) const noexcept{
         auto type = getGISFileType(path);
         return type && type.value() == this->type();
     }
 
+    /**
+     * @brief Modifies the path of the GISFile by changing the filename (extension is preserved).
+     * 
+     * @param filename new file stem of the GISFile
+     */
+    void changeFilename(const std::string & filename) noexcept {
+        if(not filename.ends_with(this->pathToFile.extension().string())) {
+            this->pathToFile = this->pathToFile.parent_path() / std::filesystem::path(filename + this->pathToFile.extension().string());
+        }
+        this->pathToFile = this->pathToFile.parent_path() / std::filesystem::path(filename);
+    }
+
+    /**
+     * @brief Appends a suffix to the filename / stem of the GISFile (extension is preserved).
+     * 
+     * @param suffix suffix to append to the filename / stem
+     */
+    void appendToFilename(const std::string & suffix) noexcept {
+        changeFilename(this->pathToFile.stem().string() + suffix);
+    }
+
+    /**
+     * @brief Returns the type of GISFile
+     * 
+     * @return constexpr GISFileType 
+     */
     constexpr virtual GISFileType type() const noexcept = 0;
 
+    /**
+     * @brief Removes the file from the filesystem
+     * 
+     * @return true success
+     * @return false error
+     */
     virtual bool remove() const noexcept = 0;
 
     virtual ~AbstractGISFile() = default;

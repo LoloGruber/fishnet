@@ -5,6 +5,7 @@
 #include "Testutil.h"
 #include <fishnet/PathHelper.h>
 #include <fishnet/TemporaryDirectiory.h>
+#include <fishnet/VectorIO.hpp>
 
 using namespace testutil;
 using namespace fishnet;
@@ -13,31 +14,37 @@ using namespace fishnet::geometry;
 class VectorLayerTest: public ::testing::Test {
 protected:
     void SetUp() override {
-        sampleLayer = VectorLayer<geometry::Polygon<double>>::read(pathToSample);
-        pointLayer = VectorLayer<geometry::Vec2DReal>::empty(sampleLayer.getSpatialReference());
+        sampleLayer = VectorIO::read<geometry::Polygon<double>>(pathToSample);
+        pointLayer = VectorLayer<geometry::Vec2DReal>(sampleLayer.getSpatialReference());
         pointLayer.addAllGeometry(points);
     }
     Shapefile pathToSample {util::PathHelper::projectDirectory() / std::filesystem::path("data/testing/Punjab_Small/Punjab_Small.shp")};
-    VectorLayer<geometry::Polygon<double>> sampleLayer = VectorLayer<geometry::Polygon<double>>::read(pathToSample);
-    VectorLayer<geometry::Vec2DReal> pointLayer = VectorLayer<geometry::Vec2DReal>::empty(sampleLayer.getSpatialReference());
+    VectorLayer<geometry::Polygon<double>> sampleLayer = VectorIO::read<geometry::Polygon<double>>(pathToSample);
+    VectorLayer<geometry::Vec2DReal> pointLayer = VectorLayer<geometry::Vec2DReal>(sampleLayer.getSpatialReference());
     Vec2DReal p1 = {0.5,1};
     Vec2DReal p2 = {3,-1};
     std::vector<Vec2DReal> points {p1,p2};
 };
 
+TEST_F(VectorLayerTest, read){
+    EXPECT_TRUE(std::filesystem::exists(pathToSample.getPath())) << "Path to testcase sample does not exist: " << pathToSample.getPath();
+    auto layer = VectorIO::read<geometry::Polygon<double>>(pathToSample);
+    EXPECT_TYPE<VectorLayer<geometry::Polygon<double>>>(layer);
+    EXPECT_FALSE(layer.isEmpty()) << "Layer should not be empty after successful read";
+}
 
 TEST_F(VectorLayerTest, init){
     EXPECT_TRUE(std::filesystem::exists(pathToSample.getPath()));
-    auto layer = VectorLayer<fishnet::geometry::Polygon<double>>::read(pathToSample);
+    auto layer = VectorIO::read<fishnet::geometry::Polygon<double>>(pathToSample);
 
     Shapefile notExistsFile {util::PathHelper::projectDirectory() / std::filesystem::path("tests/io/does_not_exists.shp")};
-    EXPECT_ANY_THROW(VectorLayer<fishnet::geometry::Polygon<double>>::read(notExistsFile));
-    EXPECT_NO_THROW(VectorLayer<geometry::Polygon<double>>::empty(layer.getSpatialReference()));
+    EXPECT_ANY_THROW(VectorIO::read<fishnet::geometry::Polygon<double>>(notExistsFile));
+    EXPECT_NO_THROW(VectorLayer<geometry::Polygon<double>>(layer.getSpatialReference()));
     EXPECT_FALSE(notExistsFile.exists());
-    auto empty = VectorLayer<fishnet::geometry::Polygon<double>>::empty(layer.getSpatialReference());
+    auto empty = VectorLayer<fishnet::geometry::Polygon<double>>(layer.getSpatialReference());
     EXPECT_EMPTY(empty.getGeometries());
     EXPECT_EMPTY(empty.getFeatures());
-    EXPECT_NO_THROW(VectorLayer<geometry::Polygon<double>>::empty(layer.getSpatialReference()));
+    EXPECT_NO_THROW(VectorLayer<geometry::Polygon<double>>(layer.getSpatialReference()));
 }
 
 TEST_F(VectorLayerTest,getGeometries) {
@@ -61,7 +68,7 @@ TEST_F(VectorLayerTest, addGeometry){
 }
 
 TEST_F(VectorLayerTest, addAllGeometry) {
-    auto layer = VectorLayer<geometry::Vec2DStd>::empty(pointLayer.getSpatialReference());
+    auto layer = VectorIO::empty<geometry::Vec2DStd>(pointLayer.getSpatialReference());
     EXPECT_EMPTY(layer.getGeometries());
     layer.addAllGeometry(points);
     EXPECT_SIZE(layer.getGeometries(),2);
@@ -86,7 +93,7 @@ TEST_F(VectorLayerTest, removeGeometry) {
 TEST_F(VectorLayerTest, getSpatialReference) {
     const char * wktSpatRef = "GEODCRS[\"WGS 84\",DATUM[\"World Geodetic System 1984\",ELLIPSOID[\"WGS 84\", 6378137, 298.257223563, LENGTHUNIT[\"metre\", 1]]],CS[ellipsoidal, 2],AXIS[\"Latitude (lat)\", north, ORDER[1]],AXIS[\"Longitude (lon)\", east, ORDER[2]],ANGLEUNIT[\"degree\", 0.0174532925199433]]";
     OGRSpatialReference spatRef = OGRSpatialReference(wktSpatRef);
-    auto points = VectorLayer<Vec2DStd>::empty(spatRef);
+    auto points = VectorIO::empty<Vec2DStd>(spatRef);
     EXPECT_EQ(spatRef.GetName(),points.getSpatialReference().GetName());
 }
 
@@ -174,23 +181,25 @@ TEST_F(VectorLayerTest, write) {
     util::AutomaticTemporaryDirectory tmp {};
     Shapefile outputFile = {tmp / std::filesystem::path(pathToSample.getPath().stem().string()+".shp")};
     EXPECT_FALSE(std::filesystem::exists(outputFile.getPath()));
-    sampleLayer.write(outputFile);
+    EXPECT_NO_FATAL_FAILURE(outputFile = VectorIO::write(sampleLayer, outputFile));
     EXPECT_TRUE(std::filesystem::exists(outputFile.getPath()));
-    EXPECT_UNSORTED_RANGE_EQ(sampleLayer.getGeometries(),VectorLayer<geometry::Polygon<double>>::read(outputFile).getGeometries());
-    sampleLayer.write(outputFile);
+    EXPECT_UNSORTED_RANGE_EQ(sampleLayer.getGeometries(),VectorIO::read<geometry::Polygon<double>>(outputFile).getGeometries());
+    Shapefile outputFileIncremented = fishnet::__impl::IncrementFilenameMapper<Shapefile>()(outputFile);
+    EXPECT_NO_FATAL_FAILURE(outputFile = VectorIO::write(sampleLayer, outputFileIncremented));
     EXPECT_TRUE(std::filesystem::exists(outputFile.getPath()));
-    EXPECT_TRUE(std::filesystem::exists(outputFile.incrementFileVersion().getPath()));
+    EXPECT_TRUE(std::filesystem::exists(outputFileIncremented.getPath()));
 }
 
 TEST_F(VectorLayerTest, overwrite) {
     util::AutomaticTemporaryDirectory tmp {}; 
     Shapefile outputFile = {tmp / std::filesystem::path(pathToSample.getPath().stem().string()+".shp")};  
-    EXPECT_FALSE(std::filesystem::exists(outputFile.getPath()));
-    sampleLayer.overwrite(outputFile);
+    EXPECT_FALSE(outputFile.exists());
+    EXPECT_NO_FATAL_FAILURE(outputFile = VectorIO::overwrite(sampleLayer, outputFile));
     EXPECT_TRUE(std::filesystem::exists(outputFile.getPath()));
-    sampleLayer.overwrite(outputFile);
-    EXPECT_TRUE(std::filesystem::exists(outputFile.getPath()));
-    EXPECT_FALSE(std::filesystem::exists(outputFile.incrementFileVersion().getPath())); 
+    EXPECT_NO_FATAL_FAILURE(outputFile = VectorIO::overwrite(sampleLayer, outputFile));
+    EXPECT_TRUE(outputFile.exists());
+    Shapefile outputFileIncremented = fishnet::__impl::IncrementFilenameMapper<Shapefile>()(outputFile);
+    EXPECT_FALSE(outputFileIncremented.exists()); 
 }
 
 

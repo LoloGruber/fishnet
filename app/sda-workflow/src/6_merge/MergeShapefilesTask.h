@@ -1,5 +1,6 @@
 #include <future>
-#include <fishnet/VectorLayer.hpp>
+#include <fishnet/GDALInitializer.hpp>
+#include <fishnet/VectorIO.hpp>
 #include <fishnet/GeometryObject.hpp>
 #include <fishnet/Task.hpp>
 #include "SettlementPolygon.hpp"
@@ -19,7 +20,7 @@ public:
     }
 
     static fishnet::VectorLayer<ShapeType> readSingleInput(const fishnet::Shapefile & input) {
-        return fishnet::VectorLayer<ShapeType>::read(input);
+        return fishnet::VectorIO::read<ShapeType>(input);
     }
 
     void run() override {
@@ -29,7 +30,7 @@ public:
             futures.push_back(std::async(std::launch::async,[this,i](){return readSingleInput(inputs[i]);}));
         }
         auto firstLayer = readSingleInput(inputs.front());
-        auto outputLayer = fishnet::VectorLayer<ShapeType>::empty(firstLayer);
+        auto outputLayer = fishnet::VectorIO::emptyCopy<ShapeType>(firstLayer);
         for(auto && feature: firstLayer.getFeatures()){
             outputLayer.addFeature(std::move(feature));
         }
@@ -40,6 +41,6 @@ public:
                 outputLayer.addFeature(std::move(feature));
             }
         }
-        outputLayer.overwrite(output);
+        fishnet::VectorIO::overwrite(outputLayer, output);
     }
 };

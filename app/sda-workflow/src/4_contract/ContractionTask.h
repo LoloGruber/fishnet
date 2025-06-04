@@ -1,7 +1,7 @@
 #pragma once
 #include <fishnet/ShapeGeometry.hpp>
 #include <fishnet/Shapefile.hpp>
-#include <fishnet/VectorLayer.hpp>
+#include <fishnet/VectorIO.hpp>
 #include <fishnet/GraphFactory.hpp>
 #include <fishnet/Contraction.hpp>
 #include <fishnet/CompositePredicate.hpp>
@@ -67,7 +67,7 @@ public:
         std::ranges::for_each(this->inputs,[&inputStrings](auto const & file){inputStrings.push_back(file.getPath().filename().string());});
         this->desc["inputs"]=inputStrings;
         for(const auto & shp : inputs) {
-            auto layer = fishnet::VectorLayer<P>::read(shp);
+            auto layer = fishnet::VectorIO::read<P>(shp);
             if(spatialRef.IsEmpty())
                 spatialRef = layer.getSpatialReference();
             if(not spatialRef.IsSame(&layer.getSpatialReference()))
@@ -120,7 +120,7 @@ public:
         });
         /* Contract the graph according to the composite contraction predicate. Old adjacencies are removed from the database as well to allow the reuse of ids, while remaining consistency. */
         fishnet::graph::contractInPlace(sourceGraph,contractionPredicate,reduceFunction,resultGraph,config.workers);
-        auto outputLayer = fishnet::VectorLayer<ResultGeometryType>::empty(ref);
+        auto outputLayer = fishnet::VectorIO::empty<ResultGeometryType>(ref);
         auto idFieldExp = outputLayer.addSizeField(Task::FISHNET_ID_FIELD); // add id field to output as well
         if(not idFieldExp)
             throw std::runtime_error(idFieldExp.error());
@@ -131,6 +131,6 @@ public:
             outputLayer.addFeature(std::move(f));
         }
         this->desc["#Nodes-after-contraction"]=outputLayer.size();
-        outputLayer.overwrite(output);
+        fishnet::VectorIO::overwrite(outputLayer, output); 
     }
 };

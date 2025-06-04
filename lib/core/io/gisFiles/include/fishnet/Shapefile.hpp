@@ -45,12 +45,6 @@ public:
         return this->exists();
     }
 
-    [[nodiscard]] Shapefile changeFilename(const std::string & filename) const noexcept;
-
-    [[nodiscard]] Shapefile appendToFilename(const std::string & postfix) const noexcept;
-
-    [[nodiscard]] Shapefile incrementFileVersion() const noexcept;
-
     bool remove() const noexcept override;
 
     GISFileType type() const noexcept override {
