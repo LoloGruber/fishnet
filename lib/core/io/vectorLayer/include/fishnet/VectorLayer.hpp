@@ -9,6 +9,7 @@
 #include <fishnet/GeometryObject.hpp>
 #include <fishnet/CollectionConcepts.hpp>
 #include <fishnet/FunctionalConcepts.hpp>
+#include <fishnet/Either.hpp>
 
 #include "FieldType.hpp"
 #include "Feature.hpp"
@@ -144,10 +145,10 @@ public:
      * @tparam T value type stored in the field
      * @param fieldName identifier of the field, must not exceed 10 characters
      * @param fieldID optional field ID, if not provided, a unique ID is generated. Use with care!
-     * @return constexpr std::expected<FieldDefinition<T>,error_type> 
+     * @return constexpr util::Either<FieldDefinition<T>,error_type> 
      */
     template<FieldValueType T>
-    [[nodiscard]] constexpr std::expected<FieldDefinition<T>,error_type> addField(const std::string & fieldName, const std::optional<int> & fieldID = std::nullopt) noexcept {
+    [[nodiscard]] constexpr util::Either<FieldDefinition<T>,error_type> addField(const std::string & fieldName, const std::optional<int> & fieldID = std::nullopt) noexcept {
         if(fieldName.length() > 10){
             return std::unexpected("Field name \""+ fieldName+"\" must not exceed a length of 10 characters");
         }
@@ -159,19 +160,19 @@ public:
         return field;
     }
 
-    constexpr std::expected<FieldDefinition<int>,error_type> addIntegerField(const std::string & fieldName, const std::optional<int> & fieldID = std::nullopt) noexcept {
+    constexpr util::Either<FieldDefinition<int>,error_type> addIntegerField(const std::string & fieldName, const std::optional<int> & fieldID = std::nullopt) noexcept {
         return addField<int>(fieldName,fieldID);
     }
 
-    constexpr std::expected<FieldDefinition<double>,error_type> addDoubleField(const std::string & fieldName, const std::optional<int> & fieldID = std::nullopt) noexcept {
+    constexpr util::Either<FieldDefinition<double>,error_type> addDoubleField(const std::string & fieldName, const std::optional<int> & fieldID = std::nullopt) noexcept {
         return addField<double>(fieldName,fieldID);
     }
 
-    constexpr std::expected<FieldDefinition<std::string>,error_type> addTextField(const std::string & fieldName, const std::optional<int> & fieldID = std::nullopt) noexcept {
+    constexpr util::Either<FieldDefinition<std::string>,error_type> addTextField(const std::string & fieldName, const std::optional<int> & fieldID = std::nullopt) noexcept {
         return addField<std::string>(fieldName,fieldID);
     }
 
-    constexpr std::expected<FieldDefinition<size_t>,error_type> addSizeField(const std::string & fieldName, const std::optional<int> & fieldID = std::nullopt) noexcept {
+    constexpr util::Either<FieldDefinition<size_t>,error_type> addSizeField(const std::string & fieldName, const std::optional<int> & fieldID = std::nullopt) noexcept {
         return addField<size_t>(fieldName,fieldID);
     }
 
