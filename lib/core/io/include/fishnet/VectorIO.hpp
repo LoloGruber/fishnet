@@ -52,6 +52,32 @@ struct IncrementFilenameMapper {
 
 namespace fishnet::VectorIO {
 
+/**
+ * @brief Creates an empty VectorLayer with the given spatial reference
+ * 
+ * @tparam G geometry type of the layer
+ * @param spatialReference spatial reference for the layer
+ * @return VectorLayer<G> empty vector layer with the given spatial reference
+ */
+template<geometry::GeometryObject G>
+VectorLayer<G> empty(const OGRSpatialReference & spatialReference) {
+    return VectorLayer<G>(spatialReference);
+}
+
+/**
+ * @brief Creates an empty VectorLayer with the same spatial reference and fields as the source layer
+ * 
+ * @tparam G geometry type of the layer
+ * @param source source layer to copy the spatial reference and fields from
+ * @return VectorLayer<G> empty vector layer with the same spatial reference and fields as the source layer
+ */
+template<geometry::GeometryObject G>
+VectorLayer<G> emptyCopy(const VectorLayer<G> & source) {
+    auto layer = empty<G>(source.getSpatialReference());
+    source.copyFields(layer);
+    return layer;
+}
+
 template<VectorLayerReader Reader>
 auto tryRead(const Reader & reader, const typename Reader::file_type & file) -> std::remove_cvref_t<decltype(reader(file))> {
     return reader(file);
@@ -70,7 +96,7 @@ VectorLayer<G> read(const Shapefile & shapefile) {
     return read(ShapefileReader<G>(), shapefile);
 } 
 
-VectorLayer<geometry::Polygon<double>> readPolygonLayer(const Shapefile & shapefile) {
+inline VectorLayer<geometry::Polygon<double>> readPolygonLayer(const Shapefile & shapefile) {
     return read<geometry::Polygon<double>>(shapefile);
 }
 

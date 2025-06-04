@@ -66,20 +66,6 @@ public:
      */
     explicit VectorLayer(OGRSpatialReference spatialReference):spatialRef(std::move(spatialReference)){}
 
-    /**
-     * @brief Factory to construct empty vector layer with initalized fields
-     * 
-     * @tparam T geometry type
-     * @param source vector layer to copy the fields from
-     * @return empty VectorLayer<G> instance with fields
-     */
-    template<geometry::GeometryObject T>
-    static VectorLayer<G> empty(const VectorLayer<T> & source) {
-        auto layer = empty(source.getSpatialReference());
-        source.copyFields(layer);
-        return layer;
-    }
-
     constexpr size_t size() const noexcept {
         return this->features.size();
     }
