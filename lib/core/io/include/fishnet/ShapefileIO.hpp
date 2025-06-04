@@ -147,20 +147,16 @@ public:
             this->options.push_back(std::move(opt));
         }
     }
-    util::Either<Shapefile,std::string> operator()(const VectorLayer<G> & layer, const Shapefile & destination) const {
+    util::Either<Shapefile,std::string> operator()(const VectorLayer<G> & layer, const Shapefile & output) const {
         GDALInitializer::init();
         GDALDriver * driver = GetGDALDriverManager()->GetDriverByName("ESRI Shapefile");
         if (driver == nullptr) {
             return std::unexpected("Could not find GDAL driver for ESRI Shapefile");
         }
-        Shapefile output = destination;
-        if(destination.exists() && !overwrite) {
-            output = destination.incrementFileVersion();
-        }
         output.remove(); // delete already existing files, if present
         GDALDataset * outputDataset = driver->Create(output.getPath().c_str(),0,0,0,GDT_Unknown,0);
         const char * const options[] = {"SPATIAL_INDEX=YES",nullptr};
-        OGRLayer * outputLayer = outputDataset->CreateLayer(output.getPath().c_str(),this->getSpatialReference().Clone(),GeometryTypeWKBAdapter::toWKB(G::type),const_cast<char **>(options));
+        OGRLayer * outputLayer = outputDataset->CreateLayer(output.getPath().c_str(),layer.getSpatialReference().Clone(),GeometryTypeWKBAdapter::toWKB(G::type),const_cast<char **>(options));
         for(const auto & [fieldName,fieldDefinition] :  layer.getFieldsMap()) {
             OGRFieldType fieldType;
             // get OGRFieldType from FieldDefinition<T> type -> T
@@ -172,11 +168,11 @@ public:
             fieldDefn.SetPrecision(20);
             outputLayer->CreateField(&fieldDefn); // add OGRFieldDefinition to output layer
         }
-        for(const auto & f : this->features){
+        for(const auto & f : layer.getFeatures()){
             auto * feature = new OGRFeature(outputLayer->GetLayerDefn());
             feature->SetGeometry(OGRGeometryAdapter::toOGR(f.getGeometry()).get());
 
-            for(const auto & [fieldName,fieldDefinition]: this->fields){
+            for(const auto & [fieldName,fieldDefinition]: layer.getFieldsMap()){
                 // visitor to set attributes for OGRFeature
                 std::visit([&fieldName,&f,feature]( auto && var){
                     auto optionalAttribute = f.getAttribute(var);
