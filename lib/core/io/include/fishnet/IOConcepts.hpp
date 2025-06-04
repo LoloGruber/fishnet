@@ -1,6 +1,7 @@
 #pragma once
 
 #include <fishnet/VectorLayer.hpp>
+#include <fishnet/GISFile.hpp>
 #include <fishnet/Either.hpp>
 
 namespace fishnet {

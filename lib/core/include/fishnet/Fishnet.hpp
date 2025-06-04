@@ -9,6 +9,6 @@
 #include <fishnet/PolygonDistance.hpp>
 #include <fishnet/PolygonFilter.hpp>
 #include <fishnet/GISFactory.hpp>
-#include <fishnet/VectorLayer.hpp>
+#include <fishnet/VectorIO.hpp>
 #include <fishnet/PathHelper.h>
 
