@@ -52,20 +52,27 @@ struct IncrementFilenameMapper {
 
 namespace fishnet::VectorIO {
 
-template<VectorGISFile F,geometry::GeometryObject G>
-util::Either<VectorLayer<G>,std::string> tryRead(const VectorLayerReader<F,G> auto & reader, const F & file) {
+template<VectorLayerReader Reader>
+auto tryRead(const Reader & reader, const typename Reader::file_type & file) -> std::remove_cvref_t<decltype(reader(file))> {
     return reader(file);
 }
 
-template<VectorGISFile F,geometry::GeometryObject G>
-VectorLayer<G> read(const VectorLayerReader<F,G> auto & reader, const F & file) {
-    return tryRead<F,G>(reader,file).value_or_throw();
+template<VectorLayerReader Reader>
+auto read(const Reader & reader, const typename Reader::file_type & file) -> std::remove_cvref_t<decltype(tryRead(reader,file).value())> {
+    using F = typename Reader::file_type;
+    using G = typename Reader::geometry_type;
+    static_assert(VectorLayerReader<Reader,F,G>, "Reader does not satisfy VectorLayerReader concept");
+    return tryRead(reader,file).value_or_throw();
 }
 
 template<geometry::GeometryObject G>
 VectorLayer<G> read(const Shapefile & shapefile) {
-    return read<Shapefile,G>(ShapefileReader<G>(), shapefile);
+    return read(ShapefileReader<G>(), shapefile);
 } 
+
+VectorLayer<geometry::Polygon<double>> readPolygonLayer(const Shapefile & shapefile) {
+    return read<geometry::Polygon<double>>(shapefile);
+}
 
 template<geometry::GeometryObject G,VectorGISFile F>
 util::Either<F,std::string> tryOverwrite(const VectorLayerWriter<G,F> auto & writer, const VectorLayer<G> & layer, const F & destination){

@@ -71,6 +71,9 @@ private:
     };
 
 public:
+    using geometry_type = G;
+    using file_type = Shapefile;
+
     ShapefileReader() {
         for(const auto & opt : DEFAULT_OPEN_OPTIONS) {
             this->gdalOpenOptions.push_back(opt);
