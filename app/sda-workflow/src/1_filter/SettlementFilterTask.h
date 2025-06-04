@@ -1,5 +1,5 @@
 #pragma once
-#include <fishnet/VectorLayer.hpp>
+#include <fishnet/VectorIO.hpp>
 #include <fishnet/Feature.hpp>
 #include <fishnet/Shapefile.hpp>
 #include <fishnet/CompositePredicate.hpp>
@@ -36,9 +36,9 @@ public:
     void run() override{
         std::ranges::for_each(config.unaryPredicates,[this](const auto & filter){unaryCompositeFilter.add(filter);});
         std::ranges::for_each(config.binaryPredicates,[this](const auto & binaryFilter){binaryCompositeFilter.add(binaryFilter);});
-        auto inputLayer = fishnet::VectorLayer<P>::read(input);
+        auto inputLayer = fishnet::VectorIO::read<P>(input);
         auto result = filter(inputLayer.getGeometries(), binaryCompositeFilter, unaryCompositeFilter);
-        auto outputLayer = fishnet::VectorLayer<P>::empty(inputLayer.getSpatialReference());
+        auto outputLayer = fishnet::VectorIO::empty<P>(inputLayer.getSpatialReference());
         auto idField = outputLayer.addSizeField(Task::FISHNET_ID_FIELD);
         if(not idField){
             throw std::runtime_error("Could not create ID Field");
@@ -49,7 +49,7 @@ public:
             current.addAttribute(*idField,normalizeToShpFileIntField(polygonHasher(current.getGeometry())));
             outputLayer.addFeature(std::move(current));
         }
-        outputLayer.overwrite(output);
+        fishnet::VectorIO::overwrite(outputLayer, output); 
         this->desc["polygon count"]=outputLayer.size();
     }
 

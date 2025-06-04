@@ -15,12 +15,12 @@ class VectorLayerTest: public ::testing::Test {
 protected:
     void SetUp() override {
         sampleLayer = VectorIO::read<geometry::Polygon<double>>(pathToSample);
-        pointLayer = VectorLayer<geometry::Vec2DReal>::empty(sampleLayer.getSpatialReference());
+        pointLayer = VectorLayer<geometry::Vec2DReal>(sampleLayer.getSpatialReference());
         pointLayer.addAllGeometry(points);
     }
     Shapefile pathToSample {util::PathHelper::projectDirectory() / std::filesystem::path("data/testing/Punjab_Small/Punjab_Small.shp")};
     VectorLayer<geometry::Polygon<double>> sampleLayer = VectorIO::read<geometry::Polygon<double>>(pathToSample);
-    VectorLayer<geometry::Vec2DReal> pointLayer = VectorLayer<geometry::Vec2DReal>::empty(sampleLayer.getSpatialReference());
+    VectorLayer<geometry::Vec2DReal> pointLayer = VectorLayer<geometry::Vec2DReal>(sampleLayer.getSpatialReference());
     Vec2DReal p1 = {0.5,1};
     Vec2DReal p2 = {3,-1};
     std::vector<Vec2DReal> points {p1,p2};
@@ -39,12 +39,12 @@ TEST_F(VectorLayerTest, init){
 
     Shapefile notExistsFile {util::PathHelper::projectDirectory() / std::filesystem::path("tests/io/does_not_exists.shp")};
     EXPECT_ANY_THROW(VectorIO::read<fishnet::geometry::Polygon<double>>(notExistsFile));
-    EXPECT_NO_THROW(VectorLayer<geometry::Polygon<double>>::empty(layer.getSpatialReference()));
+    EXPECT_NO_THROW(VectorLayer<geometry::Polygon<double>>(layer.getSpatialReference()));
     EXPECT_FALSE(notExistsFile.exists());
-    auto empty = VectorLayer<fishnet::geometry::Polygon<double>>::empty(layer.getSpatialReference());
+    auto empty = VectorLayer<fishnet::geometry::Polygon<double>>(layer.getSpatialReference());
     EXPECT_EMPTY(empty.getGeometries());
     EXPECT_EMPTY(empty.getFeatures());
-    EXPECT_NO_THROW(VectorLayer<geometry::Polygon<double>>::empty(layer.getSpatialReference()));
+    EXPECT_NO_THROW(VectorLayer<geometry::Polygon<double>>(layer.getSpatialReference()));
 }
 
 TEST_F(VectorLayerTest,getGeometries) {
@@ -68,7 +68,7 @@ TEST_F(VectorLayerTest, addGeometry){
 }
 
 TEST_F(VectorLayerTest, addAllGeometry) {
-    auto layer = VectorLayer<geometry::Vec2DStd>::empty(pointLayer.getSpatialReference());
+    auto layer = VectorIO::empty<geometry::Vec2DStd>(pointLayer.getSpatialReference());
     EXPECT_EMPTY(layer.getGeometries());
     layer.addAllGeometry(points);
     EXPECT_SIZE(layer.getGeometries(),2);
@@ -93,7 +93,7 @@ TEST_F(VectorLayerTest, removeGeometry) {
 TEST_F(VectorLayerTest, getSpatialReference) {
     const char * wktSpatRef = "GEODCRS[\"WGS 84\",DATUM[\"World Geodetic System 1984\",ELLIPSOID[\"WGS 84\", 6378137, 298.257223563, LENGTHUNIT[\"metre\", 1]]],CS[ellipsoidal, 2],AXIS[\"Latitude (lat)\", north, ORDER[1]],AXIS[\"Longitude (lon)\", east, ORDER[2]],ANGLEUNIT[\"degree\", 0.0174532925199433]]";
     OGRSpatialReference spatRef = OGRSpatialReference(wktSpatRef);
-    auto points = VectorLayer<Vec2DStd>::empty(spatRef);
+    auto points = VectorIO::empty<Vec2DStd>(spatRef);
     EXPECT_EQ(spatRef.GetName(),points.getSpatialReference().GetName());
 }
 

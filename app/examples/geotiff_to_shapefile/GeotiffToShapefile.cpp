@@ -1,5 +1,5 @@
 #include <fishnet/GISFactory.hpp>
-#include <fishnet/VectorLayer.hpp>
+#include <fishnet/VectorIO.hpp>
 #include <fishnet/PathHelper.h>
 #include <fishnet/Polygon.hpp>
 
@@ -9,7 +9,7 @@ int main(int argc, char * argv[]) {
     auto shpFileExp = GISFactory::asShapefile(src);
     if(not shpFileExp)
         throw std::runtime_error(shpFileExp.error());
-    auto layer = VectorLayer<geometry::Polygon<double>>::read(shpFileExp.value());
-    layer.overwrite(src.replace_extension(".shp"));
+    auto layer = VectorIO::readPolygonLayer(shpFileExp.value());
+    VectorIO::overwrite(layer,src.replace_extension(".shp"));
     return 0;
 }

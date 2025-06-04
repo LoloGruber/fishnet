@@ -3,7 +3,7 @@
 #include <fstream>
 #include <fishnet/PathHelper.h>
 #include <fishnet/Shapefile.hpp>
-#include <fishnet/VectorLayer.hpp>
+#include <fishnet/VectorIO.hpp>
 #include <fishnet/PolygonDistance.hpp>
 #include <fishnet/Polygon.hpp>
 #include <fishnet/StopWatch.h>
@@ -63,7 +63,7 @@ TEST(PolygonDistanceTest, settlementSamples){
     const size_t samples = 1; // 100
     auto files = fishnet::GISFactory::getGISFiles(settlementSamplesPath);
     for(const auto & file: files | std::views::take(samples) ){
-        auto layer = fishnet::VectorLayer<geometry::Polygon<double>>::read({file});
+        auto layer = fishnet::VectorIO::readPolygonLayer({file});
         auto geometries = layer.getGeometries();
         auto left = geometries.front();
         auto right = geometries.back();

@@ -1,5 +1,5 @@
 #include <fishnet/Polygon.hpp>
-#include <fishnet/VectorLayer.hpp>
+#include <fishnet/VectorIO.hpp>
 #include <fishnet/PathHelper.h>
 #include <fishnet/GISFactory.hpp>
 #include <fishnet/BoundingBoxPolygon.hpp>
@@ -27,7 +27,7 @@ int main(int argc, char * argv[]) {
     if(not expSource)
         throw std::runtime_error(expSource.error());
     const Shapefile & source = expSource.value();
-    const auto input = VectorLayer<fishnet::geometry::Polygon<double>>::read(source);
+    const auto input = VectorIO::readPolygonLayer(source);
     const std::filesystem::path outputDir {outputDirectoryName};
     const auto boundingBox = geometry::minimalBoundingBox(input.getGeometries());
     double deltaX = boundingBox.right()-boundingBox.left();
@@ -38,7 +38,7 @@ int main(int argc, char * argv[]) {
 
     for(uint32_t y = 0; y < pieces ; y++){
         for(uint32_t x = 0; x < pieces; x++){
-            outputDatasets.push_back(VectorLayer<fishnet::geometry::Polygon<double>>::empty(input.getSpatialReference()));
+            outputDatasets.push_back(VectorLayer<fishnet::geometry::Polygon<double>>(input.getSpatialReference()));
         }
     }
     for(auto && feature: input.getFeatures()){
@@ -53,7 +53,7 @@ int main(int argc, char * argv[]) {
             const auto & ds = outputDatasets.at(y*pieces+x);
             if(util::size(ds.getFeatures()) > 0) {
                 Shapefile dest = outputDir / fishnet::util::PathHelper::appendToFilename(source.getPath(),"_"+ std::to_string(x+xOffset)+"_"+std::to_string(y+yOffset)).filename();
-                ds.overwrite(dest);
+                VectorIO::overwrite(ds, dest);
             }
         }
     }

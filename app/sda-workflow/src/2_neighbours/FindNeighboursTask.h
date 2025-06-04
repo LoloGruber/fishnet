@@ -2,7 +2,7 @@
 #include <vector>
 #include <fishnet/Shapefile.hpp>
 #include <fishnet/ShapeGeometry.hpp>
-#include <fishnet/VectorLayer.hpp>
+#include <fishnet/VectorIO.hpp>
 #include <fishnet/PolygonNeighbours.hpp>
 #include <fishnet/GraphFactory.hpp>
 #include <fishnet/CompositePredicate.hpp>
@@ -64,7 +64,7 @@ public:
 
     std::vector<SettlementPolygon<P>> readInput(auto const & graph)  {
         std::vector<SettlementPolygon<P>> polygons;
-        auto layer = fishnet::VectorLayer<P>::read(primaryInput); // load polygons from primary shapefile
+        auto layer = fishnet::VectorIO::read<P>(primaryInput); // load polygons from primary shapefile
         distanceFunction = distanceFunctionForSpatialReference(layer.getSpatialReference());
         if(layer.isEmpty()){
             return polygons;
@@ -92,7 +92,7 @@ public:
         std::ranges::for_each(additionalInput,[&additionalInputStrings](auto const & file){additionalInputStrings.push_back(file.getPath().filename().string());});
         this->desc["additional-inputs"]=additionalInputStrings;
         for(const auto & shp : additionalInput) {
-            auto neighbourLayer = fishnet::VectorLayer<P>::read(shp); // load polygons from shapefile
+            auto neighbourLayer = fishnet::VectorIO::read<P>(shp); // load polygons from shapefile
             if(not layer.getSpatialReference().IsSame(&neighbourLayer.getSpatialReference()))
                 throw std::runtime_error("Spatial reference of neighbouring file does not match!\nExpecting: "+std::string(layer.getSpatialReference().GetName())+"\nActual: "+neighbourLayer.getSpatialReference().GetName());
             if(neighbourLayer.isEmpty())
