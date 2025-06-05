@@ -3,6 +3,7 @@
 #include <optional>
 #include <utility>
 #include <fishnet/Printable.hpp>
+#include <fishnet/PathHelper.h>
 
 namespace fishnet{
 
@@ -77,10 +78,7 @@ public:
      * @param filename new file stem of the GISFile
      */
     void changeFilename(const std::string & filename) noexcept {
-        if(not filename.ends_with(this->pathToFile.extension().string())) {
-            this->pathToFile = this->pathToFile.parent_path() / std::filesystem::path(filename + this->pathToFile.extension().string());
-        }
-        this->pathToFile = this->pathToFile.parent_path() / std::filesystem::path(filename);
+        this->pathToFile = util::PathHelper::changeFilename(this->pathToFile, filename);
     }
 
     /**
