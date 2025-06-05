@@ -38,8 +38,6 @@ private:
 
     using error_type = std::string; // error type for std::expected
 
-
-
     /**
      * @brief Helper function to remove certain features. 
      * 
@@ -49,6 +47,9 @@ private:
         const auto removed = std::ranges::remove_if(this->features,predicate);
         this->features.erase(removed.begin(),removed.end());
     }
+
+    template<geometry::GeometryObject T>
+    friend class VectorLayer; // allow other VectorLayers to access the private members
 
 public: 
     using geometry_type = G;
