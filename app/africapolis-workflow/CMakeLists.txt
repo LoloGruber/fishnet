@@ -6,3 +6,7 @@ install(TARGETS AfricapolisGraphComponents RUNTIME DESTINATION ${CMAKE_INSTALL_P
 add_executable(AfricapolisClearDatabase ClearDatabase.cpp)
 target_link_libraries(AfricapolisClearDatabase PRIVATE Fishnet::Fishnet Fishnet::Workflow CLI11::CLI11)
 install(TARGETS AfricapolisClearDatabase RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+
+add_executable(AfricapolisPolygonOutline AfricapolisPolygonOutline.cpp)
+target_link_libraries(AfricapolisPolygonOutline PRIVATE Fishnet::Fishnet Fishnet::Workflow CLI11::CLI11)
+install(TARGETS AfricapolisPolygonOutline RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
