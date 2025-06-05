@@ -94,3 +94,20 @@ TEST(FeatureTest, equality) {
     lhs.setAttribute(myField, 2); // Same field, different value
     EXPECT_NE(lhs,copyOfLhs);
 }
+
+TEST(FeatureTest, copyAttributes) {
+    Feature f1{geometry::Vec2DStd(0, 0)};
+    Feature f2{geometry::Vec2DStd(1, 1)};
+    auto myField = FieldDefinitionTestFactory<int>::createField("amount");
+    f1.addAttribute(myField, 42);
+    EXPECT_TRUE(f1.hasAttribute(myField));
+    EXPECT_FALSE(f2.hasAttribute(myField));
+    EXPECT_EMPTY(f2.getAttribute(myField));
+    f2.copyAttributes(f1);
+    EXPECT_TRUE(f2.hasAttribute(myField));
+    EXPECT_EQ(f2.getAttribute(myField).value(), 42);
+    Feature f3 {geometry::Segment<double>({0,0},{1,1})};
+    f3.copyAttributes(f2);
+    EXPECT_TRUE(f3.hasAttribute(myField));
+    EXPECT_EQ(f3.getAttribute(myField).value(), 42);
+}

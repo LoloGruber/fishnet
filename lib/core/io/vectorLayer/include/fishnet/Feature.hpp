@@ -4,21 +4,13 @@
 #include "FieldType.hpp"
 #include "FieldDefinition.hpp"
 
-namespace fishnet {
+namespace fishnet::__impl {
 
-/**
- * @brief Feature implementation storing a geometry and associated attributes
- * 
- * @tparam G geometry type
- */
-template<geometry::GeometryObject G>
-class Feature {
-private:
     /**
-     * @brief Helper class to store an attribute for a field 
-     * 
-     */
-    class FieldValue {
+ * @brief Helper class to store an attribute for a field 
+ * 
+ */
+class FieldValue {
     private:
         FieldType value;
         int fieldID;
@@ -43,9 +35,21 @@ private:
             return fieldID==other.fieldID && value == other.value;
         }
     };
+}
+
+namespace fishnet{
+/**
+ * @brief Feature implementation storing a geometry and associated attributes
+ * 
+ * @tparam G geometry type
+ */
+template<geometry::GeometryObject G>
+class Feature {
+private:
+
 
     G geometry;
-    std::vector<FieldValue> attributes;
+    std::vector<__impl::FieldValue> attributes;
 
     template<FieldValueType T>
     constexpr auto getItPosOfAttribute(const FieldDefinition<T> & fieldDefinition) const noexcept{
@@ -60,6 +64,9 @@ private:
             return fieldDefinition.getFieldID() == value.getFieldID();
         });
     }
+
+    template<geometry::GeometryObject O>
+    friend class Feature;
 
 public:
     constexpr explicit Feature(const G & geometry):geometry(geometry){}
@@ -91,12 +98,17 @@ public:
     template<IFieldDefinition FieldDef>
     constexpr void setAttribute(const FieldDef & fieldDefinition, math::convertible_without_loss<typename FieldDef::value_type> auto value) noexcept {
         if(not addAttribute(fieldDefinition,value)) {
-            *getItPosOfAttribute(fieldDefinition) = FieldValue(static_cast<typename FieldDef::value_type>(value), fieldDefinition.getFieldID());
+            *getItPosOfAttribute(fieldDefinition) = __impl::FieldValue(static_cast<typename FieldDef::value_type>(value), fieldDefinition.getFieldID());
         }
     }
 
     constexpr void removeAttribute(const IFieldDefinition auto fieldDefinition) noexcept {
         std::erase_if(attributes,[&fieldDefinition](const auto & value){return value.getFieldID() == fieldDefinition.getFieldID();});
+    }
+
+    template<geometry::GeometryObject O>
+    constexpr void copyAttributes(const Feature<O> & source) noexcept {
+        std::ranges::for_each(source.attributes,[this](const auto & value){this->attributes.push_back(value);});
     }
 
     constexpr const G & getGeometry() const noexcept{
