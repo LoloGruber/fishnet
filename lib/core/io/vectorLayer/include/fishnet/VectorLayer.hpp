@@ -223,7 +223,7 @@ public:
         return getField<size_t>(fieldName);
     }
 
-    constexpr std::optional<FieldDefinition<std::string>> getTestField(const std::string  & fieldName) const noexcept {
+    constexpr std::optional<FieldDefinition<std::string>> getTextField(const std::string  & fieldName) const noexcept {
         return getField<std::string>(fieldName);
     }
 
