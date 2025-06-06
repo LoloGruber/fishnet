@@ -76,8 +76,21 @@ public:
         return impl();
     }
 
+    bool operator>(const AngleImpl & other) const {
+        if(*this == other) return false;
+        return angle > other.angle;
+    }
+
+    bool operator>=(const AngleImpl & other) const {
+        return *this == other || *this > other;
+    }
+
     bool operator==(const AngleImpl & other) const {
         return fabs(angle-other.angle) < DOUBLE_EPSILON;
+    }
+
+    bool operator<=(const AngleImpl & other) const {
+        return *this == other || *this < other;
     }
 
     bool operator< (const AngleImpl & other) const {
