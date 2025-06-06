@@ -25,7 +25,7 @@ Polygon_t convexHull(const MultiPolygon_t & multiPolygon) {
         points.push_back(point);
     }
     auto n = points.size();
-    // Jarvis Walk:
+    // Jarvis Walk Algo:
     int l = 0;
     for (int i = 1; i < n; i++)
         if (points[i].x < points[l].x)
@@ -158,7 +158,6 @@ Polygon_t toBoundaryPolygon(const MultiPolygon_t & multiPolygon) {
     outlinePoints.push_back(p); // start with the top left point (first p)
     while(q != topLeft) {
         auto neighbours = graph.getNeighbours(q) | std::views::filter([p,q](const auto & r) {
-            bool result = r != p && r != q && (not (q-p).isParallel(r-p) || fishnet::geometry::Ray(p,q-p).contains(r));
             return r != p && r != q && (not (q-p).isParallel(r-p) || fishnet::geometry::Ray(p,q-p).contains(r) ); // filter out p and q and collinear points on the backward direction
         });
         for(const auto & neighbour : neighbours) {
@@ -179,7 +178,7 @@ Polygon_t toBoundaryPolygon(const MultiPolygon_t & multiPolygon) {
             if (angleR >= fishnet::math::Radians::PI) {
                 return false;
             }
-            if(angleL == angleR){
+            if(fishnet::math::areEqual(angleL.getAngleValue(), angleR.getAngleValue())){
                 return lhs.distance(q) > rhs.distance(q); //make max element the closest point to q if angles are equal
             }
             return angleL < angleR;
@@ -193,20 +192,21 @@ Polygon_t toBoundaryPolygon(const MultiPolygon_t & multiPolygon) {
     return Polygon_t{fishnet::geometry::Ring<Number_t>{std::move(outlinePoints)}}; // Create a polygon from the outline points
 }
 
+void toyExample() {
+    using namespace fishnet::geometry;
+    Polygon<double> r1 {Ring{Vec2DStd{0,0},Vec2DStd{0,2},Vec2DStd{2,2},Vec2DStd{2,0}}};
+    Polygon<double> r2 {Ring{Vec2DStd{3,1},Vec2DStd{4,1},Vec2DStd{4,-1},Vec2DStd{3,-1}}};
+    MultiPolygon<Polygon<double>> multiPolygon {r1,r2};
+    auto boundaryPolygon = toBoundaryPolygon(multiPolygon);
+    std::cout << "Boundary Polygon: " << boundaryPolygon.toString() << std::endl;
+}
+
 int main(int argc, char* argv[]) {
     using namespace fishnet::geometry;
     CLI::App app{"AfricapolisPolygonOutline"};
     std::string inputFilename = "/home/lolo/Desktop/uganda_lira_small/sample.shp";
     app.add_option("-i,--input", inputFilename, "Path to input shape file")->required()->check(CLI::ExistingFile);
     // CLI11_PARSE(app, argc, argv);
-
-    //Toy example
-    // fishnet::geometry::Polygon<double> r1 {Ring{Vec2DStd{0,0},Vec2DStd{0,2},Vec2DStd{2,2},Vec2DStd{2,0}}};
-    // fishnet::geometry::Polygon<double> r2 {Ring{Vec2DStd{3,1},Vec2DStd{4,1},Vec2DStd{4,-1},Vec2DStd{3,-1}}};
-    // fishnet::geometry::MultiPolygon<fishnet::geometry::Polygon<double>> multiPolygon {r1,r2};
-    // auto boundaryPolygon = toBoundaryPolygon(multiPolygon);
-    // std::cout << "Boundary Polygon: " << boundaryPolygon.toString() << std::endl;
-
     fishnet::Shapefile inputFile(inputFilename);
     auto inputLayer = fishnet::VectorIO::read<MultiPolygon_t>(inputFile);
     auto outputLayer = fishnet::VectorIO::emptyCopy<Polygon_t>(inputLayer);
