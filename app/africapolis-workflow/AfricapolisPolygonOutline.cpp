@@ -4,6 +4,24 @@ using MultiPolygon_t = fishnet::geometry::MultiPolygon<fishnet::geometry::Polygo
 using Polygon_t = fishnet::geometry::SimplePolygon<double>;
 using Number_t= typename MultiPolygon_t::numeric_type;
 
+#include <ogr_geometry.h>
+
+auto concaveHull(const MultiPolygon_t & multiPolygon){
+    OGRMultiPoint multiPoint;
+    std::vector<std::unique_ptr<OGRPoint>> points;
+    
+    for(const auto & polygon : multiPolygon.getPolygons()) {
+        for(const auto & point : polygon.getBoundary().getPoints()) {
+            multiPoint.addGeometry(std::make_unique<OGRPoint>(point.x, point.y));
+        }
+    }
+    OGRPolygon * concaveHull = multiPoint.ConcaveHull(0.3,true)->toPolygon();
+    auto polygon = concaveHull== nullptr? std::nullopt : fishnet::OGRGeometryAdapter::fromOGR(*concaveHull);
+    free(concaveHull);
+    return polygon; 
+}
+
+
 template<fishnet::math::Number T>
 struct DistanceFromReference{
     fishnet::geometry::Vec2D<T> referencePoint;
@@ -211,7 +229,11 @@ int main(int argc, char* argv[]) {
     auto inputLayer = fishnet::VectorIO::read<MultiPolygon_t>(inputFile);
     auto outputLayer = fishnet::VectorIO::emptyCopy<Polygon_t>(inputLayer);
     for(const auto & multiPolygonFeature: inputLayer.getFeatures()) {
-        auto feature = fishnet::Feature<Polygon_t>(convexHull(multiPolygonFeature.getGeometry()));
+        auto resultGeometry = concaveHull(multiPolygonFeature.getGeometry());
+        if(not resultGeometry) {
+            std::cout << "No concave hull found for feature: " << multiPolygonFeature.getGeometry() << std::endl;
+        }
+        auto feature = fishnet::Feature<Polygon_t>(resultGeometry.value());
         feature.copyAttributes(multiPolygonFeature);
         outputLayer.addFeature(std::move(feature));
     }
