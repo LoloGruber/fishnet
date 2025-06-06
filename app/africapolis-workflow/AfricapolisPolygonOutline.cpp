@@ -9,13 +9,14 @@ using Number_t= typename MultiPolygon_t::numeric_type;
 auto concaveHull(const MultiPolygon_t & multiPolygon){
     OGRMultiPoint multiPoint;
     std::vector<std::unique_ptr<OGRPoint>> points;
-    
+
     for(const auto & polygon : multiPolygon.getPolygons()) {
         for(const auto & point : polygon.getBoundary().getPoints()) {
             multiPoint.addGeometry(std::make_unique<OGRPoint>(point.x, point.y));
         }
     }
-    OGRPolygon * concaveHull = multiPoint.ConcaveHull(0.3,true)->toPolygon();
+    double alpha = sqrt(multiPolygon.area() / multiPolygon.aaBB().area());
+    OGRPolygon * concaveHull = multiPoint.ConcaveHull(alpha,true)->toPolygon();
     auto polygon = concaveHull== nullptr? std::nullopt : fishnet::OGRGeometryAdapter::fromOGR(*concaveHull);
     free(concaveHull);
     return polygon; 
@@ -222,7 +223,7 @@ void toyExample() {
 int main(int argc, char* argv[]) {
     using namespace fishnet::geometry;
     CLI::App app{"AfricapolisPolygonOutline"};
-    std::string inputFilename = "/home/lolo/Desktop/uganda_lira_small/sample.shp";
+    std::string inputFilename = "/home/lolo/Desktop/uganda_lira_100m/Uganda_original_102023_Lira_Africapolis.shp";
     app.add_option("-i,--input", inputFilename, "Path to input shape file")->required()->check(CLI::ExistingFile);
     // CLI11_PARSE(app, argc, argv);
     fishnet::Shapefile inputFile(inputFilename);
@@ -237,7 +238,7 @@ int main(int argc, char* argv[]) {
         feature.copyAttributes(multiPolygonFeature);
         outputLayer.addFeature(std::move(feature));
     }
-    fishnet::Shapefile outputFile = {fishnet::util::PathHelper::appendToFilename(inputFile.getPath(), "_outline")};
+    fishnet::Shapefile outputFile = {fishnet::util::PathHelper::appendToFilename(inputFile.getPath(), "_concave_hull")};
     fishnet::VectorIO::overwrite(outputLayer, outputFile);
     return 0;
 }
