@@ -13,9 +13,9 @@ using GeometryType = fishnet::geometry::SimplePolygon<double>;
 int main(int argc, char * argv[]) {
     CLI::App app  {"Fishnet Shapefile Splitter"};
     fishnet::util::StopWatch splitTask {"Split Task"};
-    std::string inputFilename ="/home/lolo/Documents/oecd/input/Kahama_BuildingFootprintsOverture.shp";
-    std::string outputDirectoryName = "/home/lolo/Desktop/out/";
-    uint32_t splits =3;
+    std::string inputFilename;// ="/home/lolo/Documents/oecd/input/Kahama_BuildingFootprintsOverture.shp";
+    std::string outputDirectoryName;// = "/home/lolo/Desktop/out/";
+    uint32_t splits;// =3;
     int xOffset=0;
     int yOffset=0;
     app.add_option("-i,--input",inputFilename,"Path to the input file (.tif or .shp)")->required()->check(CLI::ExistingFile);
@@ -23,7 +23,7 @@ int main(int argc, char * argv[]) {
     app.add_option("-s",splits,"Number of vertical/horizontal splits")->required();
     app.add_option("-x",xOffset,"x offset for the tile coordinates of the output files");
     app.add_option("-y",yOffset,"y offset for the tile coordinates of the output files");
-    // CLI11_PARSE(app,argc,argv);
+    CLI11_PARSE(app,argc,argv);
     const auto expSource = GISFactory::asShapefile(inputFilename);
     if(not expSource)
         throw std::runtime_error(expSource.error());
