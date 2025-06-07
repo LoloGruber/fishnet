@@ -8,13 +8,14 @@
 #include <CLI/CLI.hpp>
 
 using namespace fishnet;
+using GeometryType = fishnet::geometry::SimplePolygon<double>;
 
 int main(int argc, char * argv[]) {
     CLI::App app  {"Fishnet Shapefile Splitter"};
     fishnet::util::StopWatch splitTask {"Split Task"};
-    std::string inputFilename;//="/home/lolo/Documents/fishnet/data/WSF/2019/Casablanca/Small/WesternCasablanca.tif";
-    std::string outputDirectoryName;//="/home/lolo/Documents/fishnet/data/WSF/2019/Casablanca/Small/";
-    uint32_t splits;//=3;
+    std::string inputFilename ="/home/lolo/Documents/oecd/input/Kahama_BuildingFootprintsOverture.shp";
+    std::string outputDirectoryName = "/home/lolo/Desktop/out/";
+    uint32_t splits =3;
     int xOffset=0;
     int yOffset=0;
     app.add_option("-i,--input",inputFilename,"Path to the input file (.tif or .shp)")->required()->check(CLI::ExistingFile);
@@ -22,23 +23,23 @@ int main(int argc, char * argv[]) {
     app.add_option("-s",splits,"Number of vertical/horizontal splits")->required();
     app.add_option("-x",xOffset,"x offset for the tile coordinates of the output files");
     app.add_option("-y",yOffset,"y offset for the tile coordinates of the output files");
-    CLI11_PARSE(app,argc,argv);
+    // CLI11_PARSE(app,argc,argv);
     const auto expSource = GISFactory::asShapefile(inputFilename);
     if(not expSource)
         throw std::runtime_error(expSource.error());
     const Shapefile & source = expSource.value();
-    const auto input = VectorIO::readPolygonLayer(source);
+    const auto input = VectorIO::read<GeometryType>(source);
     const std::filesystem::path outputDir {outputDirectoryName};
     const auto boundingBox = geometry::minimalBoundingBox(input.getGeometries());
     double deltaX = boundingBox.right()-boundingBox.left();
     double deltaY = boundingBox.top()-boundingBox.bottom();
-    std::vector<VectorLayer<fishnet::geometry::Polygon<double>>> outputDatasets;
+    std::vector<VectorLayer<GeometryType>> outputDatasets;
     auto pieces = splits+1;
     outputDatasets.reserve(pieces*pieces);
 
     for(uint32_t y = 0; y < pieces ; y++){
         for(uint32_t x = 0; x < pieces; x++){
-            outputDatasets.push_back(VectorLayer<fishnet::geometry::Polygon<double>>(input.getSpatialReference()));
+            outputDatasets.push_back(VectorLayer<GeometryType>(input.getSpatialReference()));
         }
     }
     for(auto && feature: input.getFeatures()){
