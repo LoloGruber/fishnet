@@ -223,9 +223,9 @@ void toyExample() {
 int main(int argc, char* argv[]) {
     using namespace fishnet::geometry;
     CLI::App app{"AfricapolisPolygonOutline"};
-    std::string inputFilename = "/home/lolo/Desktop/uganda_lira_100m/Uganda_original_102023_Lira_Africapolis.shp";
+    std::string inputFilename;// = "/home/lolo/Desktop/uganda_lira_100m/Uganda_original_102023_Lira_Africapolis.shp";
     app.add_option("-i,--input", inputFilename, "Path to input shape file")->required()->check(CLI::ExistingFile);
-    // CLI11_PARSE(app, argc, argv);
+    CLI11_PARSE(app, argc, argv);
     fishnet::Shapefile inputFile(inputFilename);
     auto inputLayer = fishnet::VectorIO::read<MultiPolygon_t>(inputFile);
     auto outputLayer = fishnet::VectorIO::emptyCopy<Polygon_t>(inputLayer);
@@ -233,6 +233,7 @@ int main(int argc, char* argv[]) {
         auto resultGeometry = concaveHull(multiPolygonFeature.getGeometry());
         if(not resultGeometry) {
             std::cout << "No concave hull found for feature: " << multiPolygonFeature.getGeometry() << std::endl;
+            continue;
         }
         auto feature = fishnet::Feature<Polygon_t>(resultGeometry.value());
         feature.copyAttributes(multiPolygonFeature);
