@@ -10,11 +10,13 @@ services:
       - memgraph-logs:/var/log/memgraph
  
   fishnet-sda:
-    image: logru/fishnet:sda
-    container_name: fishnet
+    image: logru/sda:latest
+    depends_on:
+      - memgraph
+    container_name: sda-workflow
     volumes:
-      - ${HOME}/fishnet:/data
-      - ${HOME}/fishnet/working-directory:/tmp/fishnet
+      - ${HOME}/.fishnet:/data
+      - ${HOME}/.fishnet/working-directory:/tmp/fishnet
 volumes:
   memgraph-logs:
     driver: local
