@@ -1,17 +1,13 @@
-FROM logru/fishnet:base
-RUN apt-get update && apt-get install -y \
-    libssl-dev \
-    cwltool \
-    && apt-get clean
-# Clone Repository
-RUN git clone https://gitlab2.informatik.uni-wuerzburg.de/log66jr/fishnet
-# Build the project
-RUN mkdir /fishnet/build
+FROM logru/fishnet-build:latest AS build
+RUN mkdir -p /fishnet/build
 WORKDIR /fishnet/build
-RUN cmake -DCMAKE_BUILD_TYPE=Release -DFISHNET_TEST=OFF -DFISHNET_APPS=ON -DCMAKE_INSTALL_LIBDIR=lib ..
-RUN cmake --build . --config Release -j 16
+RUN cmake -DCMAKE_BUILD_TYPE=Release -DFISHNET_TEST=OFF -DFISHNET_APPS=ON .. 
+RUN cmake --build . --config Release -j 8
 RUN cmake --install .
-WORKDIR /fishnet
-RUN rm -rf build/
-WORKDIR /data
-CMD ["tail", "-f", "/dev/null"]
+
+# Runtime stage
+FROM ghcr.io/osgeo/gdal:ubuntu-small-3.9.3 AS runtime
+RUN apt-get update && apt-get install -y cwltool && apt-get clean
+COPY --from=build /usr/local/bin /usr/local/bin
+COPY --from=build /usr/local/lib /usr/local/lib
+COPY --from=build /fishnet/cwl/sda /cwl
