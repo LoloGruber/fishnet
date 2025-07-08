@@ -60,12 +60,12 @@ class SettlementDelineationAnalysis:
         Returns a list of volume mounts for the Docker container.
         """
         mounts = [
-            f"{os.path.dirname(self.config_file)}:/cfg",
-            f"{os.path.dirname(self.input_file)}:/input",
-            f"{os.path.dirname(self.output_file)}:/output"
+            f"{os.path.dirname(self.config_file)}:/data/cfg",
+            f"{os.path.dirname(self.input_file)}:/data/input",
+            f"{os.path.dirname(self.output_file)}:/data/output"
         ]
         if self.observer_file:
-            mounts.append(f"{os.path.dirname(self.observer_file)}:/observer")
+            mounts.append(f"{os.path.dirname(self.observer_file)}:/data/observer")
         return mounts
 
     def _build_docker_run_command(self):
@@ -77,10 +77,10 @@ class SettlementDelineationAnalysis:
         docker_command.append(service_name)
         docker_command.extend([
             "SettlementDelineation",
-            "-c", f"/cfg/{Path(self.config_file).name}",
-            "-i", f"/input/{Path(self.input_file).name}",
-            "--listener", f"/observer/{Path(self.observer_file).name}" if self.observer_file else "",
-            "-o", f"/output/{Path(self.output_file).name}"
+            "-c", f"/data/cfg/{Path(self.config_file).name}",
+            "-i", f"/data/input/{Path(self.input_file).name}",
+            "--listener", f"/data/observer/{Path(self.observer_file).name}" if self.observer_file else "",
+            "-o", f"/data/output/{Path(self.output_file).name}"
         ])
         return docker_command
     

@@ -11,3 +11,6 @@ RUN apt-get update && apt-get install -y cwltool && apt-get clean
 COPY --from=build /usr/local/bin /usr/local/bin
 COPY --from=build /usr/local/lib /usr/local/lib
 COPY --from=build /fishnet/cwl/sda /cwl
+RUN mkdir -p /data
+RUN mkdir -p /working
+WORKDIR /data/working
