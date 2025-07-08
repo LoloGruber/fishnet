@@ -1,1 +1,2 @@
-sudo docker images -a | grep none | awk '{ print $3; }' | xargs sudo docker rmi --force
+#! /bin/bash
+docker images -a | grep none | awk '{ print $3; }' | xargs docker rmi --force
