@@ -1,6 +1,17 @@
 # Fishnet
-*Framework for Graph-Based Analysis of GIS data*
-
+*Framework for Graph-Based Analysis of GIS data*  
+#### Table of Contents
+- [Workflows](#workflows)
+    - [Settlement Delineation and Analysis (SDA)](#settlement-delineation-and-analysis-sda)
+        - [Deployment](#deployment)
+        - [Development](#development)
+    - [Africapolis (WiP)](#africapolis-wip)
+        - [Installation](#installation)
+        - [Running the Workflow](#running-the-workflow)
+- [Framework](#framework)
+    - [Architecture](#architecture)
+    - [Installation](#installation-1)
+    - [Framework Usage](#framework-usage)
 
 # Workflows
 ## Settlement Delineation and Analysis (SDA)
@@ -36,7 +47,7 @@ The workflow can then be executed as follows:
 SettlementDelineation -i <path-to-input> -c <path-to-cfg> -o <path-to-output.shp>
 ```
 
-### Africapolis (*WiP*)
+## Africapolis (*WiP*)
 In contrast, the [*Africapolis*](cwl/africapolis) Workflow is completely orchestrated with the [Common Workflow Language (CWL)](https://www.commonwl.org/user_guide/), with each stage being a command line program, composed using *Fishnet*.
 ### Installation
 The required binaries of *Africapolis* currently have to be manually install on the system. This can be achieved with the [install](install.sh) script. Make sure that the install prefix location (*$INSTALL_PREFIX*) is referenced in *PATH* (e.g. *usr/local/bin*). 
