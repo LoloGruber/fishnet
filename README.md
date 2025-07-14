@@ -8,7 +8,7 @@ Delineate urban clusters using a settlement graph and [edge contraction](https:/
 
 ![](doc/images/SDA_Workflow.png).
 ### Deployment
-To run the **Settlement Delineation and Analysis** workflow, the easiest way is to use [SettlementDelineationAnalysis.py](app/sda-workflow/SettlementDelineationAnalysis.py), which wraps the command line interface of the [main binary](app/sda-workflow/src/0_workflow/SettlementDelineation.cpp) and executes it in a container using [docker-compose](app/sda-workflow/compose.yaml) (which is required in the deployment environment). 
+To run the **Settlement Delineation and Analysis** workflow, the easiest way is to use [SettlementDelineationAnalysis.py](app/sda-workflow/SettlementDelineationAnalysis.py), which wraps the command line interface of the [main binary](app/sda-workflow/src/0_workflow/SettlementDelineation.cpp) and executes it in a container using [docker-compose](app/sda-workflow/compose.yaml) (which has to be installed in the deployment environment). 
 ```
 python3 SettlementDelineationAnalysis.py -i <input> -c <config>.json -o <output>.shp
 ``` 
