@@ -5,9 +5,33 @@ import argparse
 import time
 import json
 
-# Docker Compose service and container settings
-docker_compose_file = "/home/lolo/Documents/fishnet/app/sda-workflow/compose.yaml"
-service_name = "fishnet-sda"  # Adjust to your docker-compose service name
+SERVICE_NAME = "fishnet-sda"  # Adjust to your docker-compose service name
+MOUNT_LOCATION = "${HOME}/.fishnet"
+SDA_IMAGE = "logru/sda:latest"
+
+def build_compose_file(mount_location: str = MOUNT_LOCATION) -> str:
+    return f"""services:
+  memgraph:
+    image: memgraph/memgraph
+    container_name: memgraphDB
+    ports:
+      - "7687:7687"
+      - "7444:7444"
+    command: ["--log-level=TRACE","--query-execution-timeout-sec=0"]
+    volumes:
+      - memgraph-logs:/var/log/memgraph
+ 
+  {SERVICE_NAME}:
+    image: {SDA_IMAGE}
+    depends_on:
+      - memgraph
+    container_name: sda-workflow
+    volumes:
+      - {mount_location}:/data
+      - {mount_location}/working-directory:/tmp/fishnet
+volumes:
+  memgraph-logs:
+    driver: local"""
 
 class SettlementDelineationAnalysis:
     def __init__(self, config_file, input_file, output_file, observer_file= None):
@@ -15,11 +39,18 @@ class SettlementDelineationAnalysis:
         self.input_file = input_file
         self.output_file = output_file
         self.observer_file = observer_file
-        self._setup_paths_and_config
+        self.compose_file = self._write_compose_file()
+        self._setup_paths_and_config()
         self._start_memgraph()
 
     def __enter__(self):
         return self
+    
+    def _write_compose_file(self)->Path:
+        compose_file_path = Path(self.config_file).parent / "sda-compose.yaml"
+        with open(compose_file_path, "w") as f:
+            f.write(build_compose_file())
+        return compose_file_path
     
     def _setup_paths_and_config(self):
         # Ensure the config file has the correct executor attribute
@@ -45,7 +76,7 @@ class SettlementDelineationAnalysis:
         # Starts the Database first
         try:
             subprocess.run(
-            ["docker", "compose", "-f", docker_compose_file, "up", "-d"],
+            ["docker", "compose", "-f", self.compose_file, "up", "-d"],
             check=True,
             capture_output=True,
             text=True
@@ -60,9 +91,9 @@ class SettlementDelineationAnalysis:
         Returns a list of volume mounts for the Docker container.
         """
         mounts = [
-            f"{os.path.dirname(self.config_file)}:/data/cfg",
-            f"{os.path.dirname(self.input_file)}:/data/input",
-            f"{os.path.dirname(self.output_file)}:/data/output"
+            f"{os.path.abspath(os.path.dirname(self.config_file))}:/data/cfg",
+            f"{os.path.abspath(os.path.dirname(self.input_file))}:/data/input",
+            f"{os.path.abspath(os.path.dirname(self.output_file))}:/data/output"
         ]
         if self.observer_file:
             mounts.append(f"{os.path.dirname(self.observer_file)}:/data/observer")
@@ -70,11 +101,11 @@ class SettlementDelineationAnalysis:
 
     def _build_docker_run_command(self):
         docker_command = [
-            "docker", "compose", "-f", docker_compose_file, "run", "--rm"
+            "docker", "compose", "-f", self.compose_file, "run", "--rm"
         ]
         for mount in self._mounts():
             docker_command.extend(["-v", mount])
-        docker_command.append(service_name)
+        docker_command.append(SERVICE_NAME)
         docker_command.extend([
             "SettlementDelineation",
             "-c", f"/data/cfg/{Path(self.config_file).name}",
@@ -105,11 +136,13 @@ class SettlementDelineationAnalysis:
         """
         try:
             subprocess.run(
-                ["docker", "compose", "-f", docker_compose_file, "down"],
+                ["docker", "compose", "-f", self.compose_file, "down"],
                 check=True,
                 capture_output=True,
                 text=True
             )
+            if self.compose_file.exists():
+                self.compose_file.unlink()
         except subprocess.CalledProcessError as e:
             print(f"Error stopping Docker Compose services:\n", e.stdout, e.stderr)
         
@@ -136,7 +169,7 @@ def get_debug_workflow() -> SettlementDelineationAnalysis:
     )
 
 if __name__ == "__main__":
-    debug = True
+    debug = False
     workflow = get_debug_workflow() if debug else parse_args_to_workflow_object()
     with workflow as workflow:
         workflow.run()
