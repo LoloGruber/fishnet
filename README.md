@@ -1,41 +1,24 @@
 # Fishnet
-A framework for graph-based computations and analysis of GIS data.
+*Framework for Graph-Based Analysis of GIS data*
 
-## Installation
-### System Installation
-Before the library can be build using *cmake*, the **GDAL** and **SSL** libraries have to be installed on the machine. On Ubuntu-based system this can be achieved using the following command:
-```shell
-sudo apt-get install -y libgdal-dev libssl-dev
+
+# Workflows
+## Settlement Delineation and Analysis (SDA)
+Delineate urban clusters using a settlement graph and [edge contraction](https://en.wikipedia.org/wiki/Edge_contraction) and then analyze the centrality of the aggregated settlement clusters.  
+
+![](doc/images/SDA_Workflow.png).
+### Deployment
+To run the **Settlement Delineation and Analysis** workflow, the easiest way is to use [SettlementDelineationAnalysis.py](app/sda-workflow/SettlementDelineationAnalysis.py), which wraps the command line interface of the [main binary](app/sda-workflow/src/0_workflow/SettlementDelineation.cpp) and executes it in a container using [docker-compose](app/sda-workflow/compose.yaml) (which is required in the deployment environment). 
+```
+python3 SettlementDelineationAnalysis.py -i <input> -c <config>.json -o <output>.shp
 ``` 
-Then the project can be build as follows:
-```shell
-mkdir build
-cd build
-cmake ..
-cmake --build . <add custom cmake parameters here>
-```
-## SDA Workflow
-To run the Settlement Delineation and Analysis workflow, the easiest way is to use the docker-compose. 
-### Docker
-- The [logru/fishnet:base](/prod/docker/base/Dockerfile) image contains the required dependencies to build the project. 
-- To execute the **sda workflow** the [logru/fishnet:sda](app/sda-workflow/Dockerfile) image builds the required binaries. 
+- **input**: Input GIS file (*GeoTIFF* | *Shapefile*) on settlement location (e.g. [WSF](https://geoservice.dlr.de/web/maps/eoc:wsf2019))
+- **config**: JSON file containing the config for the workflow run (e.g. [Example Config](app/sda-workflow/sda-docker.json) )
+- **output**: Path of output shapefile  
 
-Since the workflow requires a running memgraph instance, the [docker-compose](app/sda-workflow/compose.yaml) file joins both the memgraph database and the **fishnet/sda** image.
-```shell
-cd app/sda-workflow
-docker compose up -d
-```
-Then change your directory to the mounted directory, specified in the [docker-compose](app/sda-workflow/compose.yaml), by default: **~/fishnet**. The workflow can then be executed using the *docker exec*, specifying the inputs/config/outputs as relative paths from the mounted directory.
-```docker
-docker exec fishnet SettlementDelineation -i <input> -c <cfg> -o <output>
-
-For example:
-
-docker exec fishnet SettlementDelineation -i input/Astana_KAZ.tiff -c cfg/sda-workflow.json -o output/AstanaAnalysis.shp
-```
-
-### System
-Alternatively the sda workflow can be installed on the system using the [install](install.sh) script. Make sure that the install prefix location is referenced in *PATH* (e.g. *usr/local/bin*). 
+The input, config, intermediate and final result files will be mounted on the host system, which is by default: **${HOME}/.fishnet/**.
+### Development
+Alternatively the **SDA** workflow can be installed on the system using the [install](install.sh) script. Make sure that the install prefix location is referenced in *PATH* (e.g. *usr/local/bin*). 
 ```shell
 ./install.sh
 ```
@@ -51,6 +34,42 @@ docker compose up -d
 The workflow can then be executed as follows:
 ```shell
 SettlementDelineation -i <path-to-input> -c <path-to-cfg> -o <path-to-output.shp>
+```
+
+### Africapolis (*WiP*)
+In contrast, the [*Africapolis*](cwl/africapolis) Workflow is completely orchestrated with the [Common Workflow Language (CWL)](https://www.commonwl.org/user_guide/), with each stage being a command line program, composed using *Fishnet*.
+### Installation
+The required binaries of *Africapolis* currently have to be manually install on the system. This can be achieved with the [install](install.sh) script. Make sure that the install prefix location (*$INSTALL_PREFIX*) is referenced in *PATH* (e.g. *usr/local/bin*). 
+```shell
+./install.sh
+```
+Additionally, a [CWL Runner](https://www.commonwl.org/implementations/) must be installed to execute the workflow. The reference executor [cwltool](https://cwltool.readthedocs.io/en/latest/cli.html#cwltool) is recommended and can be installed as follows:
+```shell
+sudo apt-get install cwltool
+```
+### Running the Workflow
+```
+cwltool Africapolis.cwl <CWL-Job>.json
+``` 
+
+# Framework
+## Architecture
+The core framework contains generic components for the following domains:
+- [Graph Model and Traversal](lib/core/graph)
+- [Geometry Model and Sweep Line Algorithms](lib/core/geometry)
+- [I/O for GIS files and Vector Datasets](lib/core/io)
+- [Workflow Orchestration and Utility](lib/workflow)
+## Installation
+Before the library can be build using *cmake*, the **GDAL** and **SSL** libraries have to be installed on the machine. On Ubuntu-based system this can be achieved using the following command:
+```shell
+sudo apt-get install -y libgdal-dev libssl-dev
+``` 
+Then the project can be build as follows:
+```shell
+mkdir build
+cd build
+cmake ..
+cmake --build . <add custom cmake parameters here>
 ```
 ## Framework Usage
 The following example shows how to store polygons, obtained from a Shapefile, in a graph. Thereafter, the degree centrality measures is calculated on the graph and the results stored as features in the output shapefile.
@@ -89,5 +108,8 @@ To link the *Fishnet* framework to the program the following *CMake* file can be
 add_executable(polygonGraph PolygonGraph.cpp)
 target_link_libraries(polygonGraph PRIVATE Fishnet::Fishnet)
 ```
+
+
+
 
 
