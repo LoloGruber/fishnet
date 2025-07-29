@@ -43,7 +43,7 @@ Polygon_t convexHull(const MultiPolygon_t & multiPolygon) {
     for (const auto & point : nodes) {
         points.push_back(point);
     }
-    auto n = points.size();
+    auto n = (int) points.size();
     // Jarvis Walk Algo:
     int l = 0;
     for (int i = 1; i < n; i++)
@@ -239,7 +239,7 @@ int main(int argc, char* argv[]) {
         feature.copyAttributes(multiPolygonFeature);
         outputLayer.addFeature(std::move(feature));
     }
-    fishnet::Shapefile outputFile = {fishnet::util::PathHelper::appendToFilename(inputFile.getPath(), "_concave_hull")};
+    fishnet::Shapefile outputFile = {fishnet::util::PathHelper::appendToFilename(inputFile.getPath(), "_concave_hull").filename()};
     fishnet::VectorIO::overwrite(outputLayer, outputFile);
     return 0;
 }
