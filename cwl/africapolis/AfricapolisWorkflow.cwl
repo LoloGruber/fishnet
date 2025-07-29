@@ -31,7 +31,7 @@ inputs:
 outputs:
   result:
     type: ../types/Shapefile.yaml#Shapefile
-    outputSource: merge/mergedOutput
+    outputSource: visualize/outputShapefile
 steps:
   clearDatabase:
     run:
@@ -104,6 +104,11 @@ steps:
         source: gisInput
         valueFrom: $("./"+self.file.nameroot+"_Africapolis")
     out: [mergedOutput]
+  visualize:
+    run: OutlineVisualization.cwl
+    in:
+      gisFile: merge/mergedOutput
+    out: [outputShapefile]
 
 
   
