@@ -76,23 +76,14 @@ steps:
     in:
       trigger: graph_construction/trigger
       config: config
-      files: filter/filtered_shapefile
-    out: [clusterWorkload]
+    out: [clusterWorkloadFiles]
   clustering:
-    run: ../fishnet/cluster.cwl
+    run: AfricapolisClustering.cwl
     in: 
-      clusterWorkload: graph_components/clusterWorkload
+      workloadFile: graph_components/clusterWorkloadFiles
       config: config
-      components:
-        source: graph_components/clusterWorkload
-        valueFrom: $(inputs.clusterWorkload.components)
-      shpFiles: 
-        source: graph_components/clusterWorkload
-        valueFrom: $(inputs.clusterWorkload.files)
-      outputStem:
-        source: graph_components/clusterWorkload
-        valueFrom: $("Clustered_"+ inputs.clusterWorkload.components[0])
-    scatter: clusterWorkload
+      files: filter/filtered_shapefile
+    scatter: workloadFile
     scatterMethod: dotproduct
     out: [clusteredOutput]
   merge:
