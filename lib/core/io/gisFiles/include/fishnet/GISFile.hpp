@@ -8,7 +8,7 @@
 namespace fishnet{
 
 enum class GISFileType{
-    SHAPEFILE,GEOTIFF
+    SHAPEFILE,GEOTIFF,GEOPACKAGE
 };
 
 static std::optional<GISFileType> getGISFileType(const std::filesystem::path & path) {
@@ -17,6 +17,9 @@ static std::optional<GISFileType> getGISFileType(const std::filesystem::path & p
         return GISFileType::SHAPEFILE;
     else if (ext  == ".tif" || ext  == ".tiff") {
         return GISFileType::GEOTIFF;
+    }
+    else if (ext == ".gpkg") {
+        return GISFileType::GEOPACKAGE;
     }
     return std::nullopt;
 }
@@ -41,6 +44,7 @@ private:
 
     friend class AbstractVectorFile;
     friend class AbstractRasterFile;
+    friend class GeoPackage;
 public:
     [[nodiscard]] const std::filesystem::path & getPath() const noexcept {
         return pathToFile;

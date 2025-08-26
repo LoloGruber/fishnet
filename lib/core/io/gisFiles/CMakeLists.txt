@@ -2,6 +2,7 @@ find_package(GDAL  REQUIRED)
 add_library(io_gis STATIC
     src/Shapefile.cpp
     src/Geotiff.cpp
+    src/GeoPackage.cpp
         include/fishnet/GISFactory.hpp
         include/fishnet/GISConverter.hpp
 )
