@@ -138,6 +138,9 @@ auto distributeComponentsWorkload(ComponentMap const& componentMap, MemgraphClie
         auto singleFileComponents = std::views::filter(components, [&](auto && component) {
             return componentToFilesMap.at(component).size() == 1 && componentMap.contains(component);
         });
+        if (fishnet::util::isEmpty(singleFileComponents)) {
+            continue;
+        }
         size_t nodeCount = 0;
         std::vector<size_t> componentIdsOfFile;
         for(auto && componentRef: singleFileComponents){
