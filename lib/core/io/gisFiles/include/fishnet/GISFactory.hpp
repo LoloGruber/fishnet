@@ -28,6 +28,8 @@ public:
                 if(std::filesystem::exists(path))
                     return GISConverter::convert(GeoTiff(path));
                 else return Shapefile(path.parent_path() /path.stem().replace_extension(".shp"));
+            default:
+                break;
         }
         return std::unexpected("Unknown Error");
     }
