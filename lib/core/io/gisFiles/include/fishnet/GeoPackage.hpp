@@ -6,9 +6,9 @@ namespace fishnet {
  * @brief GeoPackage handle
  * 
  */
-class GeoPackage: public AbstractGISFile {
+class GeoPackage: public AbstractVectorFile {
 public:
-    GeoPackage(std::filesystem::path path):AbstractGISFile(path){
+    GeoPackage(std::filesystem::path path):AbstractVectorFile(path){
         if(not supports(path)){
             throw std::invalid_argument("Not a GeoPackage file: "+ path.string());
         }
