@@ -6,6 +6,7 @@
 #include <fishnet/GeometryTypeWKBAdapter.hpp>
 #include <fishnet/OGRFieldAdapter.hpp>
 #include <fishnet/OGRGeometryAdapter.hpp>
+#include <fishnet/OGRLayerAdapter.hpp>
 
 #include <gdal/ogr_spatialref.h>
 #include <gdal/gdal.h>
@@ -19,57 +20,6 @@ class ShapefileReader {
 private:
     constexpr static std::array<const char *, 1> DEFAULT_OPEN_OPTIONS = { "ADJUST_TYPE=YES"};
     std::vector<std::string> gdalOpenOptions;
-
-    /**
-     * @brief Adaptor function the add fishnet fields to the layer from a OGRFieldDefinition
-     * 
-     * @param fieldDef pointer to the OGRFieldDefinition
-     * @param id field ID for the FieldDefinition
-     */
-    static void addOGRField(VectorLayer<G> & layer,OGRFieldDefn * fieldDef,int id){
-        std::string fieldName = fieldDef->GetNameRef();
-        switch (fieldDef->GetType()){
-        case OFTReal:
-            layer.addDoubleField(fieldName,id);
-            break;
-        case OFTInteger:
-             layer.addIntegerField(fieldName,id);
-            break;
-        case OFTInteger64:
-             layer.addSizeField(fieldName,id);
-            break;
-        case OFTString:
-            layer.addTextField(fieldName,id);
-            break;
-        default:
-            break;
-        }
-    }
-
-    /**
-     * @brief Variant-Visitor to add attributes to features when reading a shapefile
-     * 
-     */
-    struct AddAttributeVisitor{
-        Feature<G> * feature;
-        OGRFeature * ogrFeature;
-
-        template<typename T>
-        bool operator()(FieldDefinition<T> const & fieldDef) {
-            if constexpr(std::same_as<T,int>)
-                return feature->addAttribute(fieldDef,ogrFeature->GetFieldAsInteger(fieldDef.getFieldID()));
-                
-            else if constexpr(std::integral<T>)
-                return feature->addAttribute(fieldDef,T(ogrFeature->GetFieldAsInteger64(fieldDef.getFieldID())));
-        
-            else if constexpr(std::floating_point<T>)
-                return feature->addAttribute(fieldDef,T(ogrFeature->GetFieldAsDouble(fieldDef.getFieldID())));
-            
-            else if constexpr(std::convertible_to<T,std::string>)
-                return feature->addAttribute(fieldDef,ogrFeature->GetFieldAsString(fieldDef.getFieldID()));
-        }
-    };
-
 public:
     using geometry_type = G;
     using file_type = Shapefile;
@@ -87,7 +37,6 @@ public:
     }
 
     util::Either<VectorLayer<G>,std::string> operator()(const Shapefile & shapefile) const {
-        VectorLayer<G> layer {};
         GDALInitializer::init();
         if(not shapefile.exists())
             return std::unexpected("Shapefile does not exists, could not read from File: \"" + shapefile.getPath().string() + "\"");
@@ -99,37 +48,7 @@ public:
         openOptionsVec.push_back(nullptr);
         const char** openOptions = openOptionsVec.data();
         auto * ds = (GDALDataset *) GDALOpenEx(shapefile.getPath().c_str(), GDAL_OF_VECTOR,nullptr, openOptions,nullptr);
-        OGRLayer * ogrLayer = ds->GetLayer(0);
-        OGRFeatureDefn * layerDef = ogrLayer->GetLayerDefn();
-        for(int i = 0; i < layerDef->GetFieldCount();i++) {
-            addOGRField(layer, layerDef->GetFieldDefn(i),i);
-        }
-        for(const auto & ogrFeature: ogrLayer){
-            auto geo = ogrFeature->GetGeometryRef();
-            if constexpr(G::type == fishnet::geometry::GeometryType::MULTIPOLYGON){
-                if(geo && wkbFlatten(geo->getGeometryType()) == GeometryTypeWKBAdapter::toWKB(G::polygon_type::type)) {
-                    auto converted = OGRGeometryAdapter::fromOGR<G::polygon_type::type>(*geo);
-                    if (not converted) 
-                        continue;
-                    Feature<G> f {{converted.value()}};
-                    for(const auto & [_,fieldDefinition]: layer.getFieldsMap()){
-                        std::visit(AddAttributeVisitor(&f,ogrFeature.get()),fieldDefinition);
-                    }
-                    layer.addFeature(std::move(f));
-                }                
-            }
-            if(geo && wkbFlatten(geo->getGeometryType()) == GeometryTypeWKBAdapter::toWKB(G::type)) {
-                auto converted = OGRGeometryAdapter::fromOGR<G::type>(*geo);
-                if (not converted) 
-                    continue;
-                Feature<G> f {converted.value()};
-                for(const auto & [_,fieldDefinition]: layer.getFieldsMap()){
-                    std::visit(AddAttributeVisitor(&f,ogrFeature.get()),fieldDefinition);
-                }
-                layer.addFeature(std::move(f));
-            }
-        }
-        layer.setSpatialReference(*ogrLayer->GetSpatialRef()->Clone());
+        auto layer = OGRLayerAdapter<G>::fromOGR(ds->GetLayer(0));
         GDALClose(ds);
         return layer;
     }
@@ -160,39 +79,41 @@ public:
         GDALDataset * outputDataset = driver->Create(output.getPath().c_str(),0,0,0,GDT_Unknown,0);
         const char * const options[] = {"SPATIAL_INDEX=YES",nullptr};
         OGRLayer * outputLayer = outputDataset->CreateLayer(output.getPath().c_str(),layer.getSpatialReference().Clone(),GeometryTypeWKBAdapter::toWKB(G::type),const_cast<char **>(options));
-        for(const auto & [fieldName,fieldDefinition] :  layer.getFieldsMap()) {
-            OGRFieldType fieldType;
-            // get OGRFieldType from FieldDefinition<T> type -> T
-            std::visit([&fieldType](auto && fieldVariant){
-                using T = typename  std::decay_t<decltype(fieldVariant)>::value_type;
-                fieldType = OGRFieldAdapter::fromTypeIndex(typeid(T));
-            },fieldDefinition);
-            auto fieldDefn = OGRFieldDefn(fieldName.c_str(),fieldType);
-            fieldDefn.SetPrecision(20);
-            outputLayer->CreateField(&fieldDefn); // add OGRFieldDefinition to output layer
-        }
-        for(const auto & f : layer.getFeatures()){
-            auto * feature = new OGRFeature(outputLayer->GetLayerDefn());
-            feature->SetGeometry(OGRGeometryAdapter::toOGR(f.getGeometry()).get());
+        // for(const auto & [fieldName,fieldDefinition] :  layer.getFieldsMap()) {
+        //     OGRFieldType fieldType;
+        //     // get OGRFieldType from FieldDefinition<T> type -> T
+        //     std::visit([&fieldType](auto && fieldVariant){
+        //         using T = typename  std::decay_t<decltype(fieldVariant)>::value_type;
+        //         fieldType = OGRFieldAdapter::fromTypeIndex(typeid(T));
+        //     },fieldDefinition);
+        //     auto fieldDefn = OGRFieldDefn(fieldName.c_str(),fieldType);
+        //     fieldDefn.SetPrecision(20);
+        //     outputLayer->CreateField(&fieldDefn); // add OGRFieldDefinition to output layer
+        // }
+        // for(const auto & f : layer.getFeatures()){
+        //     auto * feature = new OGRFeature(outputLayer->GetLayerDefn());
+        //     feature->SetGeometry(OGRGeometryAdapter::toOGR(f.getGeometry()).get());
 
-            for(const auto & [fieldName,fieldDefinition]: layer.getFieldsMap()){
-                // visitor to set attributes for OGRFeature
-                std::visit([&fieldName,&f,feature]( auto && var){
-                    auto optionalAttribute = f.getAttribute(var);
-                    if(optionalAttribute)
-                        OGRFieldAdapter::setFieldValue(feature, fieldName, optionalAttribute.value());
-                },fieldDefinition);
+        //     for(const auto & [fieldName,fieldDefinition]: layer.getFieldsMap()){
+        //         // visitor to set attributes for OGRFeature
+        //         std::visit([&fieldName,&f,feature]( auto && var){
+        //             auto optionalAttribute = f.getAttribute(var);
+        //             if(optionalAttribute)
+        //                 OGRFieldAdapter::setFieldValue(feature, fieldName, optionalAttribute.value());
+        //         },fieldDefinition);
 
-            }
-            OGRErr success = outputLayer->CreateFeature(feature);
-            if(success != 0){
-                std::cerr << "Could not write Geometry: "+f.getGeometry().toString() << std::endl;
-            }
-        }
+        //     }
+        //     OGRErr success = outputLayer->CreateFeature(feature);
+        //     if(success != 0){
+        //         std::cerr << "Could not write Geometry: "+f.getGeometry().toString() << std::endl;
+        //     }
+        // }
+        auto result = OGRLayerAdapter<G>::toOGR(layer,outputLayer);
         outputLayer->SyncToDisk();
         GDALClose(outputDataset);
-        // Shapefile destination {layer.getSpatialReference()};
-        // layer.writeToDisk(destination);
+        // return result.transform([&output](const auto & _) {
+        //     return output;
+        // });
         return output;
     }
 };
