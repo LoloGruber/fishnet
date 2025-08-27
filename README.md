@@ -1,5 +1,5 @@
 # Fishnet
-*Framework for Graph-Based Analysis of GIS data*  
+*Framework for Graph-Based Analysis of GIS Vector Data*  
 #### Table of Contents
 - [Workflows](#workflows)
     - [Settlement Delineation and Analysis (SDA)](#settlement-delineation-and-analysis-sda)
