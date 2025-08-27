@@ -44,7 +44,6 @@ private:
 
     friend class AbstractVectorFile;
     friend class AbstractRasterFile;
-    friend class GeoPackage;
 public:
     [[nodiscard]] const std::filesystem::path & getPath() const noexcept {
         return pathToFile;
