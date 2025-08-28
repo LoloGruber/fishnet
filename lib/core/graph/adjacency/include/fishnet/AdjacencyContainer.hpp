@@ -31,5 +31,6 @@ concept AdjacencyContainer= requires (C & container, const C & constContainer, N
     {constContainer.getAdjacencyPairs()} -> util::input_range_of<std::pair<const N,const N>>;
     typename C::hash_function;
     typename C::equality_predicate;
+    typename C::node_type;
 } ;
 }

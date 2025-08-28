@@ -40,6 +40,7 @@ public:
     };
     using equality_predicate = Equal;
     using hash_function = Hash;
+    using node_type = N;
 protected:
     std::unordered_map<size_t,N> keyToNodeMap;
     MemgraphClient client;

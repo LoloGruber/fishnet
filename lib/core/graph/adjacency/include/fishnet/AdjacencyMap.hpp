@@ -4,7 +4,6 @@
 #include <unordered_map>
 #include <fishnet/UtilConcepts.hpp>
 #include <algorithm>
-#include <fishnet/PairSet.hpp>
 
 namespace fishnet::graph{
 /**
@@ -24,7 +23,7 @@ private:
     const static inline Hash hash = Hash();
     const static inline NodeRange EMPTY = NodeRange(); // returning views::empty<N> would not compile with gcc 11.3 -> return view on empty node range
 public:
-
+    using node_type = N;
     using equality_predicate = Equal;
     using hash_function = Hash;
 

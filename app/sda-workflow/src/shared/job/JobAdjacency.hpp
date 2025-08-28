@@ -16,6 +16,7 @@ public:
     };
     using equality_predicate = std::equal_to<Job>;
     using hash_function = Hash;
+    using node_type = Job;
 private:
     MemgraphConnection dbConnection;
     friend JobDAGTest;
