@@ -12,7 +12,7 @@
     },
     "contraction-output-stem": "Contraction",
     "analysis-output-stem": "Analysis",
-    "memgraph-host": "memgraph",
+    "memgraph-host": "localhost",
     "memgraph-port": 7687,
     "unary-filters": [
         {

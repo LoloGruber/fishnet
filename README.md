@@ -19,15 +19,13 @@ Delineate urban clusters using a settlement graph and [edge contraction](https:/
 
 ![](doc/images/SDA_Workflow.png).
 ### Deployment
-To run the **Settlement Delineation and Analysis** workflow, the easiest way is to use [SettlementDelineationAnalysis.py](app/sda-workflow/SettlementDelineationAnalysis.py), which wraps the command line interface of the [main binary](app/sda-workflow/src/0_workflow/SettlementDelineation.cpp) and executes it in a container using [docker-compose](app/sda-workflow/compose.yaml) (which has to be installed in the deployment environment). 
+To run the **Settlement Delineation and Analysis** workflow, the easiest way is to use [SettlementDelineationAnalysis.py](app/sda-workflow/SettlementDelineationAnalysis.py), which wraps the command line interface of the [main binary](app/sda-workflow/src/0_workflow/SettlementDelineation.cpp) and executes it in a container using [docker](app/sda-workflow/Dockerfile) (which has to be installed in the deployment environment). 
 ```
 python3 SettlementDelineationAnalysis.py -i <input> -c <config>.json -o <output>.shp
 ``` 
 - **input**: Input GIS file (*GeoTIFF* | *Shapefile*) on settlement location (e.g. [WSF](https://geoservice.dlr.de/web/maps/eoc:wsf2019))
 - **config**: JSON file containing the config for the workflow run (e.g. [Example Config](app/sda-workflow/sda-docker.json) )
 - **output**: Path of output shapefile  
-
-The input, config, intermediate and final result files will be mounted on the host system, which is by default: **${HOME}/.fishnet/**.
 ### Development
 Alternatively the **SDA** workflow can be installed on the system using the [install](install.sh) script. Make sure that the install prefix location is referenced in *PATH* (e.g. *usr/local/bin*). 
 ```shell

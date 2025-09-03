@@ -5,33 +5,8 @@ import argparse
 import time
 import json
 
-SERVICE_NAME = "fishnet-sda"  # Adjust to your docker-compose service name
-MOUNT_LOCATION = "${HOME}/.fishnet"
-SDA_IMAGE = "logru/sda:latest"
-
-def build_compose_file(mount_location: str = MOUNT_LOCATION) -> str:
-    return f"""services:
-  memgraph:
-    image: memgraph/memgraph
-    container_name: memgraphDB
-    ports:
-      - "7687:7687"
-      - "7444:7444"
-    command: ["--log-level=TRACE","--query-execution-timeout-sec=0"]
-    volumes:
-      - memgraph-logs:/var/log/memgraph
- 
-  {SERVICE_NAME}:
-    image: {SDA_IMAGE}
-    depends_on:
-      - memgraph
-    container_name: sda-workflow
-    volumes:
-      - {mount_location}:/data
-      - {mount_location}/working-directory:/tmp/fishnet
-volumes:
-  memgraph-logs:
-    driver: local"""
+SDA_IMAGE = "logru/sda:1.2"
+CONTAINER_NAME = "SDAWorkflowContainer"
 
 class SettlementDelineationAnalysis:
     def __init__(self, config_file, input_file, output_file, observer_file= None):
@@ -39,18 +14,10 @@ class SettlementDelineationAnalysis:
         self.input_file = input_file
         self.output_file = output_file
         self.observer_file = observer_file
-        self.compose_file = self._write_compose_file()
         self._setup_paths_and_config()
-        self._start_memgraph()
 
     def __enter__(self):
         return self
-    
-    def _write_compose_file(self)->Path:
-        compose_file_path = Path(self.config_file).parent / "sda-compose.yaml"
-        with open(compose_file_path, "w") as f:
-            f.write(build_compose_file())
-        return compose_file_path
     
     def _setup_paths_and_config(self):
         # Ensure the config file has the correct executor attribute
@@ -64,27 +31,14 @@ class SettlementDelineationAnalysis:
         }
         if "executor" not in config_data or config_data["executor"] != expected_executor:
             config_data["executor"] = expected_executor
+            config_data["memgraph-host"] = "localhost"  # Ensure memgraph-host is set to localhost
+            config_data["memgraph-port"] = 7687  # Ensure memgraph-port is set to 7687
             with open(self.config_file, "w") as f:
                 json.dump(config_data, f, indent=4)
         # Ensure output and observer parent directories exist
         os.makedirs(os.path.dirname(self.output_file), exist_ok=True)
         if self.observer_file:
             os.makedirs(os.path.dirname(self.observer_file), exist_ok=True)
- 
-    
-    def _start_memgraph(self):
-        # Starts the Database first
-        try:
-            subprocess.run(
-            ["docker", "compose", "-f", self.compose_file, "up", "-d"],
-            check=True,
-            capture_output=True,
-            text=True
-            )
-            return True
-        except subprocess.CalledProcessError as e:
-            print(f"Error starting memgraph database service:\n", e.stdout, e.stderr)
-            return False
 
     def _mounts(self):
         """
@@ -100,27 +54,36 @@ class SettlementDelineationAnalysis:
         return mounts
 
     def _build_docker_run_command(self):
-        docker_command = [
-            "docker", "compose", "-f", self.compose_file, "run", "--rm"
+        docker_run_command = [
+            "docker", "run","--name", CONTAINER_NAME,"-d","--rm"
         ]
         for mount in self._mounts():
-            docker_command.extend(["-v", mount])
-        docker_command.append(SERVICE_NAME)
-        docker_command.extend([
+            docker_run_command.extend(["-v", mount])
+        docker_run_command.append(SDA_IMAGE)
+
+        return docker_run_command
+    
+    def _build_docker_sda_command(self):
+        docker_exec_command = [
+            "docker", "exec", CONTAINER_NAME
+        ]
+
+        docker_exec_command.extend([
             "SettlementDelineation",
             "-c", f"/data/cfg/{Path(self.config_file).name}",
             "-i", f"/data/input/{Path(self.input_file).name}",
             "--listener", f"/data/observer/{Path(self.observer_file).name}" if self.observer_file else "",
             "-o", f"/data/output/{Path(self.output_file).name}"
         ])
-        return docker_command
+        return docker_exec_command
     
     def run(self):
         print(f"Waiting for memgraph database to start...")
+        subprocess.run(self._build_docker_run_command(),capture_output=False)
         time.sleep(1)  # Wait for the database to be ready
         try:
             print("Running SettlementDelineationAnalysis Workflow...")
-            result = subprocess.run(self._build_docker_run_command(), check=True, capture_output=True, text=True)
+            result = subprocess.run(self._build_docker_sda_command(), check=True, capture_output=True, text=True)
             print(result.stdout)
             if result.stderr:
                 print("STDERR:", result.stderr)
@@ -136,15 +99,13 @@ class SettlementDelineationAnalysis:
         """
         try:
             subprocess.run(
-                ["docker", "compose", "-f", self.compose_file, "down"],
+                ["docker", "stop", CONTAINER_NAME],
                 check=True,
                 capture_output=True,
                 text=True
             )
-            if self.compose_file.exists():
-                self.compose_file.unlink()
         except subprocess.CalledProcessError as e:
-            print(f"Error stopping Docker Compose services:\n", e.stdout, e.stderr)
+            print(f"Error stopping Docker container:\n", e.stdout, e.stderr)
         
 def parse_args_to_workflow_object() -> SettlementDelineationAnalysis:
     parser = argparse.ArgumentParser(description="Run SettlementDelineationAnalysis Workflow in Docker Compose")
@@ -162,14 +123,14 @@ def parse_args_to_workflow_object() -> SettlementDelineationAnalysis:
 
 def get_debug_workflow() -> SettlementDelineationAnalysis:
     return SettlementDelineationAnalysis(
-        config_file="/home/lolo/Documents/fishnet/app/sda-workflow/sda-docker.json",
-        input_file="/home/lolo/Documents/fishnet/data/samples/Corvara_IT.tiff",
+        config_file="/home/lolo/Projects/fishnet/app/sda-workflow/sda-docker.json",
+        input_file="/home/lolo/Projects/fishnet/data/samples/Corvara_IT.tiff",
         output_file="/home/lolo/Desktop/SDA/Corvara_IT_SettlementDelineation.shp",
         observer_file="/home/lolo/Desktop/SDA/Corvara_IT_SettlementDelineation_Observer.json"
     )
 
 if __name__ == "__main__":
-    debug = False
+    debug = True
     workflow = get_debug_workflow() if debug else parse_args_to_workflow_object()
     with workflow as workflow:
         workflow.run()
