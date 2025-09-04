@@ -1,1 +1,0 @@
-../../../../prod/charliecloud/chImage.sh
