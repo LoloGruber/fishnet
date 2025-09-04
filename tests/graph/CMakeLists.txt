@@ -9,6 +9,7 @@ ContractionTest.cpp
 WeightedGraphTest.cpp
 EdgeTest.cpp
 DAGTest.cpp
+JSONAdjacencyTest.cpp
 )
 gtest_discover_tests(graphTest)
 add_executable(contractionPerformance ContractionPerformance.cpp)

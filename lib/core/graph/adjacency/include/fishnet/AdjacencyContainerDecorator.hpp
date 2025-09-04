@@ -12,12 +12,14 @@ namespace fishnet::graph{
  * @tparam AdjDelegate The type of the adjacency container to decorate.
  * @tparam N The type of the nodes in the graph.
  */
-template<class AdjDelegate, typename N> requires AdjacencyContainer<AdjDelegate,N>
+template<class AdjDelegate>
 class AdjacencyContainerDecorator{
 private:
+    using N = typename AdjDelegate::node_type;
+    static_assert(AdjacencyContainer<AdjDelegate,N>, "AdjDelegate must be an AdjacencyContainer");
     AdjDelegate delegate;
 public:
-    AdjacencyContainerDecorator(AdjDelegate delegate): delegate(std::move(delegate)) {}
+    AdjacencyContainerDecorator(const AdjDelegate & delegate): delegate(delegate) {}
 
     AdjacencyContainerDecorator(AdjDelegate && delegate) : delegate(std::move(delegate)) {}
 
