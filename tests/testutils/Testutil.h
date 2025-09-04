@@ -8,6 +8,7 @@
 #include <ranges>
 #include <fishnet/CollectionConcepts.hpp>
 #include <fishnet/NumericConcepts.hpp>
+#include <fishnet/Printable.hpp>
 namespace testutil{
 
 static void TODO() {
@@ -177,22 +178,32 @@ void EXPECT_CONTAINS_ALL( std::ranges::view auto  view, std::ranges::range auto 
 }
 
 template<typename T>
-concept supportsIOAppend = requires(const T & t, std::ostream & os){
-    {os << t} -> std::convertible_to<std::ostream>;
-};
+struct is_std_pair : std::false_type {};
+
+template<typename F, typename S>
+struct is_std_pair<std::pair<F, S>> : std::true_type {};
+
+template<typename T>
+constexpr bool is_std_pair_v = is_std_pair<T>::value;
 
 void EXPECT_UNSORTED_RANGE_EQ(std::ranges::forward_range auto const & actual, std::ranges::forward_range auto const & expected) {
     if(fishnet::util::size(actual) != fishnet::util::size(expected)){
         FAIL() << "Ranges have a different size!"<<"\nExpecting: "<<fishnet::util::size(expected)<<" but was: " << fishnet::util::size(actual);
         return;
     }
+    using T = std::remove_cvref_t<decltype(*std::ranges::begin(expected))>;
     for(const auto & expectedElement : expected){
-        if constexpr (supportsIOAppend<decltype(expectedElement)>){
-            EXPECT_NE(std::ranges::find(actual,expectedElement),std::ranges::end(actual)) <<"Actual does not contain " << expectedElement;
-        }
-        else {
-            EXPECT_NE(std::ranges::find(actual, expectedElement), std::ranges::end(actual))
-                                << "Actual does not contain expected element";
+        bool containsExpectedElement = std::ranges::find(actual, expectedElement) != std::ranges::end(actual);
+        if constexpr (fishnet::util::Printable<T>){
+            EXPECT_TRUE(containsExpectedElement) <<"Actual does not contain " << expectedElement.toString();
+        }else if constexpr (is_std_pair_v<T>){
+            if constexpr (fishnet::util::Printable<typename T::first_type> && fishnet::util::Printable<typename T::second_type>) {
+                EXPECT_TRUE(containsExpectedElement) <<"Actual does not contain " << "{" <<expectedElement.first.toString() << ", " << expectedElement.second.toString() << "}";
+            } else {
+                EXPECT_TRUE(containsExpectedElement) << "Actual does not contain expected pair";
+            }
+        } else {
+            EXPECT_TRUE(containsExpectedElement) << "Actual does not contain expected element";
         }
     }
 }
