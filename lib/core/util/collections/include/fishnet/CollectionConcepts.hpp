@@ -2,6 +2,7 @@
 #include <ranges>
 #include <concepts>
 #include <algorithm>
+#include <vector>
 namespace fishnet::util{
 /**
  * @brief Metaprogramming Helper which checks whether a concept is satisfied
@@ -57,4 +58,13 @@ constexpr size_t size(std::ranges::range auto && range) noexcept{
 constexpr inline bool isEmpty(std::ranges::range auto && range) noexcept {
     return size(range) == 0;
 }
+
+template<std::ranges::range R>
+constexpr auto toVector(R&& range) {
+    std::vector<std::ranges::range_value_t<R>> vec;
+    for (auto&& elem : range) {
+        vec.push_back(std::forward<decltype(elem)>(elem));
+    }
+    return vec;
 }
+} // fishnet::util
