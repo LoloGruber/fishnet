@@ -76,7 +76,7 @@ private:
         }
         std::ofstream file(filePath);
         if(file.is_open()){
-            file << j.dump(4);
+            file << j.dump();
             file.close();
         }
     }
