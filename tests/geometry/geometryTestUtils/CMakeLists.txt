@@ -1,4 +1,4 @@
-add_library(geometryTestUtils STATIC 
+add_library(geometryTestUtils OBJECT 
 ShapeSamples.cpp
 )
 
