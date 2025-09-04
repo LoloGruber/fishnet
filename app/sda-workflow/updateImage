@@ -1,5 +1,7 @@
 #!/bin/bash
-VERSION=1.0
+VERSION=1.2
 docker build -t logru/sda:${VERSION} .
+docker build -t logru/sda:latest .
 docker login
 docker push logru/sda:${VERSION}
+docker push logru/sda:latest

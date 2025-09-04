@@ -23,4 +23,4 @@ RUN wget -O memgraph.deb https://download.memgraph.com/memgraph/v3.1.1/ubuntu-24
 RUN dpkg -i memgraph.deb
 RUN rm memgraph.deb
 WORKDIR /data/working
-CMD [ "su", "memgraph" , "-c", "/usr/lib/memgraph/memgraph" ]
+CMD [ "su", "memgraph" , "-c", "/usr/lib/memgraph/memgraph --query-execution-timeout-sec=0 --storage-mode=IN_MEMORY_ANALYTICAL" ]
