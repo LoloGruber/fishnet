@@ -54,7 +54,7 @@ def config_template() -> dict:
         "visualize-edges": True
     }
 
-configFileRelativePath = "prod/local/sda-workflow-local.json"
+configFileRelativePath = "app/sda-workflow/prod/local/sda-workflow-local.json"
 cwlRelativePath = "cwl/sda"
 
 def get_project_directory() -> str:

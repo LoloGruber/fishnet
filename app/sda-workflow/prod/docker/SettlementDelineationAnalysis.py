@@ -123,7 +123,7 @@ def parse_args_to_workflow_object() -> SettlementDelineationAnalysis:
 
 def get_debug_workflow() -> SettlementDelineationAnalysis:
     return SettlementDelineationAnalysis(
-        config_file="/home/lolo/Projects/fishnet/app/sda-workflow/sda-docker.json",
+        config_file="/home/lolo/Projects/fishnet/app/sda-workflow/prod/sda-docker.json",
         input_file="/home/lolo/Projects/fishnet/data/samples/Corvara_IT.tiff",
         output_file="/home/lolo/Desktop/SDA/Corvara_IT_SettlementDelineation.shp",
         observer_file="/home/lolo/Desktop/SDA/Corvara_IT_SettlementDelineation_Observer.json"

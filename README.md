@@ -37,7 +37,7 @@ sudo apt-get install cwltool
 ```
 Furthermore, a running instance of the **Memgraph** database joined with the **Memgraph Lab** web interface can be obtained using docker compose:
 ```shell
-cd prod/local
+cd prod/database
 docker compose up -d
 ```
 The workflow can then be executed as follows:

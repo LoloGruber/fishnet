@@ -4,7 +4,7 @@ import shutil
 from pathlib import Path
 import runpy
 
-configFileRelativePath = "prod/local/sda-workflow-local.json"
+configFileRelativePath = "app/sda-workflow/prod/local/sda-workflow-local.json"
 WORKING_DIR_NAME = "workingDir"
 
 def get_project_directory() -> str:
