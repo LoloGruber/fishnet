@@ -2,6 +2,7 @@
 #define TEST_XYNode_H
 #include <functional>
 #include <math.h>
+#include <fishnet/Printable.hpp>
 class XYNode
 {
 private:
@@ -9,7 +10,6 @@ private:
     double y;
 public:
     XYNode(double x, double y):x(x),y(y){};
-    ~XYNode()= default;
 
     bool operator==(const XYNode & other) const {
         return this->x == other.x and this->y == other.y;
@@ -29,7 +29,12 @@ public:
         return sqrt(deltaX*deltaX + deltaY*deltaY);
     }
 
+    std::string toString() const {
+        return "("+std::to_string(this->x)+","+std::to_string(this->y)+")";
+    }
 };
+
+static_assert(fishnet::util::Printable<XYNode>, "XYNode should be printable");
 
 namespace std{
     template<>
@@ -41,8 +46,4 @@ namespace std{
         }
     };
 }
-
-
-
-
 #endif
