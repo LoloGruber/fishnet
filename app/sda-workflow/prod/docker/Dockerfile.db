@@ -1,0 +1,9 @@
+# Setup Memgraph
+FROM logru/sda-no-db:latest AS deployment
+RUN apt-get update && apt-get install -y wget adduser
+WORKDIR /tmp
+RUN wget -O memgraph.deb https://download.memgraph.com/memgraph/v3.1.1/ubuntu-24.04/memgraph_3.1.1-1_amd64.deb
+RUN dpkg -i memgraph.deb
+RUN rm memgraph.deb
+WORKDIR /data/working
+CMD [ "su", "memgraph" , "-c", "/usr/lib/memgraph/memgraph --query-execution-timeout-sec=0 --storage-mode=IN_MEMORY_ANALYTICAL" ]

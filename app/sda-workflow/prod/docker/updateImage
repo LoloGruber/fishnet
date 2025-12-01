@@ -1,7 +1,9 @@
 #!/bin/bash
-VERSION=1.2
-docker build -t logru/sda:${VERSION} .
-docker build -t logru/sda:latest .
+VERSION=1.2.1
+docker build -f Dockerfile.base  -t logru/sda-no-db:${VERSION} -t logru/sda-no-db:latest .
+docker build -f Dockerfile.db -t logru/sda:${VERSION} -t logru/sda:latest .
 docker login
+docker push logru/sda-no-db:${VERSION}
+docker push logru/sda-no-db:latest
 docker push logru/sda:${VERSION}
 docker push logru/sda:latest

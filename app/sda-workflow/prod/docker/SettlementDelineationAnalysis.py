@@ -5,7 +5,7 @@ import argparse
 import time
 import json
 
-SDA_IMAGE = "logru/sda:1.2"
+SDA_IMAGE = "logru/sda:1.2.1"
 CONTAINER_NAME = "SDAWorkflowContainer"
 
 class SettlementDelineationAnalysis:
@@ -123,14 +123,14 @@ def parse_args_to_workflow_object() -> SettlementDelineationAnalysis:
 
 def get_debug_workflow() -> SettlementDelineationAnalysis:
     return SettlementDelineationAnalysis(
-        config_file="/home/lolo/Projects/fishnet/app/sda-workflow/prod/sda-docker.json",
+        config_file="/home/lolo/Projects/fishnet/app/sda-workflow/prod/docker/sda-docker.json",
         input_file="/home/lolo/Projects/fishnet/data/samples/Corvara_IT.tiff",
         output_file="/home/lolo/Desktop/SDA/Corvara_IT_SettlementDelineation.shp",
         observer_file="/home/lolo/Desktop/SDA/Corvara_IT_SettlementDelineation_Observer.json"
     )
 
 if __name__ == "__main__":
-    debug = True
+    debug = False
     workflow = get_debug_workflow() if debug else parse_args_to_workflow_object()
     with workflow as workflow:
         workflow.run()
