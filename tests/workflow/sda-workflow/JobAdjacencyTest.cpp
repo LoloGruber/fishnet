@@ -2,16 +2,16 @@
 #include "Testutil.h"
 #include "JobAdjacency.hpp"
 #include <fishnet/Graph.hpp>
+#include "../WorkflowTestEnvironment.hpp"
 
 using namespace fishnet::graph;
 using namespace testutil;
 
-using DAGType = decltype(GraphFactory::DAG<Job>(JobAdjacency(MemgraphConnection::create("host",0).value())));
+using DAGType = decltype(GraphFactory::DAG<Job>(JobAdjacency(MemgraphConnection::create({}).value())));
 
 class JobAdjacencyTest: public ::testing::Test{
 protected:
     void SetUp() override {
-        jobAdj = std::move(MemgraphConnection::create(hostname,port).transform([](auto && connection){return JobAdjacency(std::move(connection));}));
         if(not jobAdj){
             throw std::runtime_error(jobAdj.error());
         }
@@ -29,9 +29,8 @@ protected:
             jobAdj->clear();
         }
     }
-    u_int16_t port = 7687;
-    std::string hostname = "localhost";
-    std::expected<JobAdjacency,std::string> jobAdj = std::unexpected("Not initialized yet"); 
+    static inline mg::Client::Params params = WorkflowTestEnvironment::memgraphParams();
+    static inline std::expected<JobAdjacency,std::string> jobAdj = MemgraphConnection::create(params).transform([](auto && connection){return JobAdjacency(std::move(connection));}); 
     Job filterJob {1,"filter.json",JobType::FILTER,JobState::RUNNABLE};
     Job secondFilterJob {2,"otherFilter.json",JobType::FILTER,JobState::RUNNABLE};
     Job neighboursJob {3,"neighbours.json",JobType::NEIGHBOURS,JobState::RUNNABLE};
@@ -40,7 +39,7 @@ protected:
 };
 
 TEST_F(JobAdjacencyTest, initDAG){
-    EXPECT_NO_FATAL_FAILURE(auto g= GraphFactory::DAG<Job>(JobAdjacency(MemgraphConnection::create(hostname,port).value())));
+    EXPECT_NO_FATAL_FAILURE(auto g= GraphFactory::DAG<Job>(JobAdjacency(MemgraphConnection::create(params).value())));
 }
 
 TEST_F(JobAdjacencyTest, addNode){

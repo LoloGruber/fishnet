@@ -3,6 +3,8 @@
 #include <fishnet/MemgraphAdjacency.hpp>
 #include <fishnet/CachingMemgraphAdjacency.hpp>
 #include <fishnet/GraphFactory.hpp>
+#include "WorkflowTestEnvironment.hpp"
+
 using namespace testutil;
 using namespace fishnet::graph;
 
@@ -34,11 +36,10 @@ RETURN n,r,f,n2,n1,a
 class MemgraphTest: public ::testing::Test {
 protected:
     void SetUp() override {
-        mgAdj = MemgraphConnection::create(hostname,port).transform([](auto && connection){return CachingMemgraphAdjacency<ExampleNode>(MemgraphClient(std::move(connection)));});
+        // mgAdj = MemgraphConnection::create(params).transform([](auto && connection){return CachingMemgraphAdjacency<ExampleNode>(MemgraphClient(std::move(connection)));});
         if(not mgAdj) {
             throw std::runtime_error(mgAdj.error());
         }
-        
         auto optFileRef = mgAdj->getDatabaseConnection().addFileReference("test.shp");
         if(optFileRef){
             fileRef = optFileRef.value();
@@ -47,18 +48,20 @@ protected:
     }
 
     void TearDown() override {
-        if(mgAdj)
+        if(mgAdj) {
+            mgAdj->clear();
             mgAdj->getDatabaseConnection().clearAll();
+        }
     }
 
-    u_int16_t port = 7687;
-    std::string hostname = "localhost";
-    std::expected<CachingMemgraphAdjacency<ExampleNode>,std::string> mgAdj = std::unexpected("Not initialized yet");
+    static inline mg::Client::Params params = WorkflowTestEnvironment::memgraphParams();
+    static inline std::expected<CachingMemgraphAdjacency<ExampleNode>,std::string> mgAdj = MemgraphConnection::create(params)
+        .transform([](auto && connection){return CachingMemgraphAdjacency<ExampleNode>(MemgraphClient(std::move(connection)));});
     FileReference fileRef;
 };
 
 TEST_F(MemgraphTest, create) {
-    auto invalidParamsClient = MemgraphConnection::create("invalidhost",1234);
+    auto invalidParamsClient = MemgraphConnection::create({.host="invalidhost", .port=1234});
     EXPECT_EMPTY(invalidParamsClient);
     EXPECT_VALUE(mgAdj);
 }
@@ -264,9 +267,7 @@ TEST_F(MemgraphTest, clear) {
 }
 
 TEST_F(MemgraphTest, undirectedGraph){
-    u_int16_t port = 7687;
-    std::string hostname = "localhost";
-    std::expected<MemgraphAdjacency<ExampleNode>,std::string> mgAdj = MemgraphConnection::create(hostname,port).transform([](auto && c){return MemgraphAdjacency<ExampleNode>(MemgraphClient(std::move(c)));});
+    std::expected<MemgraphAdjacency<ExampleNode>,std::string> mgAdj = MemgraphConnection::create(params).transform([](auto && c){return MemgraphAdjacency<ExampleNode>(MemgraphClient(std::move(c)));});
     auto g = fishnet::graph::GraphFactory::UndirectedGraph<ExampleNode>(std::move(mgAdj.value()));
     ExampleNode n1 {1,fileRef};
     ExampleNode n2 {2,fileRef};

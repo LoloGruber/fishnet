@@ -1,6 +1,6 @@
 add_subdirectory(sda-workflow)
 add_executable(workflowTest
-MemgraphAdjacencyTest.cpp
+MemgraphTest.cpp
 PolygonDistanceTest.cpp
 CipherQueryTest.cpp
 )

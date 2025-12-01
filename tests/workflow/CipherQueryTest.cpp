@@ -2,26 +2,20 @@
 #include <fishnet/CipherQuery.hpp>
 #include <fishnet/MemgraphModel.hpp>
 #include "Testutil.h"
+#include "WorkflowTestEnvironment.hpp"
 
 using namespace testutil;
 
 class CipherQueryTest: public ::testing::Test {
 protected:
-    void SetUp() override {
-        auto connectionExp = MemgraphConnection::create(hostname,port);
-        if(not connectionExp) {
-            throw std::runtime_error(connectionExp.error());
-        }
-        connection = std::move(connectionExp.value());
+    static void SetUpTestSuite(){
+        connection = MemgraphConnection::create(WorkflowTestEnvironment::memgraphParams()).value_or_throw();
     }
 
     void TearDown() override {
         connection.executeAndDiscard(CipherQuery::DELETE_ALL());
     }
-
-    u_int16_t port = 7687;
-    std::string hostname = "localhost";
-    MemgraphConnection connection;
+    static inline MemgraphConnection connection;
 };
 
 TEST_F(CipherQueryTest, init){
