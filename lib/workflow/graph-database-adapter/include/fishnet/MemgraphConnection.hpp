@@ -117,6 +117,8 @@ public:
             connectionError << "Could not connect to memgraph database." << std::endl;
             connectionError << "\tHost: " <<params.host << std::endl;
             connectionError << "\tPort: " << std::to_string(params.port) << std::endl;
+            connectionError << "\tUsername: " << params.username << std::endl;
+            connectionError << "\tPassword: " << params.password << std::endl;
             return std::unexpected(connectionError.str());
         }
         return fishnet::util::Either<MemgraphConnection,std::string>(MemgraphConnection(std::move(clientPtr),params));
@@ -143,21 +145,6 @@ public:
             }
         }
         return eitherConnection;
-    }
-
-        /**
-     * @brief Factory Method to create a Memgraph client from hostname and port
-     * 
-     * @param hostname (e.g. localhost)
-     * @param port (e.g. 7687)
-     * @return std::expected<MemgraphClient,std::string>: Containing the MemgraphClient on success or a string explaining the error
-     */
-    static fishnet::util::Either<MemgraphConnection ,std::string> create(std::string hostname, uint16_t port) {
-        mg::Client::Params params;
-        params.host = hostname;
-        params.port = port;
-        params.use_ssl = false;
-        return create(params);
     }
 
     const MemgraphConnection & retry() const {

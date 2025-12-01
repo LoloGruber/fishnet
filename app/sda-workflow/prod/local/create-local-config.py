@@ -41,6 +41,8 @@ def config_template() -> dict:
         "maxNeighbours": 5,
         "memgraph-host": "localhost",
         "memgraph-port": 7687,
+        "memgraph-user": "",
+        "memgraph-password": "",
         "merge-workers": 2,
         "neighbouring-files-predicate": "WSF",
         "neighbouring-predicates": [],
