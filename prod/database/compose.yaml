@@ -8,7 +8,9 @@ services:
     command: ["--log-level=TRACE","--query-execution-timeout-sec=0","--storage-mode=IN_MEMORY_ANALYTICAL", "--memory-limit=20000"]
     volumes:
       - memgraph-logs:/var/log/memgraph
- 
+    # environment:
+    #   - MEMGRAPH_USER=user
+    #   - MEMGRAPH_PASSWORD=password
   lab:
     image: memgraph/lab:latest
     container_name: memgraph-lab
@@ -22,4 +24,3 @@ services:
 volumes:
   memgraph-logs:
     driver: local
-  
