@@ -35,11 +35,15 @@ RETURN n,r,f,n2,n1,a
 
 class MemgraphTest: public ::testing::Test {
 protected:
-    void SetUp() override {
-        // mgAdj = MemgraphConnection::create(params).transform([](auto && connection){return CachingMemgraphAdjacency<ExampleNode>(MemgraphClient(std::move(connection)));});
+    static void SetUpTestSuite() {
+        mgAdj = MemgraphConnection::create(params)
+            .transform([](auto && connection){return CachingMemgraphAdjacency<ExampleNode>(MemgraphClient(std::move(connection)));});
         if(not mgAdj) {
             throw std::runtime_error(mgAdj.error());
         }
+    }
+
+    void SetUp() override {
         auto optFileRef = mgAdj->getDatabaseConnection().addFileReference("test.shp");
         if(optFileRef){
             fileRef = optFileRef.value();
@@ -55,8 +59,7 @@ protected:
     }
 
     static inline mg::Client::Params params = WorkflowTestEnvironment::memgraphParams();
-    static inline std::expected<CachingMemgraphAdjacency<ExampleNode>,std::string> mgAdj = MemgraphConnection::create(params)
-        .transform([](auto && connection){return CachingMemgraphAdjacency<ExampleNode>(MemgraphClient(std::move(connection)));});
+    static inline std::expected<CachingMemgraphAdjacency<ExampleNode>,std::string> mgAdj = std::unexpected("Not initialized");
     FileReference fileRef;
 };
 
