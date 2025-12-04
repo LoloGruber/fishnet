@@ -12,6 +12,7 @@ stages:
   - test
 build:
   stage: build
+  tags: [secloud]
   before_script:
     - apt update && apt -y install cmake libgdal-dev
   script:
@@ -25,6 +26,7 @@ build:
     expire_in: 1 hour
 test:
   stage: test
+  tags: [secloud]
   dependencies:
     - build
   before_script:
