@@ -91,8 +91,7 @@ struct Identity{
 };
 
 struct NOOP{
-    template<typename T>
-    constexpr void inline operator()(const T & t)const noexcept {
+    constexpr void inline operator()(const auto & t)const noexcept {
         return;
     }
 };
