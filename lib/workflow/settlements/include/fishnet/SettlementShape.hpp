@@ -3,6 +3,7 @@
 #include <fishnet/MemgraphAdjacency.hpp>
 #include <fishnet/GISFile.hpp>
 #include <fishnet/VectorIO.hpp>
+#include <fishnet/Task.hpp>
 
 /**
  * @brief Settlement Object, which fulfills the requirements of a Polygon and for a Node stored in the Memgraph DB.
@@ -25,32 +26,35 @@ public:
         return fileRef;
     }
 
+    auto geometry() const noexcept {
+        return static_cast<S>(*this);
+    }
+
     bool operator==(const SettlementShape<S> & other) const noexcept {
         return this->key() == other.key();
     }
 
-    static std::vector<SettlementShape<S>> load(
-        fishnet::util::range_of<fishnet::AbstractVectorFile> auto const & files,
-        std::convertible_to<MemgraphAdjacency<SettlementShape<S>>> auto & adj
-        fishnet::util::Consumer<fishnet::VectorLayer<S>> auto && onRead = fishnet::util::NOOP{}
+    template<fishnet::VectorGISFile F,fishnet::util::Predicate<S> Filter = fishnet::util::TruePredicate>
+    static std::vector<SettlementShape<S>> read(
+        fishnet::util::range_of<F> auto const & files,
+        fishnet::VectorLayerReader<F,S> auto && reader,
+        fishnet::util::UnaryFunction<F,FileReference> auto &&  fileRefMapper,
+        const Filter & filter  = fishnet::util::TruePredicate {},
+        const std::string & idLayerName = Task::FISHNET_ID_FIELD
     ){
-        std::vector<SettlementPolygon<P>> polygons;
-        std::vector<std::string> inputStrings;
-        std::ranges::for_each(this->inputs,[&inputStrings](auto const & file){inputStrings.push_back(file.getPath().filename().string());});
-        this->desc["inputs"]=inputStrings;
-        for(const auto & shp : inputs) {
-            auto layer = fishnet::VectorIO::read<P>(shp);
+        std::vector<SettlementShape<S>> settlements;
+        OGRSpatialReference spatialRef;
+        static_assert(fishnet::VectorGISFile<std::ranges::range_value_t<decltype(files)>>, "Files must be VectorGISFiles");
+        for(const auto & shp : files) {
+            auto layer = reader(shp).value_or_throw();
+            if(layer.isEmpty())
+                continue;
             if(spatialRef.IsEmpty())
                 spatialRef = layer.getSpatialReference();
             if(not spatialRef.IsSame(&layer.getSpatialReference()))
                 throw std::runtime_error("Spatial reference of files do not match!\nExpecting: "+std::string(spatialRef.GetName())+"\nActual: "+layer.getSpatialReference().GetName());
-            if(layer.isEmpty())
-                continue;
-            auto fileRef = adj.getDatabaseConnection().addFileReference(shp.getPath());
-            if(not fileRef){
-                throw std::runtime_error("Could not read file reference for shp file:\n"+shp.getPath().string());
-            }
-            auto optFishnetIdField = layer.getSizeField(Task::FISHNET_ID_FIELD);
+            FileReference fileRef = fileRefMapper(shp);
+            auto optFishnetIdField = layer.getSizeField(idLayerName);
             if(not optFishnetIdField) {
                 throw std::runtime_error("Could not find FISHNET_ID field in shp file: \n"+shp.getPath().string());
             }
@@ -59,12 +63,20 @@ public:
                 if(not optId){
                     throw std::runtime_error("No id exists for feature with geometry:\n"+ feature.getGeometry().toString());
                 }
-                polygons.emplace_back(optId.value(),fileRef.value(),std::move(feature.getGeometry()));
+                if(filter(feature.getGeometry()))
+                    settlements.emplace_back(optId.value(),fileRef,std::move(feature.getGeometry()));
             }   
         }
-        if(not adj.loadNodes(polygons,components)){
-            throw std::runtime_error("Could not load nodes from components");
-        }
-        return polygons;        
+        return settlements;        
     }
 };
+
+
+namespace std {
+    template<fishnet::geometry::Shape S>
+    struct hash<SettlementShape<S>> {
+        size_t operator()(const SettlementShape<S> & settlement) const noexcept {
+            return std::hash<size_t>()(settlement.key());
+        }
+    };
+}
