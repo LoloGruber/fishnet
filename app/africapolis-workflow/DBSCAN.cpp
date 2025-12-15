@@ -11,7 +11,6 @@ private:
     double eps;
     size_t minPts;
 
-
     template<fishnet::graph::Graph GraphType>
     void expandCluster(const GraphType & graph, 
                     const typename GraphType::node_type & point,
@@ -72,9 +71,20 @@ public:
             expandCluster(graph, node, neighbors, clusterID, labels);
             clusterID++;
         }
-        int outputSize = clusterID +1;
+        auto vals = labels | std::views::values;
+        auto maxLabel = std::ranges::max_element(vals);
+        if(maxLabel == vals.end()){
+            return ClusterResult<G>{};
+        }
+        if(*maxLabel == -1){
+            ClusterResult<G> result;
+            for(auto && pair : labels) {
+                result.noise.push_back(std::move(pair.first));
+            }
+            return result;
+        }
         ClusterResult<G> result;
-        result.clusters.resize(outputSize);
+        result.clusters.resize(*maxLabel + 1);
         for (auto && pair : labels) {
             if(pair.second == -1){
                 result.noise.push_back(std::move(pair.first));
@@ -116,6 +126,7 @@ int main(int argc, char *argv[]){
     std::vector<std::string> inputfiles;
     std::vector<ComponentReference> components;
     std::string configfile;
+    std::string outputStem;
     double eps;
     int minPts;
     app.add_option("-i,--inputs",inputfiles,"Input Shapefiles storing the polygons with id for clustering")->required()->each([](const std::string & str){
@@ -138,6 +149,7 @@ int main(int argc, char *argv[]){
     });
     app.add_option("-e,--eps", eps, "Epsilon distance")->required();
     app.add_option("-m,--minPts", minPts, "Minimum points to form a cluster")->required();
+    app.add_option("--outputStem", outputStem, "Output filename stem for storing the clustered shapefile");
     CLI11_PARSE(app, argc, argv);   
     using ShapeType = fishnet::geometry::Polygon<double>;
     using SettlementType = SettlementShape<ShapeType>;
@@ -174,14 +186,14 @@ int main(int argc, char *argv[]){
         auto settlementMultiPolygon = mergeFunction(cluster);
         auto id = settlementMultiPolygon.key();
         fishnet::Feature<OutputShapeType> feature(settlementMultiPolygon.geometry());
-        feature.setAttribute(idField, id);
+        feature.setAttribute(idField, size_t(id));
         outputLayer.addFeature(std::move(feature));
     }
     for(auto && noise : result.noise){
         fishnet::Feature<OutputShapeType> feature(OutputShapeType(noise.geometry()));
-        feature.setAttribute(idField, size_t(0));
+        feature.setAttribute(idField, size_t(9999999999999));
         outputLayer.addFeature(std::move(feature));
     }
-    fishnet::VectorIO::overwrite(outputLayer, fishnet::Shapefile("dbscan_output.shp"));
+    fishnet::VectorIO::overwrite(outputLayer, fishnet::Shapefile(outputStem + ".shp"));
     return 0;
 }
