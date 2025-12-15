@@ -2,12 +2,12 @@
     "gisInput":{
         "file":{
             "class": "File",
-            "path": "/home/lolo/Documents/fishnet/data/samples/Corvara_IT.tiff"
+            "path": "/home/lolo/Projects/fishnet/data/samples/Corvara_IT.tiff"
         }
     },
     "config":{
         "class":"File",
-        "path": "/home/lolo/Documents/fishnet/cwl/africapolis/africapolis-config.json"
+        "path": "/home/lolo/Projects/fishnet/cwl/africapolis/africapolis-config.json"
     },
     "partitions": 3
 }
