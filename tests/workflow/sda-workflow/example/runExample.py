@@ -93,7 +93,7 @@ def createAnalysisExample(project_dir:Path,working_dir: Path)->str:
 def writeJSONFile(content:str, filename: str):
     if not filename.endswith(".json"):
         filename += ".json"
-    filename = "jobs/"+filename
+    filename = Path(__file__).parent / Path("jobs") / filename
     with open(filename,"w") as f:
         f.write(content)
 

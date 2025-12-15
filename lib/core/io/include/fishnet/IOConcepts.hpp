@@ -15,8 +15,8 @@ namespace fishnet {
  */
 template<typename R, typename F=R::file_type, typename G=R::geometry_type>
 concept VectorLayerReader = util::UnaryFunction<R,F,util::Either<VectorLayer<G>,std::string>> && VectorGISFile<F> && requires(){
-    typename R::geometry_type;
-    typename R::file_type;
+    typename std::remove_cvref_t<R>::geometry_type;
+    typename std::remove_cvref_t<R>::file_type;
 };
 
 template<typename W, typename G, typename F>

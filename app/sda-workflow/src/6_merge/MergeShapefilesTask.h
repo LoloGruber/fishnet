@@ -3,7 +3,6 @@
 #include <fishnet/VectorIO.hpp>
 #include <fishnet/GeometryObject.hpp>
 #include <fishnet/Task.hpp>
-#include "SettlementPolygon.hpp"
 
 template<fishnet::geometry::Shape ShapeType>
 class MergeShapefilesTask: public Task {

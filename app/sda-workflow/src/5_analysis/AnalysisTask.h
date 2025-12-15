@@ -8,7 +8,7 @@
 #include <fishnet/CachingMemgraphAdjacency.hpp>
 #include "AnalysisConfig.cpp"
 #include "CentralityMeasureJsonReader.hpp"
-#include "SettlementPolygon.hpp"
+#include <fishnet/SettlementShape.hpp>
 #include "EdgeVisualizer.hpp"
 
 /**
@@ -27,7 +27,7 @@ private:
     fishnet::Shapefile outputFile;
 
 public:
-    using NodeType = SettlementPolygon<ShapeType>;
+    using NodeType = SettlementShape<ShapeType>;
 
     AnalysisTask(AnalysisConfig && config, fishnet::Shapefile inputFile, fishnet::Shapefile outputFile,size_t workflowID):Task(workflowID),config(std::move(config)),inputFile(std::move(inputFile)),outputFile(std::move(outputFile)){
         this->desc["type"]="ANALYSIS";
@@ -41,7 +41,7 @@ public:
      * @param adj memgraph adjacency instance to load the file reference for the input file
      * @param ref IN_OUT spatial reference used for the ouput shapefile, set according to input spatial reference
      * @throws runtime_error when the file reference for the inputs could not be loaded or the id of a settlement could not be read
-     * @return fishnet::util::forward_range_of<SettlementPolygon<P>> list of settlements
+     * @return fishnet::util::forward_range_of<SettlementShape<P>> list of settlements
      */
     std::vector<NodeType> readInput(const CachingMemgraphAdjacency<NodeType> & adj ,OGRSpatialReference & ref) const  {
         std::vector<NodeType> settlements;
@@ -86,7 +86,7 @@ public:
     }
 
     void run() override {
-        auto memgraphAdj = CachingMemgraphAdjacency<NodeType>(MemgraphClient(MemgraphConnection::create(config.params,workflowID).value_or_throw()));
+        auto memgraphAdj = CachingMemgraphAdjacency<NodeType>(MemgraphConnection::create(config.params,workflowID).value_or_throw());
         OGRSpatialReference outputRef; // used for the ouput shapefile
         auto settlements = readInput(memgraphAdj,outputRef);
         if(settlements.empty()){

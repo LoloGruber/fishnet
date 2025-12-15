@@ -62,7 +62,7 @@ protected:
     }
 
 public:
-    explicit MemgraphAdjacency(MemgraphClient && client):client(std::move(client)){}
+    explicit MemgraphAdjacency(MemgraphConnection && connection):client(MemgraphClient(std::move(connection))){}
 
     bool addAdjacency(const N & from, const N & to) noexcept {
         N copyFrom  = from;

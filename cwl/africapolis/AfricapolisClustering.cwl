@@ -71,3 +71,22 @@ steps:
           source: prepare_cluster_workload/clusterWorkload
           valueFrom: $("Clustered_"+ inputs.clusterWorkload.components[0])
       out: [clusteredOutput]
+    # clustering:
+    #   run: AfricapolisDBScan.cwl
+    #   in:
+    #     clusterWorkload: prepare_cluster_workload/clusterWorkload
+    #     config: config
+    #     components:
+    #       source: prepare_cluster_workload/clusterWorkload
+    #       valueFrom: $(inputs.clusterWorkload.components)
+    #     shpFiles: 
+    #       source: prepare_cluster_workload/clusterWorkload
+    #       valueFrom: $(inputs.clusterWorkload.files)
+    #     outputStem:
+    #       source: prepare_cluster_workload/clusterWorkload
+    #       valueFrom: $("DBScan_Clustered_"+ inputs.clusterWorkload.components[0])
+    #     eps:
+    #       valueFrom: $(200.0)
+    #     minPts:
+    #       valueFrom: $(3)
+    #   out: [clusteredOutput]

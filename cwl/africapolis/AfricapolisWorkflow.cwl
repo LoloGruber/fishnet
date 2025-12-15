@@ -29,9 +29,12 @@ inputs:
     default: 1
     doc: "Number of partitions created on the input for parallel computation"
 outputs:
-  result:
+  concave_hull:
     type: ../types/Shapefile.yaml#Shapefile
     outputSource: visualize/outputShapefile
+  multi_polygons:
+    type: ../types/Shapefile.yaml#Shapefile
+    outputSource: merge/mergedOutput
 steps:
   clearDatabase:
     run:

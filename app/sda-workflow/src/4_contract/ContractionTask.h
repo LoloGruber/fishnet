@@ -9,9 +9,10 @@
 #include <fishnet/CachingMemgraphAdjacency.hpp>
 #include <fishnet/MemgraphAdjacency.hpp>
 #include <fishnet/Task.hpp>
-#include "SettlementPolygon.hpp"
+#include <fishnet/SettlementShape.hpp>
+#include <fishnet/IDReduceFunction.hpp>
 #include "ContractionConfig.hpp"
-#include "IDReduceFunction.hpp"
+
 
 /**
  * @brief Implementation of the contraction task. 
@@ -34,11 +35,11 @@ public:
     /**
      * @brief settlement type before the contraction
      */
-    using SourceNodeType = SettlementPolygon<P>; 
+    using SourceNodeType = SettlementShape<P>; 
     /**
      * @brief settlement type after the contraction
      */
-    using ResultNodeType = SettlementPolygon<ResultGeometryType>;
+    using ResultNodeType = SettlementShape<ResultGeometryType>;
     ContractionTask(ContractionConfig && config,std::vector<ComponentReference> && components,fishnet::Shapefile output,size_t workflowID):Task(workflowID),components(std::move(components)),config(std::move(config)),output(std::move(output)){
         this->desc["type"]="CONTRACTION";
         this->desc["config"]=this->config.jsonDescription;
@@ -59,10 +60,10 @@ public:
      * @param adj IN_OUT memgraph adjacency instance, loads the settlement relationships
      * @param spatialRef IN_OUT spatial reference used for the ouput shapefile, set according to input spatial reference
      * @throws runtime_error when the file reference for the inputs could not be loaded or the id of a settlement could not be read
-     * @return fishnet::util::forward_range_of<SettlementPolygon<P>> list of settlements
+     * @return fishnet::util::forward_range_of<SettlementShape<P>> list of settlements
      */
-    std::vector<SettlementPolygon<P>> readInputs( CachingMemgraphAdjacency<SourceNodeType> & adj, OGRSpatialReference & spatialRef) {
-        std::vector<SettlementPolygon<P>> polygons;
+    std::vector<SettlementShape<P>> readInputs( CachingMemgraphAdjacency<SourceNodeType> & adj, OGRSpatialReference & spatialRef) {
+        std::vector<SettlementShape<P>> polygons;
         std::vector<std::string> inputStrings;
         std::ranges::for_each(this->inputs,[&inputStrings](auto const & file){inputStrings.push_back(file.getPath().filename().string());});
         this->desc["inputs"]=inputStrings;
@@ -101,8 +102,8 @@ public:
             throw std::runtime_error( "No input file provided");
         }
         MemgraphConnection memgraphConnection = MemgraphConnection::create(config.params,workflowID).value_or_throw();
-        auto memgraphAdjSrc = CachingMemgraphAdjacency<SourceNodeType>(MemgraphClient(MemgraphConnection(memgraphConnection)));
-        auto memgraphAdjRes = MemgraphAdjacency<ResultNodeType>(MemgraphClient(MemgraphConnection(memgraphConnection)));
+        auto memgraphAdjSrc = CachingMemgraphAdjacency<SourceNodeType>(MemgraphConnection(memgraphConnection));
+        auto memgraphAdjRes = MemgraphAdjacency<ResultNodeType>(MemgraphConnection(memgraphConnection));
         OGRSpatialReference ref; // set by readInputs function, used as spatial reference for output layer
         auto settlements = readInputs(memgraphAdjSrc,ref);
         auto outputFileRef = memgraphAdjSrc.getDatabaseConnection().addFileReference(output.getPath());

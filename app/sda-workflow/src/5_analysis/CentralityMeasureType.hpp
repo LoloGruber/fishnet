@@ -1,7 +1,6 @@
 #pragma once 
 #include <fishnet/Graph.hpp>
 #include <fishnet/VectorLayer.hpp>
-#include "SettlementPolygon.hpp"
 
 enum class CentralityMeasureType {
     DegreeCentrality,MeanLocalSignificance,SmallerNeighboursRatio

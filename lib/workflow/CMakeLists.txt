@@ -2,6 +2,7 @@ set(FISHNET_WORKFLOW_LIBRARY fishnet-workflow)
 set(SUBDIRECTORIES 
 graph-database-adapter
 task-config
+settlements
 )
 
 # Gather all subdirectory targets starting with $FISHNET_WORKFLOW_LIBRARY
