@@ -86,7 +86,7 @@ public:
     }
 
     void run() override {
-        auto memgraphAdj = CachingMemgraphAdjacency<NodeType>(MemgraphClient(MemgraphConnection::create(config.params,workflowID).value_or_throw()));
+        auto memgraphAdj = CachingMemgraphAdjacency<NodeType>(MemgraphConnection::create(config.params,workflowID).value_or_throw());
         OGRSpatialReference outputRef; // used for the ouput shapefile
         auto settlements = readInput(memgraphAdj,outputRef);
         if(settlements.empty()){

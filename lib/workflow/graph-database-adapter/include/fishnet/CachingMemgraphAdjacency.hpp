@@ -15,7 +15,7 @@ private:
     }
 
 public:
-    explicit CachingMemgraphAdjacency(MemgraphClient && memgraphClient):Base(std::move(memgraphClient)){
+    explicit CachingMemgraphAdjacency(MemgraphConnection && memgraphConnection):Base(std::move(memgraphConnection)){
         loadEdges();
     }
 

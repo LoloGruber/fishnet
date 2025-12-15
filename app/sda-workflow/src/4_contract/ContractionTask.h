@@ -102,8 +102,8 @@ public:
             throw std::runtime_error( "No input file provided");
         }
         MemgraphConnection memgraphConnection = MemgraphConnection::create(config.params,workflowID).value_or_throw();
-        auto memgraphAdjSrc = CachingMemgraphAdjacency<SourceNodeType>(MemgraphClient(MemgraphConnection(memgraphConnection)));
-        auto memgraphAdjRes = MemgraphAdjacency<ResultNodeType>(MemgraphClient(MemgraphConnection(memgraphConnection)));
+        auto memgraphAdjSrc = CachingMemgraphAdjacency<SourceNodeType>(MemgraphConnection(memgraphConnection));
+        auto memgraphAdjRes = MemgraphAdjacency<ResultNodeType>(MemgraphConnection(memgraphConnection));
         OGRSpatialReference ref; // set by readInputs function, used as spatial reference for output layer
         auto settlements = readInputs(memgraphAdjSrc,ref);
         auto outputFileRef = memgraphAdjSrc.getDatabaseConnection().addFileReference(output.getPath());

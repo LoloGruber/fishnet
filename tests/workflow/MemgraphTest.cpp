@@ -37,7 +37,7 @@ class MemgraphTest: public ::testing::Test {
 protected:
     static void SetUpTestSuite() {
         mgAdj = MemgraphConnection::create(params)
-            .transform([](auto && connection){return CachingMemgraphAdjacency<ExampleNode>(MemgraphClient(std::move(connection)));});
+            .transform([](auto && connection){return CachingMemgraphAdjacency<ExampleNode>(std::move(connection));});
         if(not mgAdj) {
             throw std::runtime_error(mgAdj.error());
         }
@@ -270,7 +270,7 @@ TEST_F(MemgraphTest, clear) {
 }
 
 TEST_F(MemgraphTest, undirectedGraph){
-    std::expected<MemgraphAdjacency<ExampleNode>,std::string> mgAdj = MemgraphConnection::create(params).transform([](auto && c){return MemgraphAdjacency<ExampleNode>(MemgraphClient(std::move(c)));});
+    std::expected<MemgraphAdjacency<ExampleNode>,std::string> mgAdj = MemgraphConnection::create(params).transform([](auto && c){return MemgraphAdjacency<ExampleNode>(std::move(c));});
     auto g = fishnet::graph::GraphFactory::UndirectedGraph<ExampleNode>(std::move(mgAdj.value()));
     ExampleNode n1 {1,fileRef};
     ExampleNode n2 {2,fileRef};

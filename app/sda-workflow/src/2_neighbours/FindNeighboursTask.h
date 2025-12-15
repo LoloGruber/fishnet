@@ -119,7 +119,7 @@ public:
 
     void run() override{
         auto graph = fishnet::graph::GraphFactory::UndirectedGraph<SettlementShape<P>>(
-            MemgraphAdjacency<SettlementShape<P>>(MemgraphClient(MemgraphConnection::create(config.params,workflowID).value_or_throw()))
+            MemgraphAdjacency<SettlementShape<P>>(MemgraphConnection::create(config.params,workflowID).value_or_throw())
         );   
         std::vector<SettlementShape<P>> polygons = readInput(graph);
         double maxEdgeDistanceVar = config.maxEdgeDistance;
