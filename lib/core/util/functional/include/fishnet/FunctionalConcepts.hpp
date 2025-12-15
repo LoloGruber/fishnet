@@ -47,8 +47,14 @@ using BiPredicate_t = std::function<bool(const T &, const R &)>;
 template<typename F, typename T>
 concept Producer = std::convertible_to<F,std::function<T()>>;
 
+template<typename T>
+using Producer_t = std::function<T()>;
+
 template<typename F, typename T>
 concept Consumer = UnaryFunction<F,T,void>;
+
+template<typename T>
+using Consumer_t = UnaryFunction_t<T,void>;
 
 template<typename F>
 concept Task = std::convertible_to<F,std::function<void()>>;
@@ -60,32 +66,32 @@ template<typename RangeType, typename ResultType = std::ranges::range_value_t<Ra
 using ReduceFunction_t = std::function<ResultType(const RangeType &)>;
 
 struct TruePredicate{
-    bool inline operator()(const auto & t)const noexcept {
+    constexpr bool inline operator()(const auto & t)const noexcept {
         return true;
     }
 };
 
 struct FalsePredicate {
-    bool inline operator()(const auto & t) const noexcept {
+    constexpr bool inline operator()(const auto & t) const noexcept {
         return false;
     }
 };
 
 struct TrueBiPredicate{
-    bool inline operator()(const auto & lhs, const auto & rhs) const noexcept {
+    constexpr bool inline operator()(const auto & lhs, const auto & rhs) const noexcept {
         return true;
     }
 };
 
 struct FalseBiPredicate {
-    bool inline operator()(const auto & lhs, const auto & rhs) const noexcept {
+    constexpr bool inline operator()(const auto & lhs, const auto & rhs) const noexcept {
         return false;
     }
 };
 
 struct Identity{
     template<typename T>
-    T inline operator()(const T & t)const noexcept {
+    constexpr T inline operator()(const T & t)const noexcept {
         return t;
     }
 };
