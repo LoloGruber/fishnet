@@ -90,6 +90,13 @@ struct Identity{
     }
 };
 
+struct NOOP{
+    template<typename T>
+    constexpr void inline operator()(const T & t)const noexcept {
+        return;
+    }
+};
+
 class LimitPredicate {
 private:
     const size_t limit;
