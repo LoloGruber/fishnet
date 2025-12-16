@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "Testutil.h"
+#include <fishnet/TestUtil.hpp>
 #include <fishnet/Graph.hpp>
 #include <fishnet/BFSAlgorithm.hpp>
 #include <fishnet/DFSAlgorithm.hpp>

@@ -4,7 +4,7 @@
 #include <fishnet/AdjacencyMap.hpp>
 #include <fishnet/TemporaryDirectiory.h>
 #include "XYNode.h"
-#include "Testutil.h"
+#include <fishnet/TestUtil.hpp>
 
 using namespace fishnet::graph;
 using namespace nlohmann;

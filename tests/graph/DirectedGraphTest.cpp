@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <fishnet/Graph.hpp>
 #include "IDNode.h"
-#include "Testutil.h"
+#include <fishnet/TestUtil.hpp>
 #include "GraphTestUtil.h"
 
 using DGraph = fishnet::graph::DirectedGraph<IDNode>;

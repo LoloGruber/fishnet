@@ -5,7 +5,7 @@ add_executable(${GraphTestBin}
 CentralityTest.cpp 
 UndirectedGraphTest.cpp 
 DirectedGraphTest.cpp 
-ConncectedComponentsTest.cpp 
+ConnectedComponentsTest.cpp 
 SearchPathTest.cpp 
 ContractionTest.cpp 
 WeightedGraphTest.cpp
@@ -14,8 +14,8 @@ DAGTest.cpp
 JSONAdjacencyTest.cpp
 )
 gtest_discover_tests(${GraphTestBin})
-target_link_libraries(${GraphTestBin} PRIVATE ${FISHNET_NAME}::Graph testutil graphTest_util util_console)
+target_link_libraries(${GraphTestBin} PRIVATE Fishnet::Test ${FISHNET}::Graph graphTest_util ${FISHNET}::IO::Console)
 
 SET(ContractionTestBin Test-Contraction)
 add_executable(${ContractionTestBin} ContractionPerformance.cpp)
-target_link_libraries(${ContractionTestBin} PRIVATE ${FISHNET_NAME}::Graph testutil graphTest_util util_console)
+target_link_libraries(${ContractionTestBin} PRIVATE Fishnet::Test ${FISHNET}::Graph graphTest_util ${FISHNET}::IO::Console)

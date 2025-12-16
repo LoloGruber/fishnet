@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include <fishnet/Graph.hpp>
-#include "Testutil.h"
+#include <fishnet/TestUtil.hpp>
 #include "IDNode.h"
 #include "GraphTestUtil.h"
 #include <fishnet/DegreeCentrality.hpp>

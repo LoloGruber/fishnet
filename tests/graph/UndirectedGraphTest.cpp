@@ -2,7 +2,7 @@
 #include <fishnet/Graph.hpp>
 #include "IDNode.h"
 #include <memory>
-#include "Testutil.h"
+#include <fishnet/TestUtil.hpp>
 #include "GraphTestUtil.h"
 
 using UGraph =  fishnet::graph::UndirectedGraph<IDNode>;

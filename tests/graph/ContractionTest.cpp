@@ -3,7 +3,6 @@
 #include <fishnet/WeightedGraph.hpp>
 #include "XYNode.h"
 #include "GraphTestUtil.h"
-#include <fishnet/StopWatch.h>
 #include <queue>
 #include <fstream>
 
@@ -56,7 +55,6 @@ TEST_F(ContractionTest, SingleWorker){
     MergePredicate Predicate;
     fishnet::graph::Weighted<fishnet::graph::UndirectedGraph<XYNode>,double,DistanceFunction> result;
     {
-        fishnet::util::StopWatch watch {"Merging Using Connected Components"};
         result = fishnet::graph::contract(g,MergePredicate(),MergeFunction());
     }
     for(auto & e: result.getEdges()){

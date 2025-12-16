@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include <fishnet/GraphFactory.hpp>
-#include <Testutil.h>
+#include <fishnet/TestUtil.hpp>
 
 using namespace fishnet::graph;
 using namespace testutil;

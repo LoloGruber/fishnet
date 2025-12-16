@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <fishnet/WeightedGraph.hpp>
 #include "XYNode.h"
-#include "Testutil.h"
+#include <fishnet/TestUtil.hpp>
 #include "GraphTestUtil.h"
 
 
