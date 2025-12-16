@@ -1,6 +1,7 @@
 find_package(GDAL REQUIRED)
+set(IOVectorLib fishnet_io_vector)
+add_library(${IOVectorLib} INTERFACE)
 
-add_library(io_vector INTERFACE)
-
-target_include_directories(io_vector INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
-target_link_libraries(io_vector INTERFACE  geometry_objects util util_collections GDAL::GDAL)
+target_include_directories(${IOVectorLib} INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
+target_link_libraries(${IOVectorLib} INTERFACE  ${FISHNET}::Geometry::Objects ${FISHNET}::Concepts GDAL::GDAL)
+add_library(${FISHNET}::IO::Vector ALIAS ${IOVectorLib})

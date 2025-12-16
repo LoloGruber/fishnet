@@ -1,4 +1,5 @@
-add_executable(ioTest
+set(IOTestBin Test-IO)
+add_executable(${IOTestBin}
         VectorLayerTest.cpp
         OGRAdapterTest.cpp
         ShapefileTest.cpp
@@ -8,5 +9,5 @@ add_executable(ioTest
         WGS84Test.cpp
         GeoPackageTest.cpp
 )
-gtest_discover_tests(ioTest)
-target_link_libraries(ioTest PRIVATE io testutil util_filesystem)
+gtest_discover_tests(${IOTestBin})
+target_link_libraries(${IOTestBin} PRIVATE ${FISHNET}::IO Fishnet::Test)
