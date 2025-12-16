@@ -1,12 +1,11 @@
-#ifndef TESTUTIL_H
-#define TESTUTIL_H
+#pragma once
 #include <gtest/gtest.h>
 #include <memory>
 #include <concepts>
 #include <algorithm>
 #include <filesystem>
 #include <ranges>
-#include <fishnet/CollectionConcepts.hpp>
+#include <fishnet/Collection.hpp>
 #include <fishnet/NumericConcepts.hpp>
 #include <fishnet/Printable.hpp>
 namespace testutil{
@@ -297,5 +296,3 @@ static void EXPECT_NOT_EXISTS(const std::filesystem::path & path){
     EXPECT_FALSE(std::filesystem::exists(path)) << "Expecting path "<<path<<" to not exist";
 }
 }
-
-#endif
