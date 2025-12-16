@@ -59,6 +59,9 @@ using Consumer_t = UnaryFunction_t<T,void>;
 template<typename F>
 concept Task = std::convertible_to<F,std::function<void()>>;
 
+template<typename Hasher,typename Key>
+concept HashFunction = UnaryFunction<Hasher,Key,size_t>;
+
 template<typename F, typename RangeType, typename ResultType = std::ranges::range_value_t<RangeType>>
 concept ReduceFunction = std::ranges::forward_range<RangeType> && UnaryFunction<F,RangeType,ResultType>;
 

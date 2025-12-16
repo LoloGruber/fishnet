@@ -1,2 +1,0 @@
-add_library(util_functional INTERFACE)
-target_include_directories(util_functional INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
