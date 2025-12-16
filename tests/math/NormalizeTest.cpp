@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <fishnet/Normalize.hpp>
 #include <fishnet/Constants.hpp>
-#include "Testutil.h"
+#include <fishnet/TestUtil.hpp>
 
 using namespace fishnet::math;
 

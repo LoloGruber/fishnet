@@ -1,6 +1,6 @@
 add_subdirectory(graphTestUtils)
 
-SET(GraphTestBin Test-Graph)
+set(GraphTestBin Test-Graph)
 add_executable(${GraphTestBin} 
 CentralityTest.cpp 
 UndirectedGraphTest.cpp 
