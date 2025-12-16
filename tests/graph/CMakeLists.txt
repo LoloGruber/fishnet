@@ -1,5 +1,7 @@
 add_subdirectory(graphTestUtils)
-add_executable(graphTest 
+
+SET(GraphTestBin Test-Graph)
+add_executable(${GraphTestBin} 
 CentralityTest.cpp 
 UndirectedGraphTest.cpp 
 DirectedGraphTest.cpp 
@@ -11,7 +13,9 @@ EdgeTest.cpp
 DAGTest.cpp
 JSONAdjacencyTest.cpp
 )
-gtest_discover_tests(graphTest)
-add_executable(contractionPerformance ContractionPerformance.cpp)
-target_link_libraries(graphTest PRIVATE graph testutil graphTest_util util_console)
-target_link_libraries(contractionPerformance PRIVATE graph testutil graphTest_util util_console)
+gtest_discover_tests(${GraphTestBin})
+target_link_libraries(${GraphTestBin} PRIVATE ${FISHNET_NAME}::Graph testutil graphTest_util util_console)
+
+SET(ContractionTestBin Test-Contraction)
+add_executable(${ContractionTestBin} ContractionPerformance.cpp)
+target_link_libraries(${ContractionTestBin} PRIVATE ${FISHNET_NAME}::Graph testutil graphTest_util util_console)

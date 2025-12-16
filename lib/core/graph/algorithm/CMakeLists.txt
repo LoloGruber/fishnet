@@ -1,3 +1,5 @@
-add_library(graph_algo INTERFACE)
-target_link_libraries(graph_algo INTERFACE graph_model)
-target_include_directories(graph_algo INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
+SET(GraphAlgoLib fishnet_graph_algorithm)
+add_library(${GraphAlgoLib} INTERFACE)
+target_link_libraries(${GraphAlgoLib} INTERFACE ${FISHNET_NAME}::Graph::Model)
+target_include_directories(${GraphAlgoLib} INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
+add_library(${FISHNET_NAME}::Graph::Algorithm ALIAS ${GraphAlgoLib})
