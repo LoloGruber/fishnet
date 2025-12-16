@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <fishnet/Graph.hpp>
 #include <fishnet/BFSAlgorithm.hpp>
-#include "Testutil.h"
+#include <fishnet/TestUtil.hpp>
 #include "IDNode.h"
 #include "GraphTestUtil.h"
 
@@ -10,7 +10,6 @@
 #include <future>
 
 static_assert(fishnet::util::BiPredicate<fishnet::util::TrueBiPredicate,XYNode>);
-static_assert(fishnet::graph::NodeBiPredicate<fishnet::util::TrueBiPredicate,XYNode>);
 
 using namespace fishnet::graph;
 using namespace fishnet::util;
