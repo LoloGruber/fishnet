@@ -1,5 +1,5 @@
 set(ConceptsLib fishnet_concepts)
 add_library(${ConceptsLib} INTERFACE)
 target_include_directories(${ConceptsLib} INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
-target_link_libraries(${ConceptsLib} INTERFACE ${FISHNET}::Functional ${FISHNET}::Collections)
+target_link_libraries(${ConceptsLib} INTERFACE)
 add_library(${FISHNET}::Concepts ALIAS ${ConceptsLib})

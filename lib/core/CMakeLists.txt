@@ -1,18 +1,23 @@
-add_subdirectory(util)
-add_subdirectory(geometry)      # depends on util, math
-add_subdirectory(graph)         # depends on util, geometry
+add_subdirectory(concepts)
+add_subdirectory(clustering)
+add_subdirectory(collections)
+add_subdirectory(functional)
+add_subdirectory(geometry)
+add_subdirectory(graph)
+add_subdirectory(io)
 add_subdirectory(math)
-add_subdirectory(io)            # depends on util, geometry
-add_subdirectory(clustering)    # depends on util, geometry, graph
-set(FISHNET_TARGETS
-        util
-        graph
-        geometry
-        io
-        math
-        clustering
+set(FishnetLibs
+        ${FISHNET}::Concepts
+        # ${FISHNET_NAME}::Clustering
+        ${FISHNET}::Collections
+        ${FISHNET}::Functional
+        ${FISHNET}::Geometry
+        ${FISHNET}::Graph
+        ${FISHNET}::IO
+        ${FISHNET}::Math
 )
-add_library(${FISHNET_NAME} INTERFACE)
-target_include_directories(${FISHNET_NAME} INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
-target_link_libraries(${FISHNET_NAME} INTERFACE ${FISHNET_TARGETS})
-add_library(${FISHNET_NAME}::${FISHNET_NAME} ALIAS ${FISHNET_NAME} )
+
+add_library(${FISHNET} INTERFACE)
+target_include_directories(${FISHNET} INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
+target_link_libraries(${FISHNET} INTERFACE ${FishnetLibs})
+add_library(${FISHNET}::${FISHNET} ALIAS ${FISHNET} )
