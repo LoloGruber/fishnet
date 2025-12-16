@@ -10,6 +10,7 @@ option(FISHNET_COMPILE_TIME_TRACE "Enable compile time tracing" OFF)
 # Variables
 set(FISHNET_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR} CACHE INTERNAL "Build applications")
 set(FISHNET_NAME Fishnet)
+set(FISHNET ${FISHNET_NAME})
 set(CMAKE_CXX_STANDARD 23)
 
 # Compiler flags and warnings
