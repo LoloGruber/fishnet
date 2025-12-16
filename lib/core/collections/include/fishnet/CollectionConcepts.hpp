@@ -46,6 +46,15 @@ concept view_of = std::ranges::view<V> && range_of<V,T>;
 template<typename V, auto C>
 concept view_over = std::ranges::view<V> && range_over<V,C>;
 
+template<typename Key>
+concept Hashable = requires(Key a)
+{
+    { std::hash<Key>{}(a) } -> std::convertible_to<std::size_t>;
+};
+
+template<typename T>
+concept Mapable = Hashable<T> && std::equality_comparable<T>;
+
 constexpr size_t size(std::ranges::range auto && range) noexcept{
     using R = decltype(range);
     if constexpr(std::ranges::sized_range<R>){

@@ -1,0 +1,5 @@
+SET(CollectionsLib fishnet_collections)
+add_library(${CollectionsLib} INTERFACE)
+target_include_directories(${CollectionsLib} INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
+target_link_libraries(${CollectionsLib} INTERFACE util_functional util_hashing)
+add_library(${FISHNET_NAME}::Collections ALIAS ${CollectionsLib})
