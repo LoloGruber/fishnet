@@ -1,0 +1,3 @@
+add_library(fishnet_clustering INTERFACE)
+target_include_directories(fishnet_clustering INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
+target_link_libraries(fishnet_clustering INTERFACE graph geometry util)
