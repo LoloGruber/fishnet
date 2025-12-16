@@ -1,5 +1,5 @@
 SET(GraphCentralityLib fishnet_graph_centrality)
 add_library(${GraphCentralityLib} INTERFACE)
 target_include_directories(${GraphCentralityLib} INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
-target_link_libraries(${GraphCentralityLib} INTERFACE ${FISHNET_NAME}::Graph::Model)
-add_library(${FISHNET_NAME}::Graph::Centrality ALIAS ${GraphCentralityLib})
+target_link_libraries(${GraphCentralityLib} INTERFACE ${FISHNET}::Graph::Model)
+add_library(${FISHNET}::Graph::Centrality ALIAS ${GraphCentralityLib})
