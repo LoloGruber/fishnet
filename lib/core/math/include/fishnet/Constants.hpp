@@ -1,5 +1,5 @@
 #pragma once
-#include "NumericConcepts.hpp"
+#include <fishnet/NumericConcepts.hpp>
 #include <cmath>
 
 namespace fishnet::math{

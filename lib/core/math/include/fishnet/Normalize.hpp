@@ -1,6 +1,6 @@
 #pragma once
 #include <cmath>
-#include "NumericConcepts.hpp"
+#include <fishnet/NumericConcepts.hpp>
 #include <type_traits>
 #include <stdexcept>
 
