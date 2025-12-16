@@ -1,10 +1,17 @@
 #pragma once
-#include "NetworkConcepts.hpp"
 #include <sstream>
 #include <concepts>
 #include <fishnet/Printable.hpp>
+#include <fishnet/NumericConcepts.hpp>
+#include <fishnet/Functional.hpp>
 
 namespace fishnet::graph{
+
+template<typename N>
+concept Node = std::equality_comparable<N>;
+
+template<typename NodeType,typename N>
+concept UniversalNodeRef = std::same_as<N,std::remove_cvref_t<NodeType>>;
 
 /**
  * @brief Interface for an Edge
@@ -25,6 +32,12 @@ concept Edge = requires(const E & e, const E & o, const N & cNodeRef /*, N&& nod
     typename E::hash_function;
     typename E::equality_predicate;
 };
+
+template<typename A>
+concept Annotation = fishnet::math::Number<A>;
+
+template<typename F, typename N, typename A>
+concept WeightFunction= Annotation<A> && fishnet::util::BiFunction<F,N,N,A>;
 
 /**
  * @brief Interface for a weighted Edge
@@ -54,7 +67,7 @@ namespace fishnet::graph::__impl{
      * @tparam Hash hasher on node type
      * @tparam Equal comparator on node type
      */
-    template<Node N,bool Directed, util::HashFunction<N> Hash = std::hash<N>, NodeBiPredicate<N> Equal = std::equal_to<N>> 
+    template<Node N,bool Directed, fishnet::util::HashFunction<N> Hash = std::hash<N>, fishnet::util::BiPredicate<N> Equal = std::equal_to<N>> 
     class BaseEdge {
         protected:
             N from;
@@ -173,10 +186,10 @@ namespace fishnet::graph::__impl{
 
 namespace fishnet::graph{
 
-template<Node N, util::HashFunction<N> Hash = std::hash<N>, NodeBiPredicate<N> Equal = std::equal_to<N>>
+template<Node N, fishnet::util::HashFunction<N> Hash = std::hash<N>, fishnet::util::BiPredicate<N> Equal = std::equal_to<N>>
 using UndirectedEdge = __impl::BaseEdge<N,false,Hash,Equal>;
 
-template<Node N, util::HashFunction<N> Hash = std::hash<N>, NodeBiPredicate<N> Equal = std::equal_to<N>>
+template<Node N, fishnet::util::HashFunction<N> Hash = std::hash<N>, fishnet::util::BiPredicate<N> Equal = std::equal_to<N>>
 using DirectedEdge = __impl::BaseEdge<N,true,Hash,Equal>;
 
 template<Edge E, Annotation A , WeightFunction<typename E::node_type,A> W>

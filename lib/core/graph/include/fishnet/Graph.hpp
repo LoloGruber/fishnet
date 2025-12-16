@@ -10,7 +10,7 @@ namespace fishnet::graph{
  * @tparam Equal comparator on node type
  * @tparam AdjContainer Adjacency container used for the graph
  */
-template<Node N, util::HashFunction<N> Hash = std::hash<N>, NodeBiPredicate<N> Equal = std::equal_to<N>, AdjacencyContainer<N> AdjContainer = AdjacencyMap<N,Hash,Equal>>
+template<Node N, util::HashFunction<N> Hash = std::hash<N>, util::BiPredicate<N> Equal = std::equal_to<N>, AdjacencyContainer<N> AdjContainer = AdjacencyMap<N,Hash,Equal>>
 using UndirectedGraph = graph::__impl::SimpleGraph<UndirectedEdge<N,Hash,Equal>,AdjContainer>;
 
 /**
@@ -21,6 +21,6 @@ using UndirectedGraph = graph::__impl::SimpleGraph<UndirectedEdge<N,Hash,Equal>,
  * @tparam Equal comparator on node type
  * @tparam AdjContainer Adjacency container used for the graph
  */
-template<Node N, util::HashFunction<N> Hash = std::hash<N>, NodeBiPredicate<N> Equal = std::equal_to<N>, AdjacencyContainer<N> AdjContainer = AdjacencyMap<N,Hash,Equal>>
+template<Node N, util::HashFunction<N> Hash = std::hash<N>, util::BiPredicate<N> Equal = std::equal_to<N>, AdjacencyContainer<N> AdjContainer = AdjacencyMap<N,Hash,Equal>>
 using DirectedGraph = graph::__impl::SimpleGraph<DirectedEdge<N,Hash,Equal>,AdjContainer>;
 }

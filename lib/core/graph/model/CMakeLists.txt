@@ -1,5 +1,5 @@
 SET(GraphModelLib fishnet_graph_model)
 add_library(${GraphModelLib} INTERFACE)
-target_link_libraries(${GraphModelLib} INTERFACE util ${FISHNET}::Graph::Adjacency)
+target_link_libraries(${GraphModelLib} INTERFACE ${FISHNET}::Concepts ${FISHNET}::Graph::Adjacency)
 target_include_directories(${GraphModelLib} INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
 add_library(${FISHNET}::Graph::Model ALIAS ${GraphModelLib})

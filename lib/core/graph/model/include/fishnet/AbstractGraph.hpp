@@ -1,7 +1,6 @@
 #pragma once
 #include "Edge.hpp"
-#include "NetworkConcepts.hpp"
-#include <fishnet/CollectionConcepts.hpp>
+#include <fishnet/Collection.hpp>
 #include <fishnet/AdjacencyContainer.hpp>
 #include <fishnet/AdjacencyMap.hpp>
 namespace fishnet::graph{

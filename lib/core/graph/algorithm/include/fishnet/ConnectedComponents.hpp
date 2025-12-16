@@ -9,7 +9,7 @@ namespace fishnet::graph{
  * @tparam Hash hasher type on nodes
  * @tparam Equal comparator type on nodes
  */
-template<typename N,util::HashFunction<N> Hash=std::hash<N>, NodeBiPredicate<N> Equal = std::equal_to<N>>
+template<typename N,util::HashFunction<N> Hash=std::hash<N>, fishnet::util::BiPredicate<N> Equal = std::equal_to<N>>
 class ConnectedComponents: public SearchResult<ConnectedComponents<N,Hash,Equal>,N,Hash,Equal>
 {
 protected:

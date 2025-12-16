@@ -1,9 +1,10 @@
-#include "AdjacencyContainerDecorator.hpp"
-#include <nlohmann/json.hpp>
-#include <filesystem>
-#include <fishnet/PathHelper.h>
 #include <fstream>
 #include <string_view>
+#include <filesystem>
+#include <nlohmann/json.hpp>
+#include <fishnet/Functional.hpp>
+#include <fishnet/PathHelper.h>
+#include "AdjacencyContainerDecorator.hpp"
 
 namespace fishnet::graph{
 

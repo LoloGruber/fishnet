@@ -6,6 +6,13 @@
 #include <concepts>
 
 namespace fishnet::graph {
+
+// template<typename P, typename N>
+// concept NodeBiPredicate = Node<N> && util::BiPredicate<P,N>;
+
+// template<typename F, typename N>
+// concept NodeBiOperator = Node<N> && util::BiOperator<F,N>;
+
 /**
  * @brief Interface for graph types.
  * Every graph type has to inherit from AbstractGraph

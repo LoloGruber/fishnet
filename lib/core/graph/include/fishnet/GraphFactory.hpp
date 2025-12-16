@@ -7,7 +7,7 @@ namespace fishnet::graph {
 
 class GraphFactory{
 public:
-    template<Node N, util::HashFunction<N> Hash = std::hash<N>,NodeBiPredicate<N> Equal = std::equal_to<N>>
+    template<Node N, util::HashFunction<N> Hash = std::hash<N>,util::BiPredicate<N> Equal = std::equal_to<N>>
     static auto UndirectedGraph(){
         return graph::__impl::SimpleGraph<UndirectedEdge<N,Hash,Equal>,AdjacencyMap<N,Hash,Equal>>();
     }
@@ -21,7 +21,7 @@ public:
     }
 
 
-    template<Node N, util::HashFunction<N> Hash = std::hash<N>,NodeBiPredicate<N> Equal = std::equal_to<N>>
+    template<Node N, util::HashFunction<N> Hash = std::hash<N>,util::BiPredicate<N> Equal = std::equal_to<N>>
     static auto DirectedGraph(){
         return graph::__impl::SimpleGraph<DirectedEdge<N,Hash,Equal>,AdjacencyMap<N,Hash,Equal>>();
     }
@@ -39,7 +39,7 @@ public:
         return DirectedAcyclicGraph(DirectedGraph<N>(std::move(adjContainer)));
     }
 
-    template<Node N, util::HashFunction<N> Hash = std::hash<N>,NodeBiPredicate<N> Equal = std::equal_to<N>>
+    template<Node N, util::HashFunction<N> Hash = std::hash<N>,util::BiPredicate<N> Equal = std::equal_to<N>>
     static auto DAG(){
         return DirectedAcyclicGraph(DirectedGraph<N,Hash,Equal>());
     }

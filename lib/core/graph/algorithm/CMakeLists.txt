@@ -1,5 +1,5 @@
 SET(GraphAlgoLib fishnet_graph_algorithm)
 add_library(${GraphAlgoLib} INTERFACE)
-target_link_libraries(${GraphAlgoLib} INTERFACE ${FISHNET}::Graph::Model)
+target_link_libraries(${GraphAlgoLib} INTERFACE ${FISHNET}::Graph::Model ${FISHNET}::Collections)
 target_include_directories(${GraphAlgoLib} INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
 add_library(${FISHNET}::Graph::Algorithm ALIAS ${GraphAlgoLib})

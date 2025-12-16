@@ -7,8 +7,7 @@
 #include <chrono>
 #include <unordered_set>
 #include <fishnet/GraphModel.hpp>
-#include <fishnet/NetworkConcepts.hpp>
-#include <fishnet/CollectionConcepts.hpp>
+#include <fishnet/Collection.hpp>
 
 namespace fishnet::graph::__impl {
 
@@ -268,7 +267,7 @@ void contractInPlace( SourceGraphType & graph, util::BiPredicate<typename Source
  * @return G contracted graph
  */
 template<Graph G> requires std::is_constructible_v<G>
-G contract(const G & source, NodeBiPredicate<typename G::node_type> auto const& contractBiPredicate, NodeBiOperator<typename G::node_type> auto const& mergeFunction, u_int8_t workers = 1){
+G contract(const G & source, fishnet::util::BiPredicate<typename G::node_type> auto const& contractBiPredicate, fishnet::util::BiOperator<typename G::node_type> auto const& mergeFunction, u_int8_t workers = 1){
     G result;
     contract(source,contractBiPredicate,mergeFunction,util::Identity(),result,workers);
     return result;
@@ -285,7 +284,7 @@ G contract(const G & source, NodeBiPredicate<typename G::node_type> auto const& 
  * @return G contracted graph
  */
 template<Graph G> requires std::is_constructible_v<G>
-G contract(const G & source, NodeBiPredicate<typename G::node_type> auto const& contractBiPredicate, util::ReduceFunction<std::vector<typename G::node_type>> auto const& reduceFunction, u_int8_t workers = 1){
+G contract(const G & source, fishnet::util::BiPredicate<typename G::node_type> auto const& contractBiPredicate, fishnet::util::ReduceFunction<std::vector<typename G::node_type>> auto const& reduceFunction, u_int8_t workers = 1){
     G result;
     contract(source,contractBiPredicate,reduceFunction,result,workers);
     return result;

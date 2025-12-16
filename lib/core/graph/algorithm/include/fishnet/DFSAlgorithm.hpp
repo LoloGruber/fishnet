@@ -1,13 +1,10 @@
 #pragma once
 #include <stack>
-
-#include <fishnet/CollectionConcepts.hpp>
-
+#include <fishnet/Collection.hpp>
 #include <fishnet/Graph.hpp>
 
 #include "SearchResult.hpp"
 #include "SearchPath.hpp"
-#include "DefaultBiPredicate.hpp"
 
 namespace fishnet::graph::__impl {
 /**
@@ -21,7 +18,7 @@ namespace fishnet::graph::__impl {
  * @param predicate BiPredicate to require additional criteria for two nodes to be in relation
  */
 template<Graph G,class SearchResultImpl>
-static void dfs(const G & g,SearchResult<SearchResultImpl> & searchResult, const typename G::node_type & start,  NodeBiPredicate<typename G::node_type>  auto const& predicate)  {
+static void dfs(const G & g,SearchResult<SearchResultImpl> & searchResult, const typename G::node_type & start,  fishnet::util::BiPredicate<typename G::node_type>  auto const& predicate)  {
     using N = G::node_type;
     std::stack<N> nodes;
     nodes.push(start);
@@ -60,7 +57,7 @@ static std::vector<typename G::edge_type> getPath(const G & g,const typename G::
     using H = G::adj_container_type::hash_function;
     using Eq = G::adj_container_type::equality_predicate;
     auto searchPath = SearchPath<E,H,Eq>(goal);
-    fishnet::graph::__impl::dfs(g,searchPath,start,__impl::DefaultBiPredicate<typename G::node_type>());
+    fishnet::graph::__impl::dfs(g,searchPath,start,fishnet::util::TrueBiPredicate());
     auto pathOpt = searchPath.get();
     if (not pathOpt){
         return std::vector<E>();

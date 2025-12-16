@@ -8,13 +8,12 @@
 #include <algorithm>
 #include <fishnet/BlockingQueue.hpp>
 #include <fishnet/GraphModel.hpp>
-#include <fishnet/NetworkConcepts.hpp>
+#include <fishnet/Functional.hpp>
 
 #include "ConnectedComponents.hpp"
 #include "ConcurrentConnectedComponents.hpp"
 #include "SearchResult.hpp"
 #include "SearchPath.hpp"
-#include "DefaultBiPredicate.hpp"
 
 namespace fishnet::graph::__impl{
 
@@ -28,7 +27,7 @@ namespace fishnet::graph::__impl{
  * @param predicate BiPredicate to require additional criteria for two nodes to be in relation
  */
 template<Graph G>
-static void bfs(const G  & g, auto & searchResult, const  typename G::node_type  & start,NodeBiPredicate<typename G::node_type> auto const& predicate) {
+static void bfs(const G  & g, auto & searchResult, const  typename G::node_type  & start,fishnet::util::BiPredicate<typename G::node_type> auto const& predicate) {
     using N = G::node_type;
     std::queue<N> q;
     q.push(start);
@@ -56,7 +55,7 @@ static void bfs(const G  & g, auto & searchResult, const  typename G::node_type 
  * @param predicate BiPredicate to require additional criteria for two nodes to be in relation
  */
 template<Graph G>
-static void bfs_all(const Graph auto & g, auto& searchResult,NodeBiPredicate<typename G::node_type> auto const& predicate){
+static void bfs_all(const Graph auto & g, auto& searchResult,fishnet::util::BiPredicate<typename G::node_type> auto const& predicate){
     auto nodes = g.getNodes();
     for(auto const& n : nodes){
         if (searchResult.stop()){
@@ -80,7 +79,7 @@ namespace fishnet::graph::BFS {
  * @return ConnectedComponents search result
  */
 template<Graph G>
-auto connectedComponents(const  G  & graph, NodeBiPredicate<typename G::node_type> auto const& inRelation)  {
+auto connectedComponents(const  G  & graph, fishnet::util::BiPredicate<typename G::node_type> auto const& inRelation)  {
     using H = G::adj_container_type::hash_function;
     using E = G::adj_container_type::equality_predicate;
     auto connectedComponents = ConnectedComponents<typename G::node_type, H, E>();
@@ -97,7 +96,7 @@ auto connectedComponents(const  G  & graph, NodeBiPredicate<typename G::node_typ
  */
 template<Graph G>
 auto connectedComponents(const G  & graph) {
-    return connectedComponents(graph,__impl::DefaultBiPredicate<typename G::node_type>());
+    return connectedComponents(graph,fishnet::util::TrueBiPredicate());
 }
 
 /**
@@ -110,7 +109,7 @@ auto connectedComponents(const G  & graph) {
  * @return ConcurrentConnectedComponents search result 
  */
 template<Graph G>
-auto connectedComponents(const G & graph,std::shared_ptr<fishnet::util::BlockingQueue<std::pair<int,std::vector<typename G::node_type>>>>  queue, NodeBiPredicate<typename G::node_type> auto const& inRelation)  {
+auto connectedComponents(const G & graph,std::shared_ptr<fishnet::util::BlockingQueue<std::pair<int,std::vector<typename G::node_type>>>>  queue, fishnet::util::BiPredicate<typename G::node_type> auto const& inRelation)  {
     using H = G::adj_container_type::hash_function;
     using E = G::adj_container_type::equality_predicate;
     auto concurrentConnectedComponents = ConcurrentConnectedComponents<typename G::node_type,H,E>(queue);
@@ -128,7 +127,7 @@ auto connectedComponents(const G & graph,std::shared_ptr<fishnet::util::Blocking
  */
 template<Graph G>
 auto connectedComponents(const G & graph, std::shared_ptr<fishnet::util::BlockingQueue<std::pair<int,std::vector<typename G::node_type>>>>  queue)  {
-    return connectedComponents(graph,queue,__impl::DefaultBiPredicate<typename G::node_type>());
+    return connectedComponents(graph,queue,fishnet::util::TrueBiPredicate());
 }
 
 /**
@@ -144,9 +143,8 @@ template<Graph G>
 auto findPath(const G & graph, const typename G::node_type & start, const typename G::node_type & goal) {
     using H = G::adj_container_type::hash_function;
     using E = G::adj_container_type::equality_predicate;
-    using N = G::node_type;
     auto p = SearchPath<typename G::edge_type,H,E>(goal);
-     __impl::bfs(graph,p,start,__impl::DefaultBiPredicate<N>());
+     __impl::bfs(graph,p,start,fishnet::util::TrueBiPredicate());
     return p;
 }
 

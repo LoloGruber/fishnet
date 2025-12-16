@@ -1,7 +1,7 @@
 #pragma once
 #include <fishnet/GraphModel.hpp>
 #include <fishnet/AbstractGraph.hpp>
-#include <fishnet/CollectionConcepts.hpp>
+#include <fishnet/Collection.hpp>
 namespace fishnet::graph{
 /**
  * @brief Abstract Graph Decorator using CRTP

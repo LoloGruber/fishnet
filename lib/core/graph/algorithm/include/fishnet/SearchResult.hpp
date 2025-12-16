@@ -1,8 +1,7 @@
 #pragma once
 #include <unordered_map>
 #include "NodeStatus.hpp"
-#include <fishnet/NetworkConcepts.hpp>
-#include <fishnet/HashConcepts.hpp>
+#include <fishnet/Functional.hpp>
 namespace fishnet::graph{
 /**
  * @brief CRTP Abstraction of Search Results
@@ -12,7 +11,7 @@ namespace fishnet::graph{
  * @tparam Hash hasher type on nodes
  * @tparam Equal comparator type on nodes
  */
-template<class ResultImpl, typename N = ResultImpl::node_type,util::HashFunction<N> Hash=std::hash<N>, NodeBiPredicate<N> Equal = std::equal_to<N>>
+template<class ResultImpl, typename N = ResultImpl::node_type,util::HashFunction<N> Hash=std::hash<N>, fishnet::util::BiPredicate<N> Equal = std::equal_to<N>>
 class SearchResult
 {
 protected:

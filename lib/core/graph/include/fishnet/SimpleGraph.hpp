@@ -1,6 +1,5 @@
 #pragma once
 #include <unordered_set>
-#include <fishnet/NetworkConcepts.hpp>
 #include <fishnet/AbstractGraph.hpp>
 #include <fishnet/AdjacencyContainer.hpp>
 #include <fishnet/AdjacencyMap.hpp>

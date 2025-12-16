@@ -11,7 +11,7 @@ namespace fishnet::graph{
  * @tparam std::hash<typename E::node_type> hasher on node type of the edge type
  * @tparam std::equal_to<typename E::node_type> comparator on node type of the edge type
  */
-template<Edge E,util::HashFunction<typename E::node_type> Hash = std::hash<typename E::node_type>,NodeBiPredicate<typename E::node_type> Equal = std::equal_to<typename E::node_type>>
+template<Edge E,util::HashFunction<typename E::node_type> Hash = std::hash<typename E::node_type>,fishnet::util::BiPredicate<typename E::node_type> Equal = std::equal_to<typename E::node_type>>
 class SearchPath : public SearchResult<SearchPath<E,Hash,Equal>,typename E::node_type,Hash,Equal>
 {
 private:

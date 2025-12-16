@@ -2,7 +2,7 @@
 #include <ranges>
 #include <vector>
 #include <unordered_map>
-#include <fishnet/UtilConcepts.hpp>
+#include <fishnet/Concepts.hpp>
 #include <algorithm>
 
 namespace fishnet::graph{
