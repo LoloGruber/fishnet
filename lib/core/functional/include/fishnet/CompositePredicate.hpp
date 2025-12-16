@@ -1,7 +1,7 @@
 #pragma once
 #include <ranges>
 #include <algorithm>
-#include "FunctionalConcepts.hpp"
+#include "Functional.hpp"
 
 namespace fishnet::util{
 
