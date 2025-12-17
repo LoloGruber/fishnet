@@ -5,9 +5,8 @@
 #include <algorithm>
 #include <filesystem>
 #include <ranges>
-#include <fishnet/Collection.hpp>
-#include <fishnet/NumericConcepts.hpp>
-#include <fishnet/Printable.hpp>
+#include <fishnet/Concepts.hpp>
+
 namespace testutil{
 
 static void TODO() {

@@ -114,7 +114,7 @@ namespace std{
         size_t operator()(const fishnet::geometry::Ray<T> & ray) const {
             size_t origin_hash = hasher(ray.origin());
             size_t direction_hash = doubleHasher(ray.direction().normalize());
-            return fishnet::util::CantorPairing(origin_hash,direction_hash);
+            return fishnet::math::CantorPairing(origin_hash,direction_hash);
         }
     };
 }
