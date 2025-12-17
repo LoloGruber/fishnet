@@ -1,6 +1,7 @@
 add_subdirectory(geometryTestUtils)
 
-add_executable(geometryTest 
+set(GeometryTestBin Test-Geometry)
+add_executable(${GeometryTestBin} 
 Vec2DTest.cpp
 LineTest.cpp
 SegmentTest.cpp
@@ -14,6 +15,5 @@ SweepLineTest.cpp
 PolygonNeighboursTest.cpp
 #CharacteristicShapeTest.cpp
 )
-gtest_discover_tests(geometryTest)
-
-target_link_libraries(geometryTest PRIVATE geometry testutil geometryTestUtils util_console io)
+gtest_discover_tests(${GeometryTestBin})
+target_link_libraries(${GeometryTestBin} PRIVATE ${FISHNET}::Geometry ${FISHNET}::Test geometryTestUtils ${FISHNET}::IO)

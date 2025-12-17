@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include <memory>
-#include "Testutil.h"
+#include <fishnet/TestUtil.hpp>
 #include "ShapeSamples.h"
 #include <fishnet/Polygon.hpp>
 #include <fishnet/GeometryObject.hpp>

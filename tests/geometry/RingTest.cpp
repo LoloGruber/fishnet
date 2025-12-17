@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include <fishnet/Ring.hpp>
-#include "Testutil.h"
+#include <fishnet/TestUtil.hpp>
 
 using namespace fishnet::geometry;
 using namespace testutil;

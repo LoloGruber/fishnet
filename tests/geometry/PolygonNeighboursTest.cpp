@@ -2,7 +2,7 @@
 #include <fishnet/PolygonNeighbours.hpp>
 #include <fishnet/SimplePolygon.hpp>
 #include <fishnet/Polygon.hpp>
-#include "Testutil.h"
+#include <fishnet/TestUtil.hpp>
 #include "ShapeSamples.h"
 #include <unordered_map>
 
