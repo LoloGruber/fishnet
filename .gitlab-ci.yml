@@ -1,4 +1,4 @@
-image: gcc:13.2
+image: logru/fishnet-deps:latest
 workflow:
   rules:
     - changes:
@@ -13,8 +13,6 @@ stages:
 build:
   stage: build
   tags: [secloud]
-  before_script:
-    - apt update && apt -y install cmake libgdal-dev
   script:
     - mkdir build
     - cd build
@@ -29,8 +27,6 @@ test:
   tags: [secloud]
   dependencies:
     - build
-  before_script:
-    - apt update && apt -y install cmake libgdal-dev
   script:
     - cd build
     - ctest --output-on-failure
