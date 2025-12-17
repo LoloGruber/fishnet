@@ -8,6 +8,8 @@ add_executable(${IOTestBin}
         FieldDefinitionTestFactory.hpp
         WGS84Test.cpp
         GeoPackageTest.cpp
+        PathHelperTest.cpp
+        TemporaryDirectoryTest.cpp
 )
 gtest_discover_tests(${IOTestBin})
 target_link_libraries(${IOTestBin} PRIVATE ${FISHNET}::IO Fishnet::Test)
