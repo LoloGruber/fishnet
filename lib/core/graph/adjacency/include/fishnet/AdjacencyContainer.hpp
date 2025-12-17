@@ -1,7 +1,7 @@
 #pragma once
 #include <concepts>
 #include <ranges>
-#include <fishnet/Collection.hpp>
+#include <fishnet/CollectionConcepts.hpp>
 namespace fishnet::graph{
 /**
  * @brief Interface for an AdjacencyContainer

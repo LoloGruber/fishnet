@@ -1,7 +1,7 @@
 #pragma once
 #include <fishnet/GraphDecorator.hpp>
 #include <fishnet/BFSAlgorithm.hpp>
-#include <fishnet/Collection.hpp>
+#include <fishnet/CollectionConcepts.hpp>
 
 namespace fishnet::graph{
 

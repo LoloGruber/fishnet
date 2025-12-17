@@ -7,7 +7,7 @@
 #include <chrono>
 #include <unordered_set>
 #include <fishnet/GraphModel.hpp>
-#include <fishnet/Collection.hpp>
+#include <fishnet/CollectionConcepts.hpp>
 
 namespace fishnet::graph::__impl {
 

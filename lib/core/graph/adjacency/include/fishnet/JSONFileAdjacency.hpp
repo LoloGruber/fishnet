@@ -2,7 +2,7 @@
 #include <string_view>
 #include <filesystem>
 #include <nlohmann/json.hpp>
-#include <fishnet/Functional.hpp>
+#include <fishnet/FunctionalConcepts.hpp>
 #include <fishnet/PathHelper.h>
 #include "AdjacencyContainerDecorator.hpp"
 
