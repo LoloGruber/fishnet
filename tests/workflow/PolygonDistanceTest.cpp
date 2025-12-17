@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "Testutil.h"
+#include <fishnet/TestUtil.hpp>
 #include <fstream>
 #include <fishnet/PathHelper.h>
 #include <fishnet/Shapefile.hpp>

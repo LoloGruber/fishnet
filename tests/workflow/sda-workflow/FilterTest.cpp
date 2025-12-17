@@ -4,7 +4,7 @@
 #include <fishnet/WGS84Ellipsoid.hpp>
 #include "InsidePolygonFilter.hpp"
 #include "ShapeSamples.h"
-#include "Testutil.h"
+#include <fishnet/TestUtil.hpp>
 using namespace fishnet;
 
 static double SQUARE_KILOMETER_IN_SQM = 1000000.0;
