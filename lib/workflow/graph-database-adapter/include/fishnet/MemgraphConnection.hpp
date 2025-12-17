@@ -6,6 +6,7 @@
 #include <iostream>
 #include <cassert>
 #include <fishnet/Either.hpp>
+#include <fishnet/Option.hpp>
 #include "CipherQuery.hpp"
 
 constexpr static inline int64_t asInt(size_t value) {
@@ -28,7 +29,7 @@ concept CipherConnection = requires(const C & constConnection, const CipherQuery
  * 
  */
 class Session{
-    friend class std::optional<Session>;
+    friend class fishnet::util::Option<Session>;
 private:
     size_t _id = 0;
     Session(size_t id):_id(id){}
@@ -59,14 +60,14 @@ public:
      * 
      * @param connection db connection
      * @param id id of session
-     * @return std::optional<Session> 
+     * @return fishnet::util::Option<Session> 
      */
-    static std::optional<Session> of(const CipherConnection auto & connection, size_t id){
+    static fishnet::util::Option<Session> of(const CipherConnection auto & connection, size_t id){
         if(connection.execute(CipherQuery("MATCH (s:Session {id:$sid})").setInt("sid",id).ret("s.id"))) {
             auto result = connection->FetchAll();
             if(result && not result.value().empty() &&  result->front().front().type() == mg::Value::Type::Int){
                 size_t id = asNodeIdType(result->front().front().ValueInt());
-                return std::optional<Session>(Session(id));
+                return fishnet::util::Option<Session>(Session(id));
             }
         }
         return std::nullopt;
