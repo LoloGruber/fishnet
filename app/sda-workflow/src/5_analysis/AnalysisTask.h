@@ -2,7 +2,7 @@
 #include <fishnet/ShapeGeometry.hpp>
 #include <fishnet/VectorIO.hpp>
 #include <fishnet/Shapefile.hpp>
-#include <fishnet/GraphFactory.hpp>
+#include <fishnet/Graph.hpp>
 #include <future>
 #include <fishnet/Task.hpp>
 #include <fishnet/CachingMemgraphAdjacency.hpp>

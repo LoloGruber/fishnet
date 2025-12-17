@@ -4,7 +4,7 @@
 #include <fishnet/ShapeGeometry.hpp>
 #include <fishnet/VectorIO.hpp>
 #include <fishnet/PolygonNeighbours.hpp>
-#include <fishnet/GraphFactory.hpp>
+#include <fishnet/Graph.hpp>
 #include <fishnet/CompositePredicate.hpp>
 #include <fishnet/Rectangle.hpp>
 #include <fishnet/WGS84Ellipsoid.hpp>

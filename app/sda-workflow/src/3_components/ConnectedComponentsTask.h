@@ -1,4 +1,4 @@
-#include <fishnet/GraphFactory.hpp>
+#include <fishnet/Graph.hpp>
 #include <fishnet/BFSAlgorithm.hpp>
 #include <fishnet/PathHelper.h>
 #include <fishnet/MemgraphClient.hpp>

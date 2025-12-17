@@ -1,5 +1,5 @@
 #pragma once
-#include <fishnet/GraphFactory.hpp>
+#include <fishnet/Graph.hpp>
 #include <JobAdjacency.hpp>
 
 using JobDAG_t = decltype(fishnet::graph::GraphFactory::DAG<Job>(JobAdjacency(MemgraphConnection::create({}).value())));

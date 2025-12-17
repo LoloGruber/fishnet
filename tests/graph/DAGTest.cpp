@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <fishnet/GraphFactory.hpp>
+#include <fishnet/Graph.hpp>
 #include <fishnet/TestUtil.hpp>
 
 using namespace fishnet::graph;

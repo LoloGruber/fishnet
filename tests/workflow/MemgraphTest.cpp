@@ -2,7 +2,7 @@
 #include <fishnet/TestUtil.hpp>
 #include <fishnet/MemgraphAdjacency.hpp>
 #include <fishnet/CachingMemgraphAdjacency.hpp>
-#include <fishnet/GraphFactory.hpp>
+#include <fishnet/Graph.hpp>
 #include <fishnet/WorkflowTestEnvironment.hpp>
 
 using namespace testutil;

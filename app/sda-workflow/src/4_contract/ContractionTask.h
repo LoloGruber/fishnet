@@ -2,7 +2,7 @@
 #include <fishnet/ShapeGeometry.hpp>
 #include <fishnet/Shapefile.hpp>
 #include <fishnet/VectorIO.hpp>
-#include <fishnet/GraphFactory.hpp>
+#include <fishnet/Graph.hpp>
 #include <fishnet/Contraction.hpp>
 #include <fishnet/CompositePredicate.hpp>
 

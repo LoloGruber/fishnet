@@ -1,4 +1,3 @@
-#include <fishnet/GraphFactory.hpp>
 #include <fishnet/Graph.hpp>
 #include <fishnet/BFSAlgorithm.hpp>
 #include <fishnet/Contraction.hpp>

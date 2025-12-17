@@ -1,7 +1,7 @@
 #include <fishnet/MemgraphClient.hpp>
 #include <fishnet/MemgraphConnection.hpp>
 #include <fishnet/TaskConfig.hpp>
-#include <fishnet/GraphFactory.hpp>
+#include <fishnet/Graph.hpp>
 #include <fishnet/BFSAlgorithm.hpp>
 #include <fishnet/CipherQuery.hpp>
 #include <fishnet/MemgraphModel.hpp>

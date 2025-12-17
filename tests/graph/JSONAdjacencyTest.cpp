@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include <fishnet/JSONFileAdjacency.hpp>
-#include <fishnet/GraphFactory.hpp>
+#include <fishnet/Graph.hpp>
 #include <fishnet/AdjacencyMap.hpp>
 #include <fishnet/TemporaryDirectiory.h>
 #include "XYNode.h"
