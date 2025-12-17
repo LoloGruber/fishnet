@@ -6,5 +6,11 @@ add_subdirectory(vectorLayer)
 set(IOLib fishnet_io)
 add_library(${IOLib} INTERFACE)
 target_include_directories(${IOLib} INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
-target_link_libraries(${IOLib} INTERFACE ${FISHNET}::IO::GIS ${FISHNET}::IO::GDAL ${FISHNET}::IO::Vector ${FISHNET}::IO::Filesystem)
+target_link_libraries(${IOLib} INTERFACE
+    ${FISHNET}::IO::GIS
+    ${FISHNET}::IO::GDAL
+    ${FISHNET}::IO::Vector
+    ${FISHNET}::IO::Filesystem 
+    ${FISHNET}::IO::Console
+ )
 add_library(${FISHNET}::IO ALIAS ${IOLib})

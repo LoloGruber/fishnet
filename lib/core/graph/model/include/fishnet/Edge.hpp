@@ -1,9 +1,7 @@
 #pragma once
 #include <sstream>
 #include <concepts>
-#include <fishnet/Printable.hpp>
-#include <fishnet/NumericConcepts.hpp>
-#include <fishnet/Functional.hpp>
+#include <fishnet/Concepts.hpp>
 
 namespace fishnet::graph{
 

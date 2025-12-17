@@ -3,7 +3,7 @@
 #include <fishnet/Vec2D.hpp>
 #include <fishnet/PolygonFilter.hpp>
 #include "ShapeSamples.h"
-#include "Testutil.h"
+#include <fishnet/TestUtil.hpp>
 
 using namespace testutil;
 using namespace fishnet::geometry;

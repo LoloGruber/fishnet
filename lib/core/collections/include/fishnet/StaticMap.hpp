@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
 #include <optional>
-#include <fishnet/HashConcepts.hpp>
+#include <fishnet/CollectionConcepts.hpp>
 #include <algorithm>
 
 namespace fishnet::util {

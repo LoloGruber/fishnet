@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
-#include "Testutil.h"
+#include <fishnet/TestUtil.hpp>
 #include <fishnet/MemgraphClient.hpp>
+#include <fishnet/WorkflowTestEnvironment.hpp>
 #include "JobAdjacency.hpp"
-#include "../WorkflowTestEnvironment.hpp"
 
 using namespace testutil;
 class ConcurrentSessionsTest: public ::testing::Test {

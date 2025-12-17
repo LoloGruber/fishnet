@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
-#include "Testutil.h"
+#include <fishnet/TestUtil.hpp>
 #include "JobAdjacency.hpp"
+#include <fishnet/WorkflowTestEnvironment.hpp>
 #include <fishnet/Graph.hpp>
-#include "../WorkflowTestEnvironment.hpp"
 
 using namespace fishnet::graph;
 using namespace testutil;

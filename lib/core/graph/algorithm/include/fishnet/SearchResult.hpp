@@ -1,7 +1,7 @@
 #pragma once
 #include <unordered_map>
 #include "NodeStatus.hpp"
-#include <fishnet/Functional.hpp>
+#include <fishnet/FunctionalConcepts.hpp>
 namespace fishnet::graph{
 /**
  * @brief CRTP Abstraction of Search Results

@@ -3,7 +3,7 @@
 #include <fishnet/Rectangle.hpp>
 #include <fishnet/VectorLayer.hpp>
 #include <fishnet/PathHelper.h>
-#include "Testutil.h"
+#include <fishnet/TestUtil.hpp>
 using namespace fishnet;
 using namespace fishnet::geometry;
 

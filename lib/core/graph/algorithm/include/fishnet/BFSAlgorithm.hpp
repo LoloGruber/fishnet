@@ -8,7 +8,7 @@
 #include <algorithm>
 #include <fishnet/BlockingQueue.hpp>
 #include <fishnet/GraphModel.hpp>
-#include <fishnet/Functional.hpp>
+#include <fishnet/FunctionalConcepts.hpp>
 
 #include "ConnectedComponents.hpp"
 #include "ConcurrentConnectedComponents.hpp"

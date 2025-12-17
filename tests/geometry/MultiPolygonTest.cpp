@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <fishnet/MultiPolygon.hpp>
 #include <fishnet/Polygon.hpp>
-#include "Testutil.h"
+#include <fishnet/TestUtil.hpp>
 #include "ShapeSamples.h"
 
 using namespace testutil;

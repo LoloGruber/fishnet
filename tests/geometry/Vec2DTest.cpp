@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include <fishnet/Vec2D.hpp>
-#include "Testutil.h"
+#include <fishnet/TestUtil.hpp>
 using namespace testutil;
 using namespace fishnet::geometry;
 using namespace fishnet::math;

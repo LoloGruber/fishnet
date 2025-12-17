@@ -2,7 +2,7 @@
 #include <fishnet/VectorLayer.hpp>
 #include <fishnet/Vec2D.hpp>
 #include <list>
-#include "Testutil.h"
+#include <fishnet/TestUtil.hpp>
 #include <fishnet/PathHelper.h>
 #include <fishnet/TemporaryDirectiory.h>
 #include <fishnet/VectorIO.hpp>

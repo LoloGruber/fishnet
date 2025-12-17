@@ -8,7 +8,7 @@
 
 #include <fishnet/GeometryObject.hpp>
 #include <fishnet/CollectionConcepts.hpp>
-#include <fishnet/Functional.hpp>
+#include <fishnet/FunctionalConcepts.hpp>
 #include <fishnet/Either.hpp>
 
 #include "FieldType.hpp"

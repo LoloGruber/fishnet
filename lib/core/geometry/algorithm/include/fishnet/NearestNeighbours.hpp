@@ -2,7 +2,7 @@
 #include <set>
 #include <ranges>
 #include <fishnet/Vec2D.hpp>
-#include <fishnet/UtilConcepts.hpp>
+#include <fishnet/Concepts.hpp>
 
 namespace fishnet::geometry {
 

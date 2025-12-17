@@ -3,8 +3,7 @@
 #include "ShapeGeometry.hpp"
 #include "LinearGeometry.hpp"
 #include "Vec2D.hpp"
-#include <fishnet/HashConcepts.hpp>
-#include <fishnet/Printable.hpp>
+#include <fishnet/Concepts.hpp>
 
 namespace fishnet::geometry {
 

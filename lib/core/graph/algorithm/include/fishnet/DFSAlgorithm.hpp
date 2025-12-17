@@ -1,6 +1,6 @@
 #pragma once
 #include <stack>
-#include <fishnet/Collection.hpp>
+#include <fishnet/FunctionalConcepts.hpp>
 #include <fishnet/Graph.hpp>
 
 #include "SearchResult.hpp"

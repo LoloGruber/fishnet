@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include <fishnet/Ray.hpp>
-#include "Testutil.h"
+#include <fishnet/TestUtil.hpp>
 #include <fishnet/Segment.hpp>
 
 using namespace fishnet::geometry;

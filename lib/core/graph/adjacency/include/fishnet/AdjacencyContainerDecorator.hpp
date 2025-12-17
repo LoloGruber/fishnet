@@ -1,6 +1,6 @@
 #pragma once
 #include <algorithm>
-#include <fishnet/Collection.hpp>
+#include <fishnet/CollectionConcepts.hpp>
 
 #include "AdjacencyContainer.hpp"
 

@@ -8,6 +8,6 @@ if (GDAL_FOUND)
   message(STATUS "Using GDAL libraries: ${GDAL_LIBRARIES}")
 endif()
 target_include_directories(${GDALAdapterLib} INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
-target_link_libraries(${GDALAdapterLib} INTERFACE ${FISHNET}::Geometry::Objects GDAL::GDAL io_vector)
+target_link_libraries(${GDALAdapterLib} INTERFACE ${FISHNET}::Geometry::Objects GDAL::GDAL)
 add_library(${FISHNET}::IO::GDAL ALIAS ${GDALAdapterLib})
 

@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 #include <fishnet/CipherQuery.hpp>
 #include <fishnet/MemgraphModel.hpp>
-#include "Testutil.h"
-#include "WorkflowTestEnvironment.hpp"
+#include <fishnet/TestUtil.hpp>
+#include <fishnet/WorkflowTestEnvironment.hpp>
 
 using namespace testutil;
 

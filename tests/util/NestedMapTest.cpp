@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "Testutil.h"
+#include <fishnet/TestUtil.hpp>
 #include <fishnet/NestedMap.hpp>
 using namespace testutil;
 using namespace fishnet::util;
