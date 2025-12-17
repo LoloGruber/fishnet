@@ -1,4 +1,4 @@
-#include "Testutil.h"
+#include <fishnet/TestUtil.hpp>
 #include <fishnet/BlockingQueue.hpp>
 #include <fishnet/FiniteBlockingQueue.hpp>
 
@@ -27,7 +27,7 @@ protected:
 
 
 
-struct Producer{
+struct TestProducer{
     void operator()(std::shared_ptr<BlockingQueue<int>> q,int first=0,int last=MAX_VALUE){
         int i = first;
         while(i < last) {
@@ -38,7 +38,7 @@ struct Producer{
 };
 
 
-struct Consumer{
+struct TestConsumer{
     void operator()(std::shared_ptr<BlockingQueue<int>> q, std::vector<int> & res){
         while(true) {
             auto value = q->take();
@@ -52,6 +52,9 @@ struct Consumer{
 
     void operator()(std::shared_ptr<BlockingQueue<int>> q, std::vector<int> & res, std::mutex & mut){
         while(true) {
+
+
+            
             auto value = q->take();
             if (not value) {
                 q->putPoisonPill();
@@ -70,8 +73,8 @@ TEST_F(BlockingQueueTest, OneProducerOneConsumer) {
     for(int i=0; i <MAX_VALUE; i++) {
         expected.push_back(i);
     }
-    std::thread producer(Producer(),q);
-    std::thread consumer(Consumer(),q,std::ref(actual));
+    std::thread producer(TestProducer(),q);
+    std::thread consumer(TestConsumer(),q,std::ref(actual));
 
     producer.join();
     q->putPoisonPill();
@@ -88,9 +91,9 @@ TEST_F(BlockingQueueTest, TwoProducerOneConsumer) {
     for(int i=0; i <MAX_VALUE; i++) {
         expected.push_back(i);
     }
-    std::thread producer1(Producer(),q,0,MAX_VALUE/2);
-    std::thread producer2(Producer(),q,MAX_VALUE/2);
-    std::thread consumer(Consumer(),q,std::ref(actual));
+    std::thread producer1(TestProducer(),q,0,MAX_VALUE/2);
+    std::thread producer2(TestProducer(),q,MAX_VALUE/2);
+    std::thread consumer(TestConsumer(),q,std::ref(actual));
 
     producer1.join();
     producer2.join();
@@ -105,9 +108,9 @@ TEST_F(BlockingQueueTest, TwoProducerOneConsumer) {
 TEST_F(BlockingQueueTest, OneProducerTwoConsumer) {
     std::vector<int> res1;
     std::vector<int> res2;
-    std::thread producer(Producer(),q);
-    std::thread consumer1(Consumer(),q,std::ref(res1));
-    std::thread consumer2(Consumer(),q,std::ref(res2));
+    std::thread producer(TestProducer(),q);
+    std::thread consumer1(TestConsumer(),q,std::ref(res1));
+    std::thread consumer2(TestConsumer(),q,std::ref(res2));
 
     producer.join();
     q->putPoisonPill();
@@ -140,8 +143,8 @@ TEST_F(BlockingQueueTest, MultiProducerMultiConsumer) {
     int N = 5;
     int dataPerProducer = MAX_VALUE/5;
     for(int i=0; i < N; i++) {
-        producers.push_back(std::thread(Producer(),q,i*dataPerProducer,(i+1)*dataPerProducer));
-        consumers.push_back(std::thread(Consumer(),q,std::ref(results),std::ref(mut))); 
+        producers.push_back(std::thread(TestProducer(),q,i*dataPerProducer,(i+1)*dataPerProducer));
+        consumers.push_back(std::thread(TestConsumer(),q,std::ref(results),std::ref(mut))); 
     }
     std::for_each(producers.begin(),producers.end(),[](auto & t){t.join();});
     q->putPoisonPill();
@@ -167,8 +170,8 @@ TEST_F(BlockingQueueTest, MultiProducerMultiConsumer) {
 
 TEST_F(FiniteBlockingQueueTest, OneProducerOneConsumer){
     std::vector<int> result;
-    std::thread producer(Producer(),q);
-    std::thread consumer(Consumer(),q,std::ref(result));
+    std::thread producer(TestProducer(),q);
+    std::thread consumer(TestConsumer(),q,std::ref(result));
 
     producer.join();
     q->putPoisonPill();
@@ -190,9 +193,9 @@ TEST_F(FiniteBlockingQueueTest, TwoProducerOneConsumer){
     for(int i=0; i <MAX_VALUE; i++) {
         expected.push_back(i);
     }
-    std::thread producer1(Producer(),q,0,MAX_VALUE/2);
-    std::thread producer2(Producer(),q,MAX_VALUE/2);
-    std::thread consumer(Consumer(),q,std::ref(actual));
+    std::thread producer1(TestProducer(),q,0,MAX_VALUE/2);
+    std::thread producer2(TestProducer(),q,MAX_VALUE/2);
+    std::thread consumer(TestConsumer(),q,std::ref(actual));
 
     producer1.join();
     producer2.join();
@@ -207,9 +210,9 @@ TEST_F(FiniteBlockingQueueTest, TwoProducerOneConsumer){
 TEST_F(FiniteBlockingQueueTest, OneProducerTwoConsumer) {
     std::vector<int> res1;
     std::vector<int> res2;
-    std::thread producer(Producer(),q);
-    std::thread consumer1(Consumer(),q,std::ref(res1));
-    std::thread consumer2(Consumer(),q,std::ref(res2));
+    std::thread producer(TestProducer(),q);
+    std::thread consumer1(TestConsumer(),q,std::ref(res1));
+    std::thread consumer2(TestConsumer(),q,std::ref(res2));
 
     producer.join();
     q->putPoisonPill();
@@ -242,8 +245,8 @@ TEST_F(FiniteBlockingQueueTest, MultiProducerMultiConsumer) {
     int N = 5;
     int dataPerProducer = MAX_VALUE/5;
     for(int i=0; i < N; i++) {
-        producers.push_back(std::thread(Producer(),q,i*dataPerProducer,(i+1)*dataPerProducer));
-        consumers.push_back(std::thread(Consumer(),q,std::ref(results),std::ref(mut))); 
+        producers.push_back(std::thread(TestProducer(),q,i*dataPerProducer,(i+1)*dataPerProducer));
+        consumers.push_back(std::thread(TestConsumer(),q,std::ref(results),std::ref(mut))); 
     }
     std::for_each(producers.begin(),producers.end(),[](auto & t){t.join();});
     q->putPoisonPill();
