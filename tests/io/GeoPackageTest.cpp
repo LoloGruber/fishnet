@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include <fstream>
-#include <Testutil.h>
+#include <fishnet/TestUtil.hpp>
 #include <fishnet/GeoPackage.hpp>
 
 using namespace fishnet;

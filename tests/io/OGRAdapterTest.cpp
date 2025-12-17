@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include <fishnet/OGRGeometryAdapter.hpp>
-#include "Testutil.h"
+#include <fishnet/TestUtil.hpp>
 
 using namespace testutil;
 using namespace fishnet::geometry;

@@ -6,7 +6,7 @@
 #include <fishnet/Vec2D.hpp>
 #include <fishnet/Line.hpp>
 #include <gtest/gtest.h>
-#include "Testutil.h"
+#include <fishnet/TestUtil.hpp>
 using namespace fishnet;
 using namespace testutil;
 

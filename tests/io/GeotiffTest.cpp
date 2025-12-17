@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <Testutil.h>
+#include <fishnet/TestUtil.hpp>
 #include <fishnet/GeoTiff.hpp>
 #include <fstream>
 #include <filesystem>
