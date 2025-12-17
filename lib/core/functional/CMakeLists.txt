@@ -1,4 +1,5 @@
 set(FunctionalLib fishnet_functional)
 add_library(${FunctionalLib} INTERFACE)
 target_include_directories(${FunctionalLib} INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
+target_link_libraries(${FunctionalLib} INTERFACE ${FISHNET}::Concepts)
 add_library(${FISHNET}::Functional ALIAS ${FunctionalLib})
