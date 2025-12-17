@@ -1,6 +1,8 @@
 #pragma once
-#include <assert>
 #include <fishnet/Graph.hpp>
+#include <fishnet/GeometryObject.hpp>
+
+namespace fishnet {
 
 class DBSCAN {
 private:
@@ -43,8 +45,8 @@ private:
 
 public:
     DBSCAN(double eps, size_t minPts) : eps(eps), minPts(minPts) {
-        assert(eps > 0,"Epsilon must be positive");
-        assert(minPts > 0,"Minimum Points per Cluster must be positive");
+        assert(eps > 0 && "Epsilon must be positive");
+        assert(minPts > 0 && "Minimum Points per Cluster must be positive");
     }
 
     template<fishnet::geometry::GeometryObject G>
@@ -94,3 +96,4 @@ public:
         return result;
     }
 };
+} // namespace fishnet

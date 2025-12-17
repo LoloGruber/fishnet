@@ -1,4 +1,5 @@
 include(GoogleTest)
+add_subdirectory(clustering)
 add_subdirectory(collections)
 add_subdirectory(graph)
 add_subdirectory(io)

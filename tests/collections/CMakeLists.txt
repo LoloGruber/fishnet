@@ -1,8 +1,8 @@
-set(UtilityTestBin Test-Collections)
-add_executable(${UtilityTestBin}
+set(CollectionsTestBin Test-Collections)
+add_executable(${CollectionsTestBin}
 BlockingQueueTest.cpp
 AlternativeKeyMapTest.cpp
 NestedMapTest.cpp
 )
-gtest_discover_tests(${UtilityTestBin})
-target_link_libraries(${UtilityTestBin} PRIVATE  ${FISHNET}::Test ${FISHNET}::Collections ${FISHNET}::IO::Filesystem) 
+gtest_discover_tests(${CollectionsTestBin})
+target_link_libraries(${CollectionsTestBin} PRIVATE  ${FISHNET}::Test ${FISHNET}::Collections) 

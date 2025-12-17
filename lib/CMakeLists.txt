@@ -9,7 +9,7 @@ add_subdirectory(math)
 add_subdirectory(workflow)
 set(FishnetLibs
         ${FISHNET}::Concepts
-        # ${FISHNET_NAME}::Clustering
+        ${FISHNET}::Clustering
         ${FISHNET}::Collections
         ${FISHNET}::Functional
         ${FISHNET}::Geometry
