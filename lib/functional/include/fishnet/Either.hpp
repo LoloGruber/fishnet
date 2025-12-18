@@ -2,7 +2,7 @@
 #include <expected>
 #include <stdexcept>
 #include <string>
-namespace fishnet::util{
+namespace fishnet{
 
 template<typename T, typename E>
 class Either: public std::expected<T,E>{

@@ -1,6 +1,9 @@
+#pragma once
 #include <optional>
+#include <string>
+#include <stdexcept>
 
-namespace fishnet::util {
+namespace fishnet {
 
 template<typename T>
 class Option : public std::optional<T> {

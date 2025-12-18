@@ -29,7 +29,7 @@ concept CipherConnection = requires(const C & constConnection, const CipherQuery
  * 
  */
 class Session{
-    friend class fishnet::util::Option<Session>;
+    friend class fishnet::Option<Session>;
 private:
     size_t _id = 0;
     Session(size_t id):_id(id){}
@@ -60,14 +60,14 @@ public:
      * 
      * @param connection db connection
      * @param id id of session
-     * @return fishnet::util::Option<Session> 
+     * @return fishnet::Option<Session> 
      */
-    static fishnet::util::Option<Session> of(const CipherConnection auto & connection, size_t id){
+    static fishnet::Option<Session> of(const CipherConnection auto & connection, size_t id){
         if(connection.execute(CipherQuery("MATCH (s:Session {id:$sid})").setInt("sid",id).ret("s.id"))) {
             auto result = connection->FetchAll();
             if(result && not result.value().empty() &&  result->front().front().type() == mg::Value::Type::Int){
                 size_t id = asNodeIdType(result->front().front().ValueInt());
-                return fishnet::util::Option<Session>(Session(id));
+                return fishnet::Option<Session>(Session(id));
             }
         }
         return std::nullopt;
@@ -111,7 +111,7 @@ public:
      * @param params parameters for the database connection (e.g hostname, port,...)
      * @return Either<MemgraphClient,std::string>: Containing the MemgraphClient on success or a string explaining the error
      */
-    static fishnet::util::Either<MemgraphConnection,std::string> create(const mg::Client::Params & params) {
+    static fishnet::Either<MemgraphConnection,std::string> create(const mg::Client::Params & params) {
         auto clientPtr = mg::Client::Connect(params);
         if(not clientPtr){
             std::ostringstream connectionError;
@@ -122,7 +122,7 @@ public:
             connectionError << "\tPassword: " << params.password << std::endl;
             return std::unexpected(connectionError.str());
         }
-        return fishnet::util::Either<MemgraphConnection,std::string>(MemgraphConnection(std::move(clientPtr),params));
+        return fishnet::Either<MemgraphConnection,std::string>(MemgraphConnection(std::move(clientPtr),params));
     }
 
 
@@ -133,7 +133,7 @@ public:
      * @param sessionID unique session id to distinguish concurrent workflows runs on the basis of labels
      * @return Either<MemgraphClient,std::string>: Containing the MemgraphClient on success or a string explaining the error
      */
-    static fishnet::util::Either<MemgraphConnection,std::string> create(const mg::Client::Params & params, size_t sessionID) {
+    static fishnet::Either<MemgraphConnection,std::string> create(const mg::Client::Params & params, size_t sessionID) {
         auto eitherConnection = create(params);
         if(sessionID==0)
             return eitherConnection; // sessionID of zero implies no session

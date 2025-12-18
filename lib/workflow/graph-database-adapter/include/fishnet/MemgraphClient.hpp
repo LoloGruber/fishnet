@@ -9,6 +9,7 @@
 #include <mgclient.hpp>
 #include <filesystem>
 #include <fishnet/CollectionConcepts.hpp>
+#include <fishnet/Option.hpp>
 
 
 using NodeIdType = size_t;
@@ -99,7 +100,7 @@ public:
      * @param path path to file
      * @return std::optional<FileReference> containing the unique ID of the file if successful 
      */
-    std::optional<FileReference> addFileReference(const std::filesystem::path & pathToFile) const noexcept{
+    fishnet::Option<FileReference> addFileReference(const std::filesystem::path & pathToFile) const noexcept{
         std::filesystem::path path = pathToFile;
         if(std::filesystem::is_symlink(pathToFile)){
             path = std::filesystem::read_symlink(pathToFile);

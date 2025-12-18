@@ -14,11 +14,11 @@ namespace fishnet {
  * @tparam G geometry type of layer
  */
 template<typename R, typename F=R::file_type, typename G=R::geometry_type>
-concept VectorLayerReader = util::UnaryFunction<R,F,util::Either<VectorLayer<G>,std::string>> && VectorGISFile<F> && requires(){
+concept VectorLayerReader = util::UnaryFunction<R,F,Either<VectorLayer<G>,std::string>> && VectorGISFile<F> && requires(){
     typename std::remove_cvref_t<R>::geometry_type;
     typename std::remove_cvref_t<R>::file_type;
 };
 
 template<typename W, typename G, typename F>
-concept VectorLayerWriter = util::BiFunction<W,VectorLayer<G>,F,util::Either<F,std::string>> && VectorGISFile<F>;   
+concept VectorLayerWriter = util::BiFunction<W,VectorLayer<G>,F,Either<F,std::string>> && VectorGISFile<F>;   
 } // namespace fishnet

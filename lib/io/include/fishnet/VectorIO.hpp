@@ -21,7 +21,7 @@ public:
     explicit NonOverwritingVectorLayerWriter(VectorLayerWriterType const& writer, fishnet::util::UnaryFunction<F,F> auto && filenameMapper) 
     : writer(std::move(writer)),filenameMapper(std::move(filenameMapper)) {}
 
-    util::Either<F,std::string> operator()(const VectorLayer<G> & layer, const F & destination) const {
+    Either<F,std::string> operator()(const VectorLayer<G> & layer, const F & destination) const {
         F outputFile = destination;
         if(destination.exists()){
             outputFile = filenameMapper(destination);
@@ -101,12 +101,12 @@ inline VectorLayer<geometry::Polygon<double>> readPolygonLayer(const Shapefile &
 }
 
 template<geometry::GeometryObject G,VectorGISFile F>
-util::Either<F,std::string> tryOverwrite(const VectorLayerWriter<G,F> auto & writer, const VectorLayer<G> & layer, const F & destination){
+Either<F,std::string> tryOverwrite(const VectorLayerWriter<G,F> auto & writer, const VectorLayer<G> & layer, const F & destination){
     return writer(layer, destination);
 }
 
 template<geometry::GeometryObject G,VectorGISFile F>
-util::Either<F,std::string> tryWrite(const VectorLayerWriter<G,F> auto & writer, const VectorLayer<G> & layer, const F & destination){
+Either<F,std::string> tryWrite(const VectorLayerWriter<G,F> auto & writer, const VectorLayer<G> & layer, const F & destination){
     auto nonOverwritingWriter = __impl::NonOverwritingVectorLayerWriter<G,F,std::remove_cvref_t<decltype(writer)>>(writer,__impl::IncrementFilenameMapper<F>());
     return tryOverwrite(nonOverwritingWriter, layer, destination);
 }

@@ -149,7 +149,7 @@ public:
      * @return constexpr util::Either<FieldDefinition<T>,error_type> 
      */
     template<FieldValueType T>
-    [[nodiscard]] constexpr util::Either<FieldDefinition<T>,error_type> addField(const std::string & fieldName, const std::optional<int> & fieldID = std::nullopt) noexcept {
+    [[nodiscard]] constexpr fishnet::Either<FieldDefinition<T>,error_type> addField(const std::string & fieldName, const std::optional<int> & fieldID = std::nullopt) noexcept {
         if(fieldName.length() > 10){
             return std::unexpected("Field name \""+ fieldName+"\" must not exceed a length of 10 characters");
         }
@@ -161,19 +161,19 @@ public:
         return field;
     }
 
-    constexpr util::Either<FieldDefinition<int>,error_type> addIntegerField(const std::string & fieldName, const std::optional<int> & fieldID = std::nullopt) noexcept {
+    constexpr fishnet::Either<FieldDefinition<int>,error_type> addIntegerField(const std::string & fieldName, const std::optional<int> & fieldID = std::nullopt) noexcept {
         return addField<int>(fieldName,fieldID);
     }
 
-    constexpr util::Either<FieldDefinition<double>,error_type> addDoubleField(const std::string & fieldName, const std::optional<int> & fieldID = std::nullopt) noexcept {
+    constexpr fishnet::Either<FieldDefinition<double>,error_type> addDoubleField(const std::string & fieldName, const std::optional<int> & fieldID = std::nullopt) noexcept {
         return addField<double>(fieldName,fieldID);
     }
 
-    constexpr util::Either<FieldDefinition<std::string>,error_type> addTextField(const std::string & fieldName, const std::optional<int> & fieldID = std::nullopt) noexcept {
+    constexpr fishnet::Either<FieldDefinition<std::string>,error_type> addTextField(const std::string & fieldName, const std::optional<int> & fieldID = std::nullopt) noexcept {
         return addField<std::string>(fieldName,fieldID);
     }
 
-    constexpr util::Either<FieldDefinition<size_t>,error_type> addSizeField(const std::string & fieldName, const std::optional<int> & fieldID = std::nullopt) noexcept {
+    constexpr fishnet::Either<FieldDefinition<size_t>,error_type> addSizeField(const std::string & fieldName, const std::optional<int> & fieldID = std::nullopt) noexcept {
         return addField<size_t>(fieldName,fieldID);
     }
 
@@ -197,8 +197,8 @@ public:
     }
 
     template<FieldValueType T>
-    constexpr std::optional<FieldDefinition<T>> getField(const std::string & fieldName) const noexcept {
-        std::optional<FieldDefinition<T>> optFieldDef = std::nullopt;
+    constexpr fishnet::Option<FieldDefinition<T>> getField(const std::string & fieldName) const noexcept {
+        fishnet::Option<FieldDefinition<T>> optFieldDef = std::nullopt;
         if(not fields.contains(fieldName)) {
             return std::nullopt;
         }
@@ -212,19 +212,19 @@ public:
         return optFieldDef;
     }
 
-    constexpr std::optional<FieldDefinition<double>> getDoubleField(const std::string  & fieldName) const noexcept {
+    constexpr fishnet::Option<FieldDefinition<double>> getDoubleField(const std::string  & fieldName) const noexcept {
         return getField<double>(fieldName);
     }
 
-    constexpr std::optional<FieldDefinition<int>> getIntegerField(const std::string  & fieldName) const noexcept {
+    constexpr fishnet::Option<FieldDefinition<int>> getIntegerField(const std::string  & fieldName) const noexcept {
         return getField<int>(fieldName);
     }
 
-    constexpr std::optional<FieldDefinition<size_t>> getSizeField(const std::string & fieldName) const noexcept  {
+    constexpr fishnet::Option<FieldDefinition<size_t>> getSizeField(const std::string & fieldName) const noexcept  {
         return getField<size_t>(fieldName);
     }
 
-    constexpr std::optional<FieldDefinition<std::string>> getTextField(const std::string  & fieldName) const noexcept {
+    constexpr fishnet::Option<FieldDefinition<std::string>> getTextField(const std::string  & fieldName) const noexcept {
         return getField<std::string>(fieldName);
     }
 

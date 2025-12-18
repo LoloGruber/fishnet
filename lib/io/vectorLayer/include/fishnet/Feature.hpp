@@ -1,5 +1,5 @@
 #pragma once
-#include <optional>
+#include <fishnet/Option.hpp>
 #include <fishnet/GeometryObject.hpp>
 #include "FieldType.hpp"
 #include "FieldDefinition.hpp"
@@ -87,12 +87,12 @@ public:
     }
 
     template<IFieldDefinition FieldDef>
-    constexpr std::optional<typename FieldDef::value_type> getAttribute(const FieldDef & fieldDefinition) const noexcept {
+    constexpr fishnet::Option<typename FieldDef::value_type> getAttribute(const FieldDef & fieldDefinition) const noexcept {
         using T = typename FieldDef::value_type;
         auto valueIt = getItPosOfAttribute(fieldDefinition);
         if(valueIt == std::ranges::end(attributes))
             return std::nullopt;
-        return std::make_optional<T>(valueIt->template getValue<T>());
+        return fishnet::Option<T>(valueIt->template getValue<T>());
     }
 
     template<IFieldDefinition FieldDef>

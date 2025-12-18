@@ -67,7 +67,7 @@ public:
      * @param ogrLayer pointer to the OGRLayer
      * @return util::Either<VectorLayer<G>, std::string> VectorLayer if successful, error message otherwise
      */
-    static util::Either<VectorLayer<G>, std::string> fromOGR(OGRLayer * ogrLayer){
+    static Either<VectorLayer<G>, std::string> fromOGR(OGRLayer * ogrLayer){
         if(ogrLayer == nullptr)
             return std::unexpected("Could not read from OGRLayer, pointer is null");
         VectorLayer<G> layer {};
@@ -110,7 +110,7 @@ public:
      * @param outputLayer inout parameter, should be already created with the correct geometry type and spatial reference
      * @return util::Either<OGRLayer, std::string> OGRLayer if successful, error message otherwise
      */
-    static util::Either<OGRLayer *, std::string> toOGR(const VectorLayer<G> & layer, OGRLayer * outputLayer){
+    static Either<OGRLayer *, std::string> toOGR(const VectorLayer<G> & layer, OGRLayer * outputLayer){
         for(const auto & [fieldName,fieldDefinition] :  layer.getFieldsMap()) {
             OGRFieldType fieldType;
             // get OGRFieldType from FieldDefinition<T> type -> T

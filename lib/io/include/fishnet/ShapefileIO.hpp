@@ -36,7 +36,7 @@ public:
         }
     }
 
-    util::Either<VectorLayer<G>,std::string> operator()(const Shapefile & shapefile) const {
+    Either<VectorLayer<G>,std::string> operator()(const Shapefile & shapefile) const {
         GDALInitializer::init();
         if(not shapefile.exists())
             return std::unexpected("Shapefile does not exists, could not read from File: \"" + shapefile.getPath().string() + "\"");
@@ -69,7 +69,7 @@ public:
             this->options.push_back(std::move(opt));
         }
     }
-    util::Either<Shapefile,std::string> operator()(const VectorLayer<G> & layer, const Shapefile & output) const {
+    Either<Shapefile,std::string> operator()(const VectorLayer<G> & layer, const Shapefile & output) const {
         GDALInitializer::init();
         GDALDriver * driver = GetGDALDriverManager()->GetDriverByName("ESRI Shapefile");
         if (driver == nullptr) {
