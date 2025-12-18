@@ -20,7 +20,7 @@ public:
     ObservableShapefileReader(fishnet::util::Consumer<fishnet::VectorLayer<G>> auto && onSuccess)
     : onSuccess(std::move(onSuccess)) {}
 
-    fishnet::util::Either<fishnet::VectorLayer<G>,std::string> operator()(const fishnet::Shapefile & shapefile) const {
+    fishnet::Either<fishnet::VectorLayer<G>,std::string> operator()(const fishnet::Shapefile & shapefile) const {
         auto layer = fishnet::VectorIO::tryRead(fishnet::ShapefileReader<G>{},shapefile);
         if(layer)
             onSuccess(layer.value());
@@ -76,11 +76,7 @@ int main(int argc, char *argv[]){
         }
     };
     auto fileRefMapper = [&memgraphAdj](const fishnet::Shapefile & shp){
-        auto fileRef = memgraphAdj.getDatabaseConnection().addFileReference(shp.getPath());
-        if(not fileRef){
-            throw std::runtime_error("Could not read file reference for shp file:\n"+shp.getPath().string());
-        }
-        return fileRef.value();
+        return memgraphAdj.getDatabaseConnection().addFileReference(shp.getPath()).value_or_throw("Could not read file reference for shp file:\n"+shp.getPath().string());
     };
     ObservableShapefileReader<ShapeType> reader(onReadStoreSpatialRef);
     auto settlements = SettlementType::read<fishnet::Shapefile>(shapeFiles, reader,fileRefMapper);
