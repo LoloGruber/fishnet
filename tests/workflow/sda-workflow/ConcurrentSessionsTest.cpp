@@ -24,7 +24,8 @@ protected:
     }
 
     static void TearDownTestSuite(){
-        connection.executeAndDiscard(CipherQuery::DELETE_ALL());
+        if(connection)
+            connection.executeAndDiscard(CipherQuery::DELETE_ALL());
     }
 
     static inline MemgraphConnection connection;

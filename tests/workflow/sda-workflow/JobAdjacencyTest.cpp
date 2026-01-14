@@ -11,6 +11,11 @@ using DAGType = decltype(GraphFactory::DAG<Job>(JobAdjacency(MemgraphConnection:
 
 class JobAdjacencyTest: public ::testing::Test{
 protected:
+    static void SetUpTestSuite() {
+        auto connection = MemgraphConnection::create(WorkflowTestEnvironment::memgraphParams()).value_or_throw();
+        jobAdj = JobAdjacency(std::move(connection));
+    }
+
     void SetUp() override {
         if(not jobAdj){
             throw std::runtime_error(jobAdj.error());
@@ -29,8 +34,9 @@ protected:
             jobAdj->clear();
         }
     }
+
     static inline mg::Client::Params params = WorkflowTestEnvironment::memgraphParams();
-    static inline std::expected<JobAdjacency,std::string> jobAdj = MemgraphConnection::create(params).transform([](auto && connection){return JobAdjacency(std::move(connection));}); 
+    static inline std::expected<JobAdjacency,std::string> jobAdj = std::unexpected("Not initialized");
     Job filterJob {1,"filter.json",JobType::FILTER,JobState::RUNNABLE};
     Job secondFilterJob {2,"otherFilter.json",JobType::FILTER,JobState::RUNNABLE};
     Job neighboursJob {3,"neighbours.json",JobType::NEIGHBOURS,JobState::RUNNABLE};

@@ -78,7 +78,7 @@ class MemgraphConnection {
 private:
     mutable std::unique_ptr<mg::Client> connection;
     mg::Client::Params params;
-     static inline std::unique_ptr<Session> session = nullptr;
+    static inline std::unique_ptr<Session> session = nullptr;
 
     explicit MemgraphConnection(std::unique_ptr<mg::Client> && connection,const mg::Client::Params & params)
     :connection(std::move(connection)),params(params){}
@@ -146,6 +146,10 @@ public:
             }
         }
         return eitherConnection;
+    }
+
+    operator bool() const noexcept {
+        return this->connection != nullptr;
     }
 
     const MemgraphConnection & retry() const {
