@@ -79,42 +79,12 @@ public:
         GDALDataset * outputDataset = driver->Create(output.getPath().c_str(),0,0,0,GDT_Unknown,0);
         const char * const options[] = {"SPATIAL_INDEX=YES",nullptr};
         OGRLayer * outputLayer = outputDataset->CreateLayer(output.getPath().c_str(),layer.getSpatialReference().Clone(),GeometryTypeWKBAdapter::toWKB(G::type),const_cast<char **>(options));
-        // for(const auto & [fieldName,fieldDefinition] :  layer.getFieldsMap()) {
-        //     OGRFieldType fieldType;
-        //     // get OGRFieldType from FieldDefinition<T> type -> T
-        //     std::visit([&fieldType](auto && fieldVariant){
-        //         using T = typename  std::decay_t<decltype(fieldVariant)>::value_type;
-        //         fieldType = OGRFieldAdapter::fromTypeIndex(typeid(T));
-        //     },fieldDefinition);
-        //     auto fieldDefn = OGRFieldDefn(fieldName.c_str(),fieldType);
-        //     fieldDefn.SetPrecision(20);
-        //     outputLayer->CreateField(&fieldDefn); // add OGRFieldDefinition to output layer
-        // }
-        // for(const auto & f : layer.getFeatures()){
-        //     auto * feature = new OGRFeature(outputLayer->GetLayerDefn());
-        //     feature->SetGeometry(OGRGeometryAdapter::toOGR(f.getGeometry()).get());
-
-        //     for(const auto & [fieldName,fieldDefinition]: layer.getFieldsMap()){
-        //         // visitor to set attributes for OGRFeature
-        //         std::visit([&fieldName,&f,feature]( auto && var){
-        //             auto optionalAttribute = f.getAttribute(var);
-        //             if(optionalAttribute)
-        //                 OGRFieldAdapter::setFieldValue(feature, fieldName, optionalAttribute.value());
-        //         },fieldDefinition);
-
-        //     }
-        //     OGRErr success = outputLayer->CreateFeature(feature);
-        //     if(success != 0){
-        //         std::cerr << "Could not write Geometry: "+f.getGeometry().toString() << std::endl;
-        //     }
-        // }
         auto result = OGRLayerAdapter<G>::toOGR(layer,outputLayer);
         outputLayer->SyncToDisk();
         GDALClose(outputDataset);
-        // return result.transform([&output](const auto & _) {
-        //     return output;
-        // });
-        return output;
+        return result.transform([&output](const auto & _) {
+            return output;
+        });
     }
 };
 
