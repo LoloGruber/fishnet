@@ -1,4 +1,5 @@
 #pragma once
+#include <assert.h>
 #include <fishnet/Graph.hpp>
 #include <fishnet/FunctionalConcepts.hpp>
 #include "ClusterAlgorithm.hpp"
