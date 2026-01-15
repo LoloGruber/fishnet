@@ -1,6 +1,6 @@
 cwlVersion: v1.2
 class: CommandLineTool
-baseCommand: [SettlementDelineationContraction]
+baseCommand: [FishnetClustering]
 requirements:
   - class: InlineJavascriptRequirement
   - class: SchemaDefRequirement
