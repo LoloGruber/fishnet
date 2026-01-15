@@ -1,13 +1,20 @@
+// Graph
 #include <fishnet/Graph.hpp>
 #include <fishnet/BFSAlgorithm.hpp>
 #include <fishnet/Contraction.hpp>
+// Geometry
 #include <fishnet/GeometryObject.hpp>
 #include <fishnet/Polygon.hpp>
 #include <fishnet/MultiPolygon.hpp>
 #include <fishnet/PolygonNeighbours.hpp>
 #include <fishnet/PolygonDistance.hpp>
 #include <fishnet/PolygonFilter.hpp>
+// IO
 #include <fishnet/GISFactory.hpp>
 #include <fishnet/VectorIO.hpp>
 #include <fishnet/PathHelper.h>
+// Clustering
+#include <fishnet/ClusterAlgorithm.hpp>
+#include <fishnet/DBScan.hpp>
+#include <fishnet/BFSClustering.hpp>
 
