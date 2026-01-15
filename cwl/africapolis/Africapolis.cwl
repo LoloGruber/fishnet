@@ -4,28 +4,6 @@
             "class": "Workflow",
             "requirements": [
                 {
-                    "class": "InitialWorkDirRequirement",
-                    "listing": [
-                        {
-                            "entryname": "fishnet",
-                            "writable": true,
-                            "entry": ""
-                        }
-                    ]
-                },
-                {
-                    "class": "ScatterFeatureRequirement"
-                },
-                {
-                    "class": "StepInputExpressionRequirement"
-                },
-                {
-                    "class": "InlineJavascriptRequirement"
-                },
-                {
-                    "class": "SubworkflowFeatureRequirement"
-                },
-                {
                     "class": "SchemaDefRequirement",
                     "types": [
                         {
@@ -63,6 +41,169 @@
                             "inputBinding": {
                                 "valueFrom": "$(self.file)"
                             }
+                        },
+                        {
+                            "name": "#ClusterWorkload.yaml/ClusterWorkload",
+                            "type": "record",
+                            "fields": [
+                                {
+                                    "name": "#ClusterWorkload.yaml/ClusterWorkload/components",
+                                    "type": {
+                                        "type": "array",
+                                        "items": "int"
+                                    }
+                                },
+                                {
+                                    "name": "#ClusterWorkload.yaml/ClusterWorkload/files",
+                                    "type": {
+                                        "type": "array",
+                                        "items": "#Shapefile.yaml/Shapefile"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ],
+            "inputs": [
+                {
+                    "type": "File",
+                    "doc": "Path to configuration file for africapolis clustering step. Contains database credentials",
+                    "id": "#AfricapolisClustering.cwl/config"
+                },
+                {
+                    "type": {
+                        "type": "array",
+                        "items": "#Shapefile.yaml/Shapefile"
+                    },
+                    "doc": "List of shapefiles to be used for assigning the workload for the clustering",
+                    "id": "#AfricapolisClustering.cwl/files"
+                },
+                {
+                    "type": "File",
+                    "doc": "File containing the workload for the clustering step",
+                    "id": "#AfricapolisClustering.cwl/workloadFile"
+                }
+            ],
+            "steps": [
+                {
+                    "run": "#cluster.cwl",
+                    "in": [
+                        {
+                            "source": "#AfricapolisClustering.cwl/prepare_cluster_workload/clusterWorkload",
+                            "id": "#AfricapolisClustering.cwl/clustering/clusterWorkload"
+                        },
+                        {
+                            "source": "#AfricapolisClustering.cwl/prepare_cluster_workload/clusterWorkload",
+                            "valueFrom": "$(inputs.clusterWorkload.components)",
+                            "id": "#AfricapolisClustering.cwl/clustering/components"
+                        },
+                        {
+                            "source": "#AfricapolisClustering.cwl/config",
+                            "id": "#AfricapolisClustering.cwl/clustering/config"
+                        },
+                        {
+                            "source": "#AfricapolisClustering.cwl/prepare_cluster_workload/clusterWorkload",
+                            "valueFrom": "$(\"Clustered_\"+ inputs.clusterWorkload.components[0])",
+                            "id": "#AfricapolisClustering.cwl/clustering/outputStem"
+                        },
+                        {
+                            "source": "#AfricapolisClustering.cwl/prepare_cluster_workload/clusterWorkload",
+                            "valueFrom": "$(inputs.clusterWorkload.files)",
+                            "id": "#AfricapolisClustering.cwl/clustering/shpFiles"
+                        }
+                    ],
+                    "out": [
+                        "#AfricapolisClustering.cwl/clustering/clusteredOutput"
+                    ],
+                    "id": "#AfricapolisClustering.cwl/clustering"
+                },
+                {
+                    "run": {
+                        "class": "ExpressionTool",
+                        "inputs": [
+                            {
+                                "type": [
+                                    "null",
+                                    "File"
+                                ],
+                                "loadContents": true,
+                                "doc": "String in json format containing the list of cluster workloads derived from the components of the graph",
+                                "id": "#AfricapolisClustering.cwl/prepare_cluster_workload/run/component"
+                            },
+                            {
+                                "type": {
+                                    "type": "array",
+                                    "items": "#Shapefile.yaml/Shapefile"
+                                },
+                                "doc": "List of shapefiles to be used for assigning the workload for the clustering step",
+                                "id": "#AfricapolisClustering.cwl/prepare_cluster_workload/run/files"
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "type": "#ClusterWorkload.yaml/ClusterWorkload",
+                                "doc": "Parsed ClusterWorkload object",
+                                "id": "#AfricapolisClustering.cwl/prepare_cluster_workload/run/clusterWorkload"
+                            }
+                        ],
+                        "expression": "${\n    let workloadJson = JSON.parse(inputs.component.contents);\n    let fileNames = [...new Set(workloadJson.files.map(file => file.split(\"/\").pop()))];\n    let files = fileNames.map(fileName => {\n        let fileObject = inputs.files.find(f => f.file.basename == fileName);\n        return fileObject;\n        });\n    let result = {\n        components: workloadJson.components,\n        files: files\n    };\n    return {\n        clusterWorkload: result,\n    };\n}\n"
+                    },
+                    "in": [
+                        {
+                            "source": "#AfricapolisClustering.cwl/workloadFile",
+                            "id": "#AfricapolisClustering.cwl/prepare_cluster_workload/component"
+                        },
+                        {
+                            "source": "#AfricapolisClustering.cwl/files",
+                            "id": "#AfricapolisClustering.cwl/prepare_cluster_workload/files"
+                        }
+                    ],
+                    "out": [
+                        "#AfricapolisClustering.cwl/prepare_cluster_workload/clusterWorkload"
+                    ],
+                    "id": "#AfricapolisClustering.cwl/prepare_cluster_workload"
+                }
+            ],
+            "id": "#AfricapolisClustering.cwl",
+            "outputs": [
+                {
+                    "type": "#Shapefile.yaml/Shapefile",
+                    "outputSource": "#AfricapolisClustering.cwl/clustering/clusteredOutput",
+                    "id": "#AfricapolisClustering.cwl/clusteredOutput"
+                }
+            ]
+        },
+        {
+            "class": "Workflow",
+            "requirements": [
+                {
+                    "class": "InitialWorkDirRequirement",
+                    "listing": [
+                        {
+                            "entryname": "fishnet",
+                            "writable": true,
+                            "entry": ""
+                        }
+                    ]
+                },
+                {
+                    "class": "ScatterFeatureRequirement"
+                },
+                {
+                    "class": "StepInputExpressionRequirement"
+                },
+                {
+                    "class": "InlineJavascriptRequirement"
+                },
+                {
+                    "class": "SubworkflowFeatureRequirement"
+                },
+                {
+                    "class": "SchemaDefRequirement",
+                    "types": [
+                        {
+                            "$import": "#Shapefile.yaml/Shapefile"
                         },
                         {
                             "name": "#GeoTIFF.yaml/GeoTIFF",
@@ -108,24 +249,7 @@
                             ]
                         },
                         {
-                            "name": "#ClusterWorkload.yaml/ClusterWorkload",
-                            "type": "record",
-                            "fields": [
-                                {
-                                    "name": "#ClusterWorkload.yaml/ClusterWorkload/components",
-                                    "type": {
-                                        "type": "array",
-                                        "items": "int"
-                                    }
-                                },
-                                {
-                                    "name": "#ClusterWorkload.yaml/ClusterWorkload/files",
-                                    "type": {
-                                        "type": "array",
-                                        "items": "#Shapefile.yaml/Shapefile"
-                                    }
-                                }
-                            ]
+                            "$import": "#ClusterWorkload.yaml/ClusterWorkload"
                         }
                     ]
                 }
@@ -150,12 +274,24 @@
                     "id": "#main/partitions"
                 }
             ],
+            "outputs": [
+                {
+                    "type": "#Shapefile.yaml/Shapefile",
+                    "outputSource": "#main/visualize/outputShapefile",
+                    "id": "#main/concave_hull"
+                },
+                {
+                    "type": "#Shapefile.yaml/Shapefile",
+                    "outputSource": "#main/merge/mergedOutput",
+                    "id": "#main/multi_polygons"
+                }
+            ],
             "steps": [
                 {
                     "run": {
                         "class": "CommandLineTool",
                         "baseCommand": [
-                            "AfricapolisClearDatabase"
+                            "FishnetClearDatabase"
                         ],
                         "inputs": [
                             {
@@ -179,33 +315,22 @@
                     "id": "#main/clearDatabase"
                 },
                 {
-                    "run": "#cluster.cwl",
+                    "run": "#AfricapolisClustering.cwl",
                     "in": [
-                        {
-                            "source": "#main/graph_components/clusterWorkload",
-                            "id": "#main/clustering/clusterWorkload"
-                        },
-                        {
-                            "source": "#main/graph_components/clusterWorkload",
-                            "valueFrom": "$(inputs.clusterWorkload.components)",
-                            "id": "#main/clustering/components"
-                        },
                         {
                             "source": "#main/config",
                             "id": "#main/clustering/config"
                         },
                         {
-                            "source": "#main/graph_components/clusterWorkload",
-                            "valueFrom": "$(\"Clustered_\"+ inputs.clusterWorkload.components[0])",
-                            "id": "#main/clustering/outputStem"
+                            "source": "#main/filter/filtered_shapefile",
+                            "id": "#main/clustering/files"
                         },
                         {
-                            "source": "#main/graph_components/clusterWorkload",
-                            "valueFrom": "$(inputs.clusterWorkload.files)",
-                            "id": "#main/clustering/shpFiles"
+                            "source": "#main/graph_components/clusterWorkloadFiles",
+                            "id": "#main/clustering/workloadFile"
                         }
                     ],
-                    "scatter": "#main/clustering/clusterWorkload",
+                    "scatter": "#main/clustering/workloadFile",
                     "scatterMethod": "dotproduct",
                     "out": [
                         "#main/clustering/clusteredOutput"
@@ -240,16 +365,12 @@
                             "id": "#main/graph_components/config"
                         },
                         {
-                            "source": "#main/filter/filtered_shapefile",
-                            "id": "#main/graph_components/files"
-                        },
-                        {
                             "source": "#main/graph_construction/trigger",
                             "id": "#main/graph_components/trigger"
                         }
                     ],
                     "out": [
-                        "#main/graph_components/clusterWorkload"
+                        "#main/graph_components/clusterWorkloadFiles"
                     ],
                     "id": "#main/graph_components"
                 },
@@ -313,19 +434,25 @@
                         "#main/split/split_shapefiles"
                     ],
                     "id": "#main/split"
+                },
+                {
+                    "run": "#OutlineVisualization.cwl",
+                    "in": [
+                        {
+                            "source": "#main/merge/mergedOutput",
+                            "id": "#main/visualize/gisFile"
+                        }
+                    ],
+                    "out": [
+                        "#main/visualize/outputShapefile"
+                    ],
+                    "id": "#main/visualize"
                 }
             ],
-            "id": "#main",
-            "outputs": [
-                {
-                    "type": "#Shapefile.yaml/Shapefile",
-                    "outputSource": "#main/merge/mergedOutput",
-                    "id": "#main/result"
-                }
-            ]
+            "id": "#main"
         },
         {
-            "class": "Workflow",
+            "class": "CommandLineTool",
             "requirements": [
                 {
                     "class": "SchemaDefRequirement",
@@ -337,157 +464,63 @@
                             "$import": "#ClusterWorkload.yaml/ClusterWorkload"
                         }
                     ]
+                },
+                {
+                    "class": "InlineJavascriptRequirement"
                 }
+            ],
+            "baseCommand": [
+                "AfricapolisGraphComponents"
             ],
             "inputs": [
                 {
-                    "type": "File",
-                    "doc": "Path to configuration file for africapolis components step. Contains database credentials and parallelization target",
-                    "id": "#GraphComponents.cwl/config"
+                    "type": "string",
+                    "default": "components",
+                    "inputBinding": {
+                        "position": 2,
+                        "prefix": "-o"
+                    },
+                    "id": "#GraphComponents.cwl/componentOutputBasename"
                 },
                 {
-                    "type": {
-                        "type": "array",
-                        "items": "#Shapefile.yaml/Shapefile"
+                    "type": "File",
+                    "doc": "Path to configuration file for africapolis components step. Contains database credentials and parallelization target",
+                    "inputBinding": {
+                        "position": 1,
+                        "prefix": "-c"
                     },
-                    "doc": "List of shapefiles to be used for assigning the workload for the clustering step",
-                    "id": "#GraphComponents.cwl/files"
+                    "id": "#GraphComponents.cwl/config"
                 }
             ],
             "outputs": [
                 {
                     "type": {
                         "type": "array",
-                        "items": "#ClusterWorkload.yaml/ClusterWorkload"
+                        "items": "File"
                     },
-                    "outputSource": "#GraphComponents.cwl/prepare_cluster_workload/clusterWorkload",
-                    "id": "#GraphComponents.cwl/clusterWorkload"
-                }
-            ],
-            "steps": [
-                {
-                    "run": {
-                        "class": "CommandLineTool",
-                        "baseCommand": [
-                            "AfricapolisGraphComponents"
-                        ],
-                        "requirements": [
-                            {
-                                "class": "InlineJavascriptRequirement"
-                            }
-                        ],
-                        "inputs": [
-                            {
-                                "type": "string",
-                                "default": "components",
-                                "inputBinding": {
-                                    "position": 2,
-                                    "prefix": "-o"
-                                },
-                                "id": "#GraphComponents.cwl/graph_components/run/componentOutputBasename"
-                            },
-                            {
-                                "type": "File",
-                                "inputBinding": {
-                                    "position": 1,
-                                    "prefix": "-c"
-                                },
-                                "doc": "Path to configuration file for africapolis components step. Contains database credentials and parallelization target",
-                                "id": "#GraphComponents.cwl/graph_components/run/config"
-                            }
-                        ],
-                        "outputs": [
-                            {
-                                "type": {
-                                    "type": "array",
-                                    "items": "File"
-                                },
-                                "outputBinding": {
-                                    "glob": "$(inputs.componentOutputBasename)*.json"
-                                },
-                                "doc": "Output file containing the components of the graph",
-                                "id": "#GraphComponents.cwl/graph_components/run/components"
-                            },
-                            {
-                                "type": "File",
-                                "id": "#GraphComponents.cwl/graph_components/run/errorOut",
-                                "outputBinding": {
-                                    "glob": "COMPONENTS_stderr.log"
-                                }
-                            },
-                            {
-                                "type": "File",
-                                "id": "#GraphComponents.cwl/graph_components/run/standardOut",
-                                "outputBinding": {
-                                    "glob": "COMPONENTS_stdout.log"
-                                }
-                            }
-                        ],
-                        "stdout": "COMPONENTS_stdout.log",
-                        "stderr": "COMPONENTS_stderr.log"
+                    "outputBinding": {
+                        "glob": "$(inputs.componentOutputBasename)*.json"
                     },
-                    "in": [
-                        {
-                            "source": "#GraphComponents.cwl/config",
-                            "id": "#GraphComponents.cwl/graph_components/config"
-                        }
-                    ],
-                    "out": [
-                        "#GraphComponents.cwl/graph_components/components"
-                    ],
-                    "id": "#GraphComponents.cwl/graph_components"
+                    "doc": "Output file containing the components of the graph",
+                    "id": "#GraphComponents.cwl/clusterWorkloadFiles"
                 },
                 {
-                    "run": {
-                        "class": "ExpressionTool",
-                        "inputs": [
-                            {
-                                "type": [
-                                    "null",
-                                    "File"
-                                ],
-                                "loadContents": true,
-                                "doc": "String in json format containing the list of cluster workloads derived from the components of the graph",
-                                "id": "#GraphComponents.cwl/prepare_cluster_workload/run/component"
-                            },
-                            {
-                                "type": {
-                                    "type": "array",
-                                    "items": "#Shapefile.yaml/Shapefile"
-                                },
-                                "doc": "List of shapefiles to be used for assigning the workload for the clustering step",
-                                "id": "#GraphComponents.cwl/prepare_cluster_workload/run/files"
-                            }
-                        ],
-                        "outputs": [
-                            {
-                                "type": "#ClusterWorkload.yaml/ClusterWorkload",
-                                "doc": "Parsed ClusterWorkload object",
-                                "id": "#GraphComponents.cwl/prepare_cluster_workload/run/clusterWorkload"
-                            }
-                        ],
-                        "expression": "${\n      let workloadJson = JSON.parse(inputs.component.contents);\n      let fileNames = [...new Set(workloadJson.files.map(file => file.split(\"/\").pop()))];\n      let files = fileNames.map(fileName => {\n          let fileObject = inputs.files.find(f => f.file.basename == fileName);\n          return fileObject;\n        });\n      let result = {\n        components: workloadJson.components,\n        files: files\n      };\n      return {\n        clusterWorkload: result,\n      };\n}\n"
-                    },
-                    "in": [
-                        {
-                            "source": "#GraphComponents.cwl/graph_components/components",
-                            "id": "#GraphComponents.cwl/prepare_cluster_workload/component"
-                        },
-                        {
-                            "source": "#GraphComponents.cwl/files",
-                            "id": "#GraphComponents.cwl/prepare_cluster_workload/files"
-                        }
-                    ],
-                    "out": [
-                        "#GraphComponents.cwl/prepare_cluster_workload/clusterWorkload"
-                    ],
-                    "scatter": [
-                        "#GraphComponents.cwl/prepare_cluster_workload/component"
-                    ],
-                    "scatterMethod": "dotproduct",
-                    "id": "#GraphComponents.cwl/prepare_cluster_workload"
+                    "type": "File",
+                    "id": "#GraphComponents.cwl/errorOut",
+                    "outputBinding": {
+                        "glob": "COMPONENTS_stderr.log"
+                    }
+                },
+                {
+                    "type": "File",
+                    "id": "#GraphComponents.cwl/standardOut",
+                    "outputBinding": {
+                        "glob": "COMPONENTS_stdout.log"
+                    }
                 }
             ],
+            "stdout": "COMPONENTS_stdout.log",
+            "stderr": "COMPONENTS_stderr.log",
             "id": "#GraphComponents.cwl"
         },
         {
@@ -643,6 +676,64 @@
             "id": "#GraphConstruction.cwl"
         },
         {
+            "class": "CommandLineTool",
+            "baseCommand": [
+                "AfricapolisPolygonOutline"
+            ],
+            "requirements": [
+                {
+                    "class": "InlineJavascriptRequirement"
+                },
+                {
+                    "class": "SchemaDefRequirement",
+                    "types": [
+                        {
+                            "$import": "#Shapefile.yaml/Shapefile"
+                        }
+                    ]
+                }
+            ],
+            "inputs": [
+                {
+                    "type": "#Shapefile.yaml/Shapefile",
+                    "inputBinding": {
+                        "position": 1,
+                        "prefix": "-i",
+                        "valueFrom": "$(self.file)"
+                    },
+                    "id": "#OutlineVisualization.cwl/gisFile"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "File",
+                    "id": "#OutlineVisualization.cwl/errorOut",
+                    "outputBinding": {
+                        "glob": "OUTLINE_$(inputs.gisFile.file.nameroot)_stderr.log"
+                    }
+                },
+                {
+                    "type": "#Shapefile.yaml/Shapefile",
+                    "outputBinding": {
+                        "glob": "$(inputs.gisFile.file.nameroot)*",
+                        "outputEval": "${\nfunction groupShapefilesByNameroot(files) {\n    var grouped = {};\n    files.forEach(function(f) {\n      var nameroot = f.nameroot || f.basename.replace(/\\.[^/.]+$/, \"\");\n      if (!grouped[nameroot]) {\n        grouped[nameroot] = {};\n      }\n      if (f.basename.endsWith(\".shp\")) grouped[nameroot].shp = f;\n      if (f.basename.endsWith(\".shx\")) grouped[nameroot].shx = f;\n      if (f.basename.endsWith(\".dbf\")) grouped[nameroot].dbf = f;\n      if (f.basename.endsWith(\".prj\")) grouped[nameroot].prj = f;\n      if (f.basename.endsWith(\".cpg\")) grouped[nameroot].cpg = f;\n      if (f.basename.endsWith(\".qpj\")) grouped[nameroot].qpj = f;\n    });\n    return Object.values(grouped).filter(f => f && f.shp);;\n}\n\nfunction groupToShapefileObject(group) {\n    if (!group.shp) return null;\n    return {\n        \"file\":{\n            class: \"File\",\n            path: group.shp.path,\n            basename: group.shp.basename,\n            nameroot: group.shp.nameroot,\n            nameext: group.shp.nameext,\n            secondaryFiles: [group.shx, group.dbf, group.prj,group.cpg,group.qpj].filter(Boolean)\n        }\n    };\n}\n\nvar shapefiles = groupShapefilesByNameroot(self);\nif(shapefiles.length == 1)\n    return groupToShapefileObject(shapefiles.at(0));\nreturn shapefiles.map(groupToShapefileObject).filter(Boolean);\n}\n  "
+                    },
+                    "doc": "Output shapefile with polygon outlines",
+                    "id": "#OutlineVisualization.cwl/outputShapefile"
+                },
+                {
+                    "type": "File",
+                    "id": "#OutlineVisualization.cwl/standardOut",
+                    "outputBinding": {
+                        "glob": "OUTLINE_$(inputs.gisFile.file.nameroot)_stdout.log"
+                    }
+                }
+            ],
+            "stdout": "OUTLINE_$(inputs.gisFile.file.nameroot)_stdout.log",
+            "stderr": "OUTLINE_$(inputs.gisFile.file.nameroot)_stderr.log",
+            "id": "#OutlineVisualization.cwl"
+        },
+        {
             "class": "ExpressionTool",
             "requirements": [
                 {
@@ -694,7 +785,7 @@
         {
             "class": "CommandLineTool",
             "baseCommand": [
-                "SettlementDelineationContraction"
+                "FishnetClustering"
             ],
             "requirements": [
                 {

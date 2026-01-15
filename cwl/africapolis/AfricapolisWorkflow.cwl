@@ -39,7 +39,7 @@ steps:
   clearDatabase:
     run:
       class: CommandLineTool
-      baseCommand: [AfricapolisClearDatabase]
+      baseCommand: [FishnetClearDatabase]
       inputs:
         config:
           type: File

@@ -4,12 +4,13 @@
             "name": "InsidePolygonFilter"
         }
     ],
-    "contraction-predicates": [
-        {
-            "distance": 200.0,
-            "name": "DistanceBiPredicate"
+    "clustering": {
+        "mode": "DBSCAN",
+        "args": {
+            "distance-threshold": 200.0,
+            "min-cluster-size": 3
         }
-    ],
+    },
     "maxDistanceMeters": 200.0,
     "maxNeighbours": 5,
     "memgraph-host": "localhost",
