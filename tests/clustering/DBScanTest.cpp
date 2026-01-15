@@ -16,7 +16,10 @@ protected:
 
 TEST_F(DBScanTest, BasicClustering){
     auto graph = completeGraph<fishnet::geometry::Vec2DStd>(points);
-    fishnet::DBSCAN dbscan(1.5, 2);
+    auto distanceFunction = [](const fishnet::geometry::Vec2DStd & a, const fishnet::geometry::Vec2DStd & b){
+        return a.distance(b);
+    };
+    fishnet::DBSCAN<fishnet::geometry::Vec2DStd> dbscan(1.5, 2, std::move(distanceFunction));
     auto result = dbscan.cluster(graph);
     EXPECT_EQ(result.clusters.size(), 3);
     EXPECT_EQ(result.noise.size(), 3);

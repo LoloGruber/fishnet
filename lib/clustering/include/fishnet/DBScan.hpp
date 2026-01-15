@@ -1,19 +1,24 @@
 #pragma once
 #include <fishnet/Graph.hpp>
-#include <fishnet/GeometryObject.hpp>
+#include <fishnet/FunctionalConcepts.hpp>
+#include "ClusterAlgorithm.hpp"
 
 namespace fishnet {
 
+template<typename T>
 class DBSCAN {
 private:
     double eps;
     size_t minPts;
+    fishnet::util::BiFunction_t<T,T,double> distanceFunction;
 
     template<fishnet::graph::Graph GraphType>
     void expandCluster(const GraphType & graph, 
-                    const typename GraphType::node_type & point,
-                    fishnet::util::range_of<typename GraphType::node_type> auto neighbors, int clusterID,
-                    std::unordered_map<typename GraphType::node_type, int>& labels) {
+            const typename GraphType::node_type & point,
+            fishnet::util::range_of<typename GraphType::node_type> auto neighbors,
+            int clusterID,
+            std::unordered_map<typename GraphType::node_type, int>& labels) 
+    {
         std::queue<typename GraphType::node_type> toProcess;
         labels[point] = clusterID;
         for (const auto& neighbor : neighbors) {
@@ -39,22 +44,22 @@ private:
     template<fishnet::graph::Graph GraphType>
     auto regionQuery(const GraphType & graph, const typename GraphType::node_type & point) {
         return graph.getNeighbours(point) | std::views::filter([&](const auto & neighbor) {
-            return point.distance(neighbor) <= eps;
+            return distanceFunction(point, neighbor) <= eps;
         });
     }
 
 public:
-    DBSCAN(double eps, size_t minPts) : eps(eps), minPts(minPts) {
+    DBSCAN(double eps, size_t minPts, fishnet::util::BiFunction<T,T,double> auto && distanceFunction) 
+        : eps(eps), minPts(minPts), distanceFunction(std::forward<fishnet::util::BiFunction_t<T,T,double>>(distanceFunction)) {
         assert(eps > 0 && "Epsilon must be positive");
         assert(minPts > 0 && "Minimum Points per Cluster must be positive");
     }
 
-    template<fishnet::geometry::GeometryObject G>
-    struct ClusterResult {
-        std::vector<std::vector<G>> clusters;
-        std::vector<G> noise;
-    };
+    ClusterResult<T> operator()(fishnet::graph::Graph auto const & graph) {
+        return cluster(graph);
+    }
 
+    using node_type = T;
 
     auto cluster(fishnet::graph::Graph auto const & graph) {
         using G = typename std::decay_t<decltype(graph)>::node_type;
@@ -96,4 +101,7 @@ public:
         return result;
     }
 };
+
+static_assert(ClusterAlgorithm<DBSCAN<int>, fishnet::graph::UndirectedGraph<int>>);
+
 } // namespace fishnet
