@@ -6,7 +6,3 @@ install(TARGETS AfricapolisGraphComponents RUNTIME DESTINATION ${CMAKE_INSTALL_P
 add_executable(AfricapolisPolygonOutline AfricapolisPolygonOutline.cpp)
 target_link_libraries(AfricapolisPolygonOutline PRIVATE Fishnet::Fishnet Fishnet::Workflow CLI11::CLI11)
 install(TARGETS AfricapolisPolygonOutline RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
-
-add_executable(AfricapolisDBSCAN DBSCAN.cpp)
-target_link_libraries(AfricapolisDBSCAN PRIVATE Fishnet::Fishnet Fishnet::Workflow CLI11::CLI11)
-install(TARGETS AfricapolisDBSCAN RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
