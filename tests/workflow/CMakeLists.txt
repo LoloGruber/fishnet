@@ -1,4 +1,3 @@
-add_subdirectory(sda-workflow)
 set(WorkflowTestBin Test-Workflow)
 add_executable(${WorkflowTestBin}
 MemgraphTest.cpp
