@@ -3,6 +3,7 @@ project(fishnet_project VERSION 1.0.0 LANGUAGES CXX)
 
 # Options
 option(FISHNET_TEST "Enable unit tests for Fishnet components" ON)
+option(FISHNET_TEST_LIB "Build Fishnet test utility library" ON)
 option(FISHNET_APPS "Build applications" ON)
 option(FISHNET_COVERAGE "Enable coverage reporting" OFF)
 option(FISHNET_COMPILE_TIME_TRACE "Enable compile time tracing" OFF)
@@ -43,4 +44,3 @@ if(FISHNET_TEST)
     enable_testing()
     add_subdirectory(tests)
 endif()
-
