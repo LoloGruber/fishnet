@@ -1,5 +1,5 @@
 if (NOT ${FISHNET_TEST_LIB})
-    message("Fishnet Testutil Library not build. Aborting tests...")
+    message(WARNING "Fishnet Testutil Library not build. Aborting tests...")
     return()
 endif()
 include(GoogleTest)
