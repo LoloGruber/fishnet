@@ -7,6 +7,10 @@ add_subdirectory(graph)
 add_subdirectory(io)
 add_subdirectory(math)
 add_subdirectory(workflow)
+if(${FISHNET_TEST_LIB})
+    add_subdirectory(test)
+endif()
+
 set(FishnetLibs
         ${FISHNET}::Concepts
         ${FISHNET}::Clustering

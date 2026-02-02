@@ -1,0 +1,5 @@
+set(TestUtilLib fishnet_testutil)
+add_library(${TestUtilLib} INTERFACE)
+target_include_directories(${TestUtilLib} INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
+target_link_libraries(${TestUtilLib} INTERFACE gtest_main ${FISHNET}::Math)
+add_library(Fishnet::Test ALIAS ${TestUtilLib})
