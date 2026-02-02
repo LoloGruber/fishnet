@@ -12,6 +12,7 @@ WeightedGraphTest.cpp
 EdgeTest.cpp
 DAGTest.cpp
 JSONAdjacencyTest.cpp
+BinaryAdjacencyTest.cpp
 )
 gtest_discover_tests(${GraphTestBin})
 target_link_libraries(${GraphTestBin} PRIVATE Fishnet::Test ${FISHNET}::Graph graphTest_util ${FISHNET}::IO::Console)
