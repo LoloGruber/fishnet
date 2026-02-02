@@ -2,14 +2,13 @@
 #include <fishnet/CipherQuery.hpp>
 #include <fishnet/MemgraphModel.hpp>
 #include <fishnet/TestUtil.hpp>
-#include <fishnet/WorkflowTestEnvironment.hpp>
 
 using namespace testutil;
 
 class CipherQueryTest: public ::testing::Test {
 protected:
     static void SetUpTestSuite(){
-        connection = MemgraphConnection::create(WorkflowTestEnvironment::memgraphParams()).value_or_throw();
+        connection = MemgraphConnection::fromEnv().value_or_throw();
     }
 
     void TearDown() override {

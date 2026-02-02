@@ -3,7 +3,6 @@
 #include <fishnet/MemgraphAdjacency.hpp>
 #include <fishnet/CachingMemgraphAdjacency.hpp>
 #include <fishnet/Graph.hpp>
-#include <fishnet/WorkflowTestEnvironment.hpp>
 
 using namespace testutil;
 using namespace fishnet::graph;
@@ -36,7 +35,7 @@ RETURN n,r,f,n2,n1,a
 class MemgraphTest: public ::testing::Test {
 protected:
     static void SetUpTestSuite() {
-        mgAdj = MemgraphConnection::create(params)
+        mgAdj = MemgraphConnection::fromEnv()
             .transform([](auto && connection){return CachingMemgraphAdjacency<ExampleNode>(std::move(connection));});
         if(not mgAdj) {
             throw std::runtime_error(mgAdj.error());
@@ -57,8 +56,6 @@ protected:
             mgAdj->getDatabaseConnection().clearAll();
         }
     }
-
-    static inline mg::Client::Params params = WorkflowTestEnvironment::memgraphParams();
     static inline std::expected<CachingMemgraphAdjacency<ExampleNode>,std::string> mgAdj = std::unexpected("Not initialized");
     FileReference fileRef;
 };
@@ -270,7 +267,7 @@ TEST_F(MemgraphTest, clear) {
 }
 
 TEST_F(MemgraphTest, undirectedGraph){
-    std::expected<MemgraphAdjacency<ExampleNode>,std::string> mgAdj = MemgraphConnection::create(params).transform([](auto && c){return MemgraphAdjacency<ExampleNode>(std::move(c));});
+    std::expected<MemgraphAdjacency<ExampleNode>,std::string> mgAdj = MemgraphConnection::fromEnv().transform([](auto && c){return MemgraphAdjacency<ExampleNode>(std::move(c));});
     auto g = fishnet::graph::GraphFactory::UndirectedGraph<ExampleNode>(std::move(mgAdj.value()));
     ExampleNode n1 {1,fileRef};
     ExampleNode n2 {2,fileRef};
