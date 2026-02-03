@@ -3,7 +3,7 @@
 #include <fishnet/Fishnet.hpp>
 #include <fishnet/TaskConfig.hpp>
 #include <fishnet/DistanceFunction.hpp>
-#include <fishnet/DistanceBiPredicate.hpp>
+#include <fishnet/DistancePredicate.hpp>
 #include <fishnet/SettlementShape.hpp>
 #include <fishnet/IDReduceFunction.hpp>
 #include <fishnet/CachingMemgraphAdjacency.hpp>
