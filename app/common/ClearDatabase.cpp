@@ -1,6 +1,6 @@
 #include <fishnet/MemgraphConnection.hpp>
 #include <fishnet/CipherQuery.hpp>
-#include <fishnet/TaskConfig.hpp>
+#include <fishnet/MemgraphConfig.hpp>
 
 #include <CLI/CLI.hpp>
 
