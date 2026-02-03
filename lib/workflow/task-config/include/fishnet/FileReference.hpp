@@ -17,6 +17,12 @@ struct FileReference{
         return static_cast<int64_t>(fileId);
     }
 
+    static FileReference create(size_t id){
+        FileReference fileRef;
+        fileRef.fileId = id;
+        return fileRef;
+    }
+
     template<fishnet::util::Hashable T>
     static FileReference hash(const T & obj) noexcept {
         FileReference fileRef;
