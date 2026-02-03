@@ -3,8 +3,6 @@
 #### Table of Contents
 - [Workflows](#workflows)
     - [Settlement Delineation and Analysis (SDA)](#settlement-delineation-and-analysis-sda)
-        - [Deployment](#deployment)
-        - [Development](#development)
     - [Africapolis (WiP)](#africapolis-wip)
         - [Installation](#installation)
         - [Running the Workflow](#running-the-workflow)
@@ -15,35 +13,7 @@
 
 # Workflows
 ## Settlement Delineation and Analysis (SDA)
-Delineate urban clusters using a settlement graph and [edge contraction](https://en.wikipedia.org/wiki/Edge_contraction) and then analyze the centrality of the aggregated settlement clusters.  
-
-![](doc/images/SDA_Workflow.png).
-### Deployment
-To run the **Settlement Delineation and Analysis** workflow, the easiest way is to use [SettlementDelineationAnalysis.py](app/sda-workflow/SettlementDelineationAnalysis.py), which wraps the command line interface of the [main binary](app/sda-workflow/src/0_workflow/SettlementDelineation.cpp) and executes it in a container using [docker](app/sda-workflow/Dockerfile) (which has to be installed in the deployment environment). 
-```
-python3 SettlementDelineationAnalysis.py -i <input> -c <config>.json -o <output>.shp
-``` 
-- **input**: Input GIS file (*GeoTIFF* | *Shapefile*) on settlement location (e.g. [WSF](https://geoservice.dlr.de/web/maps/eoc:wsf2019))
-- **config**: JSON file containing the config for the workflow run (e.g. [Example Config](app/sda-workflow/sda-docker.json) )
-- **output**: Path of output shapefile  
-### Development
-Alternatively the **SDA** workflow can be installed on the system using the [install](install.sh) script. Make sure that the install prefix location is referenced in *PATH* (e.g. *usr/local/bin*). 
-```shell
-./install.sh
-```
-Additionally, a cwl runner must be installed to execute the individual stages of the workflow. The reference executor [cwltool](https://cwltool.readthedocs.io/en/latest/cli.html#cwltool) is recommended and can be installed as follows:
-```shell
-sudo apt-get install cwltool
-```
-Furthermore, a running instance of the **Memgraph** database joined with the **Memgraph Lab** web interface can be obtained using docker compose:
-```shell
-cd prod/database
-docker compose up -d
-```
-The workflow can then be executed as follows:
-```shell
-SettlementDelineation -i <path-to-input> -c <path-to-cfg> -o <path-to-output.shp>
-```
+The SDA workflow is now developed in a separate [repository](https://gitlab2.informatik.uni-wuerzburg.de/descartes/sos/sda-workflow).
 
 ## Africapolis (*WiP*)
 In contrast, the [*Africapolis*](cwl/africapolis) Workflow is completely orchestrated with the [Common Workflow Language (CWL)](https://www.commonwl.org/user_guide/), with each stage being a command line program, composed using *Fishnet*.
