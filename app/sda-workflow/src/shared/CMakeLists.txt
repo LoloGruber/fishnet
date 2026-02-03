@@ -1,7 +1,0 @@
-add_subdirectory(settlement)
-add_subdirectory(filters)
-add_subdirectory(neighbourPredicates)
-add_subdirectory(job)
-add_library(${SDA_WORKFLOW_LIB} INTERFACE)
-target_link_libraries(${SDA_WORKFLOW_LIB} INTERFACE Fishnet::Workflow settlementLib filtersLib neighbourPredicateLib jobLib CLI11::CLI11 nlohmann_json::nlohmann_json magic_enum::magic_enum)
-add_library(${FISHNET_NAME}::SDA_Workflow ALIAS ${SDA_WORKFLOW_LIB} )

@@ -1,3 +1,0 @@
-add_library(neighbourPredicateLib INTERFACE)
-target_include_directories(neighbourPredicateLib INTERFACE ${CMAKE_CURRENT_LIST_DIR})
-target_link_libraries(neighbourPredicateLib INTERFACE Fishnet::Fishnet nlohmann_json::nlohmann_json)
