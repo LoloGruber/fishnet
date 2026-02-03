@@ -19,6 +19,10 @@ private:
     static_assert(AdjacencyContainer<AdjDelegate,N>, "AdjDelegate must be an AdjacencyContainer");
     AdjDelegate delegate;
 public:
+    using node_type = typename AdjDelegate::node_type;
+    using equality_predicate = typename AdjDelegate::equality_predicate;
+    using hash_function = typename AdjDelegate::hash_function;
+
     AdjacencyContainerDecorator(const AdjDelegate & delegate): delegate(delegate) {}
 
     AdjacencyContainerDecorator(AdjDelegate && delegate) : delegate(std::move(delegate)) {}
