@@ -1,6 +1,10 @@
-add_executable(FishnetShapefileSplitter ShapeSplitter.cpp)
+add_executable(FishnetShapefileSplitter ShapefileSplitter.cpp)
 target_link_libraries(FishnetShapefileSplitter PRIVATE Fishnet::Fishnet CLI11::CLI11)
 install(TARGETS FishnetShapefileSplitter RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+
+add_executable(FishnetShapefileMerger ShapefileMerger.cpp)
+target_link_libraries(FishnetShapefileMerger PRIVATE Fishnet::Fishnet CLI11::CLI11)
+install(TARGETS FishnetShapefileMerger RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 
 add_executable(FishnetClustering SpatialClustering.cpp)
 target_link_libraries(FishnetClustering PRIVATE Fishnet::Fishnet Fishnet::Workflow CLI11::CLI11)
