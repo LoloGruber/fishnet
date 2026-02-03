@@ -10,16 +10,10 @@
 #include <filesystem>
 #include <fishnet/CollectionConcepts.hpp>
 #include <fishnet/Option.hpp>
+#include <fishnet/FileReference.hpp>
 
 
 using NodeIdType = size_t;
-/**
- * @brief File reference have a unique id for each file
- * 
- */
-struct FileReference{
-    int64_t fileId;
-};
 
 /**
  * @brief Nodes are stored with their unique ID and a reference to the file they are stored in

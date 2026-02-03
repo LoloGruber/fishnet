@@ -1,10 +1,9 @@
 #pragma once
 #include <fishnet/ShapeGeometry.hpp>
-#include <fishnet/MemgraphAdjacency.hpp>
 #include <fishnet/GISFile.hpp>
 #include <fishnet/VectorIO.hpp>
 #include <fishnet/Task.hpp>
-
+#include <fishnet/FileReference.hpp>
 /**
  * @brief Settlement Object, which fulfills the requirements of a Polygon and for a Node stored in the Memgraph DB.
  * 
@@ -68,6 +67,17 @@ public:
             }   
         }
         return settlements;        
+    }
+
+    template<fishnet::VectorGISFile F, fishnet::util::Predicate<S> Filter = fishnet::util::TruePredicate>
+    static std::vector<SettlementShape<S>> read(
+        const F & file,
+        fishnet::VectorLayerReader<F,S> auto && reader,
+        fishnet::util::UnaryFunction<F,FileReference> auto &&  fileRefMapper,
+        const Filter & filter  = fishnet::util::TruePredicate {},
+        const std::string & idLayerName = Task::FISHNET_ID_FIELD
+    ){
+        return read<F,Filter>(std::views::single(file),std::forward<decltype(reader)>(reader),std::forward<decltype(fileRefMapper)>(fileRefMapper),filter,idLayerName);
     }
 };
 
