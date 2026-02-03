@@ -29,4 +29,17 @@ struct FileReference{
         fileRef.fileId = std::hash<T>{}(obj);
         return fileRef;
     }
+
+    bool operator==(const FileReference & other) const noexcept {
+        return this->fileId == other.fileId;
+    }
 };
+
+namespace std {
+    template<>
+    struct hash<FileReference> {
+        size_t operator()(const FileReference & fileRef) const noexcept {
+            return fileRef.fileId;
+        }
+    };
+} // namespace std
