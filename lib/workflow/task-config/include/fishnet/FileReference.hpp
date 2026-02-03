@@ -1,5 +1,6 @@
 #pragma once
 #include <memory>
+#include <fishnet/CollectionConcepts.hpp>
 
 /**
  * @brief File reference have a unique id for each file
@@ -14,5 +15,12 @@ struct FileReference{
 
     operator int64_t() const noexcept {
         return static_cast<int64_t>(fileId);
+    }
+
+    template<fishnet::util::Hashable T>
+    static FileReference hash(const T & obj) noexcept {
+        FileReference fileRef;
+        fileRef.fileId = std::hash<T>{}(obj);
+        return fileRef;
     }
 };
