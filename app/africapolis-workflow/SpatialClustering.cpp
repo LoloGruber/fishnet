@@ -6,6 +6,7 @@
 #include <fishnet/DistancePredicate.hpp>
 #include <fishnet/SettlementShape.hpp>
 #include <fishnet/IDReduceFunction.hpp>
+#include <fishnet/Task.hpp>
 #include "BinarySettlementGraphAdjacency.hpp"
 
 
@@ -71,6 +72,68 @@ public:
     }
 };
 
+class SpatialClustering : public Task {
+private: 
+    ClusteringConfig config;
+    std::vector<std::string> inputFilenames;
+    std::filesystem::path graphFile;
+    std::string outputStem;
+public:
+
+    SpatialClustering(
+        const ClusteringConfig & config,
+        std::vector<std::string> && inputFilenames,
+        const std::filesystem::path & graphFile,
+        std::string && outputStem
+    ):config(config), inputFilenames(std::move(inputFilenames)), graphFile(graphFile), outputStem(std::move(outputStem)){}
+    
+
+    void run() override {
+        // Load shapes and settlement graph
+        using ShapeType = fishnet::geometry::Polygon<double>;
+        using SettlementType = SettlementShape<ShapeType>;
+        auto shapeFiles = inputFilenames | std::views::transform([](const std::string & str){ return fishnet::Shapefile(str); });
+        OGRSpatialReference spatialRef;
+        auto onReadStoreSpatialRef = [&spatialRef](const fishnet::VectorLayer<ShapeType> & layer){
+            if(spatialRef.IsEmpty()){
+                spatialRef = layer.getSpatialReference();
+            }
+        };
+        ObservableShapefileReader<ShapeType> reader(onReadStoreSpatialRef);
+        auto settlements = SettlementType::read<fishnet::Shapefile>(shapeFiles, reader,HashingFileReferenceMapper{});
+        auto adj = ReadingBinarySettlementGraphAdjacency<SettlementType>(
+            this->graphFile,
+            SettlementShapeDeserializer<ShapeType>{std::move(settlements)}
+        );
+        auto graph = fishnet::graph::GraphFactory::UndirectedGraph<SettlementType>(std::move(adj));
+
+        // Run clustering
+        auto clusterAlgorithm = config.getSpatialClusterAlgorithm<decltype(graph)>(distanceFunctionForSpatialReference(spatialRef));
+        auto result = clusterAlgorithm(graph);
+
+        // Store result
+        using OutputShapeType = fishnet::geometry::MultiPolygon<ShapeType>;
+        auto outputLayer = fishnet::VectorIO::empty<OutputShapeType>(spatialRef);
+        auto idField = outputLayer.addSizeField(Task::FISHNET_ID_FIELD).value_or_throw();
+        auto mergeFunction = IDReduceFunction();
+        for(auto && cluster : result.clusters){
+            auto settlementMultiPolygon = mergeFunction(cluster);
+            auto id = settlementMultiPolygon.key();
+            fishnet::Feature<OutputShapeType> feature(settlementMultiPolygon.geometry());
+            feature.setAttribute(idField, size_t(id));
+            outputLayer.addFeature(std::move(feature));
+        }
+        for(auto && noise : result.noise){
+            fishnet::Feature<OutputShapeType> feature(OutputShapeType(noise.geometry()));
+            feature.setAttribute(idField, size_t(9999999999999));
+            outputLayer.addFeature(std::move(feature));
+        }
+        fishnet::VectorIO::overwrite(outputLayer, fishnet::Shapefile(outputStem + ".shp"));
+    }
+
+
+};
+
 
 int main(int argc, char *argv[]){
     // Parse cmd arguments
@@ -92,46 +155,13 @@ int main(int argc, char *argv[]){
     app.add_option("-g, --graph",graphFile,"Graph file")->required()->check(CLI::ExistingFile);
     app.add_option("--outputStem", outputStem, "Output filename stem for storing the clustered shapefile");
     CLI11_PARSE(app, argc, argv); 
-    
-    // Load shapes and settlement graph
-    using ShapeType = fishnet::geometry::Polygon<double>;
-    using SettlementType = SettlementShape<ShapeType>;
-    ClusteringConfig config(nlohmann::json::parse(std::ifstream(configfile)));
-
-    auto shapeFiles = inputfiles | std::views::transform([](const std::string & str){ return fishnet::Shapefile(str); });
-    OGRSpatialReference spatialRef;
-    auto onReadStoreSpatialRef = [&spatialRef](const fishnet::VectorLayer<ShapeType> & layer){
-        if(spatialRef.IsEmpty()){
-            spatialRef = layer.getSpatialReference();
-        }
-    };
-    ObservableShapefileReader<ShapeType> reader(onReadStoreSpatialRef);
-    auto settlements = SettlementType::read<fishnet::Shapefile>(shapeFiles, reader,HashingFileReferenceMapper{});
-    auto adj = BinarySettlementGraphAdjacency<ShapeType>({graphFile}, std::move(settlements));
-    auto graph = fishnet::graph::GraphFactory::UndirectedGraph<SettlementType>(std::move(adj));
-
-    // Run clustering
-    auto clusterAlgorithm = config.getSpatialClusterAlgorithm<decltype(graph)>(distanceFunctionForSpatialReference(spatialRef));
-    auto result = clusterAlgorithm(graph);
-
-    // Store result
-    using OutputShapeType = fishnet::geometry::MultiPolygon<ShapeType>;
-    auto outputLayer = fishnet::VectorIO::empty<OutputShapeType>(spatialRef);
-    auto idField = outputLayer.addSizeField(Task::FISHNET_ID_FIELD).value_or_throw();
-    auto mergeFunction = IDReduceFunction();
-    for(auto && cluster : result.clusters){
-        auto settlementMultiPolygon = mergeFunction(cluster);
-        auto id = settlementMultiPolygon.key();
-        fishnet::Feature<OutputShapeType> feature(settlementMultiPolygon.geometry());
-        feature.setAttribute(idField, size_t(id));
-        outputLayer.addFeature(std::move(feature));
-    }
-    for(auto && noise : result.noise){
-        fishnet::Feature<OutputShapeType> feature(OutputShapeType(noise.geometry()));
-        feature.setAttribute(idField, size_t(9999999999999));
-        outputLayer.addFeature(std::move(feature));
-    }
-    fishnet::VectorIO::overwrite(outputLayer, fishnet::Shapefile(outputStem + ".shp"));
+    SpatialClustering clusteringTask(
+        ClusteringConfig(nlohmann::json::parse(std::ifstream(configfile))),
+        std::move(inputfiles), 
+        std::filesystem::path(graphFile),
+        std::move(outputStem)
+    );
+    clusteringTask.run();
     return 0;
 }
 
