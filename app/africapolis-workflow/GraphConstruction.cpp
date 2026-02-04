@@ -80,8 +80,14 @@ public:
     }
 
     void run() override{
-        auto binAdjacency = BinarySettlementGraphAdjacency<S>(this->graphBinaryOutputPath, std::move(this->fileRefMap));
-        auto graph = fishnet::graph::GraphFactory::UndirectedGraph<SettlementShape<S>>(std::move(binAdjacency));
+        auto graph = fishnet::graph::GraphFactory::UndirectedGraph<SettlementShape<S>>(
+            WritingBinarySettlementGraphAdjacency<SettlementShape<S>>(
+                this->graphBinaryOutputPath,
+                std::move(this->fileRefMap),
+                DefaultSettlementSerializer{},
+                SettlementShapeDeserializer<S>{} // not used
+            )
+        );
         auto boundingBoxPolygonWrapper = [this](const SettlementShape<S> & settPolygon ){
             /* Create scaled aaBB containing at least all points reachable from the polygon within the maximum edge distance*/
             auto aaBB = fishnet::geometry::Rectangle<fishnet::math::DEFAULT_NUMERIC>(settPolygon);
