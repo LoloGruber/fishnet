@@ -1,7 +1,9 @@
 #pragma once
-#include "SimpleGraph.hpp"
 #include <fishnet/GraphModel.hpp>
-#include <fishnet/DirectedAcyclicGraph.hpp>
+#include <fishnet/BFSAlgorithm.hpp>
+#include "DirectedAcyclicGraph.hpp"
+#include "WeightedGraph.hpp"
+#include "SimpleGraph.hpp"
 
 namespace fishnet::graph{
     
