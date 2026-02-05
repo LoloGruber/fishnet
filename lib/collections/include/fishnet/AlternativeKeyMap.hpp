@@ -15,7 +15,7 @@ template<Mapable Key, Mapable AltKey,typename Value>
 class AlternativeKeyMap {
 private:
     std::unordered_map<Key,Value> map;
-    fishnet::util::BidirectionalMap<Key,AltKey> keyMap;
+    fishnet::util::BidirectionalHashMap<Key,AltKey> keyMap;
 
 public:
     constexpr std::optional<AltKey> getAlternative(const Key & key) const noexcept {
