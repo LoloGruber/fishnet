@@ -1,5 +1,6 @@
 # pragma once
 #include <fishnet/Fishnet.hpp>
+#include <fishnet/SettlementShape.hpp>
 #include <fishnet/BinaryAdjacency.hpp>
 #include <fishnet/FileReference.hpp>
 
@@ -28,7 +29,20 @@ struct ProxySettlement {
     FileReference file() const noexcept {
         return fileRef;
     }
+
+    bool operator==(const ProxySettlement & other) const noexcept {
+        return id == other.id;
+    }
 };
+
+namespace std {
+    template<>
+    struct hash<ProxySettlement> {
+        size_t operator()(const ProxySettlement & settlement) const noexcept {
+            return settlement.key();
+        }
+    };
+}
 
 static_assert(ISettlement<ProxySettlement>);
 
@@ -113,6 +127,14 @@ public:
     ):Base(fishnet::graph::AdjacencyMap<Settlement>(),std::forward<decltype(serializer)>(serializer),std::forward<decltype(deserializer)>(deserializer))
     {
             deserialize(data);
+    }
+
+    const std::unordered_map<FileReference, std::filesystem::path> & getFileRefToPathMap() const {
+        return fileRefToPathMap;
+    }
+
+    std::unordered_map<FileReference, std::filesystem::path> & getFileRefToPathMap() {
+        return fileRefToPathMap;
     }
 
     std::vector<uint8_t> serialize() const noexcept {
