@@ -14,7 +14,7 @@ class ConnectedComponents: public SearchResult<ConnectedComponents<N,Hash,Equal>
 {
 protected:
     std::vector<std::vector<N>> components;
-    int index;
+    size_t index;
     int openClosedCounter;
 
     virtual void handleClose(){
@@ -61,11 +61,40 @@ public:
     }
 
     /**
+     * @brief Get connected components as a Map: ID -> std::vector<N>
+     * 
+     * @return std::unordered_map<size_t,std::vector<N>>
+     */
+    std::unordered_map<size_t,std::vector<N>> getAsMap() & noexcept {
+        std::unordered_map<size_t,std::vector<N>> map;
+        size_t component_number = 0;
+        for(const auto & component : components) {
+            map.try_emplace(component_number,component);
+            component_number++;
+        }
+        return map;
+    }
+    /**
+     * @brief Get connected components as a Map: ID -> std::vector<N>
+     * 
+     * @return std::unordered_map<size_t,std::vector<N>>
+     */
+    std::unordered_map<size_t,std::vector<N>> getAsMap() && noexcept {
+        std::unordered_map<size_t,std::vector<N>> map;
+        size_t component_number = 0;
+        for(auto && component : components) {
+            map.try_emplace(component_number,std::move(component));
+            component_number++;
+        }
+        return map;
+    }
+
+        /**
      * @brief Get connected components as a Map: Node -> component-id
      * 
      * @return std::unordered_map<N,int,Hash,Equal> storing for each node the component id as a value
      */
-    std::unordered_map<N,int,Hash,Equal> asMap() const noexcept {
+    std::unordered_map<N,int,Hash,Equal> nodeMap() const noexcept {
         std::unordered_map<N,int,Hash,Equal> map;
         for(size_t component_number=0; component_number < components.size(); component_number++) {
             for(auto & node : components[component_number]) {
@@ -74,6 +103,7 @@ public:
         }
         return map;
     }
+
     ~ConnectedComponents() = default;
 };
 }

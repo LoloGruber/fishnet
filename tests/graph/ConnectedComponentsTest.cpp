@@ -80,13 +80,13 @@ TEST_F(ConnectedComponentsTest, Instantiation){
     auto res = BFS::connectedComponents(simple);
     auto comp = res.get();
     EXPECT_EQ(comp.size(),1);
-    auto compMap = res.asMap();
+    auto compMap = res.nodeMap();
     EXPECT_EQ(compMap.at(this->n1),compMap.at(this->n2));
 }
 
 
 TEST_F(ConnectedComponentsTest, DistancePredicate){
-    auto resMap = BFS::connectedComponents(xygraph,DistanceXYNodePredicate()).asMap();
+    auto resMap = BFS::connectedComponents(xygraph,DistanceXYNodePredicate()).nodeMap();
     std::unordered_set<int> indeces;
     for(auto & v: expected) {
         int currentIndex = resMap.at(v[0]);
@@ -96,6 +96,17 @@ TEST_F(ConnectedComponentsTest, DistancePredicate){
         }
     }
     EXPECT_EQ(indeces.size(),expected.size());
+}
+
+
+TEST_F(ConnectedComponentsTest, getAsMap){
+    auto result = BFS::connectedComponents(xygraph,DistanceXYNodePredicate());
+    auto vector = result.get();
+    auto map = result.getAsMap();
+    EXPECT_EQ(vector.size(),map.size());
+    for(size_t i = 0; i < vector.size(); i++) {
+        EXPECT_EQ(vector[i],map.at(i));
+    }
 }
 
 struct XYNodeConsumer{
@@ -122,7 +133,7 @@ TEST_F(ConnectedComponentsTest, DistancePredicateConcurrent) {
     auto future = std::async(std::launch::async, [this,q](){return BFS::connectedComponents(xygraph,q,DistanceXYNodePredicate());});
     XYNodeConsumer c = XYNodeConsumer();
     std::thread xyNodeConsumer(c,q,std::ref(actual));
-    auto resMap = future.get().asMap();
+    auto resMap = future.get().nodeMap();
     q->putPoisonPill();
     xyNodeConsumer.join();
 

@@ -94,7 +94,7 @@ auto contractImpl(const SourceGraphType & source,
     for(int i = 0; i < workers; i++){
         futures.emplace_back(std::async(std::launch::async,[queue,&reduceFunction](){return __impl::mergeWorker<N,R>(queue,reduceFunction);}));
     }
-    auto componentsMap = BFS::connectedComponents(source,queue,contractBiPredicate).asMap();
+    auto componentsMap = BFS::connectedComponents(source,queue,contractBiPredicate).nodeMap();
     std::unordered_map<int,R> result;
     queue->putPoisonPill();
     result.reserve(componentsMap.size());
