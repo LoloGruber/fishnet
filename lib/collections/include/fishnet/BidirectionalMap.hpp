@@ -239,6 +239,14 @@ public:
 
     constexpr BidirectionalMultiHashMap()=default;
 
+    constexpr auto keySet() const noexcept {
+        return fishnet::util::toUnorderedSet(this->map | std::views::keys);
+    }
+
+    constexpr auto inverseKeySet() const noexcept {
+        return fishnet::util::toUnorderedSet(this->inverse | std::views::keys);
+    }
+
     constexpr auto getTo(const from_type & key) const noexcept {
         auto [begin,end] = this->map.equal_range(key);
         return std::ranges::subrange(begin,end) |
@@ -263,12 +271,16 @@ public:
             std::views::transform([]( auto & pair) -> auto& { return pair.second; });
     }
 
-    constexpr auto get(const from_type & key) const noexcept requires(not std::convertible_to<from_type,to_type>){
-        return getTo(key);
-    }
-
-    constexpr auto get(const to_type & key) const noexcept requires(not std::convertible_to<from_type,to_type>) {
-        return getFrom(key);
+    template<typename T>
+    constexpr auto get(const T & key) const noexcept 
+        requires(__impl::UniversalType<T, from_type> || __impl::UniversalType<T, to_type>) 
+            && (not std::convertible_to<from_type,to_type>) 
+    {
+        if constexpr(__impl::UniversalType<T, from_type>) {
+            return getTo(key);
+        } else {
+            return getFrom(key);
+        }
     }
 };
 } // namespace fishnet::util
