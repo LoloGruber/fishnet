@@ -223,7 +223,7 @@ private:
 public:
     WritingBinarySettlementGraphAdjacency(
         std::filesystem::path outputPath,
-        std::unordered_map<FileReference,std::filesystem::path> && fileRefToPathMap,
+        std::unordered_map<FileReference,std::filesystem::path> fileRefToPathMap,
         Serializer<Settlement> auto && serializer,
         Deserializer<Settlement> auto && deserializer
     ):BinarySettlementGraphAdjacency<Settlement>(std::move(fileRefToPathMap),std::forward<decltype(serializer)>(serializer),std::forward<decltype(deserializer)>(deserializer)),
