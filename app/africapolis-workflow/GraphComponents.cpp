@@ -60,7 +60,6 @@ private:
         return std::make_pair(std::move(graph), std::move(fileIdToPathMap));
     }
 
-
     fishnet::util::BidirectionalMultiHashMap<FileReference, size_t> componentToFilesMap(const std::unordered_map<size_t, std::vector<ProxySettlement>> & componentToSettlements) {
         fishnet::util::BidirectionalMultiHashMap<FileReference, size_t> compToFilesMap;
         for (const auto& [componentID, settlements] : componentToSettlements) {
@@ -91,7 +90,38 @@ private:
         }
     }
 
-    void writeOutput(const std::vector<ClusterWorkloadResult> & workloadResults) {
+    ClusterWorkloadResult transformToWorkloadResult(const ClusterWorkload & workload, const std::unordered_map<FileReference, 
+        std::filesystem::path> & fileIdToPathMap,
+         const auto & graph,
+         auto & components
+    ) {
+        std::filesystem::path outputGraphBinPath = std::filesystem::path("graph_component_" + std::to_string(workload.components.front()) + ".bin");
+        std::unordered_map<FileReference, std::filesystem::path> fileIdToPathMapComponent;
+        for (const auto & fileRef : workload.files) {
+            fileIdToPathMapComponent[fileRef] = fishnet::util::PathHelper::absoluteCanonical(fileIdToPathMap.at(fileRef));
+        }
+        auto filePaths = fishnet::util::toVector(std::views::values(fileIdToPathMapComponent) | std::views::transform([](const auto & path) { return path.string(); }));
+        // Build subgraph of component(s)
+        auto subgraph = fishnet::graph::GraphFactory::UndirectedGraph<ProxySettlement>(
+            WritingBinarySettlementGraphAdjacency<ProxySettlement>(
+            outputGraphBinPath,
+            std::move(fileIdToPathMapComponent),
+            DefaultSettlementSerializer{},
+            ProxySettlementDeserializer{}
+        ));
+        for (const auto & component: workload.components) {
+                subgraph.addNodes(std::move(components.at(component)));
+        }
+        for(const auto & node: subgraph.getNodes()) {
+            for(const auto & neighbor : graph.getNeighbours(node)) {
+                // check if neighbor not required in subgraph since we iterate over all nodes of a graph component 
+                subgraph.addEdge(node, neighbor); 
+            }
+        }
+        return ClusterWorkloadResult{.files = filePaths,.graphBinaryFile = std::move(outputGraphBinPath)};
+    }
+
+    void writeOutput(const fishnet::util::input_range_of<ClusterWorkloadResult> auto & workloadResults) {
         for (const auto & workload : workloadResults) {
             nlohmann::json outputJson = workload;
             std::ofstream outputFile(std::filesystem::path(workload.graphBinaryFile).replace_extension(".json"));
@@ -127,49 +157,17 @@ public:
             if (fishnet::util::isEmpty(singleFileComponents)) {
                 continue;
             }
-         
             splitAndInsertWorkload(workloads, ClusterWorkload {
                 .files = {file},
                 .components = fishnet::util::toVector(singleFileComponents)
             });
         }
-        
-        // Transform workloads into workload results
-        std::vector<ClusterWorkloadResult> workloadResults;
-        for(const auto & workload : workloads) {
-            std::filesystem::path outputGraphBinPath = std::filesystem::path("graph_component_" + std::to_string(workload.components.front()) + ".bin");
-            std::unordered_map<FileReference, std::filesystem::path> fileIdToPathMapComponent;
-            for (const auto & fileRef : workload.files) {
-                fileIdToPathMapComponent[fileRef] = fishnet::util::PathHelper::absoluteCanonical(fileIdToPathMap.at(fileRef));
-            }
-            auto filePaths = fishnet::util::toVector(std::views::values(fileIdToPathMapComponent) | std::views::transform([](const auto & path) { return path.string(); }));
-            // Build subgraph of component(s)
-            auto subgraph = fishnet::graph::GraphFactory::UndirectedGraph<ProxySettlement>(
-                WritingBinarySettlementGraphAdjacency<ProxySettlement>(
-                outputGraphBinPath,
-                std::move(fileIdToPathMapComponent),
-                DefaultSettlementSerializer{},
-                ProxySettlementDeserializer{}
-            ));
-            for (const auto & component: workload.components) {
-                 subgraph.addNodes(std::move(components.at(component)));
-            }
-            for(const auto & node: subgraph.getNodes()) {
-                for(const auto & neighbor : graph.getNeighbours(node)) {
-                    // check if neighbor not required in subgraph since we iterate over all nodes of a graph component 
-                    subgraph.addEdge(node, neighbor); 
-                }
-            }
-            workloadResults.push_back(ClusterWorkloadResult{
-                .files = filePaths,
-                .graphBinaryFile = std::move(outputGraphBinPath)
-            });
-        }
-        writeOutput(workloadResults);
+        // Transform workloads and export workload results
+        writeOutput(std::views::transform(workloads, [&](const auto & workload) {
+            return transformToWorkloadResult(workload, fileIdToPathMap, graph, components);
+        }));
     }
 };
-
-
 
 int main(int argc, char * argv[]){
     CLI::App app{"AfricapolisGraphComponents"};
