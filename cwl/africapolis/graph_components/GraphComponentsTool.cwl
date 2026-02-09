@@ -3,8 +3,7 @@ class: CommandLineTool
 requirements:
   - class: SchemaDefRequirement
     types: 
-      - $import: ../types/Shapefile.yaml
-      - $import: ClusterWorkload.yaml
+      - $import: ComponentsOutput.yaml
   - class: InlineJavascriptRequirement
 baseCommand: [AfricapolisGraphComponents]
 inputs:
@@ -12,21 +11,22 @@ inputs:
     type: File
     doc: "Path to configuration file for africapolis components step. Contains database credentials and parallelization target"
     inputBinding:
-      position: 1
       prefix: -c
-  componentOutputBasename:
-    type: string
-    default: "components"
+  graphBinaries:
+    type: File[]
     inputBinding:
-      position: 2
-      prefix: -o
-
+      prefix: -g
 outputs:
   clusterWorkloadFiles:
     type: File[]
     outputBinding:
-      glob: "$(inputs.componentOutputBasename)*.json"
-    doc: "Output file containing the components of the graph"
+      glob: "*.json"
+    doc: "Output file containing the associations of shapefiles to graph binaries of the graph"
+  graphWorkloadFiles:
+    type: File[]
+    outputBinding:
+      glob: "*.bin"
+    doc: "Output file containing the binary representation of the graph components, to be used as input for the clustering step"
   standardOut:
     type: stdout
   errorOut:
