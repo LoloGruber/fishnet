@@ -3,11 +3,11 @@ class: ExpressionTool
 requirements:
   - class: SchemaDefRequirement
     types: 
-    - $import: ../types/Shapefile.yaml
-    - $import: ../types/GeoTIFF.yaml
+    - $import: ../../types/Shapefile.yaml
+    - $import: ../../types/GeoTIFF.yaml
     - $import: GraphConstructionWorkload.yaml
 inputs:
-    shapefiles: ../types/Shapefile.yaml#Shapefile[]
+    shapefiles: ../../types/Shapefile.yaml#Shapefile[]
     filenamePrefix: string?
 outputs: 
     graph_construction_workload:

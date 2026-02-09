@@ -3,14 +3,14 @@ class: Workflow
 requirements:
   - class: SchemaDefRequirement
     types: 
-      - $import: ../types/Shapefile.yaml
+      - $import: ../../types/Shapefile.yaml
       - $import: GraphConstructionWorkload.yaml
   - class: StepInputExpressionRequirement
   - class: ScatterFeatureRequirement
   - class: InlineJavascriptRequirement
 inputs:
   shapefiles:
-    type: ../types/Shapefile.yaml#Shapefile[]
+    type: ../../types/Shapefile.yaml#Shapefile[]
     doc: "List of shapefiles to be used for graph construction. Each polygon must be associated with a unique FISHNET ID."
   filenamePrefix:
     type: string?
@@ -20,9 +20,9 @@ inputs:
   config:
     type: File
 outputs: 
-    trigger:
-        type: boolean
-        outputSource: done/trigger
+  graphBinaries:
+    type: File[]
+    outputSource: generate_graph/graphBinary
 steps:
   prepare_workload:
     run: PrepareGraphConstruction.cwl
@@ -31,7 +31,7 @@ steps:
       filenamePrefix: filenamePrefix
     out: [graph_construction_workload]
   generate_graph:
-    run: ../fishnet/generateGraph.cwl
+    run: GraphGenerationTool.cwl
     in:
       graph_construction_workload: prepare_workload/graph_construction_workload
       primaryInput: 
@@ -43,19 +43,4 @@ steps:
       config: config
     scatter: graph_construction_workload
     scatterMethod: dotproduct
-    out: [standardOut]
-  done:
-    run:
-      class: ExpressionTool
-      cwlVersion: v1.2
-      inputs:
-          dummy:
-            type: File[]
-      outputs:
-          trigger:
-            type: boolean
-      expression: |
-          ${ return { trigger: true }; }
-    in:
-      dummy: generate_graph/standardOut
-    out: [trigger]
+    out: [graphBinary]
