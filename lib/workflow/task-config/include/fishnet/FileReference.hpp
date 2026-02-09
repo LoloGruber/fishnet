@@ -9,18 +9,12 @@
 struct FileReference{
     size_t fileId;
 
-    FileReference(int64_t fileId):fileId(static_cast<size_t>(fileId)){}
+    FileReference(size_t fileId):fileId(fileId){}
 
     FileReference():fileId(static_cast<size_t>(-1)){}
 
-    operator int64_t() const noexcept {
-        return static_cast<int64_t>(fileId);
-    }
-
-    static FileReference create(size_t id){
-        FileReference fileRef;
-        fileRef.fileId = id;
-        return fileRef;
+    static FileReference fromInt(std::integral auto id){
+        return FileReference(static_cast<size_t>(id));
     }
 
     template<fishnet::util::Hashable T>
@@ -43,3 +37,5 @@ namespace std {
         }
     };
 } // namespace std
+
+static_assert(not std::convertible_to<FileReference, size_t>, "FileReference should not be implicitly convertible to size_t");

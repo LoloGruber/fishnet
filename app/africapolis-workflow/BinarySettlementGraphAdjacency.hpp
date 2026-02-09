@@ -80,7 +80,7 @@ struct ProxySettlementDeserializer {
         size_t fileId;
         std::memcpy(&fileId, buffer.data() + sizeof(size_t), sizeof(size_t));
 
-        return ProxySettlement(id, FileReference::create(fileId));
+        return ProxySettlement(id, FileReference(fileId));
     }
 };
 
@@ -194,7 +194,7 @@ public:
             std::string pathStr(reinterpret_cast<const char*>(data.data() + offset), pathSize);
             offset += pathSize;
 
-            fileRefToPathMap[FileReference::create(fileId)] = std::filesystem::path(pathStr);
+            fileRefToPathMap[FileReference(fileId)] = std::filesystem::path(pathStr);
         }
 
         // Load the remaining binary data into the graph

@@ -76,7 +76,7 @@ public:
         auto additionalSettlements = SettlementShape<S>::template read<fishnet::Shapefile>(secondaryInputs, reader, HashingFileReferenceMapper{}, distanceFromBoundingBoxFilter);
         this->settlements.insert(this->settlements.end(), additionalSettlements.begin(), additionalSettlements.end());
         this->fileRefMap = reader.getFileReferenceMap();
-        this->graphBinaryOutputPath = std::to_string(HashingFileReferenceMapper{}(primaryInput)) + "_graph.bin";
+        this->graphBinaryOutputPath = std::to_string(HashingFileReferenceMapper{}(primaryInput).fileId) + "_graph.bin";
     }
 
     void run() override{
