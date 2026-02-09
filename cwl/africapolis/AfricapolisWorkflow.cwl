@@ -36,20 +36,6 @@ outputs:
     type: ../types/Shapefile.yaml#Shapefile
     outputSource: merge/mergedOutput
 steps:
-  clearDatabase:
-    run:
-      class: CommandLineTool
-      baseCommand: [FishnetClearDatabase]
-      inputs:
-        config:
-          type: File
-          inputBinding:
-            position: 1
-            prefix: -c
-      outputs: []
-    in:
-      config: config
-    out: []
   split:
     run: ../fishnet/split.cwl
     in:
@@ -65,21 +51,21 @@ steps:
       config: config
     scatter: [gisFile]
     out: [filtered_shapefile]
-  graph_construction:
-    run: GraphConstruction.cwl
+  graph_generation:
+    run: graph_generation/GraphGeneration.cwl
     in: 
       shapefiles: filter/filtered_shapefile
       filenamePrefix: 
         source: gisInput
         valueFrom: $(self.file.nameroot)
       config: config
-    out: [trigger]
+    out: [graphBinaries]
   graph_components:
     run: GraphComponents.cwl
     in:
-      trigger: graph_construction/trigger
+      graphBinaries: graph_generation/graphBinaries
       config: config
-    out: [clusterWorkloadFiles]
+    out: [clusterWorkloadFiles,graphWorkloadFiles]
   clustering:
     run: AfricapolisClustering.cwl
     in: 
