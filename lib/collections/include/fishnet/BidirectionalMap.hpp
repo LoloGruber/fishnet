@@ -221,9 +221,10 @@ public:
  * @tparam to_type to type
  */
 template<Mapable from_type, Mapable to_type>
-class BidirectionalHashMultiMap: public __impl::AbstractBidirectionalMap<BidirectionalHashMultiMap<from_type,to_type>, std::unordered_multimap<from_type,to_type>, std::unordered_multimap<to_type,from_type>> {
+class BidirectionalMultiHashMap: public __impl::AbstractBidirectionalMap<BidirectionalMultiHashMap<from_type,to_type>, std::unordered_multimap<from_type,to_type>, std::unordered_multimap<to_type,from_type>> {
 private:
-    using Base = __impl::AbstractBidirectionalMap<BidirectionalHashMultiMap<from_type,to_type>, std::unordered_multimap<from_type,to_type>, std::unordered_multimap<to_type,from_type>>;
+    using Base = __impl::AbstractBidirectionalMap<BidirectionalMultiHashMap<from_type,to_type>, std::unordered_multimap<from_type,to_type>, std::unordered_multimap<to_type,from_type>>;
+    friend Base;
 
     constexpr void updateImpl(typename Base::value_type && value) noexcept {
         this->inverse.insert(inverse_value_type{value.second,value.first});
@@ -234,20 +235,32 @@ public:
     using value_type = typename Base::value_type;
     using inverse_value_type = typename Base::inverse_value_type;
 
-    BidirectionalHashMultiMap(std::initializer_list<typename Base::value_type_non_const> init):Base(std::move(init)) {}
+    BidirectionalMultiHashMap(std::initializer_list<typename Base::value_type_non_const> init):Base(std::move(init)) {}
 
-    constexpr BidirectionalHashMultiMap()=default;
+    constexpr BidirectionalMultiHashMap()=default;
 
     constexpr auto getTo(const from_type & key) const noexcept {
-        if(not this->map.contains(key))
-            return std::nullopt;
-        return std::make_optional(std::ranges::subrange(this->map.equal_range(key)));
+        auto [begin,end] = this->map.equal_range(key);
+        return std::ranges::subrange(begin,end) |
+            std::views::transform([](const auto & pair) -> const auto & { return pair.second; });
+    }
+
+    constexpr auto getTo(const from_type & key) noexcept {
+        auto [begin,end] = this->map.equal_range(key);
+        return std::ranges::subrange(begin,end) |
+            std::views::transform([](auto & pair) -> auto& { return pair.second; });
     }
 
     constexpr auto getFrom(const to_type & key) const noexcept {
-        if(not this->inverse.contains(key))
-            return std::nullopt;
-        return std::make_optional(std::ranges::subrange(this->inverse.equal_range(key)));
+        auto [begin,end] = this->inverse.equal_range(key);
+        return std::ranges::subrange(begin,end) |
+            std::views::transform([](const auto & pair) -> const auto & { return pair.second; });
+    }
+
+    constexpr auto getFrom(const to_type & key) noexcept {
+        auto [begin,end] = this->inverse.equal_range(key);
+        return std::ranges::subrange(begin,end) |
+            std::views::transform([]( auto & pair) -> auto& { return pair.second; });
     }
 
     constexpr auto get(const from_type & key) const noexcept requires(not std::convertible_to<from_type,to_type>){
@@ -258,4 +271,4 @@ public:
         return getFrom(key);
     }
 };
-}
+} // namespace fishnet::util
