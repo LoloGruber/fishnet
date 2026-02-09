@@ -9,7 +9,7 @@
 struct FileReference{
     size_t fileId;
 
-    FileReference(size_t fileId):fileId(fileId){}
+    explicit FileReference(size_t fileId):fileId(fileId){}
 
     FileReference():fileId(static_cast<size_t>(-1)){}
 
