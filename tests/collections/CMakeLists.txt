@@ -3,7 +3,7 @@ add_executable(${CollectionsTestBin}
 BlockingQueueTest.cpp
 AlternativeKeyMapTest.cpp
 BidirectionalHashMapTest.cpp
-# BidirectionalHashMultiMapTest.cpp TODO
+BidirectionalHashMultiMapTest.cpp
 NestedMapTest.cpp
 )
 gtest_discover_tests(${CollectionsTestBin})
