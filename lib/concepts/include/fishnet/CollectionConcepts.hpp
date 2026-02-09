@@ -3,6 +3,8 @@
 #include <concepts>
 #include <algorithm>
 #include <vector>
+#include <unordered_set>
+
 namespace fishnet::util{
 /**
  * @brief Metaprogramming Helper which checks whether a concept is satisfied
@@ -75,5 +77,14 @@ constexpr auto toVector(R&& range) {
         vec.push_back(std::forward<decltype(elem)>(elem));
     }
     return vec;
+}
+
+template<std::ranges::range R>
+constexpr auto toUnorderedSet(R&& range) {
+    std::unordered_set<std::ranges::range_value_t<R>> set;
+    for (auto&& elem : range) {
+        set.insert(std::forward<decltype(elem)>(elem));
+    }
+    return set;
 }
 } // fishnet::util
