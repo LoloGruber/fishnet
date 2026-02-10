@@ -1,10 +1,5 @@
 cwlVersion: v1.2
 class: CommandLineTool
-requirements:
-  - class: SchemaDefRequirement
-    types: 
-      - $import: ComponentsOutput.yaml
-  - class: InlineJavascriptRequirement
 baseCommand: [AfricapolisGraphComponents]
 inputs:
   config:

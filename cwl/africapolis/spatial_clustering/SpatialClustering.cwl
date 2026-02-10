@@ -3,71 +3,79 @@ class: Workflow
 requirements:
 - class: SchemaDefRequirement
   types: 
-    - $import: ../types/Shapefile.yaml
-    - $import: ClusterWorkload.yaml
+    - $import: ../../types/Shapefile.yaml
+    - $import: ../types/ComponentsOutput.yaml
+    - $import: ../types/ClusterWorkload.yaml
 inputs:
   config:
     type: File
     doc: "Path to configuration file for africapolis clustering step. Contains database credentials"
-  workloadFile: 
-    type: File
-    doc: "File containing the workload for the clustering step"
+  workload: 
+    type: ../types/ComponentsOutput.yaml#ComponentsOutput
+    doc: "Object containing the json workload definition and the graph file"
   files: 
-    type: ../types/Shapefile.yaml#Shapefile[]
+    type: ../../types/Shapefile.yaml#Shapefile[]
     doc: "List of shapefiles to be used for assigning the workload for the clustering"
 outputs:
   clusteredOutput:
-    type: ../types/Shapefile.yaml#Shapefile
+    type: ../../types/Shapefile.yaml#Shapefile
     outputSource: clustering/clusteredOutput
 steps:
     prepare_cluster_workload:
         run:
             class: ExpressionTool
             inputs:
-                component:
-                    type: File?
+                workloadDefinition:
+                    type: File
                     loadContents: true
                     doc: "String in json format containing the list of cluster workloads derived from the components of the graph"
                 files: 
-                    type: ../types/Shapefile.yaml#Shapefile[]
+                    type: ../../types/Shapefile.yaml#Shapefile[]
                     doc: "List of shapefiles to be used for assigning the workload for the clustering step"
-
+                graphBinary:
+                    type: File
+                    doc: "Binary file containing the graph structure of the components to be clustered"
             outputs:
                 clusterWorkload:
-                    type: ClusterWorkload.yaml#ClusterWorkload
+                    type: ../types/ClusterWorkload.yaml#ClusterWorkload
                     doc: "Parsed ClusterWorkload object"
             expression: |
                 ${
-                    let workloadJson = JSON.parse(inputs.component.contents);
+                    let workloadJson = JSON.parse(inputs.workloadDefinition.contents);
                     let fileNames = [...new Set(workloadJson.files.map(file => file.split("/").pop()))];
                     let files = fileNames.map(fileName => {
                         let fileObject = inputs.files.find(f => f.file.basename == fileName);
                         return fileObject;
                         });
                     let result = {
-                        components: workloadJson.components,
-                        files: files
+                        graphBinary: inputs.graphBinary,
+                        shpFiles: files
                     };
                     return {
                         clusterWorkload: result,
                     };
                 }
         in:
-            component: workloadFile
+            workloadDefinition: 
+              source: workload
+              valueFrom: $(self.workloadJson)
             files: files
+            graphBinary: 
+              source: workload
+              valueFrom: $(self.graphBinary)
         out: [clusterWorkload]
     clustering:
-      run: ../fishnet/cluster.cwl
+      run: SpatialClusteringTool.cwl
       in:
         clusterWorkload: prepare_cluster_workload/clusterWorkload
         config: config
-        components:
+        graphBinary:
           source: prepare_cluster_workload/clusterWorkload
-          valueFrom: $(inputs.clusterWorkload.components)
+          valueFrom: $(inputs.clusterWorkload.graphBinary)
         shpFiles: 
           source: prepare_cluster_workload/clusterWorkload
-          valueFrom: $(inputs.clusterWorkload.files)
+          valueFrom: $(inputs.clusterWorkload.shpFiles)
         outputStem:
           source: prepare_cluster_workload/clusterWorkload
-          valueFrom: $("Clustered_"+ inputs.clusterWorkload.components[0])
+          valueFrom: $("Clustered_"+ inputs.clusterWorkload.graphBinary.basename)
       out: [clusteredOutput]

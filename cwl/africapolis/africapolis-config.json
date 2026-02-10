@@ -11,12 +11,8 @@
             "min-cluster-size": 3
         }
     },
-    "maxDistanceMeters": 200.0,
-    "maxNeighbours": 5,
-    "memgraph-host": "localhost",
-    "memgraph-port": 7687,
-    "merge-workers": 2,
-    "neighbouring-predicates": [],
+    "buffer-distance-meters": 200.0,
+    "max-neighbors-per-node": 5,
     "splits": 0,
     "unary-filters": [
         {

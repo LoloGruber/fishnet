@@ -5,13 +5,13 @@ requirements:
     types: 
     - $import: ../../types/Shapefile.yaml
     - $import: ../../types/GeoTIFF.yaml
-    - $import: GraphConstructionWorkload.yaml
+    - $import: ../types/GraphConstructionWorkload.yaml
 inputs:
     shapefiles: ../../types/Shapefile.yaml#Shapefile[]
     filenamePrefix: string?
 outputs: 
     graph_construction_workload:
-      type: GraphConstructionWorkload.yaml#GraphConstructionWorkload[]
+      type: ../types/GraphConstructionWorkload.yaml#GraphConstructionWorkload[]
 expression: | 
     ${
     class Coordinate{

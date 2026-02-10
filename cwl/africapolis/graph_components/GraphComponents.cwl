@@ -3,31 +3,18 @@ class: Workflow
 requirements:
   - class: SchemaDefRequirement
     types: 
-      - $import: ComponentsOutput.yaml
+      - $import: ../types/ComponentsOutput.yaml
   - class: InlineJavascriptRequirement
 inputs:
   config:
     type: File
     doc: "Path to configuration file for africapolis components step. Contains database credentials and parallelization target"
-    inputBinding:
-      prefix: -c
   graphBinaries:
     type: File[]
-    inputBinding:
-      prefix: -g
-
 outputs:
-  clusterWorkloadFiles:
-    type: File[]
-    outputBinding:
-      glob: "*.json"
-    doc: "Output file containing the associations of shapefiles to graph binaries of the graph"
-  graphWorkloadFiles:
-    type: File[]
-    outputBinding:
-      glob: "*.bin"
-    doc: "Output file containing the binary representation of the graph components, to be used as input for the clustering step"
-
+  componentsOutput:
+    type: ../types/ComponentsOutput.yaml#ComponentsOutput[]
+    outputSource: post_components_output/componentsOutput
 steps:
   graph_components:
     run: GraphComponentsTool.cwl
@@ -40,8 +27,34 @@ steps:
       class: ExpressionTool
       requirements:
         - class: InlineJavascriptRequirement
-    # TODO group the graphWorkloadFiles and clusterWorkloadFiles into a "ComponentsOutput" objects
-    # componentsOutput: {
-    #   graphBinary: $(graphWorkloadFiles[0]),
-    #   workloadJson: $(clusterWorkloadFiles[0])
-    # }
+      inputs:
+        clusterWorkloadFiles: File[]
+        graphWorkloadFiles: File[]
+      outputs:
+        componentsOutput:
+          type: ../types/ComponentsOutput.yaml#ComponentsOutput[]
+      expression: |
+        ${
+          function filesToMap(fileArray){
+            const result = {};
+            fileArray.forEach(f => {
+              result[f.nameroot] = f;
+            });
+            return result;
+          }
+          const clusterWorkloadFileMap = filesToMap(inputs.clusterWorkloadFiles);
+          const graphWorkloadFileMap = filesToMap(inputs.graphWorkloadFiles);
+          console.log("Graph workload files: ", graphWorkloadFileMap);
+          const componentsOutput = Object.keys(clusterWorkloadFileMap).map(basename => {
+            return {
+              "workloadJson": clusterWorkloadFileMap[basename],
+              "graphBinary": graphWorkloadFileMap[basename]
+            }
+          });
+          console.log("Components output: ", componentsOutput);
+          return {"componentsOutput": componentsOutput};
+        }
+    in:
+      clusterWorkloadFiles: graph_components/clusterWorkloadFiles
+      graphWorkloadFiles: graph_components/graphWorkloadFiles
+    out: [componentsOutput]

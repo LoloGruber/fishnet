@@ -1,16 +1,16 @@
 cwlVersion: v1.2
 class: CommandLineTool
-baseCommand: [FishnetClustering]
+baseCommand: [AfricapolisSpatialClustering]
 requirements:
   - class: InlineJavascriptRequirement
   - class: SchemaDefRequirement
     types:
-      - $import: ../types/Shapefile.yaml
+      - $import: ../../types/Shapefile.yaml
 inputs:
     shpFiles:
         type: 
           type: array 
-          items: ../types/Shapefile.yaml#Shapefile
+          items: ../../types/Shapefile.yaml#Shapefile
           inputBinding: 
             valueFrom: $(self.file)
         inputBinding:
@@ -21,11 +21,11 @@ inputs:
         inputBinding:
             prefix: -c
         doc: "Path to configuration for contraction task"
-    components:
-        type: int[]
+    graphBinary:
+        type: File
         inputBinding:
-            prefix: --components
-        doc: "List of connected components to be processed by this job"
+            prefix: -g
+        doc: "Binary file containing the graph structure of the components to be clustered"
     outputStem:
         type: string
         inputBinding:
@@ -38,11 +38,11 @@ outputs:
     errorOut:
         type: stderr
     clusteredOutput:
-        type: ../types/Shapefile.yaml#Shapefile
+        type: ../../types/Shapefile.yaml#Shapefile
         outputBinding:
             glob: "$(inputs.outputStem).*"
             outputEval:
-                $include: ../utils/groupToShapefile.js
+                $include: ../../utils/groupToShapefile.js
         doc: "Merged output file"
-stdout: CLUSTER_$(inputs.components[0])_stdout.log
-stderr: CLUSTER_$(inputs.components[0])_stderr.log
+stdout: CLUSTER_$(inputs.graphBinary.basename)_stdout.log
+stderr: CLUSTER_$(inputs.graphBinary.basename)_stderr.log

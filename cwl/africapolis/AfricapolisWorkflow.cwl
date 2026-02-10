@@ -14,7 +14,9 @@ requirements:
   types: 
     - $import: ../types/Shapefile.yaml
     - $import: ../types/GeoTIFF.yaml
-    - $import: ClusterWorkload.yaml
+    - $import: types/ClusterWorkload.yaml
+    - $import: types/ComponentsOutput.yaml
+    - $import: types/GraphConstructionWorkload.yaml
 inputs:
   gisInput:
     type: 
@@ -61,18 +63,18 @@ steps:
       config: config
     out: [graphBinaries]
   graph_components:
-    run: GraphComponents.cwl
+    run: graph_components/GraphComponents.cwl
     in:
       graphBinaries: graph_generation/graphBinaries
       config: config
-    out: [clusterWorkloadFiles,graphWorkloadFiles]
+    out: [componentsOutput]
   clustering:
-    run: AfricapolisClustering.cwl
+    run: spatial_clustering/SpatialClustering.cwl
     in: 
-      workloadFile: graph_components/clusterWorkloadFiles
+      workload: graph_components/componentsOutput
       config: config
       files: filter/filtered_shapefile
-    scatter: workloadFile
+    scatter: [workload]
     scatterMethod: dotproduct
     out: [clusteredOutput]
   merge:

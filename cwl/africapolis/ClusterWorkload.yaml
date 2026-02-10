@@ -1,7 +1,0 @@
-name: ClusterWorkload
-type: record
-fields:
-  - name: components
-    type: int[]
-  - name: files
-    type: ../types/Shapefile.yaml#Shapefile[]

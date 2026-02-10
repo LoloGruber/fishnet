@@ -4,7 +4,7 @@ requirements:
   - class: SchemaDefRequirement
     types: 
       - $import: ../../types/Shapefile.yaml
-      - $import: GraphConstructionWorkload.yaml
+      - $import: ../types/GraphConstructionWorkload.yaml
   - class: StepInputExpressionRequirement
   - class: ScatterFeatureRequirement
   - class: InlineJavascriptRequirement
@@ -15,8 +15,6 @@ inputs:
   filenamePrefix:
     type: string?
     doc: "Prefix used to identify the shapefiles. The prefix is used to extract the grid coordinates from the filenames."
-  # graph_construction_workload:
-  #   type: GraphConstructionWorkload.yaml#GraphConstructionWorkload
   config:
     type: File
 outputs: 
