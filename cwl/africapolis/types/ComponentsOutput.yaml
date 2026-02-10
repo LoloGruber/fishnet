@@ -5,3 +5,4 @@ fields:
     type: File
   - name: workloadJson
     type: File
+    loadContents: true

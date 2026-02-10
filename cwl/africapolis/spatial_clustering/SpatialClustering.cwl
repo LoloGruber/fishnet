@@ -25,30 +25,25 @@ steps:
         run:
             class: ExpressionTool
             inputs:
-                workloadDefinition:
-                    type: File
-                    loadContents: true
-                    doc: "String in json format containing the list of cluster workloads derived from the components of the graph"
+                workload:
+                    type: ../types/ComponentsOutput.yaml#ComponentsOutput
                 files: 
                     type: ../../types/Shapefile.yaml#Shapefile[]
                     doc: "List of shapefiles to be used for assigning the workload for the clustering step"
-                graphBinary:
-                    type: File
-                    doc: "Binary file containing the graph structure of the components to be clustered"
             outputs:
                 clusterWorkload:
                     type: ../types/ClusterWorkload.yaml#ClusterWorkload
                     doc: "Parsed ClusterWorkload object"
             expression: |
                 ${
-                    let workloadJson = JSON.parse(inputs.workloadDefinition.contents);
+                    let workloadJson = JSON.parse(inputs.workload.workloadJson.contents);
                     let fileNames = [...new Set(workloadJson.files.map(file => file.split("/").pop()))];
                     let files = fileNames.map(fileName => {
                         let fileObject = inputs.files.find(f => f.file.basename == fileName);
                         return fileObject;
                         });
                     let result = {
-                        graphBinary: inputs.graphBinary,
+                        graphBinary: inputs.workload.graphBinary,
                         shpFiles: files
                     };
                     return {
@@ -56,13 +51,8 @@ steps:
                     };
                 }
         in:
-            workloadDefinition: 
-              source: workload
-              valueFrom: $(self.workloadJson)
+            workload: workload
             files: files
-            graphBinary: 
-              source: workload
-              valueFrom: $(self.graphBinary)
         out: [clusterWorkload]
     clustering:
       run: SpatialClusteringTool.cwl
