@@ -71,12 +71,16 @@ public:
         auto reader = GraphConstructionShapefileReader<S>{};
         this->settlements = SettlementShape<S>::read(primaryInput, reader, HashingFileReferenceMapper{});
         this->distanceFunction = reader.getDistanceFunction();
-        // Read additional inputs with bounding box filter
-        auto distanceFromBoundingBoxFilter = DistancePredicate(this->distanceFunction, fishnet::geometry::minimalBoundingBox(this->settlements), this->config.bufferDistanceMeters);
-        auto additionalSettlements = SettlementShape<S>::template read<fishnet::Shapefile>(secondaryInputs, reader, HashingFileReferenceMapper{}, distanceFromBoundingBoxFilter);
-        this->settlements.insert(this->settlements.end(), additionalSettlements.begin(), additionalSettlements.end());
         this->fileRefMap = reader.getFileReferenceMap();
         this->graphBinaryOutputPath = std::to_string(HashingFileReferenceMapper{}(primaryInput).fileId) + "_graph.bin";
+        // Read additional inputs with bounding box filter
+        if(this->settlements.empty()){
+            std::cerr << "Warning: No settlements read from primary input, returning empty graph" << std::endl;
+        }else {
+            auto distanceFromBoundingBoxFilter = DistancePredicate(this->distanceFunction, fishnet::geometry::minimalBoundingBox(this->settlements), this->config.bufferDistanceMeters);
+            auto additionalSettlements = SettlementShape<S>::template read<fishnet::Shapefile>(secondaryInputs, reader, HashingFileReferenceMapper{}, distanceFromBoundingBoxFilter);
+            this->settlements.insert(this->settlements.end(), additionalSettlements.begin(), additionalSettlements.end());
+        }
     }
 
     void run() override{
