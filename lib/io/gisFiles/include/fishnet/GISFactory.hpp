@@ -1,6 +1,6 @@
 #pragma once
 #include <expected>
-#include <optional>
+#include <fishnet/Either.hpp>
 
 #include "Shapefile.hpp"
 #include "GISFile.hpp"
@@ -17,7 +17,7 @@ public:
      * @param path path to the file
      * @return std::expected<Shapefile,std::string>: Containing a shapefile on success or the error as a string
      */
-    static std::expected<Shapefile,std::string> asShapefile(const std::filesystem::path& path){
+    static fishnet::Either<Shapefile,std::string> asShapefile(const std::filesystem::path& path){
         auto fileType = getGISFileType(path);
         if (not fileType)
             return std::unexpected("Unsupported File Type");
