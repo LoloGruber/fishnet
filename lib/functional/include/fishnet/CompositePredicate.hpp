@@ -32,6 +32,10 @@ public:
     constexpr void add(const predicate_type & predicate) {
         predicates.push_back(std::move(predicate));
     }
+
+    constexpr bool empty() const noexcept {
+        return predicates.empty();
+    }
 };
 
 /**
