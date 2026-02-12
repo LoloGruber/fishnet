@@ -3,6 +3,7 @@ set(SUBDIRECTORIES
 graph-database-adapter
 task-config
 spatial-clustering
+geometry-filter
 )
 
 # Gather all subdirectory targets starting with $FISHNET_WORKFLOW_LIBRARY

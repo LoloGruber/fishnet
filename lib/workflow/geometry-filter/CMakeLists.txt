@@ -1,0 +1,5 @@
+SET(SETTLEMENT_WORKFLOW_LIBRARY ${FISHNET_WORKFLOW_LIBRARY}-geometry-filter)
+add_library(${SETTLEMENT_WORKFLOW_LIBRARY} INTERFACE)
+target_link_libraries(${SETTLEMENT_WORKFLOW_LIBRARY} INTERFACE Fishnet::Fishnet nlohmann_json::nlohmann_json magic_enum::magic_enum)
+target_include_directories(${SETTLEMENT_WORKFLOW_LIBRARY} INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
+add_library(${FISHNET_NAME}::Workflow::Filter ALIAS ${SETTLEMENT_WORKFLOW_LIBRARY})
