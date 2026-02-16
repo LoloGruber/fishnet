@@ -2,7 +2,7 @@
 #include <fishnet/VectorIO.hpp>
 #include <fishnet/PathHelper.h>
 #include <fishnet/GISFactory.hpp>
-#include <fishnet/BoundingBoxPolygon.hpp>
+#include <fishnet/Rectangle.hpp>
 #include <fishnet/StopWatch.h>
 #include <cassert>
 #include <CLI/CLI.hpp>
