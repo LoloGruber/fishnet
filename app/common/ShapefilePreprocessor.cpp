@@ -45,10 +45,16 @@ public:
     void run() override {
         auto filter = loadFilters();
         auto binaryFilter = loadBinaryFilters();
-        auto layer = fishnet::VectorIO::read<G>(this->inputFile);
-        // auto features = (filter.empty() && binaryFilter.empty()) ? layer.getFeatures() : fishnet::geometry::filter(layer.getFeatures(),binaryFilter,filter);
-        // TODO filter while keeping the field values of the features
-
+        auto input = fishnet::VectorIO::read<G>(this->inputFile);
+        auto proj = []( const auto & feature){
+            return feature.getGeometry();
+        };
+        auto filteredFeatures = fishnet::geometry::filter(input.getFeatures(),proj,binaryFilter,filter);
+        auto output = fishnet::VectorIO::emptyCopy<G>(input);
+        for(auto && feature: filteredFeatures){
+            output.addFeature(std::move(feature));
+        }
+        fishnet::VectorIO::overwrite(output, this->outputFile);
     }
 };
 constexpr static const char * OUTPUT_SUFFIX = "_filtered.shp";
