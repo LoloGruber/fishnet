@@ -97,13 +97,13 @@ public:
             auto aaBB = fishnet::geometry::Rectangle<fishnet::math::DEFAULT_NUMERIC>(settPolygon);
             double distanceMetersTopLeftBotLeft = this->distanceFunction({aaBB.left(),aaBB.top()},{aaBB.left(),aaBB.bottom()});
             double scale = (this->config.bufferDistanceMeters / distanceMetersTopLeftBotLeft) +1;
-            return fishnet::geometry::BoundingBoxPolygon(settPolygon,aaBB.scale(scale));
+            return fishnet::geometry::BoundingBoxWrapper(settPolygon,aaBB.scale(scale));
         };
         fishnet::util::AllOfPredicate<S,S> neighbouringPredicate;
         /* add all neighbouring predicates to composite predicate */
         neighbouringPredicate.add(DistanceBiPredicate(distanceFunction,config.bufferDistanceMeters));
         //std::ranges::for_each(config.initNeighbouringPredicates<S>(),[&neighbouringPredicate](const auto & predicate){neighbouringPredicate.add(predicate);});
-        auto shortCircuitPredicate = [neighbouringPredicate= std::move(neighbouringPredicate)](const fishnet::geometry::BoundingBoxPolygon<SettlementShape<S>> & lhs, const fishnet::geometry::BoundingBoxPolygon<SettlementShape<S>> & rhs){
+        auto shortCircuitPredicate = [neighbouringPredicate= std::move(neighbouringPredicate)](const fishnet::geometry::BoundingBoxWrapper<SettlementShape<S>> & lhs, const fishnet::geometry::BoundingBoxWrapper<SettlementShape<S>> & rhs){
             return lhs.getBoundingBox().overlap(rhs.getBoundingBox()) && neighbouringPredicate(lhs.getPolygon(),rhs.getPolygon());
         };
         auto result = fishnet::geometry::findNeighbouringPolygonsTemplate(this->settlements,shortCircuitPredicate,boundingBoxPolygonWrapper,config.maxNeighborsPerNode);

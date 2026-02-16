@@ -40,7 +40,7 @@ struct BoxWrapper {
         auto r = rectangle.right() +maxDistance + 0.1;
         auto t = rectangle.top() + maxDistance + 0.1;
         auto b = rectangle.bottom() - maxDistance- 0.1;
-        return BoundingBoxPolygon(shape,Rectangle(l,t,r,b));
+        return BoundingBoxWrapper(shape,Rectangle(l,t,r,b));
     }
 };
 
