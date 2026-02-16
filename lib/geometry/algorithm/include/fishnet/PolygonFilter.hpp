@@ -1,34 +1,39 @@
 #pragma once
 #include "SweepLine.hpp"
-#include "BoundingBoxPolygon.hpp"
+#include "BoundingBoxWrapper.hpp"
 namespace fishnet::geometry {
 
 namespace __impl{
 
-/**
- * @brief Type for Polygon Filter Sweepline
- * It stores the polygons as BoundingBoxPolygons in the SLS and sorts them from left to right
- * The output is a vector of polygons of type P, which are passing the filter.
- * @tparam P polygon type
- */
-template<IPolygon P>
-using PolygonFilter = SweepLine<BoundingBoxPolygon<P>,std::vector<P>,HorizontalAABBOrdering<P>>;
+
+// template<Shape S>
+// using ShapeFilter = SweepLine<BoundingBoxWrapper<S>,std::vector<S>,HorizontalAABBOrdering<BoundingBoxWrapper<S>>>;
 
 /**
- * @brief Insert event for Polygon Filter Sweepline
+ * @brief Type for Geometry Filter Sweepline
+ * It stores the shapes as BoundingBoxWrapper objects in the SLS and sorts them from left to right
+ * The output is a vector of the element type of the bounding box wrapper, which are passing the filter.
+ * @tparam BoundingBoxWrapper type
+ */
+template<IBoundingBoxWrapper BBWrapper>
+using GeometryFilter = SweepLine<BBWrapper, std::vector<typename BBWrapper::element_type>,HorizontalAABBOrdering<BBWrapper>>;
+
+
+/**
+ * @brief Insert event for Geometry Filter Sweepline
  * 
  * @tparam P polygon type
  * @tparam BinaryFilter (P,P) -> bool
  * @tparam Filter: (P) -> bool
  */
-template<IPolygon P,util::BiPredicate<P> BinaryFilter, util::Predicate<P> Filter>
-class PolygonFilterInsertEvent:public PolygonFilter<P>::InsertEvent{
+template<IBoundingBoxWrapper BBWrapper,util::BiPredicate<typename BBWrapper::geometry_type> BinaryFilter, util::Predicate<typename BBWrapper::geometry_type> Filter>
+class ShapeFilterInsertEvent:public GeometryFilter<BBWrapper>::InsertEvent{
 private:
     Filter & filter; 
     BinaryFilter & binaryFilter;
 
 public:
-    PolygonFilterInsertEvent(const BoundingBoxPolygon<P> & box,BinaryFilter  & binaryCondition, Filter  & condition):PolygonFilter<P>::InsertEvent(box),filter(condition),binaryFilter(binaryCondition){}
+    ShapeFilterInsertEvent(const BBWrapper & box,BinaryFilter  & binaryCondition, Filter  & condition):GeometryFilter<BBWrapper>::InsertEvent(box),filter(condition),binaryFilter(binaryCondition){}
     
     /**
      * @brief processing of this event
@@ -36,7 +41,7 @@ public:
      * @param sweepLine 
      * @param output 
      */
-    virtual void process(PolygonFilter<P> & sweepLine, std::vector<P> & output)const{
+    virtual void process(GeometryFilter<BBWrapper> & sweepLine, std::vector<typename BBWrapper::element_type> & output)const{
         const auto & polygonUnderTest = this->obj->getPolygon();
         if(not filter(polygonUnderTest))
             return; // directly return if polygon does not pass filter
@@ -51,7 +56,7 @@ public:
             if(not binaryFilter((*it)->getPolygon(),polygonUnderTest))
                 return;
         }
-        output.push_back(polygonUnderTest); // add to output if all filters were passed
+        output.push_back(this->obj->getElement()); // add to output if all filters were passed
     }
 
     /**
@@ -64,9 +69,9 @@ public:
     }
 };
 
-template<IPolygon P>
-struct PolygonFilterRemoveEvent: public PolygonFilter<P>::DefaultRemoveEvent {
-    PolygonFilterRemoveEvent(const BoundingBoxPolygon<P> & box):PolygonFilter<P>::DefaultRemoveEvent(box){}
+template<IBoundingBoxWrapper BBWrapper>
+struct ShapeFilterRemoveEvent: public GeometryFilter<BBWrapper>::DefaultRemoveEvent {
+    ShapeFilterRemoveEvent(const BBWrapper & box):GeometryFilter<BBWrapper>::DefaultRemoveEvent(box){}
     /**
      * @brief EventPoint of Removal is the bottom of the bounding box (Sweepline goes from top to bottom)
      * 
@@ -92,16 +97,16 @@ struct PolygonFilterRemoveEvent: public PolygonFilter<P>::DefaultRemoveEvent {
 template<PolygonRange R,util::BiPredicate<std::ranges::range_value_t<R>> BinaryFilter, util::Predicate<std::ranges::range_value_t<R>> Filter = util::TruePredicate>
 static std::vector<std::ranges::range_value_t<R>> filter( const R & polygons, BinaryFilter binaryCondition, Filter condition = Filter()) noexcept {
     using P = std::ranges::range_value_t<R>;
-    using SweepLine_t = typename __impl::PolygonFilter<P>;
+    using SweepLine_t = typename __impl::GeometryFilter<BoundingBoxWrapper<P>>;
     SweepLine_t sweepLine;
     std::vector<P> out;
-    std::vector<BoundingBoxPolygon<P>> boundingBoxPolygons;
+    std::vector<BoundingBoxWrapper<P>> boundingBoxPolygons;
     boundingBoxPolygons.reserve(util::size(polygons));
 
     std::ranges::for_each(polygons,[&boundingBoxPolygons](const auto & p){boundingBoxPolygons.emplace_back(p);});
     std::ranges::for_each(boundingBoxPolygons,[&sweepLine,&binaryCondition,&condition](const auto & bbPptr){
-        sweepLine.addEvent(std::make_unique<__impl::PolygonFilterInsertEvent<P,BinaryFilter,Filter>>(bbPptr,binaryCondition,condition));
-        sweepLine.addEvent(std::make_unique<__impl::PolygonFilterRemoveEvent<P>>(bbPptr));
+        sweepLine.addEvent(std::make_unique<__impl::ShapeFilterInsertEvent<BoundingBoxWrapper<P>,BinaryFilter,Filter>>(bbPptr,binaryCondition,condition));
+        sweepLine.addEvent(std::make_unique<__impl::ShapeFilterRemoveEvent<BoundingBoxWrapper<P>>>(bbPptr));
     });
     return sweepLine.sweep(out);
 }
@@ -120,4 +125,23 @@ static std::vector<std::ranges::range_value_t<R>> filter(const R & polygons, Fil
     auto alwaysTrue = util::TrueBiPredicate();
     return filter(polygons,alwaysTrue,condition);
 }
+
+
+template<std::ranges::forward_range R, class Proj, geometry::Shape G = std::invoke_result_t<Proj,std::ranges::range_value_t<std::remove_cvref_t<R>>>>
+static std::vector<std::ranges::range_value_t<R>> filter(const R & elements, const Proj & proj, util::BiPredicate<G,G> auto binaryCondition, util::Predicate<G> auto condition) {
+    using T = std::ranges::range_value_t<R>;
+    using SweepLine_t = __impl::GeometryFilter<BoundingBoxWrapper<T,Proj>>;
+    using BinaryFilter = decltype(binaryCondition);
+    using Filter = decltype(condition);
+    SweepLine_t sweepLine;
+    std::vector<T> out;
+    std::vector<BoundingBoxWrapper<T,Proj>> boundingBoxWrappers;
+    boundingBoxWrappers.reserve(util::size(elements));
+    std::ranges::for_each(elements,[&boundingBoxWrappers](const auto & p){boundingBoxWrappers.emplace_back(p);});
+    std::ranges::for_each(boundingBoxWrappers,[&sweepLine,&binaryCondition,&condition](const auto & bbPptr){
+        sweepLine.addEvent(std::make_unique<__impl::ShapeFilterInsertEvent<BoundingBoxWrapper<T,Proj>,BinaryFilter,Filter>>(bbPptr,binaryCondition,condition));
+        sweepLine.addEvent(std::make_unique<__impl::ShapeFilterRemoveEvent<BoundingBoxWrapper<T,Proj>>>(bbPptr));
+    });
+    return sweepLine.sweep(out);
+}  
 }
