@@ -11,8 +11,9 @@ namespace fishnet::util{
  */
 template<typename... Types>
 class CompositePredicate{
-protected:
+public: 
     using predicate_type = std::function<bool(Types...)>;
+protected:
     std::vector<predicate_type> predicates;
 
     constexpr explicit CompositePredicate(predicate_type && predicate){
