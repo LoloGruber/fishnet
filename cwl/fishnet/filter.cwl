@@ -5,7 +5,7 @@ requirements:
     types:
     - $import: ../types/Shapefile.yaml
   - class: InlineJavascriptRequirement
-baseCommand: [SettlementDelineationFilter]
+baseCommand: [FishnetShapefilePreprocessor]
 inputs:
   gisFile:
     type: 
