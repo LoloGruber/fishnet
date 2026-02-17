@@ -3,4 +3,5 @@
 /build-release
 /.idea
 /cmake-build-debug
+/tmp
 data/WSF
