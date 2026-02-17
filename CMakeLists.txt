@@ -17,7 +17,7 @@ set(CMAKE_CXX_STANDARD 23)
 # Compiler flags and warnings
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     message(STATUS "Setting compiler flags and warnings")
-    add_compile_options(-Wall -Wextra -Wpedantic -Wconversion -Wno-unused-parameter -Wno-unused-function -fconcepts-diagnostics-depth=2 )
+    add_compile_options(-Wall -Wextra -Wpedantic -Wconversion -Wno-unused-parameter -Wno-unused-function)
     if(FISHNET_COMPILE_TIME_TRACE)
         add_compile_options(-fplugin=externis -fplugin-arg-externis-trace=${CMAKE_BINARY_DIR}/trace.json)
     endif()
