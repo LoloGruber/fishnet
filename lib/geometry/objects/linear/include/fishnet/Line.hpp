@@ -17,8 +17,8 @@ public:
     const Vec2D<T> p;
     const Vec2D<T> q;
 
-    constexpr static Line<T> X_AXIS = Line<T>(T(0),T(0));
-    constexpr static Line<T> Y_AXIS = Line<T>(Vec2D<T>(0,0),Vec2D<T>(0,1));
+    const static inline Line<T> X_AXIS = Line<T>(T(0),T(0));
+    const static inline Line<T> Y_AXIS = Line<T>(Vec2D<T>(0,0),Vec2D<T>(0,1));
 
     /**
      * @brief Vertical line factory 
@@ -177,8 +177,8 @@ public:
         return "Vertical Line x = "+std::to_string(p.x);
     }
 };
-constexpr Line<double> xAxis = Line<double>::X_AXIS;
-constexpr Line<double> yAxis = Line<double>::Y_AXIS;
+const static inline Line<double> xAxis = Line<double>::X_AXIS;
+const static inline Line<double> yAxis = Line<double>::Y_AXIS;
 static_assert(LinearGeometry<Line<double>>);
 
 // Explicit template instantiation
