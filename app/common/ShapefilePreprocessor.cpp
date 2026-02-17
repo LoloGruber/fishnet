@@ -1,4 +1,5 @@
 #include <CLI/CLI.hpp>
+#include <nlohmann/json.hpp>
 #include <fishnet/Fishnet.hpp>
 #include <fishnet/Task.hpp>
 #include <fishnet/TaskConfig.hpp>
@@ -9,11 +10,10 @@ struct ShapefilePreprocessorConfig {
     constexpr static const char * FILTER_KEY = "filters";
     nlohmann::json filterJson;
 
-    ShapefilePreprocessorConfig(const json & configJson){
-        if(configJson.contains(FILTER_KEY)){
+    ShapefilePreprocessorConfig(const nlohmann::json & configJson){
+        if(configJson.contains(FILTER_KEY))
             configJson.at(FILTER_KEY).get_to(this->filterJson);
-        }
-    }    
+    }
 };
 
 template<fishnet::geometry::GeometryObject G>
@@ -50,8 +50,11 @@ public:
             return feature.getGeometry();
         };
         auto filteredFeatures = fishnet::geometry::filter(input.getFeatures(),proj,binaryFilter,filter);
-        auto output = fishnet::VectorIO::emptyCopy<G>(input);
+        fishnet::VectorLayer<G> output = fishnet::VectorIO::emptyCopy<G>(input);
+        auto idField = output.hasField(Task::FISHNET_ID_FIELD) ? output.getSizeField(Task::FISHNET_ID_FIELD).value_or_throw() : output.addSizeField(Task::FISHNET_ID_FIELD).value_or_throw();
+        auto geometryHasher = std::hash<G>();
         for(auto && feature: filteredFeatures){
+            feature.setAttribute(idField, normalizeToShpFileIntField(geometryHasher(feature.getGeometry())));
             output.addFeature(std::move(feature));
         }
         fishnet::VectorIO::overwrite(output, this->outputFile);
