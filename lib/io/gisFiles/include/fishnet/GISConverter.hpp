@@ -1,4 +1,5 @@
 #pragma once
+#include <expected>
 #include "Shapefile.hpp"
 #include "GeoTiff.hpp"
 #include <gdal/gdal.h>
@@ -27,7 +28,7 @@ public:
         auto driver = GetGDALDriverManager()->GetDriverByName("ESRI Shapefile");
         if(driver == nullptr)
             return std::unexpected("No suitable ESRI Shapefile driver detected");
-        std::filesystem::path destPath = geoTiff.getPath().parent_path() / geoTiff.getPath().stem().replace_extension(".shp");
+        std::filesystem::path destPath = geoTiff.getPath().parent_path() / geoTiff.getPath().stem().replace_extension(".shp"); //TODO change to cwd to prevent errors with cwl
         GDALDataset *dest = driver->Create(destPath.c_str(), 0,0, 0, GDT_Unknown,nullptr);
         auto spatialReference = src->GetSpatialRef();
         OGRLayer * layer = dest->CreateLayer(destPath.stem().c_str(),spatialReference->Clone(),wkbPolygon, nullptr);
