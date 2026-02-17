@@ -44,7 +44,7 @@ int main(int argc, char * argv[]){
     });
     app.add_option("-o,--output",outputFilename,"Output file location")->required()->check([](const std::string & str){
         try{
-            auto file = fishnet::Shapefile(str);
+            auto file = fishnet::Shapefile(str); //TODO use current working directory / filename.shp to prevent cwl error in readonly containers
             std::filesystem::path parentPath = std::filesystem::path(str).parent_path();
             if(not std::filesystem::exists(parentPath)){
                 std::filesystem::create_directories(parentPath);
