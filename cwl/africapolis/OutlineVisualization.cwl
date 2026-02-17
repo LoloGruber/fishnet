@@ -1,5 +1,8 @@
 class: CommandLineTool
 cwlVersion: v1.2
+hints:
+  DockerRequirement:
+    dockerPull: logru/africapolis:latest
 baseCommand: [AfricapolisPolygonOutline]
 requirements:
   - class: InlineJavascriptRequirement

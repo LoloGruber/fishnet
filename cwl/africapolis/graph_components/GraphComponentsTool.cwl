@@ -1,5 +1,8 @@
 cwlVersion: v1.2
 class: CommandLineTool
+hints:
+  DockerRequirement:
+    dockerPull: logru/africapolis:latest
 baseCommand: [AfricapolisGraphComponents]
 inputs:
   config:

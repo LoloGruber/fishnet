@@ -6,6 +6,9 @@ requirements:
       types: 
         - $import: ../../types/Shapefile.yaml
     - class: InlineJavascriptRequirement
+hints:
+  DockerRequirement:
+    dockerPull: logru/africapolis:latest
 inputs:
   primaryInput:
     type: ../../types/Shapefile.yaml#Shapefile
