@@ -1,11 +1,6 @@
 cwlVersion: v1.2
 class: Workflow
 requirements:
-- class: InitialWorkDirRequirement
-  listing:
-    - entryname: fishnet
-      writable: true
-      entry: ""
 - class: ScatterFeatureRequirement
 - class: StepInputExpressionRequirement
 - class: InlineJavascriptRequirement
