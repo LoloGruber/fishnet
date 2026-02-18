@@ -7,7 +7,9 @@ requirements:
     - $import: ../types/Shapefile.yaml
 - class: InlineJavascriptRequirement
 baseCommand: [FishnetShapefileSplitter]
-
+hints:
+  DockerRequirement:
+    dockerPull: logru/africapolis:latest
 inputs:
     gisFile:
         type: 

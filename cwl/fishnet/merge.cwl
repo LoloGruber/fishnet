@@ -1,11 +1,14 @@
 cwlVersion: v1.2
 class: CommandLineTool
-baseCommand: [SettlementDelineationMerge]
+baseCommand: [FishnetShapefileMerger]
 requirements:
   - class: InlineJavascriptRequirement
   - class: SchemaDefRequirement
     types: 
       - $import: ../types/Shapefile.yaml
+hints:
+  DockerRequirement:
+    dockerPull: logru/africapolis:latest
 inputs:
     shpFiles:
         type: 

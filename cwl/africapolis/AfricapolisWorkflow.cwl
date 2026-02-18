@@ -78,7 +78,7 @@ steps:
     scatterMethod: dotproduct
     out: [clusteredOutput]
   merge:
-    run: ../fishnet/mergeShapefiles.cwl
+    run: ../fishnet/merge.cwl
     in:
       gisInput: gisInput
       shpFiles: clustering/clusteredOutput
