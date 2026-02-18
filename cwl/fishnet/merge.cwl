@@ -3,7 +3,7 @@ class: CommandLineTool
 baseCommand: [FishnetShapefileMerger]
 hints:
   DockerRequirement:
-    dockerPull: logru/africapolis:latest
+    dockerPull: logru/africapolis:1.0.0
 requirements:
   - class: InlineJavascriptRequirement
   - class: SchemaDefRequirement

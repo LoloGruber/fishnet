@@ -3,7 +3,7 @@ class: CommandLineTool
 baseCommand: [AfricapolisGraphComponents]
 hints:
   DockerRequirement:
-    dockerPull: logru/africapolis:latest
+    dockerPull: logru/africapolis:1.0.0
 inputs:
   config:
     type: File
