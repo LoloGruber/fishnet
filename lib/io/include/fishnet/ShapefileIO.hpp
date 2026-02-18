@@ -48,6 +48,8 @@ public:
         openOptionsVec.push_back(nullptr);
         const char** openOptions = openOptionsVec.data();
         auto * ds = (GDALDataset *) GDALOpenEx(shapefile.getPath().c_str(), GDAL_OF_VECTOR,nullptr, openOptions,nullptr);
+        if(ds == nullptr)
+            return std::unexpected("Could not open Shapefile: \"" + shapefile.getPath().string() + "\" with GDAL");
         auto layer = OGRLayerAdapter<G>::fromOGR(ds->GetLayer(0));
         GDALClose(ds);
         return layer;
