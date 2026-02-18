@@ -2,6 +2,7 @@
 #include <expected>
 #include "Shapefile.hpp"
 #include "GeoTiff.hpp"
+#include <filesystem>
 #include <gdal/gdal.h>
 #include <gdal_alg.h>
 #include <ogrsf_frmts.h>
@@ -28,7 +29,9 @@ public:
         auto driver = GetGDALDriverManager()->GetDriverByName("ESRI Shapefile");
         if(driver == nullptr)
             return std::unexpected("No suitable ESRI Shapefile driver detected");
-        std::filesystem::path destPath = geoTiff.getPath().parent_path() / geoTiff.getPath().stem().replace_extension(".shp"); //TODO change to cwd to prevent errors with cwl
+        std::filesystem::path conversionOutputDir = std::filesystem::current_path() / "conversion_output";
+        std::filesystem::create_directories(conversionOutputDir);
+        std::filesystem::path destPath = conversionOutputDir / geoTiff.getPath().stem().replace_extension(".shp");
         GDALDataset *dest = driver->Create(destPath.c_str(), 0,0, 0, GDT_Unknown,nullptr);
         auto spatialReference = src->GetSpatialRef();
         OGRLayer * layer = dest->CreateLayer(destPath.stem().c_str(),spatialReference->Clone(),wkbPolygon, nullptr);
@@ -39,28 +42,15 @@ public:
         int fieldID = layer->GetLayerDefn()->GetFieldIndex(fieldName);
         char ** papszOptions = nullptr;
         papszOptions = CSLSetNameValue(papszOptions, "8CONNECTED", "8");
-        if(maskZero) {
-            if (showProgress) {
-                GDALPolygonize(src->GetRasterBand(1), src->GetRasterBand(1), layer, fieldID, papszOptions,
-                               GDALTermProgress,
-                               nullptr);
-            } else {
-                GDALPolygonize(src->GetRasterBand(1), src->GetRasterBand(1), layer, fieldID, papszOptions,
-                               nullptr,
-                               nullptr);
-            }
-
-        } else {
-            if (showProgress) {
-                GDALPolygonize(src->GetRasterBand(1), nullptr, layer, fieldID, papszOptions,
-                               GDALTermProgress,
-                               nullptr);
-            } else {
-                GDALPolygonize(src->GetRasterBand(1), nullptr, layer, fieldID, papszOptions,
-                               nullptr,
-                               nullptr);
-            }
-        }
+        GDALPolygonize(
+            src->GetRasterBand(1),
+            maskZero?src->GetRasterBand(1):nullptr,
+            layer,
+            fieldID,
+            papszOptions,
+            showProgress?GDALTermProgress:nullptr,
+            nullptr
+        );
         layer->SyncToDisk();
         GDALClose(src);
         GDALClose(dest);
