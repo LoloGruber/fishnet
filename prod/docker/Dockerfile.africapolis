@@ -1,5 +1,6 @@
 FROM logru/fishnet-deps:latest AS build
-RUN git clone https://gitlab2.informatik.uni-wuerzburg.de/descartes/sos/fishnet
+COPY . /fishnet
+WORKDIR /fishnet
 RUN mkdir -p /fishnet/build
 WORKDIR /fishnet/build
 RUN cmake -DCMAKE_BUILD_TYPE=Release -DFISHNET_TEST=OFF -DFISHNET_TEST_LIB=OFF -DFISHNET_APPS=ON .. 

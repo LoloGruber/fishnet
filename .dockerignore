@@ -1,0 +1,8 @@
+/.vscode
+/build
+/build-release
+/.idea
+/cmake-build-debug
+/tmp
+/doc/
+/data/ 
