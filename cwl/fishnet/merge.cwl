@@ -1,14 +1,14 @@
 cwlVersion: v1.2
 class: CommandLineTool
 baseCommand: [FishnetShapefileMerger]
+hints:
+  DockerRequirement:
+    dockerPull: logru/africapolis:latest
 requirements:
   - class: InlineJavascriptRequirement
   - class: SchemaDefRequirement
     types: 
       - $import: ../types/Shapefile.yaml
-hints:
-  DockerRequirement:
-    dockerPull: logru/africapolis:latest
 inputs:
     shpFiles:
         type: 

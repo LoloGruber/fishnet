@@ -1,9 +1,9 @@
 cwlVersion: v1.2
 class: CommandLineTool
+baseCommand: [AfricapolisGraphComponents]
 hints:
   DockerRequirement:
     dockerPull: logru/africapolis:latest
-baseCommand: [AfricapolisGraphComponents]
 inputs:
   config:
     type: File

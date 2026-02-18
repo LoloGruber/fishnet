@@ -1,15 +1,15 @@
 cwlVersion: v1.2
 class: CommandLineTool
+baseCommand: [FishnetShapefileSplitter]
+hints:
+  DockerRequirement:
+    dockerPull: logru/africapolis:latest
 requirements:
 - class: SchemaDefRequirement
   types:
     - $import: ../types/GeoTIFF.yaml
     - $import: ../types/Shapefile.yaml
 - class: InlineJavascriptRequirement
-baseCommand: [FishnetShapefileSplitter]
-hints:
-  DockerRequirement:
-    dockerPull: logru/africapolis:latest
 inputs:
     gisFile:
         type: 

@@ -1,14 +1,14 @@
 cwlVersion: v1.2
 class: CommandLineTool
 baseCommand: [AfricapolisGraphConstruction]
+hints:
+  DockerRequirement:
+    dockerPull: logru/africapolis:latest
 requirements:
     - class: SchemaDefRequirement
       types: 
         - $import: ../../types/Shapefile.yaml
     - class: InlineJavascriptRequirement
-hints:
-  DockerRequirement:
-    dockerPull: logru/africapolis:latest
 inputs:
   primaryInput:
     type: ../../types/Shapefile.yaml#Shapefile
