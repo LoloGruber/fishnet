@@ -3,9 +3,7 @@
 #### Table of Contents
 - [Workflows](#workflows)
     - [Settlement Delineation and Analysis (SDA)](#settlement-delineation-and-analysis-sda)
-    - [Africapolis (WiP)](#africapolis-wip)
-        - [Installation](#installation)
-        - [Running the Workflow](#running-the-workflow)
+    - [Africapolis](#africapolis)
 - [Framework](#framework)
     - [Architecture](#architecture)
     - [Installation](#installation-1)
@@ -15,22 +13,8 @@
 ## Settlement Delineation and Analysis (SDA)
 The SDA workflow is now developed in a separate [repository](https://gitlab2.informatik.uni-wuerzburg.de/descartes/sos/sda-workflow).
 
-## Africapolis (*WiP*)
-In contrast, the [*Africapolis*](cwl/africapolis) Workflow is completely orchestrated with the [Common Workflow Language (CWL)](https://www.commonwl.org/user_guide/), with each stage being a command line program, composed using *Fishnet*.
-### Installation
-The required binaries of *Africapolis* currently have to be manually install on the system. This can be achieved with the [install](install.sh) script. Make sure that the install prefix location (*$INSTALL_PREFIX*) is referenced in *PATH* (e.g. *usr/local/bin*). 
-```shell
-./install.sh
-```
-Additionally, a [CWL Runner](https://www.commonwl.org/implementations/) must be installed to execute the workflow. The reference executor [cwltool](https://cwltool.readthedocs.io/en/latest/cli.html#cwltool) is recommended and can be installed as follows:
-```shell
-sudo apt-get install cwltool
-```
-### Running the Workflow
-```
-cwltool Africapolis.cwl <CWL-Job>.json
-``` 
-
+## Africapolis
+The Africapolis workflow is now developed in a separate [repository](https://gitlab2.informatik.uni-wuerzburg.de/descartes/sos/africapolis)
 # Framework
 ## Architecture
 The core framework contains generic components for the following domains:
