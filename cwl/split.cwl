@@ -7,14 +7,14 @@ hints:
 requirements:
 - class: SchemaDefRequirement
   types:
-    - $import: ../types/GeoTIFF.yaml
-    - $import: ../types/Shapefile.yaml
+    - $import: types/GeoTIFF.yaml
+    - $import: types/Shapefile.yaml
 - class: InlineJavascriptRequirement
 inputs:
     gisFile:
         type: 
         # - ../GIS.cwl#Shapefile
-        - ../types/GeoTIFF.yaml#GeoTIFF
+        - types/GeoTIFF.yaml#GeoTIFF
         inputBinding:
             position: 1
             prefix: --input 
@@ -50,11 +50,11 @@ outputs:
     errorOut:
         type: stderr
     split_shapefiles:
-        type: ../types/Shapefile.yaml#Shapefile[]
+        type: types/Shapefile.yaml#Shapefile[]
         outputBinding:
             glob: "$(inputs.gisFile.file.nameroot)*"
             outputEval:
-                $include: ../utils/groupToShapefile.js
+                $include: utils/groupToShapefile.js
         doc: "Split output files"
 
 

@@ -8,12 +8,12 @@ requirements:
   - class: InlineJavascriptRequirement
   - class: SchemaDefRequirement
     types: 
-      - $import: ../types/Shapefile.yaml
+      - $import: types/Shapefile.yaml
 inputs:
     shpFiles:
         type: 
           type: array 
-          items: ../types/Shapefile.yaml#Shapefile
+          items: types/Shapefile.yaml#Shapefile
           inputBinding: 
             valueFrom: $(self.file)
         inputBinding:
@@ -32,11 +32,11 @@ outputs:
     errorOut:
         type: stderr
     mergedOutput:
-        type: ../types/Shapefile.yaml#Shapefile
+        type: types/Shapefile.yaml#Shapefile
         outputBinding:
             glob: "$(inputs.outputPath).*"
             outputEval:
-                $include: ../utils/groupToShapefile.js
+                $include: utils/groupToShapefile.js
         doc: "Merged output file"
 stdout: MERGE_stdout.log
 stderr: MERGE_stderr.log

@@ -1,17 +1,14 @@
 cwlVersion: v1.2
 class: CommandLineTool
-baseCommand: [AfricapolisGraphConstruction]
-hints:
-  DockerRequirement:
-    dockerPull: logru/africapolis:1.0.0
+baseCommand: [SettlementDelineationNeighbours]
 requirements:
     - class: SchemaDefRequirement
       types: 
-        - $import: ../../types/Shapefile.yaml
+        - $import: types/Shapefile.yaml
     - class: InlineJavascriptRequirement
 inputs:
   primaryInput:
-    type: ../../types/Shapefile.yaml#Shapefile
+    type: types/Shapefile.yaml#Shapefile
     inputBinding:
         prefix: -i
         valueFrom: $(self.file)
@@ -19,7 +16,7 @@ inputs:
   additionalInput:
     type: 
       type: array
-      items: ../../types/Shapefile.yaml#Shapefile
+      items: types/Shapefile.yaml#Shapefile
       inputBinding:
         valueFrom: $(self.file)
     inputBinding:
@@ -35,11 +32,5 @@ outputs:
         type: stdout
     errorOut:
         type: stderr
-    graphBinary:
-        type: File
-        outputBinding:
-            glob: "*.bin"
-            outputEval: $(self[0])
-            
 stdout: GENERATE_GRAPH_$(inputs.primaryInput.file.nameroot)_stdout.log
 stderr: GENERATE_GRAPH_$(inputs.primaryInput.file.nameroot)_stderr.log
