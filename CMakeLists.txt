@@ -2,9 +2,10 @@ cmake_minimum_required(VERSION 3.16)
 project(fishnet_project VERSION 1.0.0 LANGUAGES CXX)
 
 # Options
+option(FISHNET_APPS "Build common fishnet applications" ON)
+option(FISHNET_EXAMPLES "Build example applications" ON)
 option(FISHNET_TEST "Enable unit tests for Fishnet components" ON)
 option(FISHNET_TEST_LIB "Build Fishnet test utility library" ON)
-option(FISHNET_APPS "Build applications" ON)
 option(FISHNET_COVERAGE "Enable coverage reporting" OFF)
 option(FISHNET_COMPILE_TIME_TRACE "Enable compile time tracing" OFF)
 
@@ -26,9 +27,14 @@ endif()
 # Build core lib
 add_subdirectory(lib)
 
-# Build workflows and examples
+# Build common applications
 if(FISHNET_APPS)
-    add_subdirectory(app)
+    add_subdirectory(src)
+endif()
+
+# Build example applications
+if(FISHNET_EXAMPLES)
+    add_subdirectory(example)
 endif()
 
 # Enable code coverage
