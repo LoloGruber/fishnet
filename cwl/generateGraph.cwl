@@ -4,11 +4,11 @@ baseCommand: [SettlementDelineationNeighbours]
 requirements:
     - class: SchemaDefRequirement
       types: 
-        - $import: ../types/Shapefile.yaml
+        - $import: types/Shapefile.yaml
     - class: InlineJavascriptRequirement
 inputs:
   primaryInput:
-    type: ../types/Shapefile.yaml#Shapefile
+    type: types/Shapefile.yaml#Shapefile
     inputBinding:
         prefix: -i
         valueFrom: $(self.file)
@@ -16,7 +16,7 @@ inputs:
   additionalInput:
     type: 
       type: array
-      items: ../types/Shapefile.yaml#Shapefile
+      items: types/Shapefile.yaml#Shapefile
       inputBinding:
         valueFrom: $(self.file)
     inputBinding:
