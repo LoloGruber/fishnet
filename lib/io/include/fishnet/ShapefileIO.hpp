@@ -20,6 +20,7 @@ class ShapefileReader {
 private:
     constexpr static std::array<const char *, 1> DEFAULT_OPEN_OPTIONS = { "ADJUST_TYPE=YES"};
     std::vector<std::string> gdalOpenOptions;
+    bool checked = true;
 public:
     using geometry_type = G;
     using file_type = Shapefile;
@@ -30,10 +31,14 @@ public:
         }
     }
 
-    ShapefileReader(fishnet::util::forward_range_of<std::string> auto && openOptions) {
+    ShapefileReader(fishnet::util::forward_range_of<std::string> auto && openOptions, bool checked) : checked(checked) {
         for(auto && opt : openOptions) {
             this->gdalOpenOptions.push_back(std::move(opt));
         }
+    }
+
+    void setChecked(bool checked) {
+        this->checked = checked;
     }
 
     Either<VectorLayer<G>,std::string> operator()(const Shapefile & shapefile) const {
@@ -50,7 +55,7 @@ public:
         auto * ds = (GDALDataset *) GDALOpenEx(shapefile.getPath().c_str(), GDAL_OF_VECTOR,nullptr, openOptions,nullptr);
         if(ds == nullptr)
             return std::unexpected("Could not open Shapefile: \"" + shapefile.getPath().string() + "\" with GDAL");
-        auto layer = OGRLayerAdapter<G>::fromOGR(ds->GetLayer(0));
+        auto layer = OGRLayerAdapter<G>::fromOGR(ds->GetLayer(0),checked);
         GDALClose(ds);
         return layer;
     }

@@ -2,8 +2,9 @@
 #include <gdal/gdal.h>
 #include <gdal/ogr_core.h>
 #include <gdal/gdal_priv.h>
-
+#include "GeometryTypeWKBAdapter.hpp"
 #include "OGRGeometryAdapter.hpp"
+#include "OGRFieldAdapter.hpp"
 
 namespace fishnet {
 
@@ -67,7 +68,7 @@ public:
      * @param ogrLayer pointer to the OGRLayer
      * @return util::Either<VectorLayer<G>, std::string> VectorLayer if successful, error message otherwise
      */
-    static Either<VectorLayer<G>, std::string> fromOGR(OGRLayer * ogrLayer){
+    static Either<VectorLayer<G>, std::string> fromOGR(OGRLayer * ogrLayer,bool checked = false){
         if(ogrLayer == nullptr)
             return std::unexpected("Could not read from OGRLayer, pointer is null");
         VectorLayer<G> layer {};
@@ -79,7 +80,7 @@ public:
             auto geo = ogrFeature->GetGeometryRef();
             if constexpr(G::type == fishnet::geometry::GeometryType::MULTIPOLYGON){
                 if(geo && wkbFlatten(geo->getGeometryType()) == GeometryTypeWKBAdapter::toWKB(G::polygon_type::type)) {
-                    auto converted = OGRGeometryAdapter::fromOGR<G::polygon_type::type>(*geo);
+                    auto converted = OGRGeometryAdapter::fromOGR<G::polygon_type::type>(*geo, checked);
                     if (not converted) 
                         continue;
                     Feature<G> f {{converted.value()}};
@@ -90,7 +91,7 @@ public:
                 }                
             }
             if(geo && wkbFlatten(geo->getGeometryType()) == GeometryTypeWKBAdapter::toWKB(G::type)) {
-                auto converted = OGRGeometryAdapter::fromOGR<G::type>(*geo);
+                auto converted = OGRGeometryAdapter::fromOGR<G::type>(*geo, checked);
                 if (not converted) 
                     continue;
                 Feature<G> f {converted.value()};

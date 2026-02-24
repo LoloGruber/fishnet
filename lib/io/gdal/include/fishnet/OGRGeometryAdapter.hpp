@@ -1,7 +1,6 @@
 #pragma once
 #include <gdal/gdal.h>
 #include <gdal/ogr_geometry.h>
-
 #include <optional>
 #include <fishnet/GeometryObject.hpp>
 #include <fishnet/Vec2D.hpp>
@@ -89,7 +88,7 @@ static OGRUniquePtr<OGRMultiPolygon> toOGR(fishnet::geometry::IMultiPolygon auto
     // https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry maybe change direction of inner rings
 }
 
-static std::optional<fishnet::geometry::MultiPolygon<fishnet::geometry::Polygon<fishnet::math::DEFAULT_NUMERIC>>> fromOGR(const OGRMultiPolygon & multiPolygon) noexcept {
+static std::optional<fishnet::geometry::MultiPolygon<fishnet::geometry::Polygon<fishnet::math::DEFAULT_NUMERIC>>> fromOGR(const OGRMultiPolygon & multiPolygon, bool checked = false) noexcept {
     try{
         
         std::vector<fishnet::geometry::Polygon<fishnet::math::DEFAULT_NUMERIC>> polygons;
@@ -99,7 +98,7 @@ static std::optional<fishnet::geometry::MultiPolygon<fishnet::geometry::Polygon<
                 continue;
             polygons.push_back(polygon.value());
         }
-        return fishnet::geometry::MultiPolygon<fishnet::geometry::Polygon<double>>(polygons);
+        return fishnet::geometry::MultiPolygon<fishnet::geometry::Polygon<double>>(polygons, checked);
     }catch(fishnet::geometry::InvalidGeometryException & ex) {
         return std::nullopt;
     }
@@ -107,7 +106,7 @@ static std::optional<fishnet::geometry::MultiPolygon<fishnet::geometry::Polygon<
 
 
 template<fishnet::geometry::GeometryType G>
-constexpr static auto fromOGR(const OGRGeometry & ogrGeometry){
+constexpr static auto fromOGR(const OGRGeometry & ogrGeometry, bool checked = false){
     if constexpr(G == fishnet::geometry::GeometryType::POLYGON){
         return fromOGR(*ogrGeometry.toPolygon());
     } else if constexpr(G == fishnet::geometry::GeometryType::POINT){
@@ -115,7 +114,7 @@ constexpr static auto fromOGR(const OGRGeometry & ogrGeometry){
     } else if constexpr(G == fishnet::geometry::GeometryType::RING){
         return fromOGR(*ogrGeometry.toLinearRing());
     }else if constexpr(G == fishnet::geometry::GeometryType::MULTIPOLYGON){
-        return fromOGR(*ogrGeometry.toMultiPolygon());
+        return fromOGR(*ogrGeometry.toMultiPolygon(), checked);
     }else {
         return std::optional<fishnet::geometry::MultiPolygon<fishnet::geometry::Polygon<double>>>();
     }
