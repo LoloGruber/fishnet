@@ -1,6 +1,5 @@
 set(FISHNET_WORKFLOW_LIBRARY fishnet-workflow)
 set(SUBDIRECTORIES 
-graph-database-adapter
 task-config
 spatial-clustering
 geometry-filter
