@@ -9,7 +9,7 @@ namespace fishnet::graph{
  * @tparam C container implementation type
  * @tparam N node type stored in the container
  */
-template<class C, typename N>
+template<class C, typename N = typename C::node_type>
 concept AdjacencyContainer= requires (C & container, const C & constContainer, N & nodeRef, const N & constNodeRef, N && nodeRval, std::vector<N>  nodes, std::vector<std::pair<N,N>> adjacencies){
     {container.addAdjacency(constNodeRef,constNodeRef)};
     {container.addAdjacency(nodeRef,nodeRef)};

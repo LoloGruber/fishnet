@@ -56,7 +56,7 @@ static std::vector<typename G::edge_type> getPath(const G & g,const typename G::
     using E = typename G::edge_type;
     using H = G::adj_container_type::hash_function;
     using Eq = G::adj_container_type::equality_predicate;
-    auto searchPath = SearchPath<E,H,Eq>(goal);
+    auto searchPath = SearchPath<E,H,Eq>(start,goal);
     fishnet::graph::__impl::dfs(g,searchPath,start,fishnet::util::TrueBiPredicate());
     auto pathOpt = searchPath.get();
     if (not pathOpt){

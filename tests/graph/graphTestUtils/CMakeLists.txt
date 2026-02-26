@@ -1,3 +1,3 @@
 add_library(graphTest_util INTERFACE)
 target_include_directories(graphTest_util INTERFACE ${CMAKE_CURRENT_LIST_DIR})
-target_link_libraries(graphTest_util INTERFACE ${FISHNET_NAME}::Graph::Model)
+target_link_libraries(graphTest_util INTERFACE ${FISHNET_NAME}::Graph::Model ${FISHNET_NAME}::Graph::Adjacency)

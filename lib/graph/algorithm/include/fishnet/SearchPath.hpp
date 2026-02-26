@@ -16,6 +16,7 @@ class SearchPath : public SearchResult<SearchPath<E,Hash,Equal>,typename E::node
 {
 private:
     using N = E::node_type;
+    N start;
     N goal;
     bool found;
     Equal eq = Equal();
@@ -23,7 +24,7 @@ private:
 public:
     using node_type =  N;
 
-    SearchPath(const N & goal): SearchResult<SearchPath<E,Hash,Equal>,N,Hash,Equal>(),goal(goal),found(false){};
+    SearchPath(const N & start, const N & goal): SearchResult<SearchPath<E,Hash,Equal>,N,Hash,Equal>(),start(start),goal(goal),found(false){};
 
     void onOpen(const N & node) {
         if(eq(node,goal)) {
@@ -38,7 +39,7 @@ public:
     }
 
     void onEdge(const N & from, const N & to){
-        predecessor.insert_or_assign(to,from);
+        predecessor.try_emplace(to,from);
     }
 
     bool stop() const {
@@ -50,7 +51,7 @@ public:
             return std::nullopt;
         std::vector<N> nodes;
         nodes.push_back(goal);
-        while(this->predecessor.contains(nodes.back())) {
+        while(this->predecessor.contains(nodes.back()) && !eq(nodes.back(),start)) {
             nodes.push_back(this->predecessor.at(nodes.back()));
         }
         std::reverse(nodes.begin(),nodes.end());
