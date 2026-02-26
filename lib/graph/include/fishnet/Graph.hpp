@@ -36,9 +36,9 @@ public:
         return graph::__impl::SimpleGraph<UndirectedEdge<N,Hash,Equal>,AdjacencyMap<N,Hash,Equal>>();
     }
 
-    template<Node N>
-    static auto UndirectedGraph(AdjacencyContainer<N> auto && adjContainer){
+    static auto UndirectedGraph(AdjacencyContainer auto && adjContainer){
         using AdjacencyContainer_t = std::remove_cvref_t<decltype(adjContainer)>;
+        using N = typename AdjacencyContainer_t::node_type;
         using Hash = typename AdjacencyContainer_t::hash_function;
         using Equal = typename AdjacencyContainer_t::equality_predicate;
         return graph::__impl::SimpleGraph<UndirectedEdge<N,Hash,Equal>,AdjacencyContainer_t>(std::move(adjContainer));
@@ -50,22 +50,22 @@ public:
         return graph::__impl::SimpleGraph<DirectedEdge<N,Hash,Equal>,AdjacencyMap<N,Hash,Equal>>();
     }
 
-    template<Node N>
-    static auto DirectedGraph(AdjacencyContainer<N> auto && adjContainer){
+    static auto DirectedGraph(AdjacencyContainer auto && adjContainer){
         using AdjacencyContainer_t = std::remove_cvref_t<decltype(adjContainer)>;
+        using N = typename AdjacencyContainer_t::node_type;
         using Hash = typename AdjacencyContainer_t::hash_function;
         using Equal = typename AdjacencyContainer_t::equality_predicate;
         return graph::__impl::SimpleGraph<DirectedEdge<N,Hash,Equal>,AdjacencyContainer_t>(std::move(adjContainer));
     }
 
-    template<Node N>
-    static auto DAG(AdjacencyContainer<N> auto && adjContainer){
-        return DirectedAcyclicGraph(DirectedGraph<N>(std::move(adjContainer)));
-    }
-
     template<Node N, util::HashFunction<N> Hash = std::hash<N>,util::BiPredicate<N> Equal = std::equal_to<N>>
     static auto DAG(){
         return DirectedAcyclicGraph(DirectedGraph<N,Hash,Equal>());
+    }
+
+    static auto DAG(AdjacencyContainer auto && adjContainer){
+        using N = typename std::remove_cvref_t<decltype(adjContainer)>::node_type;
+        return DirectedAcyclicGraph(DirectedGraph<N>(std::move(adjContainer)));
     }
 };
 }
