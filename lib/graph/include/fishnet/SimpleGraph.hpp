@@ -20,20 +20,22 @@ private:
     using N = Base::node_type;
 public:
 
-    SimpleGraph():Base(),adj(){};
+    SimpleGraph() requires std::is_default_constructible_v<AdjContainer>
+        :Base(),adj(){};
 
     SimpleGraph(AdjContainer && adjContainer):Base(),adj(std::move(adjContainer)){}
 
     SimpleGraph(SimpleGraph && other):adj(std::move(other.adj)){}
 
-    SimpleGraph(const SimpleGraph & other):adj(other.adj){}
+    SimpleGraph(const SimpleGraph & other) requires std::is_copy_constructible_v<AdjContainer>
+        :adj(other.adj){}
 
     SimpleGraph & operator=(SimpleGraph && other)noexcept{
         this->adj = std::move(other.adj);
         return *this;
     }
 
-    SimpleGraph & operator=(const SimpleGraph & other)noexcept{
+    SimpleGraph & operator=(const SimpleGraph & other) requires std::is_copy_assignable_v<AdjContainer> {
         this->adj = other.adj;
         return *this;
     }
