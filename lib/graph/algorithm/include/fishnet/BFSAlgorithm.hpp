@@ -1,19 +1,15 @@
 #pragma once
-#include <concepts>
 #include <vector>
-#include <array>
 #include <queue>
 #include <memory>
-#include <type_traits>
-#include <algorithm>
 #include <fishnet/BlockingQueue.hpp>
 #include <fishnet/GraphModel.hpp>
 #include <fishnet/FunctionalConcepts.hpp>
 
 #include "ConnectedComponents.hpp"
 #include "ConcurrentConnectedComponents.hpp"
-#include "SearchResult.hpp"
 #include "SearchPath.hpp"
+#include "Neighborhood.hpp"
 
 namespace fishnet::graph::__impl{
 
@@ -36,14 +32,27 @@ static void bfs(const G  & g, auto & searchResult, const  typename G::node_type 
         q.pop();
         searchResult.open(current);
         for(auto const& neighbour : g.getNeighbours(current)){
-                if (searchResult.isUnknown(neighbour) and predicate(current,neighbour) ) {
-                    searchResult.open(neighbour);
-                    searchResult.onEdge(current,neighbour);
-                    q.push(neighbour);
-                }
+            searchResult.onEdge(current,neighbour);
+            if (searchResult.isUnknown(neighbour) and predicate(current,neighbour) ) {
+                searchResult.open(neighbour);
+                q.push(neighbour);
+            }
         }
         searchResult.close(current);
     }
+}
+
+/**
+ * @brief Generic breadth-first search implementation starting from a node
+ * 
+ * @tparam G graph type
+ * @param g graph
+ * @param searchResult mutable reference to search result
+ * @param start start node
+ */
+template<Graph G>
+static void bfs(const G  & g, auto & searchResult, const  typename G::node_type  & start) {
+    bfs(g,searchResult,start,fishnet::util::TrueBiPredicate());
 }
 
 /**
@@ -143,8 +152,8 @@ template<Graph G>
 auto findPath(const G & graph, const typename G::node_type & start, const typename G::node_type & goal) {
     using H = G::adj_container_type::hash_function;
     using E = G::adj_container_type::equality_predicate;
-    auto p = SearchPath<typename G::edge_type,H,E>(goal);
-     __impl::bfs(graph,p,start,fishnet::util::TrueBiPredicate());
+    auto p = SearchPath<typename G::edge_type,H,E>(start,goal);
+     __impl::bfs(graph,p,start);
     return p;
 }
 
@@ -171,4 +180,25 @@ util::input_range_of<typename G::edge_type> auto getPath(const G & graph, const 
     }
     return edges;
 }
+
+template<Graph G, Graph O> requires std::same_as<typename G::node_type, typename O::node_type>
+auto neighborhood(const G & graph, const typename G::node_type & node, size_t order, O && outputGraph){
+    outputGraph.addNode(node); // adding start node to output graph, so that it is included in neighborhood of order 0
+    auto neighborhood = Neighborhood(std::forward<O>(outputGraph),node,order);
+    __impl::bfs(graph,neighborhood,node);
+    return std::move(neighborhood).get();
 }
+
+template<Graph G> requires std::is_default_constructible_v<G>
+auto neighborhood(const G & graph, const typename G::node_type & node, size_t order){
+    return neighborhood(graph,node,order,G());
+}
+
+template<Graph G> requires (!std::is_default_constructible_v<G> && std::is_copy_constructible_v<G>)
+auto neighborhood(const G & graph, const typename G::node_type & node, size_t order){
+    auto copy = graph;
+    copy.clear();
+    return neighborhood(graph,node,order,copy);
+}
+
+} // namespace fishnet::graph::BFS
