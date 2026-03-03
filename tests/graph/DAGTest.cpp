@@ -28,6 +28,7 @@ TEST_F(DAGTest, init) {
     auto directed = GraphFactory::DirectedGraph<size_t>();
     //auto mustNotCompile = DAGGraphType(std::move(undirected));
     EXPECT_NO_FATAL_FAILURE(DAGGraphType(std::move(directed)));
+    auto dagFromAdjContainer = GraphFactory::DAG(AdjacencyMap<size_t>());
 }
 
 TEST_F(DAGTest, addNode){

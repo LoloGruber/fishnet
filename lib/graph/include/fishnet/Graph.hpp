@@ -64,8 +64,7 @@ public:
     }
 
     static auto DAG(AdjacencyContainer auto && adjContainer){
-        using N = typename std::remove_cvref_t<decltype(adjContainer)>::node_type;
-        return DirectedAcyclicGraph(DirectedGraph<N>(std::move(adjContainer)));
+        return DirectedAcyclicGraph(DirectedGraph(std::move(adjContainer)));
     }
 };
 }
