@@ -1,6 +1,5 @@
 #pragma once
 #include <concepts>
-#include <ranges>
 #include <fishnet/CollectionConcepts.hpp>
 namespace fishnet::graph{
 /**
