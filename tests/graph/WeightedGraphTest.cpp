@@ -15,7 +15,6 @@ using namespace testutil;
 using namespace fishnet::graph;
 using WG = Weighted<UndirectedGraph<XYNode>,double,DistanceFunction>;
 using DG = GraphDecorator<WG,UndirectedGraph<XYNode>,typename WG::edge_type>;
-using AG = AbstractGraph<DG,typename DG::edge_type, typename DG::adj_container_type>;
 static_assert(Graph<WG>);
 static_assert(std::derived_from<WG,DG>);
 

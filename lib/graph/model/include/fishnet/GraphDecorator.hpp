@@ -1,6 +1,5 @@
 #pragma once
 #include <fishnet/GraphModel.hpp>
-#include <fishnet/AbstractGraph.hpp>
 #include <fishnet/CollectionConcepts.hpp>
 namespace fishnet::graph{
 /**
@@ -11,17 +10,15 @@ namespace fishnet::graph{
  * @tparam G::edge_type edge type of graph
  */
 template<class DecoratorImpl, class G, Edge E = typename G::edge_type>
-class GraphDecorator : public AbstractGraph<DecoratorImpl, E, typename G::adj_container_type>
+class GraphDecorator
 {                                                          
 protected:
-    using Base = AbstractGraph<DecoratorImpl,E,typename G::adj_container_type>;
     G g;
     using N = G::node_type;
-    GraphDecorator():Base(){}
+    GraphDecorator() requires std::is_default_constructible_v<G> = default;
     GraphDecorator(G && source):g(std::move(source)){};
     GraphDecorator(typename G::adj_container_type && adjContainer):g(std::move(adjContainer)){}
-    GraphDecorator(util::forward_range_of<N> auto& nodes):g(nodes){};
-    GraphDecorator(util::forward_range_of<N> auto && nodes):g(nodes){};
+    GraphDecorator(util::forward_range_of<N> auto && nodes):g(std::forward<decltype(nodes)>(nodes)){};
 public:
     using edge_type = E;
     using adj_container_type = G::adj_container_type;

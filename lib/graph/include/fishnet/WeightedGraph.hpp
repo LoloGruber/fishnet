@@ -73,6 +73,10 @@ namespace fishnet::graph::__impl {
                 std::ranges::for_each(edges,[this]( auto && edge){this->addEdge(edge);});
             }
 
+            void addEdges(util::forward_range_of<std::pair<N,N>> auto && nodePairs) {
+                std::ranges::for_each(nodePairs,[this]( auto && pair){this->addEdge(pair.first,pair.second);});
+            }
+
             bool addEdge( const N & from, const N & to){
                 return Base::addEdge(from,to);
             }
@@ -108,7 +112,7 @@ namespace fishnet::graph::__impl {
                 return Base::containsEdge(unweighted) && toWeightedEdge(unweighted).getWeight() == edge.getWeight();
             }
 
-            bool containsEdge(const N & from, const N & to){
+            bool containsEdge(const N & from, const N & to) const{
                 return Base::containsEdge(from,to);
             }
 

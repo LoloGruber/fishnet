@@ -1,9 +1,10 @@
 #pragma once
 #include <fishnet/GraphModel.hpp>
+#include <fishnet/AdjacencyMap.hpp>
 #include <fishnet/BFSAlgorithm.hpp>
 #include "DirectedAcyclicGraph.hpp"
 #include "WeightedGraph.hpp"
-#include "SimpleGraph.hpp"
+#include "BaseGraph.hpp"
 
 namespace fishnet::graph{
     
@@ -16,7 +17,7 @@ namespace fishnet::graph{
  * @tparam AdjContainer Adjacency container used for the graph
  */
 template<Node N, util::HashFunction<N> Hash = std::hash<N>, util::BiPredicate<N> Equal = std::equal_to<N>, AdjacencyContainer<N> AdjContainer = AdjacencyMap<N,Hash,Equal>>
-using UndirectedGraph = graph::__impl::SimpleGraph<UndirectedEdge<N,Hash,Equal>,AdjContainer>;
+using UndirectedGraph = graph::__impl::BaseGraph<UndirectedEdge<N,Hash,Equal>,AdjContainer>;
 
 /**
  * @brief Simple Directed Graph type
@@ -27,13 +28,13 @@ using UndirectedGraph = graph::__impl::SimpleGraph<UndirectedEdge<N,Hash,Equal>,
  * @tparam AdjContainer Adjacency container used for the graph
  */
 template<Node N, util::HashFunction<N> Hash = std::hash<N>, util::BiPredicate<N> Equal = std::equal_to<N>, AdjacencyContainer<N> AdjContainer = AdjacencyMap<N,Hash,Equal>>
-using DirectedGraph = graph::__impl::SimpleGraph<DirectedEdge<N,Hash,Equal>,AdjContainer>;
+using DirectedGraph = graph::__impl::BaseGraph<DirectedEdge<N,Hash,Equal>,AdjContainer>;
 
 class GraphFactory{
 public:
     template<Node N, util::HashFunction<N> Hash = std::hash<N>,util::BiPredicate<N> Equal = std::equal_to<N>>
     static auto UndirectedGraph(){
-        return graph::__impl::SimpleGraph<UndirectedEdge<N,Hash,Equal>,AdjacencyMap<N,Hash,Equal>>();
+        return graph::__impl::BaseGraph<UndirectedEdge<N,Hash,Equal>,AdjacencyMap<N,Hash,Equal>>();
     }
 
     static auto UndirectedGraph(AdjacencyContainer auto && adjContainer){
@@ -41,13 +42,13 @@ public:
         using N = typename AdjacencyContainer_t::node_type;
         using Hash = typename AdjacencyContainer_t::hash_function;
         using Equal = typename AdjacencyContainer_t::equality_predicate;
-        return graph::__impl::SimpleGraph<UndirectedEdge<N,Hash,Equal>,AdjacencyContainer_t>(std::move(adjContainer));
+        return graph::__impl::BaseGraph<UndirectedEdge<N,Hash,Equal>,AdjacencyContainer_t>(std::move(adjContainer));
     }
 
 
     template<Node N, util::HashFunction<N> Hash = std::hash<N>,util::BiPredicate<N> Equal = std::equal_to<N>>
     static auto DirectedGraph(){
-        return graph::__impl::SimpleGraph<DirectedEdge<N,Hash,Equal>,AdjacencyMap<N,Hash,Equal>>();
+        return graph::__impl::BaseGraph<DirectedEdge<N,Hash,Equal>,AdjacencyMap<N,Hash,Equal>>();
     }
 
     static auto DirectedGraph(AdjacencyContainer auto && adjContainer){
@@ -55,7 +56,7 @@ public:
         using N = typename AdjacencyContainer_t::node_type;
         using Hash = typename AdjacencyContainer_t::hash_function;
         using Equal = typename AdjacencyContainer_t::equality_predicate;
-        return graph::__impl::SimpleGraph<DirectedEdge<N,Hash,Equal>,AdjacencyContainer_t>(std::move(adjContainer));
+        return graph::__impl::BaseGraph<DirectedEdge<N,Hash,Equal>,AdjacencyContainer_t>(std::move(adjContainer));
     }
 
     template<Node N, util::HashFunction<N> Hash = std::hash<N>,util::BiPredicate<N> Equal = std::equal_to<N>>

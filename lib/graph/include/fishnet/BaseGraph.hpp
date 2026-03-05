@@ -1,9 +1,9 @@
 #pragma once
-#include <unordered_set>
-#include <fishnet/AbstractGraph.hpp>
+#include <ranges>
 #include <fishnet/AdjacencyContainer.hpp>
-#include <fishnet/AdjacencyMap.hpp>
+#include <fishnet/GraphModel.hpp>
 #include <fishnet/Edge.hpp>
+#include <fishnet/CollectionConcepts.hpp>
 
 namespace fishnet::graph::__impl {
 /**
@@ -13,35 +13,38 @@ namespace fishnet::graph::__impl {
  * @tparam AdjContainer adjacency container type
  */
 template<Edge E, AdjacencyContainer<typename E::node_type> AdjContainer>
-class SimpleGraph: public AbstractGraph<SimpleGraph<E,AdjContainer>,E,AdjContainer> {
+class BaseGraph {
+public:
+    using node_type = typename AdjContainer::node_type;
+    using edge_type = E;
+    using adj_container_type = AdjContainer;
 private:
     AdjContainer adj;
-    using Base = AbstractGraph<SimpleGraph<E,AdjContainer>,E,AdjContainer>;
-    using N = Base::node_type;
+    using N = node_type;
 public:
 
-    SimpleGraph() requires std::is_default_constructible_v<AdjContainer>
-        :Base(),adj(){};
 
-    SimpleGraph(AdjContainer && adjContainer):Base(),adj(std::move(adjContainer)){}
+    BaseGraph() requires std::is_default_constructible_v<AdjContainer>: adj(){};
 
-    SimpleGraph(SimpleGraph && other):adj(std::move(other.adj)){}
+    BaseGraph(AdjContainer && adjContainer): adj(std::move(adjContainer)){}
 
-    SimpleGraph(const SimpleGraph & other) requires std::is_copy_constructible_v<AdjContainer>
+    BaseGraph(BaseGraph && other):adj(std::move(other.adj)){}
+
+    BaseGraph(const BaseGraph & other) requires std::is_copy_constructible_v<AdjContainer>
         :adj(other.adj){}
 
-    SimpleGraph & operator=(SimpleGraph && other)noexcept{
+    BaseGraph & operator=(BaseGraph && other)noexcept{
         this->adj = std::move(other.adj);
         return *this;
     }
 
-    SimpleGraph & operator=(const SimpleGraph & other) requires std::is_copy_assignable_v<AdjContainer> {
+    BaseGraph & operator=(const BaseGraph & other) requires std::is_copy_assignable_v<AdjContainer> {
         this->adj = other.adj;
         return *this;
     }
 
-    SimpleGraph(util::forward_range_of<N> auto && nodes):Base(){
-        addNodes(nodes);
+    BaseGraph(util::forward_range_of<N> auto && nodes){
+        addNodes(std::forward<decltype(nodes)>(nodes));
     };
 
     bool addNode(const N & node){
@@ -54,20 +57,18 @@ public:
 
     template<typename... Args>
     bool addNode(const N & node, Args... args){
-        return Base::addNode(node,args...);
+        bool hasChanged = addNode(node);
+        return hasChanged && addNode(args...);
     }
 
     template<typename... Args>
     bool addNode(N && node, Args... args){
-        return Base::addNode(node,args...);
-    }
-
-    bool addNodes(util::forward_range_of<N> auto & nodes){
-        return adj.addNodes(nodes);
+        bool hasChanged = addNode(std::move(node));
+        return hasChanged && addNode(args...);
     }
 
     bool addNodes(util::forward_range_of<N> auto && nodes){
-        return adj.addNodes(nodes);
+        return adj.addNodes(std::forward<decltype(nodes)>(nodes));
     }
 
     bool containsNode(const N & node) const noexcept {
@@ -110,7 +111,9 @@ public:
     }
 
     void addEdges(util::forward_range_of<E> auto && edges) {
-        Base::addEdges(edges);
+        std::vector<std::pair<N,N>> pairs;
+        std::ranges::for_each(edges,[&pairs](const auto & e){pairs.emplace_back(e.getFrom(),e.getTo());});
+        addEdges(pairs);
     }
 
     bool addEdge(const E & edge) {
@@ -139,6 +142,10 @@ public:
 
     void removeEdge(const E & edge){
         removeEdge(edge.getFrom(),edge.getTo());
+    }
+
+    inline E makeEdge(const N & from, const N & to) const {
+        return E(from,to);
     }
 
     auto getNodes() const noexcept {
@@ -193,6 +200,6 @@ public:
         return adj;
     }
 
-    virtual ~SimpleGraph()=default;
+    virtual ~BaseGraph()=default;
 };
 }
