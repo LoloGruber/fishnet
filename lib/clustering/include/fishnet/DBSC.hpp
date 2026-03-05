@@ -1,26 +1,24 @@
 #include <fishnet/Graph.hpp>
-#include <fishnet/GraphFactory.hpp>
-#include <fishnet/Contraction.hpp>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
-#include <cmath>
-#include <fishnet/SimplePolygon.hpp>
+#include <fishnet/BFSAlgorithm.hpp>
 #include <fishnet/FunctionalConcepts.hpp>
-#include <fishnet/Ring.hpp> 
-#include <list>
+#include <unordered_map>
+#include <cmath>
+#include "ClusterAlgorithm.hpp"
+
 
 namespace fishnet {
 
 template<typename T>
 class DBSC {
 private:
+    double T1;
+    int beta;
     fishnet::util::BiFunction_t<T,T,double> distanceFunction;
     fishnet::util::UnaryFunction_t<T, double> attributeExtractor;
-    int beta;
 
 
-    // the mean length of the edges directly incident to point Pi
+
+/*     // the mean length of the edges directly incident to point Pi
     double local_Mean(GraphT &graph, const PointType &point, std::unordered_map<PointType, std::unordered_map<PointType, double>> distanceMap) {
         double sum = 0.0;
         for( auto neighbour : graph.getNeighbours(point)){
@@ -52,7 +50,7 @@ private:
         }
         variance /= size;
         return sqrt(variance);
-    }
+    } */
 
     double distance(const T & lhs, const T & rhs) {
         return distanceFunction(lhs, rhs);
@@ -61,6 +59,8 @@ private:
 public: 
     // eps is the threshold for T_1, which is a similarity attribute threshold
     DBSC(int beta) : beta(beta) {}
+
+    DBSC(double T1, int beta, fishnet::util::BiFunction<T,T,double> auto distanceFunction) : T1(T1), beta(beta), distanceFunction(std::forward<fishnet::util::BiFunction_t<T,T,double>>(distanceFunction)) {}
 
     auto cache_distances(fishnet::graph::Graph auto const & graph){
         std::unordered_map<T, std::unordered_map<T, double>> distanceMap;
@@ -74,34 +74,77 @@ public:
         return distanceMap;
     }
 
-
-    auto cluster(fishnet::graph::Graph auto & graph) {
-        static_assert(std::derived_from<std::decay_t<decltype(graph)>::node_type, T>, "Graph node type must be compatible with DBSC point type");
-        size_t edgeCount = fishnet::util::size(graph.getEdges());
-        double global_mean = std::ranges::fold_left(graph.getEdges(), 0.0, [&](double acc, const auto & edge) {
+    auto meanEdgeDistance(std::ranges::forward_range auto const & edges){
+        static_assert(fishnet::graph::Edge<std::ranges::range_value_t<decltype(edges)>,T>, "Input range must be a range of graph edges");
+        double edgeCount = static_cast<double>(fishnet::util::size(edges));
+        return std::ranges::fold_left(edges, 0.0, [&](double acc, const auto & edge) {
             return acc + distance(edge.getFrom(), edge.getTo());
         }) / edgeCount;
-        double global_variation = sqrt(std::ranges::fold_left(graph.getEdges(), 0.0, [&](double acc, const auto & edge) {
+    }
+
+    auto stdEdgeDistance(std::ranges::forward_range auto const & edges, double mean){
+        static_assert(fishnet::graph::Edge<std::ranges::range_value_t<decltype(edges)>,T>, "Input range must be a range of graph edges");
+        double edgeCount = static_cast<double>(fishnet::util::size(edges));
+        return sqrt(std::ranges::fold_left(edges, 0.0, [&](double acc, const auto & edge) {
             double dist = distance(edge.getFrom(), edge.getTo());
-            return acc + (dist - global_mean) * (dist - global_mean);
+            return acc + (dist - mean) * (dist - mean);
         }) / edgeCount);
+    }
+
+
+
+    auto cluster(fishnet::graph::Graph auto & graph) {
+        static_assert(std::derived_from<typename std::decay_t<decltype(graph)>::node_type, T>, "Graph node type must be compatible with DBSC point type");
+        double global_mean = meanEdgeDistance(graph.getEdges());
+        double global_variation = stdEdgeDistance(graph.getEdges(), global_mean);
         auto local_mean = [&](const T & node){
             return std::ranges::fold_left(graph.getNeighbours(node), 0.0, [&](double acc, const auto & nbr) {
                 return acc + distance(node, nbr);
-            }) / fishnet::util::size(graph.getNeighbours(node));
+            }) / static_cast<double>(fishnet::util::size(graph.getNeighbours(node)));
         };
-        auto global_distance_constraint = [global_mean,global_variation,local_mean](const T & point) {
-            double alpha = global_mean/local_mean(point);
+        auto local_variation = [&](const T & node){
+            double local_mean_value = local_mean(node);
+            auto neighbours = graph.getNeighbours(node);
+            return sqrt(std::ranges::fold_left(neighbours, 0.0, [&](double acc, const auto & nbr) {
+                double dist = distance(node, nbr);
+                return acc + (dist - local_mean_value) * (dist - local_mean_value);
+            }) / static_cast<double>(fishnet::util::size(neighbours)));
+        };
+        auto global_distance_constraint = [global_mean,global_variation,&local_mean](const T & node) {
+            double alpha = global_mean/local_mean(node);
             double gdc = global_mean + alpha * global_variation;
             return gdc;
+        };
+
+        /* Remove global long edges */
+        for(const auto & node : graph.getNodes()){
+            double gdc = global_distance_constraint(node);
+            for(const auto & nbr : graph.getNeighbours(node)){
+                if(distance(node, nbr) > gdc){
+                    graph.removeEdge(node, nbr);
+                }
+            }
         }
-        auto local_distance_constraint = //TODO create 2-order subgraph and compute mean of edges in the subgraph
-        for(const auto & node: graph.getNodes()){
 
+        /* Remove local long edges*/
+        for (const auto & node: graph.getNodes()){
+            auto order2_graph = fishnet::graph::BFS::neighborhood(graph, node, 2);
+            auto order2_mean = meanEdgeDistance(order2_graph.getEdges());
+            auto mean_local_variation = std::ranges::fold_left(order2_graph.getNodes(), 0.0, [&](double acc, const auto & n) {
+                return acc + local_variation(n);
+            }) / static_cast<double>(fishnet::util::size(order2_graph.getNodes()));
+            auto local_distance_constraint = order2_mean + beta * mean_local_variation;
+            for(const auto & edge: order2_graph.getEdges()){
+                if(distance(edge.getFrom(), edge.getTo()) > local_distance_constraint){
+                    graph.removeEdge(edge);
+                }
+            }
         }
 
+        return ClusterResult<T>();
 
-        // step 1
+
+/*         // step 1
         auto removed_global_edges =  remove_global_long_edges(graph, distanceMap); 
         auto final_graph =  remove_local_edges(removed_global_edges, beta, distanceMap);
         // step 2
@@ -116,11 +159,11 @@ public:
         // step 3 
         auto clusters = get_clusters(graph, attributeExtractor, eps, beta);
         
-        return clusters;
+        return clusters; */
     }
     
     
-    //  density indicator is employed to measure the ‘density’ of an object with a given threshold T1 = esp.
+   /*  //  density indicator is employed to measure the ‘density’ of an object with a given threshold T1 = esp.
     double density_indicator(GraphT&graph, const PointType point, fishnet::util::UnaryFunction<PointType, double> auto & attributeExtractor, double eps){
         double n_size = fishnet::util::size(graph.getNeighbours(point));
         if(n_size == 0) {return 0;}
@@ -412,6 +455,6 @@ public:
             countsubgraphs ++;
         }
         return graph_modified;
-    }
+    } */
 };
 } // namespace fishnet
