@@ -2,9 +2,8 @@
 #include <fishnet/Graph.hpp>
 #include <fishnet/Concepts.hpp>
 
-template<typename T>
-static auto completeGraph(fishnet::util::range_of<T> auto const & nodes) {
-    auto graph = fishnet::graph::UndirectedGraph<T>(nodes);
+static auto completeGraph(std::ranges::forward_range auto const & nodes) {
+    auto graph = fishnet::graph::UndirectedGraph<std::ranges::range_value_t<decltype(nodes)>>(nodes);
     for (auto && from : nodes) {
         for (auto && to : nodes) {
             if (from != to) {

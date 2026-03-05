@@ -15,7 +15,7 @@ protected:
 };
 
 TEST_F(BFSClusteringTest, NoRelationPredicate){
-    auto graph = completeGraph<fishnet::geometry::Vec2DStd>(points);
+    auto graph = completeGraph(points);
     fishnet::BFSClustering<fishnet::geometry::Vec2DStd> bfsClustering;
     auto result = bfsClustering(graph);
     EXPECT_EQ(result.clusters.size(), 1);
@@ -26,7 +26,7 @@ TEST_F(BFSClusteringTest, DistanceRelationPredicate){
     auto distancePredicate = [](const fishnet::geometry::Vec2DStd & a, const fishnet::geometry::Vec2DStd & b){
         return a.distance(b) <= 1.5;
     };
-    auto graph = completeGraph<fishnet::geometry::Vec2DStd>(points);
+    auto graph = completeGraph(points);
     fishnet::BFSClustering<fishnet::geometry::Vec2DStd> bfsClustering (std::move(distancePredicate));
     auto result = bfsClustering(graph);
     EXPECT_EQ(result.clusters.size(), 5);

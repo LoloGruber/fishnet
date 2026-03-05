@@ -15,7 +15,7 @@ protected:
 };
 
 TEST_F(DBScanTest, BasicClustering){
-    auto graph = completeGraph<fishnet::geometry::Vec2DStd>(points);
+    auto graph = completeGraph(points);
     auto distanceFunction = [](const fishnet::geometry::Vec2DStd & a, const fishnet::geometry::Vec2DStd & b){
         return a.distance(b);
     };
