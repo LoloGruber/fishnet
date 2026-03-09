@@ -1,13 +1,12 @@
 image: logru/fishnet-deps:latest
 workflow:
   rules:
-    - changes:
-        - app/** 
-        - lib/** 
-        - tests/** 
-        - CMakeLists.txt    
-    - if: $CI_COMMIT_BRANCH != "main"
-      when: never
+    - if: $CI_COMMIT_BRANCH == "main"
+      changes:
+        - src/**
+        - lib/**
+        - tests/**
+        - CMakeLists.txt
 stages:
   - build
   - test
