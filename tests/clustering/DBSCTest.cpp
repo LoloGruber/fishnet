@@ -32,6 +32,6 @@ protected:
 
  TEST_F(DBSCTest, DefaultClusteringNoAttribute){
     auto distanceFunction = [](const auto & lhs, const auto & rhs){return lhs.distance(rhs);};
-    fishnet::DBSC<T> dbsc(2, distanceFunction);
+    fishnet::DBSC<T> dbsc(4.0,2, distanceFunction);
     auto result = dbsc.cluster(graph);
  }
