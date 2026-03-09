@@ -3,7 +3,7 @@ add_executable(${MathTestBin}
 NormalizeTest.cpp
 DegreeTest.cpp
 RadiansTest.cpp
-# StatisticsTest.cpp
+StatisticsTest.cpp
 )
 gtest_discover_tests(${MathTestBin})
 
