@@ -5,5 +5,5 @@ set(MATH_SOURCES
 set(MathLib fishnet_math)
 add_library(${MathLib} STATIC ${MATH_SOURCES})
 target_include_directories(${MathLib} PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
-target_link_libraries(${MathLib} PUBLIC ${FISHNET}::Concepts)
+target_link_libraries(${MathLib} PUBLIC ${FISHNET}::Concepts ${FISHNET}::Functional)
 add_library(${FISHNET}::Math ALIAS ${MathLib})
