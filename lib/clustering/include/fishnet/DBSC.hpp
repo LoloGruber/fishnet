@@ -115,10 +115,10 @@ public:
             attributeDiffs.push_back(nearest_attribute_diff);
         }
         double meanAttributeDiff = fishnet::math::mean(attributeDiffs).value_or_throw("Illegal state, graph has at least one node, so attributeDiffs should not be empty");
-        double stdAttributeDiff = fishnet::math::std(attributeDiffs, meanAttributeDiff).value_or_throw("Illegal state, graph has at least one node, so attributeDiffs should not be empty");
-        // const double T1 = fishnet::math::mean(attributeDiffs | std::views::filter([stdAttributeDiff,meanAttributeDiff](double diff){
-        //     return meanAttributeDiff - 3 * stdAttributeDiff <= diff && diff <= meanAttributeDiff + 3 * stdAttributeDiff;
-        // })).value_or_throw("Illegal state, there should be at least one non-outlier attribute difference, so the filtered range should not be empty");
+        double stdAttributeDiff = fishnet::math::std(attributeDiffs, meanAttributeDiff).value_or_throw("Illegal state, graph has at least one node, so attributeDiffs should not be empty"); 
+        const double T1 = fishnet::math::mean(attributeDiffs | std::views::filter([meanAttributeDiff, stdAttributeDiff](double diff){
+            return meanAttributeDiff - 3 * stdAttributeDiff <= diff && diff <= meanAttributeDiff + 3 * stdAttributeDiff;
+        })).value_or_throw("Illegal state, there should be at least one non-outlier attribute difference, so the filtered range should not be empty");
 
 
 
