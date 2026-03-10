@@ -58,11 +58,11 @@ template<typename T>
 concept Mapable = Hashable<T> && std::equality_comparable<T>;
 
 constexpr size_t size(std::ranges::range auto && range) noexcept{
-    using R = decltype(range);
+    using R = std::remove_cvref_t<decltype(range)>;
     if constexpr(std::ranges::sized_range<R>){
-        return static_cast<size_t>(std::ranges::distance(range));
+        return static_cast<size_t>(std::ranges::size(range));
     }else {
-        return std::ranges::count_if(range, [](const auto & e){return true;});
+        return static_cast<size_t>(std::ranges::distance(range));
     }
 }
 
