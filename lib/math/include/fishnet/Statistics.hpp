@@ -15,7 +15,7 @@ static Option<double> mean(std::ranges::input_range auto && values, fishnet::uti
     }
     double count = static_cast<double>(fishnet::util::size(values));
     return std::ranges::fold_left(values, 0.0, [&](double acc, const auto & value) {
-        return acc + valueMapper(value);
+        return acc + std::invoke(valueMapper, value);
     }) / count;
 }
 
@@ -41,7 +41,7 @@ static Option<double> var(std::ranges::input_range auto  && values, fishnet::uti
     }
     double count = static_cast<double>(fishnet::util::size(values));
     return std::ranges::fold_left(values, 0.0, [&](double acc, const auto & value) {
-        double diff_to_mean = valueMapper(value) - meanValue;
+        double diff_to_mean = std::invoke(valueMapper, value) - meanValue;
         return acc + diff_to_mean * diff_to_mean;
     }) / count;
 } 
