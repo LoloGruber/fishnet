@@ -16,12 +16,13 @@ namespace fishnet {
 template<typename T>
 class DBSC {
 private:
-    const double eps;
+    const double eps; // TODO compute automatically from the data and base reachability on attribute difference and spatial distance 
     double T1 = NAN; // attribute difference threshold for spatial reachability, will be computed from the data
     const int beta;
     const int minPts = 2;
     fishnet::util::BiFunction_t<T,T,double> distanceFunction;
     fishnet::util::UnaryFunction_t<T, double> attributeExtractor;
+    std::unordered_map<size_t, bool> visitedNodes; // node id to visited flag
 
     struct ClusterNode {
         T node;
@@ -30,7 +31,6 @@ private:
         mutable double densityIndicator = 0.0;
         mutable double meanAttributeDiff = 0.0; // mean attribute difference to neighbours
         mutable double nearestAttributeDiff = 0.0; // attribute difference to nearest neighbour
-        mutable bool visited = false;
 
         bool operator==(const ClusterNode & other) const {
             return node == other.node;
@@ -96,6 +96,7 @@ private:
         /* Update cluster nodes in the trimmed graph with density indicators and mean attribute difference and nearest neighbour attribute difference */
         auto nodes = graph.getNodes();
         for(const ClusterNode & clusterNode : nodes){
+            visitedNodes[clusterNode.id] = false;
             auto neighbors = graph.getNeighbours(clusterNode);
             double N_size = static_cast<double>(fishnet::util::size(neighbors));
             if(N_size == 0) continue;
@@ -127,6 +128,14 @@ private:
         });
     } 
 
+    bool visited(const ClusterNode & node) const {
+        return visitedNodes.at(node.id);
+    }
+
+    void markVisited(const ClusterNode & node) {
+        visitedNodes[node.id] = true;
+    }
+
     bool reachable(const ClusterNode & core, const ClusterNode & q, fishnet::util::forward_range_of<ClusterNode> auto && temporalCluster) {
         double avg_clu = core.attributeValue;
         for(const auto & node : temporalCluster){
@@ -146,13 +155,13 @@ private:
         // initial cluster is populated.
         std::vector<ClusterNode> directNeighbours;
         for (const ClusterNode & nbr : graph.getNeighbours(core)) {
-            if (!nbr.visited && count_spatially_directly_reachable(nbr, graph) > 0)
+            if (!visited(nbr) && count_spatially_directly_reachable(nbr, graph) > 0)
                 directNeighbours.push_back(nbr);
         }
         std::ranges::sort(directNeighbours, ClusterNodeOrdering{});
         for (const ClusterNode & nbr : directNeighbours) {
             if (spatially_directly_reachable(core, nbr) && reachable(core, nbr, cluster)) {
-                nbr.visited = true;
+                markVisited(nbr);
                 cluster.push_back(nbr);
             }
         }
@@ -168,20 +177,19 @@ private:
 
         std::queue<ClusterNode> seedQueue;
         for (const ClusterNode & nbr : betaOrderNeighbours) {
-            if(!nbr.visited && count_spatially_directly_reachable(nbr, graph) > 0)
+            if(!visited(nbr) && count_spatially_directly_reachable(nbr, graph) > 0)
                 seedQueue.push(nbr);
         }
         while (!seedQueue.empty()) {
             const ClusterNode seed = seedQueue.front();
-            seed.visited = true;
             seedQueue.pop();
-            if (seed.visited || count_spatially_directly_reachable(seed, graph) == 0)
+            if (visited(seed) || count_spatially_directly_reachable(seed, graph) == 0)
                 continue;
             if (spatially_directly_reachable(core, seed) && reachable(core, seed, cluster)) {
-                seed.visited = true;
+                markVisited(seed);
                 cluster.push_back(seed);
                 for (const ClusterNode & nbr : graph.getNeighbours(seed)) {
-                    if (!nbr.visited && count_spatially_directly_reachable(nbr, graph) > 0)
+                    if (!visited(nbr) && count_spatially_directly_reachable(nbr, graph) > 0)
                         seedQueue.push(nbr);
                 }
             }
@@ -241,9 +249,9 @@ public:
         /* Clustering */
         ClusterResult<T> clusterResult;
         for(const ClusterNode & core : clusteringData){
-            if(core.visited) 
+            if(visited(core)) 
                 continue;
-            core.visited = true;
+            markVisited(core);
             auto result = expand(core, graph);
             if (fishnet::util::size(result) >= minPts) {
                 clusterResult.clusters.push_back(fishnet::util::toVector(result | std::views::transform(&ClusterNode::node)));
