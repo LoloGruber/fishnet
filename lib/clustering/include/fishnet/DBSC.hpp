@@ -5,7 +5,9 @@
 #include <fishnet/Constants.hpp>
 #include <ranges>
 #include <unordered_map>
+#include <queue>
 #include <cmath>
+#include <cassert>
 #include "ClusterAlgorithm.hpp"
 
 
@@ -15,7 +17,9 @@ template<typename T>
 class DBSC {
 private:
     const double eps;
+    double T1 = NAN; // attribute difference threshold for spatial reachability, will be computed from the data
     const int beta;
+    const int minPts = 2;
     fishnet::util::BiFunction_t<T,T,double> distanceFunction;
     fishnet::util::UnaryFunction_t<T, double> attributeExtractor;
 
@@ -72,18 +76,17 @@ private:
     auto getClusterGraph(fishnet::graph::Graph auto const & graph) {
         auto clusterGraph = getClusterGraphType(graph);
         size_t nodeIndex = 0;
-        std::unordered_map<const T*, ClusterNode> nodeMap;
+        std::unordered_map<T, ClusterNode> nodeMap;
         for(const auto & node : graph.getNodes()){
-            nodeMap.try_emplace(&node, ClusterNode{
+            nodeMap.try_emplace(node, ClusterNode{
                 .node = node,
                 .id = nodeIndex++,
-
                 .attributeValue = attributeExtractor(node)
             });
         }
         for(const auto & node: graph.getNodes()){
             for(const auto & nbr: graph.getNeighbours(node)){
-                clusterGraph.addEdge(nodeMap[&node], nodeMap[&nbr]);
+                clusterGraph.addEdge(nodeMap[node], nodeMap[nbr]);
             }
         }
         return clusterGraph;
@@ -116,6 +119,74 @@ private:
             return avgAttributeDiff - 3 * stdAttributeDiff <= data.nearestAttributeDiff && data.nearestAttributeDiff <= avgAttributeDiff + 3 * stdAttributeDiff;
         }), &ClusterNode::nearestAttributeDiff).value_or_throw("Illegal state, there should be at least one non-outlier attribute difference, so the filtered range should not be empty");
         return T1;
+    }
+
+    size_t count_spatially_directly_reachable(const ClusterNode & node, fishnet::graph::Graph auto const & graph) const noexcept {
+        return std::ranges::count_if(graph.getNeighbours(node), [this,&node](const auto & nbr) {
+            return spatially_directly_reachable(node, nbr);
+        });
+    } 
+
+    bool reachable(const ClusterNode & core, const ClusterNode & q, fishnet::util::forward_range_of<ClusterNode> auto && temporalCluster) {
+        double avg_clu = core.attributeValue;
+        for(const auto & node : temporalCluster){
+            avg_clu += node.attributeValue;
+        }
+        avg_clu = avg_clu/(1 + static_cast<double>(fishnet::util::size(temporalCluster)));
+        return std::abs(q.attributeValue - avg_clu) <= T1;
+    }
+
+    std::vector<ClusterNode> expand(const ClusterNode & core, fishnet::graph::Graph auto & graph) {
+        std::vector<ClusterNode> cluster;
+        cluster.push_back(core);
+
+        // (i)+(ii): Pre-pass over direct (order-1) neighbors to establish the initial cluster.
+        // This bootstraps avg(CLU) with a meaningful local mean before any more distant
+        // node is evaluated — the reachable() predicate is only meaningful once this
+        // initial cluster is populated.
+        std::vector<ClusterNode> directNeighbours;
+        for (const ClusterNode & nbr : graph.getNeighbours(core)) {
+            if (!nbr.visited && count_spatially_directly_reachable(nbr, graph) > 0)
+                directNeighbours.push_back(nbr);
+        }
+        std::ranges::sort(directNeighbours, ClusterNodeOrdering{});
+        for (const ClusterNode & nbr : directNeighbours) {
+            if (spatially_directly_reachable(core, nbr) && reachable(core, nbr, cluster)) {
+                nbr.visited = true;
+                cluster.push_back(nbr);
+            }
+        }
+
+        // (iii): Expand further using the full beta-order neighborhood.
+        // The queue is seeded with all hops 1..beta sorted by descending density;
+        // already-visited nodes (admitted in step ii) are skipped immediately,
+        // so effectively only hops 2..beta are processed here.
+        // Newly admitted nodes are enqueued so expansion continues iteratively outward.
+        auto betaOrderNeighbours = fishnet::util::toVector(
+            fishnet::graph::BFS::neighborhood(graph, core, beta).getNodes());
+        std::ranges::sort(betaOrderNeighbours, ClusterNodeOrdering{});
+
+        std::queue<ClusterNode> seedQueue;
+        for (const ClusterNode & nbr : betaOrderNeighbours) {
+            if(!nbr.visited && count_spatially_directly_reachable(nbr, graph) > 0)
+                seedQueue.push(nbr);
+        }
+        while (!seedQueue.empty()) {
+            const ClusterNode seed = seedQueue.front();
+            seed.visited = true;
+            seedQueue.pop();
+            if (seed.visited || count_spatially_directly_reachable(seed, graph) == 0)
+                continue;
+            if (spatially_directly_reachable(core, seed) && reachable(core, seed, cluster)) {
+                seed.visited = true;
+                cluster.push_back(seed);
+                for (const ClusterNode & nbr : graph.getNeighbours(seed)) {
+                    if (!nbr.visited && count_spatially_directly_reachable(nbr, graph) > 0)
+                        seedQueue.push(nbr);
+                }
+            }
+        }
+        return cluster;
     }
 
 public: 
@@ -163,261 +234,26 @@ public:
             }
         }
         /* Prepare clustering data */
-        const double T1 = prepareClusteringData(graph);
+        this->T1 = prepareClusteringData(graph);
         std::vector<ClusterNode> clusteringData(graph.getNodes().begin(), graph.getNodes().end());
         std::ranges::sort(clusteringData, ClusterNodeOrdering{});
-        auto count_spatially_directly_reachable = [this,&graph](const ClusterNode & node) {
-            return std::ranges::count_if(graph.getNeighbours(node), [this,&node](const auto & nbr) {
-                return spatially_directly_reachable(node, nbr);
-            });
-        };
-        auto reachable = [this,T1](const ClusterNode & core, const ClusterNode & q, fishnet::util::forward_range_of<ClusterNode> auto && temporalCluster) {
-            double avg_clu = core.attributeValue;
-            for(const auto & node : temporalCluster){
-                avg_clu += node.attributeValue;
-            }
-            avg_clu = avg_clu/(1 + static_cast<double>(fishnet::util::size(temporalCluster)));
-            return std::abs(q.attributeValue - avg_clu) <= T1;
-        };
+        assert(T1 != NAN);
         /* Clustering */
         ClusterResult<T> clusterResult;
         for(const ClusterNode & core : clusteringData){
             if(core.visited) 
                 continue;
             core.visited = true;
-            std::vector<T> cluster;
-            cluster.push_back(core.node);
-            /* Collect expanding cores (i.e. neighbours that directly spatially reach neighbour neighbours) */
-            std::vector<ClusterNode> expandingCores;
-            for (const ClusterNode & nbr : graph.getNeighbours(core)) {
-                if(nbr.visited || count_spatially_directly_reachable(nbr) == 0)
-                    continue;
-                expandingCores.push_back(nbr); 
+            auto result = expand(core, graph);
+            if (fishnet::util::size(result) >= minPts) {
+                clusterResult.clusters.push_back(fishnet::util::toVector(result | std::views::transform(&ClusterNode::node)));
+            } else {
+                std::ranges::for_each(result, [&clusterResult](auto && clusterNode){
+                    clusterResult.noise.push_back(std::move(clusterNode.node));
+                });
             }
-            std::ranges::sort(expandingCores, ClusterNodeOrdering{});
-            
-  
-            // (ii) add the expanding clusters if they are spatially reachable and spatially directly reachable
-            for (const auto &expandingCore : expandingCores) {
-                if (spatially_directly_reachable(core,expandingCore) && reachable(core, expandingCore, expandingCores)) {
-                    expandingCore.visited = true;
-                    cluster.push_back(expandingCore.node);
-                }
-            }
-            
-            // (iii) expand using k-order neighbors (k = beta)
-            auto betaOrderGraph = fishnet::graph::BFS::neighborhood(graph,core,beta);
-            // find first starting expanding core (highest density)
-            //std::vector<PointType> k_order_graph_nodes(k_order_neighbors.getNodes().begin(), k_order_neighbors.getNodes().end());
-            // std::list<PointType> ordered_candidates = descending_density(graph, k_order_neighbors.nodes, attributeExtractor, eps);
-            
-            // for (auto &starting_core : ordered_candidates) {
-            //     if (visited[starting_core]) continue;
-            //     if (number_of_SDR(graph, starting_core, attributeExtractor, eps) == 0) continue;
-            //     // treat starting_core as new "seed"
-            //     std::vector<PointType> local_expanding;
-            //     local_expanding.push_back(starting_core);
-            //     visited[starting_core] = true;
-            //     cluster.push_back(starting_core);
-            //     bool expanded = true;
-            //     while (expanded) {
-            //         expanded = false;
-            //         // gather expanding cores around current seed
-            //         std::vector<PointType> new_candidates;
-            //         for (auto nbr : graph.getNeighbours(starting_core)) {
-            //             double number = number_of_SDR(graph, nbr, attributeExtractor, eps);
-            //             if (!visited[nbr] && number > 0)
-            //             {
-            //                 new_candidates.push_back(nbr);
-            //             }
-            //         }
-            //         // rank by density
-            //         std::list<PointType> ordered_new =
-            //             descending_density(graph, new_candidates, attributeExtractor, eps);
-            //         for (auto &cand : ordered_new) {
-            //             if (!visited[cand] &&
-            //                 spatially_directly_reachable(graph, core, cand, attributeExtractor, eps) &&
-            //                 spatially_reachable(cluster, graph, attributeExtractor, core, cand, eps))
-            //             {
-            //                 cluster.push_back(cand);
-            //                 visited[cand] = true;
-            //                 expanded = true;
-            //             }
-            //         }
-            //     }
-            // }
-            
-            // // if only the core is in the cluster, then it should be marked as noise
-            // if (cluster.size() > 1) {
-            //     clusters[cluster_id++] = cluster;
-            // }
-            // else {
-            //     visited[core] = false;
-
-            // }
-
         }
-
-
-
-
-
-
-
-        return ClusterResult<T>();
+        return clusterResult;
     }
-    
-
-
-    // std::unordered_map<int, std::vector<PointType>> get_clusters(GraphT&graph,
-    //     fishnet::util::UnaryFunction<PointType, double> auto & attributeExtractor, double eps, int beta)
-    // {
-    //     std::unordered_map<PointType, bool> visited;     // track classified/unclassified
-    //     for (auto &node : graph.getNodes()) {
-    //         visited[node] = false;
-    //     }
-    //     std::unordered_map<int, std::vector<PointType>> clusters;
-    //     int cluster_id = 0;
-    //     auto nodesView = graph.getNodes();
-    //     std::vector<PointType> graph_nodes(nodesView.begin(), nodesView.end());
-    //     std::list<PointType> density_order = descending_density(graph, graph_nodes, attributeExtractor, eps);
-    //     for (auto &core : density_order) {
-    //         if (visited[core]) continue; 
-    //         std::vector<PointType> cluster;
-    //         cluster.push_back(core);
-    //         visited[core] = true;
-    //         // (i)
-    //         // collect expanding cores of this core
-    //         std::vector<PointType> expanding_cores;
-    //         for (auto nbr : graph.getNeighbours(core)) {
-    //             double nr_sdr = number_of_SDR(graph, nbr, attributeExtractor, eps);
-    //             if (!visited[nbr] && nr_sdr > 0)
-
-    //             {
-    //                 expanding_cores.push_back(nbr);
-    //             }
-    //         }
-    //         // (i) rank the expanding cores according to their density indicator
-    //         std::list<PointType> ordered_expanding = descending_density(graph, expanding_cores, attributeExtractor, eps);
-           
-    //         // (ii) add the expanding clusters if they are spatially reachable and spatially directly reachable
-    //         for (auto &ecore : ordered_expanding) {
-    //             if (spatially_directly_reachable(graph, core, ecore, attributeExtractor, eps) && spatially_reachable(cluster, graph, attributeExtractor, core, ecore, eps)) {
-    //                 cluster.push_back(ecore);
-    //                 visited[ecore] = true;
-    //             }
-    //         }
-            
-    //         // (iii) expand using k-order neighbors (k = beta)
-    //         using EdgeType = fishnet::graph::__impl::BaseEdge<PointType, false>;
-    //         auto k_order_neighbors = beta_order_subgraph<PointType, GraphT, EdgeType>(graph, core, beta);
-    //         // find first starting expanding core (highest density)
-    //         //std::vector<PointType> k_order_graph_nodes(k_order_neighbors.getNodes().begin(), k_order_neighbors.getNodes().end());
-    //         std::list<PointType> ordered_candidates = descending_density(graph, k_order_neighbors.nodes, attributeExtractor, eps);
-            
-    //         for (auto &starting_core : ordered_candidates) {
-    //             if (visited[starting_core]) continue;
-    //             if (number_of_SDR(graph, starting_core, attributeExtractor, eps) == 0) continue;
-    //             // treat starting_core as new "seed"
-    //             std::vector<PointType> local_expanding;
-    //             local_expanding.push_back(starting_core);
-    //             visited[starting_core] = true;
-    //             cluster.push_back(starting_core);
-    //             bool expanded = true;
-    //             while (expanded) {
-    //                 expanded = false;
-    //                 // gather expanding cores around current seed
-    //                 std::vector<PointType> new_candidates;
-    //                 for (auto nbr : graph.getNeighbours(starting_core)) {
-    //                     double number = number_of_SDR(graph, nbr, attributeExtractor, eps);
-    //                     if (!visited[nbr] && number > 0)
-    //                     {
-    //                         new_candidates.push_back(nbr);
-    //                     }
-    //                 }
-    //                 // rank by density
-    //                 std::list<PointType> ordered_new =
-    //                     descending_density(graph, new_candidates, attributeExtractor, eps);
-    //                 for (auto &cand : ordered_new) {
-    //                     if (!visited[cand] &&
-    //                         spatially_directly_reachable(graph, core, cand, attributeExtractor, eps) &&
-    //                         spatially_reachable(cluster, graph, attributeExtractor, core, cand, eps))
-    //                     {
-    //                         cluster.push_back(cand);
-    //                         visited[cand] = true;
-    //                         expanded = true;
-    //                     }
-    //                 }
-    //             }
-    //         }
-            
-    //         // if only the core is in the cluster, then it should be marked as noise
-    //         if (cluster.size() > 1) {
-    //             clusters[cluster_id++] = cluster;
-    //         }
-    //         else {
-    //             visited[core] = false;
-
-    //         }
-    //     }
-    //     // step (v): assign noise 
-    //     std::vector<PointType> noise;
-    //     for (auto &[node, was_visited] : visited) {
-    //         if (!was_visited) {
-    //             noise.push_back(node);
-    //         }
-    //     }
-    //     if (!noise.empty()) {
-    //         clusters[-1] = noise;
-    //     }
-    //     return clusters;
-    // }
-    // // if Q is spatially directly reachable from Pi 
-    // bool spatially_directly_reachable(
-    //     GraphT&graph, 
-    //     const PointType &point, 
-    //     PointType &Q, 
-    //     fishnet::util::UnaryFunction<PointType, double> auto & attributeExtractor,
-    //     double eps) {
-    //     // (i) Q in Neighbors(point) and  
-    //     // (ii) attr_diff(P, Q) <= T_1, treshold = eps
-    //     const auto neighbours = graph.getNeighbours(point);
-    //     bool inNeighbours =  (std::find(neighbours.begin(), neighbours.end(), Q) != neighbours.end());
-    //     double attrDiff = std::abs(attributeExtractor(point) - attributeExtractor(Q));
-    //     bool epsThreshold = attrDiff <= eps;
-       
-    //     return inNeighbours && epsThreshold;
-    // }
-    // bool spatially_reachable(std::vector<PointType>& cluster, const GraphT & graph, 
-    //     fishnet::util::UnaryFunction<PointType, double> auto & attributeExtractor, PointType& point, PointType& Q, double eps){
-    //     // if Q is spatially reachable from Pi
-    //     // given set of spatial objects CLU
-    //     // (i) attr_diff(Qi, Avg(CLU)) <= T1 and
-    //     // (ii) Qi in Neighbors(Pi) and Pi in CLU
-    //     double avg_clusters = 0.0;
-    //     for(auto node : cluster){
-    //         avg_clusters += attributeExtractor(node);
-    //     }
-    //     avg_clusters = avg_clusters/cluster.size();
-    //     double attr_diff =  std::abs(attributeExtractor(Q) - avg_clusters);
-    //     const auto neighbours = graph.getNeighbours(point);
-    //     bool inNeighbours =  (std::find(neighbours.begin(), neighbours.end(), Q) != neighbours.end());
-    //     bool inCLU =  (std::find(cluster.begin(), cluster.end(), point) != cluster.end());
-    //     bool result = inNeighbours && inCLU && (attr_diff <= eps);
-    //     return result;
-    // }
-    // //  sort the objects in order of descending density indicator
-    // std::list<PointType> descending_density(GraphT& graph, std::vector<PointType> &nodes, fishnet::util::UnaryFunction<PointType, double> auto & attributeExtractor, double eps){
-        
-    //     std::vector<PointType> sorted_nodes = nodes; 
-    //     // suppose time complexity of sort() is O(N log(N))
-    //     std::sort(sorted_nodes.begin(), sorted_nodes.end(),[&](const PointType &a, const PointType &b) {
-    //         double dens_a = density_indicator(graph, a, attributeExtractor, eps);
-    //         double dens_b = density_indicator(graph, b, attributeExtractor, eps);
-    //         return dens_a > dens_b;
-    //     });
-    //     std::list<PointType> result(sorted_nodes.begin(), sorted_nodes.end());
-    //     return result;
-    // }
 };
-} // namespace fishnet
+}  //namespace fishnet
