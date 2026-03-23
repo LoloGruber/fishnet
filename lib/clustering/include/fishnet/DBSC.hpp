@@ -3,6 +3,7 @@
 #include <fishnet/FunctionalConcepts.hpp>
 #include <fishnet/Statistics.hpp>
 #include <fishnet/Constants.hpp>
+#include <fishnet/CantorPairing.hpp>
 #include <ranges>
 #include <unordered_map>
 #include <queue>
@@ -30,6 +31,7 @@ private:
     fishnet::util::UnaryFunction_t<T, double> attributeExtractor;
     std::unordered_map<size_t, bool> visitedNodes; // node id to visited flag
     std::unordered_map<size_t, ClusterNodeStats> clusterNodeStats; // node id to cluster node stats
+    mutable std::unordered_map<size_t, double> distanceCache; 
 
     struct ClusterNode {
         T node;
@@ -65,12 +67,14 @@ private:
         };
     }
 
-    double spatial_distance(const T & lhs, const T & rhs) const noexcept {
-        return distanceFunction(lhs, rhs);
-    }
-
-    double inline spatial_distance(const ClusterNode & lhs, const ClusterNode & rhs) const noexcept {
-        return distanceFunction(lhs.node, rhs.node);
+    double spatial_distance(const ClusterNode & lhs, const ClusterNode & rhs) const noexcept {
+        size_t hash = fishnet::math::CantorPairing(lhs.id,rhs.id);
+        if (distanceCache.contains(hash)) {
+            return distanceCache.at(hash);
+        }
+        double dist = distanceFunction(lhs.node, rhs.node);
+        distanceCache[hash] = dist;
+        return dist;
     }
 
     bool inline spatially_directly_reachable(const ClusterNode & p, const ClusterNode & q)const noexcept {
@@ -87,7 +91,7 @@ private:
     }
 
 
-    constexpr auto getClusterGraphType(fishnet::graph::Graph auto const & graph) {
+    constexpr auto getClusterGraphType(fishnet::graph::Graph auto const & graph) const noexcept {
         if constexpr (std::remove_cvref_t<decltype(graph)>::edge_type::isDirected()) {
             return fishnet::graph::DirectedGraph<ClusterNode, ClusterNodeHash>();
         }
@@ -96,7 +100,7 @@ private:
         }
     }
 
-    auto getClusterGraph(fishnet::graph::Graph auto const & graph) {
+    auto getClusterGraph(fishnet::graph::Graph auto const & graph) const noexcept {
         auto clusterGraph = getClusterGraphType(graph);
         size_t nodeIndex = 0;
         std::unordered_map<T, ClusterNode> nodeMap;
