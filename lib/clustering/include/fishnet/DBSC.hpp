@@ -110,7 +110,7 @@ private:
         clusterGraph.addNodes(std::views::values(nodeMap));
         for(const auto & node: graph.getNodes()){
             for(const auto & nbr: graph.getNeighbours(node)){
-                clusterGraph.addEdge(nodeMap[node], nodeMap[nbr]);
+                clusterGraph.addEdge(nodeMap.at(node), nodeMap.at(nbr));
             }
         }
         return clusterGraph;
