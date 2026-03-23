@@ -81,13 +81,13 @@ private:
         return spatial_distance(p, q) <= eps;
     }
 
-    bool inline attribute_distance(const ClusterNode & p, const ClusterNode & q) const noexcept {
-        return std::abs(p.attributeValue - q.attributeValue);
+    double inline attribute_distance(const ClusterNode & p, const ClusterNode & q) const noexcept {
+        return std::fabs(p.attributeValue - q.attributeValue);
     }
 
     bool reachable(const ClusterNode & q, fishnet::util::forward_range_of<ClusterNode> auto && temporalCluster) {
         double avg_clu = fishnet::math::avg(temporalCluster, &ClusterNode::attributeValue).value_or_throw();
-        return std::abs(q.attributeValue - avg_clu) <= T1;
+        return std::fabs(q.attributeValue - avg_clu) <= T1;
     }
 
 
@@ -126,7 +126,14 @@ private:
             visitedNodes[clusterNode.id] = false;
             auto neighbors = graph.getNeighbours(clusterNode);
             double N_size = static_cast<double>(fishnet::util::size(neighbors));
-            if(N_size == 0) continue;
+            if(N_size == 0){ 
+                clusterNodeStats[clusterNode.id] = ClusterNodeStats{
+                    .densityIndicator = 0.0,
+                    .meanDistance = 0.0,
+                    .nearestDistance = 0.0
+                };
+                continue;
+            }
             double N_SDR = static_cast<double>(std::ranges::count_if(neighbors, [&](const auto & nbr) {
                 return spatially_directly_reachable(clusterNode, nbr);
             }));
