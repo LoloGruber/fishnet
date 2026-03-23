@@ -184,25 +184,46 @@ struct is_std_pair<std::pair<F, S>> : std::true_type {};
 template<typename T>
 constexpr bool is_std_pair_v = is_std_pair<T>::value;
 
-void EXPECT_UNSORTED_RANGE_EQ(std::ranges::forward_range auto const & actual, std::ranges::forward_range auto const & expected) {
+/**
+ * @brief Checks if two ranges are equal, ignoring order
+ * 
+ * @param actual 
+ * @param expected 
+ * @return std::optional<std::string> contains error message if ranges are not equal, std::nullopt otherwise
+ */
+static std::optional<std::string> unsortedRangeEqual(std::ranges::forward_range auto const & actual, std::ranges::forward_range auto const & expected) {
+    auto buildMessage = [](auto... vals){
+        std::stringstream ss;
+        ((ss << vals), ...);
+        return ss.str();
+    };
     if(fishnet::util::size(actual) != fishnet::util::size(expected)){
-        FAIL() << "Ranges have a different size!"<<"\nExpecting: "<<fishnet::util::size(expected)<<" but was: " << fishnet::util::size(actual);
-        return;
+        return buildMessage("Ranges have a different size!\nExpecting: ", fishnet::util::size(expected), " but was: ", fishnet::util::size(actual));
     }
     using T = std::remove_cvref_t<decltype(*std::ranges::begin(expected))>;
     for(const auto & expectedElement : expected){
         bool containsExpectedElement = std::ranges::find(actual, expectedElement) != std::ranges::end(actual);
-        if constexpr (fishnet::util::Printable<T>){
-            EXPECT_TRUE(containsExpectedElement) <<"Actual does not contain " << expectedElement.toString();
-        }else if constexpr (is_std_pair_v<T>){
-            if constexpr (fishnet::util::Printable<typename T::first_type> && fishnet::util::Printable<typename T::second_type>) {
-                EXPECT_TRUE(containsExpectedElement) <<"Actual does not contain " << "{" <<expectedElement.first.toString() << ", " << expectedElement.second.toString() << "}";
+        if(!containsExpectedElement){
+            if constexpr (fishnet::util::Printable<T>){
+                return buildMessage("Actual does not contain ", expectedElement.toString());
+            }else if constexpr (is_std_pair_v<T>){
+                if constexpr (fishnet::util::Printable<typename T::first_type> && fishnet::util::Printable<typename T::second_type>) {
+                    return buildMessage("Actual does not contain ", "{", expectedElement.first.toString(), ", ", expectedElement.second.toString(), "}");
+                } else {
+                    return buildMessage("Actual does not contain expected pair");
+                }
             } else {
-                EXPECT_TRUE(containsExpectedElement) << "Actual does not contain expected pair";
+                return buildMessage("Actual does not contain expected element");
             }
-        } else {
-            EXPECT_TRUE(containsExpectedElement) << "Actual does not contain expected element";
         }
+    }
+    return std::nullopt;
+}
+
+void EXPECT_UNSORTED_RANGE_EQ(std::ranges::forward_range auto const & actual, std::ranges::forward_range auto const & expected) {
+    auto result = unsortedRangeEqual(actual, expected);
+    if(result.has_value()){
+        FAIL() << result.value();
     }
 }
 
