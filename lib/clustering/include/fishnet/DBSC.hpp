@@ -16,24 +16,28 @@ namespace fishnet {
 template<typename T>
 class DBSC {
 private:
+    struct ClusterNodeStats {
+        double densityIndicator;
+        double meanDistance;
+        double nearestDistance;
+    };
+
     double T1 = NAN; // attribute difference threshold for spatial reachability, will be computed from the data
+    const double eps;
     const size_t beta;
-    const size_t minPts = 2;
-    const double attribute_weight= 0.5; // weight of attribute difference in the combined distance function, can be tuned based on the dataset
+    const size_t minPts;
     fishnet::util::BiFunction_t<T,T,double> distanceFunction;
     fishnet::util::UnaryFunction_t<T, double> attributeExtractor;
     std::unordered_map<size_t, bool> visitedNodes; // node id to visited flag
+    std::unordered_map<size_t, ClusterNodeStats> clusterNodeStats; // node id to cluster node stats
 
     struct ClusterNode {
         T node;
         size_t id;
         double attributeValue;
-        mutable double densityIndicator = 0.0;
-        mutable double meanDistance = 0.0; // mean attribute difference to neighbours
-        mutable double nearestDistance = 0.0; // attribute difference to nearest neighbour
 
         bool operator==(const ClusterNode & other) const {
-            return node == other.node;
+            return this->id == other.id;
         }
     };
 
@@ -43,14 +47,23 @@ private:
         }
     };
 
-    struct ClusterNodeOrdering {
-        bool operator()(const ClusterNode & lhs, const ClusterNode & rhs) const {
-            if (! fishnet::math::areEqual(lhs.densityIndicator, rhs.densityIndicator)) {
-                return lhs.densityIndicator > rhs.densityIndicator;
+    auto ClusterNodeOrdering() const noexcept {
+        return [this](const ClusterNode & lhs, const ClusterNode & rhs) {
+            const auto &lhsStats = clusterNodeStats.at(lhs.id);
+            const auto &rhsStats = clusterNodeStats.at(rhs.id);
+
+            if (! fishnet::math::areEqual(lhsStats.densityIndicator, rhsStats.densityIndicator)) {
+                return lhsStats.densityIndicator > rhsStats.densityIndicator;
             }
-            return lhs.meanDistance < rhs.meanDistance;
-        }
-    };
+            return lhsStats.meanDistance < rhsStats.meanDistance;
+        };
+    }
+
+    auto ClusterNodeOrderingReverse() const noexcept {
+        return [ordering = ClusterNodeOrdering()](const ClusterNode & lhs, const ClusterNode & rhs) {
+            return not ordering(rhs, lhs);
+        };
+    }
 
     double spatial_distance(const T & lhs, const T & rhs) const noexcept {
         return distanceFunction(lhs, rhs);
@@ -60,13 +73,19 @@ private:
         return distanceFunction(lhs.node, rhs.node);
     }
 
-    double inline distance(const ClusterNode & lhs, const ClusterNode & rhs) const noexcept {
-        return spatial_distance(lhs, rhs) + attribute_weight * std::abs(lhs.attributeValue - rhs.attributeValue);
+    bool inline spatially_directly_reachable(const ClusterNode & p, const ClusterNode & q)const noexcept {
+        return spatial_distance(p, q) <= eps;
     }
 
-    bool inline spatially_directly_reachable(const ClusterNode & p, const ClusterNode & q)const noexcept {
-        return distance(p, q) <= T1;
+    bool inline attribute_distance(const ClusterNode & p, const ClusterNode & q) const noexcept {
+        return std::abs(p.attributeValue - q.attributeValue);
     }
+
+    bool reachable(const ClusterNode & q, fishnet::util::forward_range_of<ClusterNode> auto && temporalCluster) {
+        double avg_clu = fishnet::math::avg(temporalCluster, &ClusterNode::attributeValue).value_or_throw();
+        return std::abs(q.attributeValue - avg_clu) <= T1;
+    }
+
 
     constexpr auto getClusterGraphType(fishnet::graph::Graph auto const & graph) {
         if constexpr (std::remove_cvref_t<decltype(graph)>::edge_type::isDirected()) {
@@ -88,6 +107,7 @@ private:
                 .attributeValue = attributeExtractor(node)
             });
         }
+        clusterGraph.addNodes(std::views::values(nodeMap));
         for(const auto & node: graph.getNodes()){
             for(const auto & nbr: graph.getNeighbours(node)){
                 clusterGraph.addEdge(nodeMap[node], nodeMap[nbr]);
@@ -98,8 +118,7 @@ private:
 
     double prepareClusteringData(fishnet::graph::Graph auto & graph) {
         /* Update cluster nodes in the trimmed graph with density indicators and mean attribute difference and nearest neighbour attribute difference */
-        auto nodes = graph.getNodes();
-        for(const ClusterNode & clusterNode : nodes){
+        for(const ClusterNode & clusterNode : graph.getNodes()){
             visitedNodes[clusterNode.id] = false;
             auto neighbors = graph.getNeighbours(clusterNode);
             double N_size = static_cast<double>(fishnet::util::size(neighbors));
@@ -107,22 +126,25 @@ private:
             double N_SDR = static_cast<double>(std::ranges::count_if(neighbors, [&](const auto & nbr) {
                 return spatially_directly_reachable(clusterNode, nbr);
             }));
-            double meanDistance = fishnet::math::mean(neighbors, [&](const auto & nbr) {
-                return distance(clusterNode, nbr);
-            }).value_or(0.0);
-
             const ClusterNode & nearestNeighbour = *std::ranges::min_element(neighbors, [&](const auto & lhs, const auto & rhs) {
                 return spatial_distance(clusterNode, lhs) < spatial_distance(clusterNode, rhs);
             });
-            clusterNode.nearestDistance = distance(clusterNode, nearestNeighbour);
-            clusterNode.meanDistance = meanDistance;
-            clusterNode.densityIndicator = N_SDR + N_SDR/N_size;
+            double nearestDistance = attribute_distance(clusterNode, nearestNeighbour);
+            double meanDistance = fishnet::math::mean(neighbors, [&](const auto & nbr) {
+                return attribute_distance(clusterNode, nbr);
+            }).value_or(0.0);
+            double densityIndicator = N_SDR + N_SDR/N_size;
+            clusterNodeStats[clusterNode.id] = ClusterNodeStats{
+                .densityIndicator = densityIndicator,
+                .meanDistance = meanDistance,
+                .nearestDistance = nearestDistance
+            };
         }
-        double avgAttributeDiff = fishnet::math::mean(nodes,&ClusterNode::nearestDistance).value_or_throw("Illegal state, graph has at least one node, so attributeDiffs should not be empty");
-        double stdAttributeDiff = fishnet::math::std(nodes, &ClusterNode::nearestDistance).value_or_throw("Illegal state, graph has at least one node, so attributeDiffs should not be empty"); 
-        const double T1 = fishnet::math::mean(nodes | std::views::filter([avgAttributeDiff, stdAttributeDiff](const ClusterNode & data) {
+        double avgAttributeDiff = fishnet::math::mean(std::views::values(clusterNodeStats),&ClusterNodeStats::nearestDistance).value_or_throw("Illegal state, graph has at least one node, so attributeDiffs should not be empty");
+        double stdAttributeDiff = fishnet::math::std(std::views::values(clusterNodeStats), &ClusterNodeStats::nearestDistance).value_or_throw("Illegal state, graph has at least one node, so attributeDiffs should not be empty"); 
+        const double T1 = fishnet::math::mean(std::views::values(clusterNodeStats) | std::views::filter([avgAttributeDiff, stdAttributeDiff](const ClusterNodeStats & data) {
             return avgAttributeDiff - 3 * stdAttributeDiff <= data.nearestDistance && data.nearestDistance <= avgAttributeDiff + 3 * stdAttributeDiff;
-        }), &ClusterNode::nearestDistance).value_or_throw("Illegal state, there should be at least one non-outlier attribute difference, so the filtered range should not be empty");
+        }), &ClusterNodeStats::nearestDistance).value_or_throw("Illegal state, there should be at least one non-outlier attribute difference, so the filtered range should not be empty");
         return T1;
     }
 
@@ -142,15 +164,10 @@ private:
         visitedNodes[node.id] = true;
     }
 
-    bool reachable(const ClusterNode & q, fishnet::util::forward_range_of<ClusterNode> auto && temporalCluster) {
-        double avg_clu = fishnet::math::avg(temporalCluster, &ClusterNode::attributeValue).value_or_throw();
-        return std::abs(q.attributeValue - avg_clu) <= T1;
-    }
-
     std::vector<ClusterNode> expand(const ClusterNode & core, fishnet::graph::Graph auto const& graph) {
         std::vector<ClusterNode> cluster;
         cluster.push_back(core);
-        std::priority_queue<ClusterNode,std::vector<ClusterNode>,ClusterNodeOrdering> expandingCores;
+        std::priority_queue<ClusterNode,std::vector<ClusterNode>,decltype(ClusterNodeOrderingReverse())> expandingCores(ClusterNodeOrderingReverse());
         expandingCores.push(core);
         while (!expandingCores.empty()) {
             const ClusterNode current = expandingCores.top();
@@ -169,17 +186,17 @@ private:
     }
 
 public: 
-    DBSC(size_t beta, size_t minPts, fishnet::util::BiFunction<T,T,double> auto && distanceFunction, fishnet::util::UnaryFunction<T, double> auto && attributeExtractor) 
-        : beta(beta), minPts(minPts), distanceFunction(std::forward<fishnet::util::BiFunction_t<T,T,double>>(distanceFunction)), attributeExtractor(std::forward<fishnet::util::UnaryFunction_t<T, double>>(attributeExtractor)) {}
+    DBSC(double eps, size_t beta, size_t minPts, fishnet::util::BiFunction<T,T,double> auto && distanceFunction, fishnet::util::UnaryFunction<T, double> auto && attributeExtractor) 
+        : eps(eps), beta(beta), minPts(minPts), distanceFunction(std::forward<fishnet::util::BiFunction_t<T,T,double>>(distanceFunction)), attributeExtractor(std::forward<fishnet::util::UnaryFunction_t<T, double>>(attributeExtractor)) {}
 
-    DBSC(size_t beta, size_t minPts, fishnet::util::BiFunction<T,T,double> auto && distanceFunction) 
-        :beta(beta), minPts(minPts), distanceFunction(std::forward<fishnet::util::BiFunction_t<T,T,double>>(distanceFunction)), attributeExtractor([](){return 0.0;}) {}
+    DBSC(double eps, size_t beta, size_t minPts, fishnet::util::BiFunction<T,T,double> auto && distanceFunction) 
+        :eps(eps), beta(beta), minPts(minPts), distanceFunction(std::forward<fishnet::util::BiFunction_t<T,T,double>>(distanceFunction)), attributeExtractor([](){return 0.0;}) {}
 
-    void setCustomEps(double eps) {
-        this->T1 = eps;
+    void setCustomT1(double t1) {
+        this->T1 = t1;
     }
 
-    auto cluster(fishnet::graph::Graph auto const & input_graph) {
+    ClusterResult<T> operator()(fishnet::graph::Graph auto const & input_graph) {
         static_assert(std::derived_from<typename std::decay_t<decltype(input_graph)>::node_type, T>, "Graph node type must be compatible with DBSC point type");
         auto graph = getClusterGraph(input_graph);
         auto initalEdges = graph.getEdges();
@@ -229,10 +246,10 @@ public:
         });
         /* Prepare clustering data */
         double calculatedT1 =prepareClusteringData(graph);
-        T1 =T1!= NAN? T1 : calculatedT1;
+        this->T1 = std::isnan(this->T1) ? calculatedT1 : this->T1;
         std::vector<ClusterNode> clusteringData(graph.getNodes().begin(), graph.getNodes().end());
-        std::ranges::sort(clusteringData, ClusterNodeOrdering{});
-        assert(T1 != NAN);
+        std::ranges::sort(clusteringData, ClusterNodeOrdering());
+        assert(!std::isnan(this->T1) && "T1 should have been set either by user or calculated from the data, but it is still NaN, indicating an illegal state");
         /* Clustering */
         ClusterResult<T> clusterResult;
         for(const ClusterNode & core : clusteringData){
@@ -251,4 +268,56 @@ public:
         return clusterResult;
     }
 };
+
+static_assert(ClusterAlgorithm<DBSC<int>, fishnet::graph::UndirectedGraph<int>>);
+
+template<typename T>
+struct DBSCBuilder {
+    double eps;
+    size_t beta;
+    size_t minPts = 2;
+    fishnet::util::BiFunction_t<T,T,double> distanceFunction;
+    fishnet::util::UnaryFunction_t<T, double> attributeExtractor = [](const auto & node){return 0.0;};
+    double t1 = NAN;
+
+    auto build() {
+        DBSC<T> dbsc(eps, beta, minPts, distanceFunction, attributeExtractor);
+        if(!std::isnan(t1)){
+            dbsc.setCustomT1(t1);
+        }
+        return dbsc;
+    }
+
+    DBSCBuilder<T> & setEps(double eps) {
+        this->eps = eps;
+        return *this;
+    }
+
+    DBSCBuilder<T> & setBeta(size_t beta) {
+        this->beta = beta;
+        return *this;
+    }
+
+    DBSCBuilder<T> & setMinPts(size_t minPts) {
+        this->minPts = minPts;
+        return *this;
+    }
+
+    DBSCBuilder<T> & setDistanceFunction(fishnet::util::BiFunction<T,T,double> auto && distanceFunction) {
+        this->distanceFunction = distanceFunction;
+        return *this;
+    }
+
+    DBSCBuilder<T> & setAttributeExtractor(fishnet::util::UnaryFunction<T, double> auto && attributeExtractor) {
+        this->attributeExtractor = attributeExtractor;
+        return *this;
+    }
+
+    DBSCBuilder<T> & setT1(double t1) {
+        this->t1 = t1;
+        return *this;
+    }
+
+};
+
 }  //namespace fishnet
