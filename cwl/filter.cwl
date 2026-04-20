@@ -3,38 +3,35 @@ class: CommandLineTool
 baseCommand: [FishnetShapefilePreprocessor]
 hints:
   DockerRequirement:
-    dockerPull: logru/africapolis:1.0.0
+    dockerPull: logru/fishnet-apps:1.2.0
 requirements:
-  - class: SchemaDefRequirement
-    types:
-    - $import: types/Shapefile.yaml
-  - class: InlineJavascriptRequirement
+  InlineJavascriptRequirement: {}
+  ResourceRequirement:
+    coresMin: 1
+    ramMin: 250
 inputs:
-  gisFile:
-    type: 
-      # - ../GIS.cwl#GeoTIFF
-      - types/Shapefile.yaml#Shapefile
+  shapefile:
+    type: File
+    secondaryFiles: [^.shx, ^.dbf, ^.prj, ^.cpg?, ^.qpj?]
+    # format: SHP
     inputBinding:
-      position: 1
       prefix: --input
-      valueFrom: $(self.file)
-
   config:
     type: File
+    # format: JSON
     doc: "Configuration file for filter process"
     inputBinding:
       prefix: --config
-      position: 2
 outputs:
   standardOut:
     type: stdout
   errorOut:
     type: stderr
   filtered_shapefile:
-    type: types/Shapefile.yaml#Shapefile
+    type: File
+    secondaryFiles: [^.shx, ^.dbf, ^.prj, ^.cpg?, ^.qpj?]
+    # format: SHP
     outputBinding:
-      glob: "*_filtered.*"  # Gather all files associate with the shapefile
-      outputEval:
-        $include: utils/groupToShapefile.js 
-stdout: FILTER_$(inputs.gisFile.file.nameroot)_stdout.log
-stderr: FILTER_$(inputs.gisFile.file.nameroot)_stderr.log
+      glob: "*_filtered.shp"  # Gather all files associate with the shapefile
+stdout: FILTER_$(inputs.shapefile.nameroot)_stdout.log
+stderr: FILTER_$(inputs.shapefile.nameroot)_stderr.log
