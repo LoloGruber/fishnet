@@ -58,7 +58,7 @@ static void runScenarios(fishnet::geometry::IPolygon auto const & lhs, fishnet::
 
 
 TEST(PolygonDistanceTest, settlementSamples){
-    const std::filesystem::path settlementSamplesPath = util::PathHelper::projectDirectory() / std::filesystem::path("data/testing/Settlement_Samples");
+    const std::filesystem::path settlementSamplesPath = util::PathHelper::projectDirectory() / std::filesystem::path("data/testing/settlements");
     const size_t repetitions = 1;
     const size_t samples = 1; // 100
     auto files = fishnet::GISFactory::getGISFiles(settlementSamplesPath);

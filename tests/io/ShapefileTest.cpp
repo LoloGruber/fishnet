@@ -5,7 +5,7 @@
 #include <fishnet/VectorIO.hpp>
 using namespace fishnet;
 
-static const std::filesystem::path example {util::PathHelper::projectDirectory() / std::filesystem::path("data/testing/Punjab_Small/Punjab_Small.shp")};
+static const std::filesystem::path example {util::PathHelper::projectDirectory() / std::filesystem::path("data/testing/regions/Corvara_Small_Preprocessed.shp")};
 static const auto filenameIncrementer = __impl::IncrementFilenameMapper<Shapefile>();
 
 TEST(ShapefileTest, init){

@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 #include <fishnet/VectorLayer.hpp>
 #include <fishnet/Vec2D.hpp>
-#include <list>
 #include <fishnet/TestUtil.hpp>
 #include <fishnet/PathHelper.h>
 #include <fishnet/TemporaryDirectiory.h>
@@ -18,7 +17,7 @@ protected:
         pointLayer = VectorLayer<geometry::Vec2DReal>(sampleLayer.getSpatialReference());
         pointLayer.addAllGeometry(points);
     }
-    Shapefile pathToSample {util::PathHelper::projectDirectory() / std::filesystem::path("data/testing/Punjab_Small/Punjab_Small.shp")};
+    Shapefile pathToSample {util::PathHelper::projectDirectory() / std::filesystem::path("data/testing/regions/Corvara_Small_Preprocessed.shp")};
     VectorLayer<geometry::Polygon<double>> sampleLayer = VectorIO::read<geometry::Polygon<double>>(pathToSample);
     VectorLayer<geometry::Vec2DReal> pointLayer = VectorLayer<geometry::Vec2DReal>(sampleLayer.getSpatialReference());
     Vec2DReal p1 = {0.5,1};
