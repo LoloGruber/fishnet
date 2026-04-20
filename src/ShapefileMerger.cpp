@@ -2,10 +2,13 @@
 #include <future>
 #include <CLI/CLI.hpp>
 #include <fishnet/Fishnet.hpp>
+#include <fishnet/Task.hpp>
 
 template<fishnet::geometry::GeometryObject G>
-class ShapefileMerger {
+class ShapefileMerger: public Task {
 public:
+    ShapefileMerger():Task("ShapefileMerger"){}
+
     static fishnet::Shapefile operator()(const fishnet::util::range_of<fishnet::Shapefile> auto& inputs, std::filesystem::path && outputPath){
         fishnet::GDALInitializer::init();
         std::vector<std::future<fishnet::VectorLayer<G>>> futures;

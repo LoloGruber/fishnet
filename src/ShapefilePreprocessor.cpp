@@ -40,9 +40,9 @@ private:
     }
 public:
     ShapefilePreprocessor(ShapefilePreprocessorConfig config, fishnet::Shapefile input, fishnet::Shapefile output)
-        :config(std::move(config)),inputFile(std::move(input)),outputFile(std::move(output)){}
+        :Task("ShapefilePreprocessor"),config(std::move(config)),inputFile(std::move(input)),outputFile(std::move(output)){}
 
-    void run() override {
+    void run() {
         auto filter = loadFilters();
         auto binaryFilter = loadBinaryFilters();
         auto input = fishnet::VectorIO::read<G>(this->inputFile);
@@ -54,7 +54,7 @@ public:
         auto idField = output.hasField(Task::FISHNET_ID_FIELD) ? output.getSizeField(Task::FISHNET_ID_FIELD).value_or_throw() : output.addSizeField(Task::FISHNET_ID_FIELD).value_or_throw();
         auto geometryHasher = std::hash<G>();
         for(auto && feature: filteredFeatures){
-            feature.setAttribute(idField, normalizeToShpFileIntField(geometryHasher(feature.getGeometry())));
+            feature.setAttribute(idField, fishnet::normalizeToShpFileIntField(geometryHasher(feature.getGeometry())));
             output.addFeature(std::move(feature));
         }
         fishnet::VectorIO::overwrite(output, this->outputFile);

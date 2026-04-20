@@ -1,5 +1,6 @@
 SET(TASK_CONFIG_LIB ${FISHNET_WORKFLOW_LIBRARY}-task-config)
 include(${FISHNET_SOURCE_DIR}/extern/json.cmake)
+include(${FISHNET_SOURCE_DIR}/extern/spdlog.cmake)
 add_library(${TASK_CONFIG_LIB} INTERFACE)
 target_include_directories(${TASK_CONFIG_LIB} INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
-target_link_libraries(${TASK_CONFIG_LIB} INTERFACE nlohmann_json::nlohmann_json ${FISHNET}::IO::Console ${FISHNET}::Concepts ${FISHNET}::Math)
+target_link_libraries(${TASK_CONFIG_LIB} INTERFACE nlohmann_json::nlohmann_json spdlog::spdlog ${FISHNET}::IO::Console ${FISHNET}::Concepts ${FISHNET}::Math)

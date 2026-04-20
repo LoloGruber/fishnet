@@ -2,11 +2,11 @@ include(${FISHNET_SOURCE_DIR}/extern/cli11.cmake)
 include(${FISHNET_SOURCE_DIR}/extern/magic_enum.cmake)
 
 add_executable(FishnetShapefileSplitter ShapefileSplitter.cpp)
-target_link_libraries(FishnetShapefileSplitter PRIVATE Fishnet::Fishnet CLI11::CLI11)
+target_link_libraries(FishnetShapefileSplitter PRIVATE Fishnet::Fishnet Fishnet::Workflow CLI11::CLI11)
 install(TARGETS FishnetShapefileSplitter RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 
 add_executable(FishnetShapefileMerger ShapefileMerger.cpp)
-target_link_libraries(FishnetShapefileMerger PRIVATE Fishnet::Fishnet CLI11::CLI11)
+target_link_libraries(FishnetShapefileMerger PRIVATE Fishnet::Fishnet Fishnet::Workflow CLI11::CLI11)
 install(TARGETS FishnetShapefileMerger RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 
 add_executable(FishnetShapefilePreprocessor ShapefilePreprocessor.cpp)
