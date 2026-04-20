@@ -1,7 +1,6 @@
 #pragma once
-#include <typeinfo>
 #include <gdal/ogr_feature.h>
-#include <variant>
+#include <fishnet/Normalize.hpp>
 #include <typeindex>
 #include <fishnet/FieldType.hpp>
 #include <fishnet/FieldDefinition.hpp>
@@ -37,4 +36,10 @@ public:
                 feature->SetField(name, value);
     }
 };
+
+uint64_t normalizeToShpFileIntField(std::integral auto number) noexcept {
+    const uint64_t SHP_MAX_VALUE = 1000000000000000000ULL;
+    return fishnet::math::normalize(number,SHP_MAX_VALUE); 
+}
+
 }
