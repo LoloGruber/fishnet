@@ -121,7 +121,7 @@ public:
             },fieldDefinition);
             auto fieldDefn = OGRFieldDefn(fieldName.c_str(),fieldType);
             fieldDefn.SetPrecision(20);
-            outputLayer->CreateField(&fieldDefn); // add OGRFieldDefinition to output layer
+            std::ignore = outputLayer->CreateField(&fieldDefn); // add OGRFieldDefinition to output layer, ignore return value since it is not needed
         }
         for(const auto & f : layer.getFeatures()){
             auto * feature = new OGRFeature(outputLayer->GetLayerDefn());
