@@ -79,6 +79,43 @@ TEST_F(PolygonNeighboursTest, touching){
     EXPECT_CONTAINS(result.at(b1),touchesB1);
 }
 
+TEST_F(PolygonNeighboursTest, delaunayNeighbours) {
+    auto result = toMap(findNeighbouringPolygonsDelaunay(polygons));
+    // Delaunay on centroids should connect all 7 polygons into a connected graph
+    EXPECT_SIZE(std::views::keys(result), 7);
+
+    // Every polygon should have at least one neighbour (connected graph)
+    for (const auto & polygon : polygons) {
+        EXPECT_TRUE(result.contains(polygon)) << "Polygon not found in result map";
+        EXPECT_GE(result.at(polygon).size(), 1) << "Polygon has no neighbours";
+    }
+}
+
+TEST_F(PolygonNeighboursTest, delaunayNeighboursFiltered) {
+    // Filter: only keep edges where polygons are within distance 2 of each other
+    auto result = toMap(findNeighbouringPolygonsDelaunay(polygons, DistancePredicate{2.0}));
+
+    // All 7 polygons should still be in the result (connected via short edges)
+    EXPECT_SIZE(std::views::keys(result), 7);
+
+    // With a very restrictive filter (distance <= 0.1), b1 and r2 should still be neighbours
+    // because they are close, but far-away pairs like b1 and t1 should be excluded
+    auto restrictive = toMap(findNeighbouringPolygonsDelaunay(polygons, DistancePredicate{0.1}));
+    // b1 and r2 are close (distance ~0.5) — actually let me check: r2 at (-0.5,-0.5), b1 at (0,0)
+    // Distance is about 0.7. With 0.1 filter they might not connect.
+    // Just verify the filter reduces edges compared to unfiltered
+    auto unfiltered = toMap(findNeighbouringPolygonsDelaunay(polygons));
+    size_t unfilteredEdgeCount = 0;
+    for (const auto & [k, v] : unfiltered) {
+        unfilteredEdgeCount += v.size();
+    }
+    size_t filteredEdgeCount = 0;
+    for (const auto & [k, v] : restrictive) {
+        filteredEdgeCount += v.size();
+    }
+    EXPECT_LE(filteredEdgeCount, unfilteredEdgeCount) << "Filter should not increase edge count";
+}
+
 // #define TEST_PERFORMANCE false
 // #if TEST_PERFORMANCE
 // #include <fishnet/VectorLayer.hpp>

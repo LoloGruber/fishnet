@@ -4,6 +4,9 @@
 #include <fishnet/FunctionalConcepts.hpp>
 #include <fishnet/FixedSizeBuffer.hpp>
 #include "PolygonDistance.hpp"
+#include "DelaunayTriangulation.hpp"
+
+#include <unordered_map>
 
 namespace fishnet::geometry {
 
@@ -161,4 +164,55 @@ static std::vector<std::pair<std::ranges::range_value_t<R>,std::ranges::range_va
     };
     return findNeighbouringPolygonsTemplate(polygons, crossesOrContainedInBoundingBox,scaledWrapper,k);
 }
+
+/**
+ * @brief Find neighbouring polygons using Delaunay triangulation on centroids.
+ *
+ * Computes the centroid for each polygon, builds a Delaunay triangulation,
+ * and returns an edge for every triangle side connecting two centroids.
+ * A BiPredicate filters which edges are considered valid neighbours.
+ *
+ * @tparam R range type
+ * @tparam P polygon type == value type of range
+ * @param polygons range of polygons
+ * @param neighbouringPredicate BiPredicate deciding whether two Polygons are neighbours
+ * @return std::vector<std::pair<P,P>> list of pairs, indicating the neighbouring relationship of two polygons
+ */
+template<PolygonRange R, IPolygon P = std::ranges::range_value_t<R>>
+static std::vector<std::pair<P,P>> findNeighbouringPolygonsDelaunay(const R & polygons, util::BiPredicate<P> auto const & neighbouringPredicate) {
+    // 1. Extract centroids and build centroid -> polygon map
+    std::vector<Vec2DReal> centroids;
+    centroids.reserve(util::size(polygons));
+    std::unordered_map<Vec2DReal, P, std::hash<Vec2DReal>, std::equal_to<Vec2DReal>> centroidToPolygon;
+    for (const auto & polygon : polygons) {
+        auto c = polygon.centroid();
+        centroids.push_back(c);
+        centroidToPolygon.emplace(c, polygon);
+    }
+
+    // 2. Delaunay triangulation on centroids
+    DelaunayTriangulation delaunay(centroids);
+
+    // 3. Map edges back to polygons and apply predicate
+    return delaunay.getEdges().transform([&](const auto & edges) {
+        std::vector<std::pair<P,P>> adjacencies;
+        for (const auto & edge : edges) {
+            auto it1 = centroidToPolygon.find(edge.p());
+            auto it2 = centroidToPolygon.find(edge.q());
+            if (it1 != centroidToPolygon.end() && it2 != centroidToPolygon.end() && neighbouringPredicate(it1->second, it2->second)) {
+                adjacencies.emplace_back(it1->second, it2->second);
+            }
+        }
+        return adjacencies;
+    }).value_or(std::vector<std::pair<P,P>>{});
 }
+
+/**
+ * @brief Overload without predicate — returns all Delaunay edges.
+ */
+template<PolygonRange R, IPolygon P = std::ranges::range_value_t<R>>
+static std::vector<std::pair<P,P>> findNeighbouringPolygonsDelaunay(const R & polygons) {
+    return findNeighbouringPolygonsDelaunay(polygons, fishnet::util::TrueBiPredicate{});
+}
+
+} // namespace fishnet::geometry

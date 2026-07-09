@@ -1,7 +1,7 @@
 add_subdirectory(geometryTestUtils)
 
 set(GeometryTestBin Test-Geometry)
-add_executable(${GeometryTestBin} 
+add_executable(${GeometryTestBin}
 Vec2DTest.cpp
 LineTest.cpp
 SegmentTest.cpp
@@ -13,6 +13,8 @@ MultiPolygonTest.cpp
 kNearestNeighboursTest.cpp
 SweepLineTest.cpp
 PolygonNeighboursTest.cpp
+TriangleTest.cpp
+DelaunayTriangulationTest.cpp
 #CharacteristicShapeTest.cpp
 )
 gtest_discover_tests(${GeometryTestBin})
