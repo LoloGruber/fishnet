@@ -249,26 +249,12 @@ public:
 
     constexpr auto getTo(const from_type & key) const noexcept {
         auto [begin,end] = this->map.equal_range(key);
-        return std::ranges::subrange(begin,end) |
-            std::views::transform([](const auto & pair) -> const auto & { return pair.second; });
-    }
-
-    constexpr auto getTo(const from_type & key) noexcept {
-        auto [begin,end] = this->map.equal_range(key);
-        return std::ranges::subrange(begin,end) |
-            std::views::transform([](auto & pair) -> auto& { return pair.second; });
+        return fishnet::util::toVector(std::ranges::subrange(begin,end) | std::views::values);
     }
 
     constexpr auto getFrom(const to_type & key) const noexcept {
         auto [begin,end] = this->inverse.equal_range(key);
-        return std::ranges::subrange(begin,end) |
-            std::views::transform([](const auto & pair) -> const auto & { return pair.second; });
-    }
-
-    constexpr auto getFrom(const to_type & key) noexcept {
-        auto [begin,end] = this->inverse.equal_range(key);
-        return std::ranges::subrange(begin,end) |
-            std::views::transform([]( auto & pair) -> auto& { return pair.second; });
+        return fishnet::util::toVector(std::ranges::subrange(begin,end) | std::views::values);
     }
 
     template<typename T>

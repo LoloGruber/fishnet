@@ -31,10 +31,6 @@ TEST_F(BidirectionalMultiHashMapTest, getTo) {
     EXPECT_UNSORTED_RANGE_EQ(valFrom, std::vector<std::string>{"Two", "Dos"});
     auto empty = biHashMultiMap.getFrom("NonExisting");
     EXPECT_EMPTY(empty);
-    for(auto & value: biHashMultiMap.getTo(2)) {
-        value = "Zwei";
-    }
-    EXPECT_UNSORTED_RANGE_EQ(biHashMultiMap.getTo(2), std::vector<std::string>{"Zwei", "Zwei"});
 }
 
 TEST_F(BidirectionalMultiHashMapTest, getFrom) {
@@ -48,10 +44,6 @@ TEST_F(BidirectionalMultiHashMapTest, getFrom) {
     biHashMultiMap.insert(5,"Uno");
     auto valUpdate = biHashMultiMap.getFrom("Uno");
     EXPECT_UNSORTED_RANGE_EQ(valUpdate, std::vector<size_t>{1, 5});
-    for(auto & value: biHashMultiMap.getFrom("Uno")) {
-        value = 10;
-    }
-    EXPECT_UNSORTED_RANGE_EQ(biHashMultiMap.getFrom("Uno"), std::vector<size_t>{10, 10});
 }
 
 TEST_F(BidirectionalMultiHashMapTest, get) {
