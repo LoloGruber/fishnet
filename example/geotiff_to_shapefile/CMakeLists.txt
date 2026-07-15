@@ -1,2 +1,0 @@
-add_executable(geoTiffToShp GeotiffToShapefile.cpp)
-target_link_libraries(geoTiffToShp PRIVATE Fishnet::Fishnet)
