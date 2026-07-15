@@ -2,12 +2,7 @@ image: logru/fishnet-deps:latest
 workflow:
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
-      changes:
-        - src/**
-        - lib/**
-        - tests/**
-        - CMakeLists.txt
-        - .gitlab-ci.yml
+    - if: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main"
 stages:
   - build
   - test
@@ -17,7 +12,7 @@ build:
   script:
     - mkdir build
     - cd build
-    - cmake -DFISHNET_APPS=OFF ..
+    - cmake -DFISHNET_APPS=ON -DFISHNET_TESTS=ON -DFISHNET_EXAMPLES=ON ..
     - cmake --build . -j 8
   artifacts:
     paths:
