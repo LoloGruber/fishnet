@@ -1,2 +1,5 @@
-add_subdirectory(geotiff_to_shapefile)
-add_subdirectory(polygon_graph)
+add_executable(FishnetGeotiffToShapefile GeotiffToShapefile.cpp)
+target_link_libraries(FishnetGeotiffToShapefile PRIVATE Fishnet::Fishnet)
+
+add_executable(FishnetPolygonGraph PolygonGraph.cpp)
+target_link_libraries(FishnetPolygonGraph PRIVATE Fishnet::Fishnet)

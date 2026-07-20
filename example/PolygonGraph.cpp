@@ -10,7 +10,7 @@ int main() {
     // scale aaBB of polygon by this factor; intersecting buffers -> adjacent
     double bufferMultiplier = 2; 
     size_t maximumNumberOfNeighbours = 5;
-    auto adjacencies = geometry::findNeighbouringPolygons(polygons,bufferMultiplier,maximumNumberOfNeighbours);
+    auto adjacencies = geometry::PolygonNeighbours::sweepWithFixedBuffer(polygons,bufferMultiplier,maximumNumberOfNeighbours);
     auto polygonGraph = graph::GraphFactory::UndirectedGraph<G>();
     polygonGraph.addEdges(adjacencies);
     // copy spatial reference from input layer

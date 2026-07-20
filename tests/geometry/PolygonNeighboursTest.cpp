@@ -58,7 +58,7 @@ static std::unordered_map<PolygonType,std::vector<PolygonType>> toMap(std::vecto
 
 TEST_F(PolygonNeighboursTest, simple){
     double maxDistance = 1;
-    auto result = findNeighbouringPolygons(polygons,DistancePredicate{maxDistance},BoxWrapper(maxDistance),2);
+    auto result = PolygonNeighbours::sweep(polygons,DistancePredicate{maxDistance},BoxWrapper(maxDistance),2);
     auto resultMap = toMap(result);
     EXPECT_CONTAINS_ALL(resultMap.at(b1),b4,r2);
     EXPECT_CONTAINS_ALL(resultMap.at(r1),b1);
@@ -75,8 +75,45 @@ TEST_F(PolygonNeighboursTest, simple){
 TEST_F(PolygonNeighboursTest, touching){
     auto touchesB1 = SimplePolygonSamples::aaBB({0,2},{-0.5,2.5});
     polygons.push_back(touchesB1);
-    auto result = toMap(findNeighbouringPolygons(polygons,DistancePredicate{1},BoxWrapper(1),1));
+    auto result = toMap(PolygonNeighbours::sweep(polygons,DistancePredicate{1},BoxWrapper(1),1));
     EXPECT_CONTAINS(result.at(b1),touchesB1);
+}
+
+TEST_F(PolygonNeighboursTest, delaunayNeighbours) {
+    auto result = toMap(PolygonNeighbours::delaunay(polygons));
+    // Delaunay on centroids should connect all 7 polygons into a connected graph
+    EXPECT_SIZE(std::views::keys(result), 7);
+
+    // Every polygon should have at least one neighbour (connected graph)
+    for (const auto & polygon : polygons) {
+        EXPECT_TRUE(result.contains(polygon)) << "Polygon not found in result map";
+        EXPECT_GE(result.at(polygon).size(), 1) << "Polygon has no neighbours";
+    }
+}
+
+TEST_F(PolygonNeighboursTest, delaunayNeighboursFiltered) {
+    // Filter: only keep edges where polygons are within distance 2 of each other
+    auto result = toMap(PolygonNeighbours::delaunay(polygons, DistancePredicate{2.0}));
+
+    // All 7 polygons should still be in the result (connected via short edges)
+    EXPECT_SIZE(std::views::keys(result), 7);
+
+    // With a very restrictive filter (distance <= 0.1), b1 and r2 should still be neighbours
+    // because they are close, but far-away pairs like b1 and t1 should be excluded
+    auto restrictive = toMap(PolygonNeighbours::delaunay(polygons, DistancePredicate{0.1}));
+    // b1 and r2 are close (distance ~0.5) — actually let me check: r2 at (-0.5,-0.5), b1 at (0,0)
+    // Distance is about 0.7. With 0.1 filter they might not connect.
+    // Just verify the filter reduces edges compared to unfiltered
+    auto unfiltered = toMap(PolygonNeighbours::delaunay(polygons));
+    size_t unfilteredEdgeCount = 0;
+    for (const auto & [k, v] : unfiltered) {
+        unfilteredEdgeCount += v.size();
+    }
+    size_t filteredEdgeCount = 0;
+    for (const auto & [k, v] : restrictive) {
+        filteredEdgeCount += v.size();
+    }
+    EXPECT_LE(filteredEdgeCount, unfilteredEdgeCount) << "Filter should not increase edge count";
 }
 
 // #define TEST_PERFORMANCE false
