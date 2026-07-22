@@ -300,8 +300,13 @@ concept OptionalOrExpected = requires(const T & t){
     {t.has_value()} -> std::convertible_to<bool>;
 };
 
-void EXPECT_VALUE(const OptionalOrExpected auto & opt) {
+void EXPECT_VALUE(const OptionalOrExpected auto & opt){
     EXPECT_TRUE(opt.has_value());
+}
+
+void EXPECT_VALUE(const OptionalOrExpected auto & opt, const typename std::remove_cvref_t<decltype(opt)>::value_type &expectedValue){
+    EXPECT_TRUE(opt.has_value());
+    EXPECT_EQ(opt.value(), expectedValue);
 }
 
 void EXPECT_EMPTY(const OptionalOrExpected auto & opt){
