@@ -96,7 +96,7 @@ static std::vector<std::pair<P,P>> polygonNeighboursDelaunay(const R & polygons,
     DelaunayTriangulation delaunay(centroids);
 
     // 3. Map edges back to polygons and apply predicate
-    return delaunay.getEdges().transform([&](const auto & edges) {
+    return delaunay.edges().transform([&](const auto & edges) {
         std::vector<std::pair<P,P>> adjacencies;
         for (const auto & edge : edges) {
             auto it1 = centroidToPolygon.find(edge.p());
