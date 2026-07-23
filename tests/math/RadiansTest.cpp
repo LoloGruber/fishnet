@@ -101,7 +101,7 @@ TEST(RadiansTest, plusMinusAssignment){
 
 TEST(RadiansTest, equality ){
     EXPECT_EQ(Radians(0.0),Radians(TWO_PI));
-    EXPECT_EQ(Radians(0.0),Radians(1e-12));
+    EXPECT_EQ(Radians(0.0),Radians(DOUBLE_EPSILON*.1));
     EXPECT_NE(Radians(PI),Radians(PI/2));
     EXPECT_NE(Radians(0.0),Radians(0.0001));
 }
@@ -110,7 +110,7 @@ TEST(RadiansTest, lessThan){
     EXPECT_LT(Radians(0.0),Radians(1.0));
     EXPECT_LT(Radians(PI/2),Radians(PI));
     EXPECT_LT(Radians(0.0),Radians(0.0001));
-    EXPECT_FALSE(Radians(0.0) < Radians(1e-12));
+    EXPECT_FALSE(Radians(0.0) < Radians(DOUBLE_EPSILON*.1));
 }
 
 TEST(RadiansTest, hash){

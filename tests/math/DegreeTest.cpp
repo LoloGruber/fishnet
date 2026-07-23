@@ -95,7 +95,7 @@ TEST(DegreeTest, plusMinusAssignment){
 
 TEST(DegreeTest, equality){
     EXPECT_EQ(Degrees(0.0),Degrees(360.0));
-    EXPECT_EQ(Degrees(0.0),Degrees(1e-12));
+    EXPECT_EQ(Degrees(0.0),Degrees(DOUBLE_EPSILON*.1));
     EXPECT_NE(Degrees(180.0),Degrees(181.0));
     EXPECT_NE(Degrees(0.0),Degrees(0.0001));
 }
@@ -104,7 +104,7 @@ TEST(DegreeTest, lessThan){
     EXPECT_LT(Degrees(0.0),Degrees(1.0));
     EXPECT_LT(Degrees(90.0),Degrees(180.0));
     EXPECT_LT(Degrees(0.0),Degrees(0.0001));
-    EXPECT_FALSE(Degrees(0.0) < Degrees(1e-12));
+    EXPECT_FALSE(Degrees(0.0) < Degrees(DOUBLE_EPSILON*.1));
 }
 
 TEST(DegreeTest, hash){
