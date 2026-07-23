@@ -81,7 +81,7 @@ struct PolygonNeighboursRemoveEvent: public PolygonNeighbours<P>::RemoveEvent {
 };
 
 template<PolygonRange R, IPolygon P = std::ranges::range_value_t<R>>
-static std::vector<std::pair<P,P>> polygonNeighboursDelaunay(const R & polygons, util::BiPredicate<P> auto const & neighbouringPredicate) {
+static std::vector<std::pair<P,P>> polygonNeighboursDelaunay(const R & polygons, util::BiPredicate<P> auto const & neighbouringPredicate, double tolerance = 0.0, bool onlyEdges = true) {
     // 1. Extract centroids and build centroid -> polygon map
     std::vector<Vec2DReal> centroids;
     centroids.reserve(util::size(polygons));
@@ -93,7 +93,7 @@ static std::vector<std::pair<P,P>> polygonNeighboursDelaunay(const R & polygons,
     }
 
     // 2. Delaunay triangulation on centroids
-    DelaunayTriangulation delaunay(centroids);
+    DelaunayTriangulation delaunay(centroids, tolerance, onlyEdges);
 
     // 3. Map edges back to polygons and apply predicate
     return delaunay.edges().transform([&](const auto & edges) {
@@ -145,8 +145,8 @@ public:
  * @return std::vector<std::pair<P,P>> list of pairs, indicating the neighbouring relationship of two polygons
  */
 template<PolygonRange R, IPolygon P = std::ranges::range_value_t<R>>
-static std::vector<std::pair<P,P>> delaunay(const R & polygons, util::BiPredicate<P> auto const & neighbouringPredicate) {
-    return __impl::polygonNeighboursDelaunay(polygons,neighbouringPredicate);
+static std::vector<std::pair<P,P>> delaunay(const R & polygons, util::BiPredicate<P> auto const & neighbouringPredicate, double tolerance = 0.0, bool onlyEdges = true) {
+    return __impl::polygonNeighboursDelaunay(polygons,neighbouringPredicate, tolerance, onlyEdges);
 }
 
 /**

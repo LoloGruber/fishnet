@@ -54,11 +54,11 @@ public:
         std::vector<Triangle<numeric_type>> delaunayTriangles;
         delaunayTriangles.reserve(delaunay->toGeometryCollection()->getNumGeometries());
         for(const auto & triangle : delaunay->toGeometryCollection()){
-            triangle->toPolygon()->getExteriorRing();
+            OGRLinearRing * exteriorRing = triangle->toPolygon()->getExteriorRing();
             fishnet::geometry::Triangle<numeric_type> t(
-                {triangle->toPolygon()->getExteriorRing()->getX(0), triangle->toPolygon()->getExteriorRing()->getY(0)},
-                {triangle->toPolygon()->getExteriorRing()->getX(1), triangle->toPolygon()->getExteriorRing()->getY(1)},
-                {triangle->toPolygon()->getExteriorRing()->getX(2), triangle->toPolygon()->getExteriorRing()->getY(2)}
+                {exteriorRing->getX(0), exteriorRing->getY(0)},
+                {exteriorRing->getX(1), exteriorRing->getY(1)},
+                {exteriorRing->getX(2), exteriorRing->getY(2)}
             );
             delaunayTriangles.push_back(t);
         }
@@ -98,5 +98,9 @@ private:
 template<std::ranges::forward_range R>
     requires IPoint<std::ranges::range_value_t<R>>
 DelaunayTriangulation(R const &) -> DelaunayTriangulation<std::ranges::range_value_t<R>>;
+
+template<std::ranges::forward_range R>
+    requires IPoint<std::ranges::range_value_t<R>>
+DelaunayTriangulation(R const &,double,bool) -> DelaunayTriangulation<std::ranges::range_value_t<R>>;
 
 } // namespace fishnet::geometry
