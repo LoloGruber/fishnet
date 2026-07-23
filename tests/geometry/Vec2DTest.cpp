@@ -52,7 +52,7 @@ TEST(Vec2DTest, equality){
     EXPECT_NE(Vec2D(1.0,1.0),Vec2D(1.0,1.01));
     EXPECT_NE(Vec2D(0.0,0.0),Vec2D(DOUBLE_EPSILON,DOUBLE_EPSILON));
     EXPECT_EQ(Vec2D(),Vec2D(0.0,0.0));
-    EXPECT_EQ(Vec2D(),Vec2D(1e-12,1e-12));
+    EXPECT_EQ(Vec2D(),Vec2D(DOUBLE_EPSILON*0.1,DOUBLE_EPSILON*0.1));
     EXPECT_EQ(Vec2D(0.0f,0.0f),Vec2D(1e-7f,1e-7f));
     EXPECT_NE(Vec2D(0.0f,0.0f),Vec2D(1e-4f,1e-4f));
 }

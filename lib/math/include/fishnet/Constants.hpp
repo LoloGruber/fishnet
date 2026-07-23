@@ -7,8 +7,8 @@ namespace fishnet::math{
     constexpr static double TWO_PI = 2*PI; 
     constexpr static double DEG_TO_RAD = PI / 180.0;
     constexpr static double RAD_TO_DEG = 180.0 / PI;
-    constexpr static double DOUBLE_EPSILON = 1e-8;
-    constexpr static float FLOAT_EPSILON=1e-5f;
+    constexpr static double DOUBLE_EPSILON = 1e-12;
+    constexpr static float FLOAT_EPSILON=1e-6f;
 
     template<std::floating_point F>
     constexpr static DEFAULT_FLOATING_POINT getDefaultEpsilon(){

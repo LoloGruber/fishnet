@@ -65,7 +65,7 @@ TEST(SegmentTest, isValid){
     EXPECT_TRUE(Segment(Vec2D(0.123,0.456),Vec2D(100000L,2345578L)).isValid());
     EXPECT_FALSE(Segment(Vec2D(),Vec2D()).isValid());
     EXPECT_FALSE(Segment(Vec2D(1.01,1.0),Vec2D(1.01,1.0)).isValid());
-    EXPECT_FALSE(Segment(Vec2D(0,0),Vec2D(1e-12,1e-12)).isValid());
+    EXPECT_FALSE(Segment(Vec2D(0,0),Vec2D(0.1*DOUBLE_EPSILON,0.1*DOUBLE_EPSILON)).isValid());
 }
 
 TEST(SegmentTest, toLine){
