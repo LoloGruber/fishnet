@@ -80,7 +80,7 @@ int main(int argc, char * argv[]){
     bool noFilter = false;
     app.add_option("-i,--input",inputFilename,"Input GIS file for the filter step")->required()->check(CLI::ExistingFile);
     app.add_option("-c,--config", configFilename, "Json description of the preprocessing task")->check(CLI::ExistingFile);
-    app.add_option("--no-filter", noFilter, "Disable filtering of the input file");
+    app.add_flag("--no-filter", noFilter, "Disable filtering of the input file");
     CLI11_PARSE(app, argc, argv);
     auto inputFile = fishnet::GISFactory::asShapefile(inputFilename).value_or_throw();
     auto outputFile = fishnet::Shapefile(inputFile.getPath().stem().string() + OUTPUT_SUFFIX);
