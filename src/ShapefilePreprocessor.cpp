@@ -9,6 +9,7 @@
 struct ShapefilePreprocessorConfig {
     constexpr static const char * FILTER_KEY = "filters";
     nlohmann::json filterJson;
+    bool runFilter = true;
 
     ShapefilePreprocessorConfig(const nlohmann::json & configJson){
         if(configJson.contains(FILTER_KEY))
@@ -38,26 +39,35 @@ private:
         }
         return biPredicate;
     }
+
+    void writeOutput(fishnet::util::forward_range_of<fishnet::Feature<G>> auto && features, fishnet::VectorLayer<G> & output) const {
+        auto idField = output.hasField(Task::FISHNET_ID_FIELD) ? output.getSizeField(Task::FISHNET_ID_FIELD).value_or_throw() : output.addSizeField(Task::FISHNET_ID_FIELD).value_or_throw();
+        auto geometryHasher = std::hash<G>();
+        for(auto && feature: features){
+            feature.setAttribute(idField, fishnet::normalizeToShpFileIntField(geometryHasher(feature.getGeometry())));
+            output.addFeature(std::move(feature));
+        }
+        fishnet::VectorIO::overwrite(output, this->outputFile);
+    }
+    
 public:
     ShapefilePreprocessor(ShapefilePreprocessorConfig config, fishnet::Shapefile input, fishnet::Shapefile output)
         :Task("ShapefilePreprocessor"),config(std::move(config)),inputFile(std::move(input)),outputFile(std::move(output)){}
 
     void run() {
+        auto input = fishnet::VectorIO::read<G>(this->inputFile);
+        auto output = fishnet::VectorIO::emptyCopy<G>(input);
+        if (not this->config.runFilter){
+            writeOutput(input.getFeatures(), output);
+            return;
+        }
         auto filter = loadFilters();
         auto binaryFilter = loadBinaryFilters();
-        auto input = fishnet::VectorIO::read<G>(this->inputFile);
         auto proj = []( const auto & feature){
             return feature.getGeometry();
         };
         auto filteredFeatures = fishnet::geometry::filter(input.getFeatures(),proj,binaryFilter,filter);
-        fishnet::VectorLayer<G> output = fishnet::VectorIO::emptyCopy<G>(input);
-        auto idField = output.hasField(Task::FISHNET_ID_FIELD) ? output.getSizeField(Task::FISHNET_ID_FIELD).value_or_throw() : output.addSizeField(Task::FISHNET_ID_FIELD).value_or_throw();
-        auto geometryHasher = std::hash<G>();
-        for(auto && feature: filteredFeatures){
-            feature.setAttribute(idField, fishnet::normalizeToShpFileIntField(geometryHasher(feature.getGeometry())));
-            output.addFeature(std::move(feature));
-        }
-        fishnet::VectorIO::overwrite(output, this->outputFile);
+        writeOutput(filteredFeatures, output);
     }
 };
 constexpr static const char * OUTPUT_SUFFIX = "_filtered.shp";
@@ -67,8 +77,10 @@ int main(int argc, char * argv[]){
     CLI::App app{"Shapefile Preprocessor"};
     std::string configFilename;
     std::string inputFilename;
+    bool noFilter = false;
     app.add_option("-i,--input",inputFilename,"Input GIS file for the filter step")->required()->check(CLI::ExistingFile);
     app.add_option("-c,--config", configFilename, "Json description of the preprocessing task")->check(CLI::ExistingFile);
+    app.add_option("--no-filter", noFilter, "Disable filtering of the input file");
     CLI11_PARSE(app, argc, argv);
     auto inputFile = fishnet::GISFactory::asShapefile(inputFilename).value_or_throw();
     auto outputFile = fishnet::Shapefile(inputFile.getPath().stem().string() + OUTPUT_SUFFIX);
