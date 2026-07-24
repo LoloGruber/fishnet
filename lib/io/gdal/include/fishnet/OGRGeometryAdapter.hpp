@@ -51,7 +51,7 @@ static OGRUniquePtr<OGRLinearRing> toOGR(fishnet::geometry::IRing auto const & r
     return ogrRing;
 }
 
-static std::optional<fishnet::geometry::Polygon<fishnet::math::DEFAULT_NUMERIC>> fromOGR(const OGRPolygon & ogrPolygon) noexcept {
+static std::optional<fishnet::geometry::Polygon<fishnet::math::DEFAULT_NUMERIC>> fromOGR(const OGRPolygon & ogrPolygon, bool checked = false) noexcept {
     try{
         auto ogrBoundary = ogrPolygon.getExteriorRing();
         auto fishnetBoundary = fromOGR(*ogrBoundary);
@@ -64,8 +64,9 @@ static std::optional<fishnet::geometry::Polygon<fishnet::math::DEFAULT_NUMERIC>>
                 continue;
             holes.push_back(hole.value());
         }
-        return fishnet::geometry::Polygon<fishnet::math::DEFAULT_NUMERIC>(fishnetBoundary.value(),holes);
+        return fishnet::geometry::Polygon<fishnet::math::DEFAULT_NUMERIC>(fishnetBoundary.value(),holes, checked);
     }catch(fishnet::geometry::InvalidGeometryException & e){
+        std::cerr << "Invalid geometry: " << e.what() << std::endl;
         return std::nullopt;
     }
 }
@@ -108,7 +109,7 @@ static std::optional<fishnet::geometry::MultiPolygon<fishnet::geometry::Polygon<
 template<fishnet::geometry::GeometryType G>
 constexpr static auto fromOGR(const OGRGeometry & ogrGeometry, bool checked = false){
     if constexpr(G == fishnet::geometry::GeometryType::POLYGON){
-        return fromOGR(*ogrGeometry.toPolygon());
+        return fromOGR(*ogrGeometry.toPolygon(), checked);
     } else if constexpr(G == fishnet::geometry::GeometryType::POINT){
         return fromOGR(*ogrGeometry.toPoint());
     } else if constexpr(G == fishnet::geometry::GeometryType::RING){

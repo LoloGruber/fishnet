@@ -50,7 +50,9 @@ public:
      * @param boundary 
      * @param holes 
      */
-    Polygon(const Ring<T> & boundary, const std::vector<Ring<T>> & holes = {}):SimplePolygon<T>(boundary),holes(holes){
+    Polygon(const Ring<T> & boundary, const std::vector<Ring<T>> & holes = {}, bool checked = false):SimplePolygon<T>(boundary),holes(holes){
+        if(checked)
+            return;
         if (std::ranges::any_of(holes, [&boundary](const auto & hole){return not boundary.contains(hole);}))
             throw InvalidGeometryException("Hole not contained within Boundary of Polygon");
         if (std::ranges::any_of(holes, [&boundary,&holes](const auto & h1){
@@ -60,11 +62,11 @@ public:
         })) throw InvalidGeometryException("Holes of Polygon are intersecting each other");
     };
 
-    Polygon(const Ring<T> & boundary, const util::forward_range_of<Ring<T>> auto & holes):Polygon(boundary,std::move(copyRings(holes))) {}
+    Polygon(const Ring<T> & boundary, const util::forward_range_of<Ring<T>> auto & holes, bool checked = false):Polygon(boundary,std::move(copyRings(holes)), checked) {}
 
-    Polygon(const SimplePolygon<T> & boundary, const std::vector<Ring<T>> & holes = {}):Polygon(boundary.getBoundary(),holes){}
+    Polygon(const SimplePolygon<T> & boundary, const std::vector<Ring<T>> & holes = {}, bool checked = false):Polygon(boundary.getBoundary(),holes, checked){}
 
-    Polygon(const SimplePolygon<T> & boundary, const util::forward_range_of<Ring<T>> auto & holes):Polygon(boundary.getBoundary(),std::move(copyRings(holes))) {}
+    Polygon(const SimplePolygon<T> & boundary, const util::forward_range_of<Ring<T>> auto & holes, bool checked = false):Polygon(boundary.getBoundary(),std::move(copyRings(holes)), checked) {}
 
     constexpr const Ring<T> & getBoundary() const noexcept{
         return static_cast<const Ring<T> &>(*this);
