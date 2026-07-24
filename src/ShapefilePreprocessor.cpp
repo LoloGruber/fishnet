@@ -9,9 +9,10 @@
 struct ShapefilePreprocessorConfig {
     constexpr static const char * FILTER_KEY = "filters";
     nlohmann::json filterJson;
-    bool runFilter = true;
+    bool runFilter;
 
-    ShapefilePreprocessorConfig(const nlohmann::json & configJson){
+    ShapefilePreprocessorConfig(const nlohmann::json & configJson, bool runFilter){
+        this->runFilter = runFilter;
         if(configJson.contains(FILTER_KEY))
             configJson.at(FILTER_KEY).get_to(this->filterJson);
     }
@@ -85,7 +86,7 @@ int main(int argc, char * argv[]){
     auto inputFile = fishnet::GISFactory::asShapefile(inputFilename).value_or_throw();
     auto outputFile = fishnet::Shapefile(inputFile.getPath().stem().string() + OUTPUT_SUFFIX);
     ShapefilePreprocessor<ShapeType>(
-        ShapefilePreprocessorConfig {configFilename.empty() ? nlohmann::json() : nlohmann::json::parse(std::ifstream(configFilename))},
+        ShapefilePreprocessorConfig {configFilename.empty() ? nlohmann::json() : nlohmann::json::parse(std::ifstream(configFilename)), !noFilter},
         std::move(inputFile),
         std::move(outputFile)
     ).run();
