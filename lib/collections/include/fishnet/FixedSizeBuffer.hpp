@@ -20,10 +20,13 @@ public:
         return collection.empty();
     }
 
-    void push(T && value){
+    template<typename U>
+    void push(U && value){
+        static_assert(std::is_same_v<std::decay_t<U>, T>, "Type of value must be T");
+        auto mappedValue = mapper(value);
         if(collection.size() < capacity){
-            cache.push_back(mapper(value));
-            collection.push_back(std::move(value));
+            cache.push_back(mappedValue);
+            collection.push_back(std::forward<U>(value));
         }else{
             int swapIndex=0;
             auto max = cache[0];
@@ -34,16 +37,11 @@ public:
                     swapIndex = i;
                 }
             }
-            if(mapper(value) < max){
-                cache[swapIndex] = mapper(value);
-                collection[swapIndex] = std::move(value);
+            if(mappedValue < max){
+                cache[swapIndex] = mappedValue;
+                collection[swapIndex] = std::forward<U>(value);
             }
         }
-    }
-
-    void push(const T & value){
-        T copy = value;
-        push(std::move(copy));
     }
 
     auto begin(){
