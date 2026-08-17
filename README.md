@@ -26,7 +26,7 @@ The Fishnet library is organized into the following modules:
 | **Clustering** | `fishnet` | Spatial clustering algorithms for grouping geometric features based on proximity and other criteria. |
 | **Collections** | `fishnet::util` | Custom container types and data structures extending the C++ standard library for framework-specific use cases. |
 | **Concepts** | `fishnet::util` | C++20 concepts defining type constraints and requirements used throughout the framework. |
-| **Functional** | `fishnet::util` | Functional programming utilities including function concepts, composite predicates, Option and Either. |
+| **Functional** | `fishnet::util`, `fishnet` | Functional programming utilities including function concepts, composite predicates, Option and Either. |
 | **Math** | `fishnet::math` | Mathematical utilities including angular types (degrees/radians), numerical operations, and constants. |
 | **Workflow** | `::` | Reusable components for composing spatial processing tasks|
 
