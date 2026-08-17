@@ -26,4 +26,21 @@ jobs:
 
     - name: Test
       run: ctest --test-dir build -C ${{env.BUILD_TYPE}} --output-on-failure
+  docs:
+    runs-on: alpine-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Configure CMake
+      run: cmake -B build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DFISHNET_DOCS=ON
+
+    - name: Build Doxygen
+      run: cmake --build build --target docs
+
+    - name: Deploy to GH Actions
+      uses: peaceiris/actions-gh-pages@v4
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./build/doc/html
+
 

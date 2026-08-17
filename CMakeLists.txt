@@ -8,6 +8,7 @@ option(FISHNET_TEST "Enable unit tests for Fishnet components" ON)
 option(FISHNET_TEST_LIB "Build Fishnet test utility library" ON)
 option(FISHNET_COVERAGE "Enable coverage reporting" OFF)
 option(FISHNET_COMPILE_TIME_TRACE "Enable compile time tracing" OFF)
+option(FISHNET_DOCS "Enable documentation generation" OFF)
 
 # Variables
 set(FISHNET_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR} CACHE INTERNAL "Build applications")
@@ -49,4 +50,24 @@ if(FISHNET_TEST)
     include(extern/gtest.cmake)
     enable_testing()
     add_subdirectory(tests)
+endif()
+
+# Documentation
+if(FISHNET_DOCS)
+    find_package(Doxygen OPTIONAL_COMPONENTS dot)
+    if(DOXYGEN_FOUND)
+        set(DOXYGEN_IN ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in)
+        set(DOXYGEN_OUT ${CMAKE_BINARY_DIR}/Doxyfile)
+        
+        configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT} @ONLY)
+        
+        add_custom_target(docs
+            COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+            COMMENT "Generating HTML documentation with Doxygen"
+            VERBATIM)
+        message(STATUS "Doxygen found: docs target available (run 'cmake --build . --target docs')")
+    else()
+        message(STATUS "Doxygen not found, documentation target unavailable")
+    endif()
 endif()
