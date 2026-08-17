@@ -1,40 +1,52 @@
 # Fishnet
 *Framework for Graph-Based Analysis of GIS Vector Data*  
 #### Table of Contents
+- [Fishnet](#fishnet)
+      - [Table of Contents](#table-of-contents)
+- [Fishnet Library](#fishnet-library)
+  - [Modules](#modules)
+  - [Dependencies](#dependencies)
+  - [Usage](#usage)
+- [Fishnet Binaries](#fishnet-binaries)
+  - [Installation](#installation)
+  - [CMake Options](#cmake-options)
 - [Workflows](#workflows)
-    - [Settlement Delineation and Analysis (SDA)](#settlement-delineation-and-analysis-sda)
-    - [Africapolis](#africapolis)
-- [Framework](#framework)
-    - [Architecture](#architecture)
-    - [Installation](#installation-1)
-    - [Framework Usage](#framework-usage)
 
-# Workflows
-## Settlement Delineation and Analysis (SDA)
-The SDA workflow is now developed in a separate [repository](https://gitlab2.informatik.uni-wuerzburg.de/descartes/sos/sda-workflow).
+# Fishnet Library
+The core library contains generic components for graph modeling and traversal, geometry models and sweep line procedures, IO for vector-based GIS files, spatial clustering algorithms and workflow modelling utility.
 
-## Africapolis
-The Africapolis workflow is now developed in a separate [repository](https://gitlab2.informatik.uni-wuerzburg.de/descartes/sos/africapolis)
-# Framework
-## Architecture
-The core framework contains generic components for the following domains:
-- [Graph Model and Traversal](lib/core/graph)
-- [Geometry Model and Sweep Line Algorithms](lib/core/geometry)
-- [I/O for GIS files and Vector Datasets](lib/core/io)
-- [Workflow Orchestration and Utility](lib/workflow)
-## Installation
-Before the library can be build using *cmake*, the **GDAL** and **SSL** libraries have to be installed on the machine. On Ubuntu-based system this can be achieved using the following command:
+## Modules
+The Fishnet library is organized into the following modules:
+
+| Module | Namespace | Description |
+|--------|-----------|-------------|
+| **Graph** | `fishnet::graph` | Graph data structures and algorithms including BFS, DFS, connected components, centrality measures (degree, betweenness), graph contraction, and neighborhood search. Supports directed, undirected, and acyclic graphs. |
+| **Geometry** | `fishnet::geometry` | Geometric primitives (polygons, lines, points, rings, rectangles) and spatial algorithms including sweep-line, polygon intersection, buffering, and distance computations. |
+| **I/O** | `fishnet` | File I/O abstractions, GDAL integration for reading/writing GIS vector data (Shapefile, GeoPackage), vector layer management, and filesystem utilities. |
+| **Clustering** | `fishnet` | Spatial clustering algorithms for grouping geometric features based on proximity and other criteria. |
+| **Collections** | `fishnet::util` | Custom container types and data structures extending the C++ standard library for framework-specific use cases. |
+| **Concepts** | `fishnet::util` | C++20 concepts defining type constraints and requirements used throughout the framework. |
+| **Functional** | `fishnet::util` | Functional programming utilities including function concepts, composite predicates, Option and Either. |
+| **Math** | `fishnet::math` | Mathematical utilities including angular types (degrees/radians), numerical operations, and constants. |
+| **Workflow** | `::` | Reusable components for composing spatial processing tasks|
+
+## Dependencies
+### System Dependencies
+The fishnet library depends on [**GDAL**](https://gdal.org/en/stable/) to provide GIS IO functionality. 
+GDAL must be installed on the system to build / run fishnet applications. On Ubuntu-based system this can be achieved using the following command:
 ```shell
-sudo apt-get install -y libgdal-dev libssl-dev
+sudo apt-get install -y libgdal-dev
 ``` 
-Then the project can be build as follows:
-```shell
-mkdir build
-cd build
-cmake ..
-cmake --build . <add custom cmake parameters here>
-```
-## Framework Usage
+### Project Dependencies
+| Name | Repository | Purpose |
+| --- | ---| ---|
+| CLI11 | https://github.com/CLIUtils/CLI11 | Command line parameter parsing
+| JSON | https://github.com/nlohmann/json | JSON C++ library
+| magic_enum | https://github.com/Neargye/magic_enum | String <> Enum conversions
+| spdlog | https://github.com/gabime/spdlog | Logging
+| gtest | https://github.com/google/googletest.git | Testing
+
+## Usage
 The following example shows how to store polygons, obtained from a Shapefile, in a graph. Thereafter, the degree centrality measures is calculated on the graph and the results stored as features in the output shapefile.
 ```cpp
 #include <fishnet/Fishnet.hpp>
@@ -71,6 +83,40 @@ To link the *Fishnet* framework to the program the following *CMake* file can be
 add_executable(polygonGraph PolygonGraph.cpp)
 target_link_libraries(polygonGraph PRIVATE Fishnet::Fishnet)
 ```
+
+
+# Fishnet Binaries
+Fishnet also provides some common functionalities when processing vector files under the [src](src/) directory and additional examples under [example](example/) directory.
+## Installation
+Before the binaries can be build using *cmake*, the **GDAL** library has to be installed on the machine. Then the installer script can be invoked as follows:
+```shell
+./install.sh
+```
+Alternatively, you can install the binaries as follows:
+```shell
+mkdir build
+cd build
+cmake ..
+cmake --build . <add custom cmake parameters here>
+```
+## CMake Options
+| Name | Description  | Default
+| --- | --- | --- |
+FISHNET_APPS | Build common fishnet applications|  ON
+FISHNET_EXAMPLES | Build example applications|  ON
+FISHNET_TEST | Enable unit tests for Fishnet components|  ON
+FISHNET_TEST_LIB | Build Fishnet test utility library|  ON
+FISHNET_COVERAGE | Enable coverage reporting |  OFF
+FISHNET_COMPILE_TIME_TRACE | Enable compile time tracing|  OFF
+FISHNET_DOCS | Enable documentation generation | OFF
+
+# Workflows
+Fishnet is already used in existing production workflows.
+| Name | Repository |
+|---|---|
+| **Settlement Delineation and Analysis (SDA)** | https://github.com/dfg-sos/sda-workflow
+| **Africapolis** | https://github.com/LoloGruber/africapolis
+
 
 
 
