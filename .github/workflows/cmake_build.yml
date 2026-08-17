@@ -27,7 +27,7 @@ jobs:
     - name: Test
       run: ctest --test-dir build -C ${{env.BUILD_TYPE}} --output-on-failure
   docs:
-    runs-on: alpine-latest
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     
