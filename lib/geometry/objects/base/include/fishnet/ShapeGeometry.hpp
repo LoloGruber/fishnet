@@ -1,8 +1,9 @@
 #pragma once
 #include <fishnet/CollectionConcepts.hpp>
-#include <fishnet/Segment.hpp>
 #include <fishnet/NumericConcepts.hpp>
 #include <fishnet/Printable.hpp>
+#include <fishnet/Segment.hpp>
+
 namespace fishnet::geometry{
 
 namespace __impl{
@@ -52,7 +53,7 @@ concept HolesQueries = requires(const S & shape, const O & other) {
 };
 }
 
-#include "LinearGeometry.hpp"
+// #include "LinearGeometry.hpp"
 
 template<typename R>
 concept SegmentRange = std::ranges::range<R> && ISegment<std::ranges::range_value_t<R>>;
