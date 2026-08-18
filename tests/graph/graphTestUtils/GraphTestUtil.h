@@ -1,6 +1,6 @@
 #ifndef GraphTestUtil_H
 #define GraphTestUtil_H
-
+#include <fishnet/TestUtil.hpp>
 #include <fishnet/Graph.hpp>
 #include "IDNode.h"
 #include "XYNode.h"
@@ -93,6 +93,11 @@ static fishnet::graph::UndirectedGraph<XYNode> getCompleteXYGraph(std::vector<XY
         }
     }
     return g;
+}
+
+static void EXPECT_GRAPH_EQ(const auto & g1, const auto & g2){
+    testutil::EXPECT_UNSORTED_RANGE_EQ(g1.getNodes(),g2.getNodes());
+    testutil::EXPECT_UNSORTED_RANGE_EQ(g1.getEdges(),g2.getEdges());
 }
 
 
