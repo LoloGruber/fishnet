@@ -141,6 +141,21 @@ public:
     bool remove() const noexcept override {
         return std::filesystem::remove(this->pathToFile);
     }
+
+    AbstractVectorFile & move(const std::filesystem::path & newPath) {
+        std::filesystem::rename(this->pathToFile, newPath);
+        this->pathToFile = newPath;
+        return *this;
+    }
+
+    AbstractVectorFile copy(const std::filesystem::path & newPath) const {
+        std::filesystem::copy(this->pathToFile, newPath);
+        return AbstractVectorFile(newPath);
+    }
+
+    std::string toString() const noexcept {
+        return "VectorFile(" + this->pathToFile.string() + ")";
+    }
 };
 
 
@@ -170,6 +185,8 @@ concept GISFile = std::derived_from<File,AbstractGISFile> && util::Printable<Fil
  */
 template<typename File>
 concept VectorGISFile = GISFile<File> && std::derived_from<File,AbstractVectorFile>;
+
+static_assert(VectorGISFile<AbstractVectorFile>, "AbstractVectorFile should be a VectorGISFile");
 
 /**
  * @brief Interface for all Raster GISFile types.
