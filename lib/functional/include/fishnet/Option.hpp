@@ -1,8 +1,11 @@
 #pragma once
+#include <fishnet/FunctionalConcepts.hpp>
+#include <concepts>
 #include <optional>
 #include <string>
 #include <functional>
 #include <stdexcept>
+#include <type_traits>
 
 namespace fishnet {
 
@@ -59,17 +62,26 @@ public:
     }
 
     /* F: () -> T */
-    template<typename F>
+    template<typename F> requires std::convertible_to<std::invoke_result_t<F>,T>
     Option<T> or_else(F&& f) const& {
         if (this->has_value()) return *this;
-        return Option<T>(std::invoke(std::forward<F>(f)));
+        return std::invoke(std::forward<F>(f));
     }
 
-    template<typename F>
+    template<typename F> requires std::convertible_to<std::invoke_result_t<F>,Option<T>>
     Option<T> or_else(F&& f) && {
         if (this->has_value()) return std::move(*this);
-        return Option<T>(std::invoke(std::forward<F>(f)));
+        return std::invoke(std::forward<F>(f));
+    }
+
+    auto filter(fishnet::util::Predicate<T> auto const & predicate) {
+        if (this->has_value() && predicate(this->value()))
+            return *this;
+        return Option<T>{};
     }
 };
+
+template<typename T>
+Option(std::optional<T> opt) -> Option<T>;
 
 }  // namespace fishnet
