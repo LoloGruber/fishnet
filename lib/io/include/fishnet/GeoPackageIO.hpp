@@ -58,14 +58,17 @@ public:
 template<geometry::GeometryObject G>
 class GeoPackageWriter {
 private:
-    bool overwrite = false;
+    bool createSpatialIndex = true;
     std::vector<std::string> options;
 public:
     GeoPackageWriter() = default;
 
-    GeoPackageWriter(bool overwrite) : overwrite(overwrite) {}
+    GeoPackageWriter(bool createSpatialIndex) : createSpatialIndex(createSpatialIndex) {
+        if(not createSpatialIndex)
+            this->options.push_back("SPATIAL_INDEX=NO");
+    }
 
-    GeoPackageWriter(bool overwrite, fishnet::util::forward_range_of<std::string> auto && options) : overwrite(overwrite) {
+    GeoPackageWriter(bool createSpatialIndex, fishnet::util::forward_range_of<std::string> auto && options) : createSpatialIndex(createSpatialIndex) {
         for(auto && opt : options) {
             this->options.push_back(std::move(opt));
         }
@@ -93,8 +96,13 @@ public:
             GDALClose(outputDataset);
             return std::unexpected("Could not create layer in GeoPackage: \"" + output.getPath().string() + "\"");
         }
+        OGRErr err = outputDataset->StartTransaction();
+        if (err != OGRERR_NONE) {
+            return std::unexpected("Could not start transaction for GeoPackage: \"" + output.getPath().string() + "\"");
+        }
         auto result = OGRLayerAdapter<G>::toOGR(layer, outputLayer);
-        outputLayer->SyncToDisk();
+        outputDataset->CommitTransaction();
+        // outputLayer->SyncToDisk();
         GDALClose(outputDataset);
         return result.transform([&output](const auto & _) {
             return output;
