@@ -50,7 +50,7 @@ public:
             for(size_t x = 0; x < chunksPerDimension; x++){
                 const auto & ds = outputDatasets.at(y*chunksPerDimension+x);
                 if(util::size(ds.getFeatures()) > 0) {
-                    Shapefile dest = outputDirectory / fishnet::util::PathHelper::appendToFilename(source.getPath(),"_"+ std::to_string(static_cast<int64_t>(x)+config.xOffset)+"_"+std::to_string(static_cast<int64_t>(y)+config.yOffset)).filename();
+                    Shapefile dest = Shapefile( outputDirectory / fishnet::util::PathHelper::appendToFilename(source.getPath(),"_"+ std::to_string(static_cast<int64_t>(x)+config.xOffset)+"_"+std::to_string(static_cast<int64_t>(y)+config.yOffset)).filename());
                     VectorIO::overwrite(ds, dest);
                 }
             }
