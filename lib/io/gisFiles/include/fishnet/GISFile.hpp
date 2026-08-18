@@ -8,7 +8,7 @@
 namespace fishnet{
 
 enum class GISFileType{
-    SHAPEFILE,GEOTIFF,GEOPACKAGE
+    SHAPEFILE,GEOTIFF,GEOPACKAGE,VECTOR
 };
 
 static std::optional<GISFileType> getGISFileType(const std::filesystem::path & path) {
@@ -113,9 +113,17 @@ public:
 
 class AbstractVectorFile: public AbstractGISFile {
 public:
-    explicit AbstractVectorFile(const std::filesystem::path & pathToFile): AbstractGISFile(pathToFile){}
-    explicit AbstractVectorFile(const std::string& pathName): AbstractGISFile(pathName){}
+    AbstractVectorFile(const std::filesystem::path & pathToFile): AbstractGISFile(pathToFile){}
+    AbstractVectorFile(const std::string& pathName): AbstractGISFile(pathName){}
     virtual ~AbstractVectorFile() = default;
+
+    constexpr GISFileType type() const noexcept override {
+        return GISFileType::VECTOR;
+    }
+
+    bool remove() const noexcept override {
+        return std::filesystem::remove(this->pathToFile);
+    }
 };
 
 
