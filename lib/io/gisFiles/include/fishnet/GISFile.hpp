@@ -28,6 +28,19 @@ static fishnet::Option<GISFileType> getGISFileType(const std::filesystem::path &
     return std::nullopt;
 }
 
+static const char * getExtension(GISFileType type) {
+    switch(type) {
+        case GISFileType::SHAPEFILE:
+            return ".shp";
+        case GISFileType::GEOTIFF:
+            return ".tif";
+        case GISFileType::GEOPACKAGE:
+            return ".gpkg";
+        default:
+            throw std::invalid_argument("Unsupported GISFileType");
+    }
+}
+
 /**
  * Abstract class representing a GISFile, can only be inherited by predefined classes, namely AbstractVectorFile and AbstractRasterFile.
  */
