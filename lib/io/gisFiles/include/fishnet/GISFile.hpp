@@ -1,6 +1,7 @@
 #pragma once
 #include <filesystem>
-#include <optional>
+#include <array>
+#include <fishnet/Option.hpp>
 #include <utility>
 #include <fishnet/Printable.hpp>
 #include <fishnet/PathHelper.h>
@@ -11,7 +12,10 @@ enum class GISFileType{
     SHAPEFILE,GEOTIFF,GEOPACKAGE,VECTOR
 };
 
-static std::optional<GISFileType> getGISFileType(const std::filesystem::path & path) {
+[[maybe_unused]] static std::array<GISFileType,4> SUPPORTED_VECTOR_FORMATS{GISFileType::SHAPEFILE,GISFileType::GEOPACKAGE};
+[[maybe_unused]] static std::array<GISFileType,4> SUPPORTED_RASTER_FORMATS{GISFileType::GEOTIFF};
+
+static fishnet::Option<GISFileType> getGISFileType(const std::filesystem::path & path) {
     const auto & ext = path.extension().string();
     if(ext == ".shp" )
         return GISFileType::SHAPEFILE;
