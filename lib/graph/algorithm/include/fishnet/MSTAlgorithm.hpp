@@ -14,64 +14,46 @@ namespace fishnet::graph::MST {
 namespace __impl {
 
 /**
- * @brief Union-Find (Disjoint Set Union) data structure for Kruskal's algorithm
- * 
- * @tparam N node type
- * @tparam Hash hash function for nodes
- * @tparam Equal equality predicate for nodes
+ * @brief Union-Find (Disjoint Set Union) data structure using integer indices.
+ * Maps nodes to indices externally, avoiding storing node copies internally.
  */
-template<typename N, util::HashFunction<N> Hash, util::BiPredicate<N> Equal>
 class UnionFind {
 private:
-    std::unordered_map<N, N, Hash, Equal> parent;
-    std::unordered_map<N, size_t, Hash, Equal> rank;
-    Equal eq = Equal();
+    std::vector<size_t> parent;
+    std::vector<size_t> rank;
 
 public:
-    UnionFind() = default;
-
-    void makeSet(const N& node) {
-        if (not parent.contains(node)) {
-            parent.emplace(node, node);
-            rank.emplace(node, 0);
+    explicit UnionFind(size_t n) : parent(n), rank(n, 0) {
+        for (size_t i = 0; i < n; ++i) {
+            parent[i] = i;
         }
     }
 
-    N find(const N& node) {
-        auto it = parent.find(node);
-        if (it == parent.end()) {
-            makeSet(node);
-            return node;
+    size_t find(size_t x) {
+        if (parent[x] != x) {
+            parent[x] = find(parent[x]);
         }
-        if (not eq(it->second, node)) {
-            it->second = find(it->second);
-        }
-        return it->second;
+        return parent[x];
     }
 
-    bool unite(const N& a, const N& b) {
-        N rootA = find(a);
-        N rootB = find(b);
-        if (eq(rootA, rootB)) {
+    bool unite(size_t a, size_t b) {
+        size_t rootA = find(a);
+        size_t rootB = find(b);
+        if (rootA == rootB) {
             return false;
         }
-        auto rankA = rank.at(rootA);
-        auto rankB = rank.at(rootB);
-        if (rankA < rankB) {
+        if (rank[rootA] < rank[rootB]) {
             std::swap(rootA, rootB);
-            std::swap(rankA, rankB);
         }
-        auto it = parent.find(rootB);
-        it->second = rootA;
-        if (rankA == rankB) {
-            auto rankIt = rank.find(rootA);
-            rankIt->second = rankA + 1;
+        parent[rootB] = rootA;
+        if (rank[rootA] == rank[rootB]) {
+            rank[rootA]++;
         }
         return true;
     }
 
-    bool connected(const N& a, const N& b) {
-        return eq(find(a), find(b));
+    bool connected(size_t a, size_t b) {
+        return find(a) == find(b);
     }
 };
 
@@ -82,7 +64,8 @@ public:
  * @tparam W weight function type
  * @param graph input graph
  * @param weightFunction function computing edge weight from two nodes
- * @return fishnet::Option<G> containing the MST graph, or nullopt if disconnected
+ * @param mst output graph to store the MST result
+ * @return fishnet::Option<G> reference to mst if connected, nullopt if disconnected
  */
 template<Graph G, typename W>
 requires std::totally_ordered<std::invoke_result_t<W, const typename G::node_type&, const typename G::node_type&>>
@@ -100,33 +83,40 @@ static fishnet::Option<G> kruskalImpl(
     size_t nodeCount = std::ranges::distance(nodes);
 
     if (nodeCount == 0) {
-        return mst;
+        return std::move(mst);
     }
 
     if (nodeCount == 1) {
         for (const auto& node : nodes) {
             mst.addNode(node);
         }
-        return mst;
+        return std::move(mst);
     }
+
+    // node -> index mapping
+    std::unordered_map<N, size_t, H, Eq> nodeToIndex;
+    nodeToIndex.reserve(nodeCount);
+    size_t idx = 0;
+    for (const auto& node : nodes) {
+        nodeToIndex[node] = idx++;
+    }
+
     std::vector<E> edges = fishnet::util::toVector(graph.getEdges());
     auto weightComparator = [&weightFunction](const E& lhs, const E& rhs) {
         return weightFunction(lhs.getFrom(), lhs.getTo()) < weightFunction(rhs.getFrom(), rhs.getTo());
     };
     std::ranges::sort(edges, weightComparator);
-    UnionFind<N, H, Eq> uf;
-    for (const auto& node : nodes) {
-        uf.makeSet(node);
-        mst.addNode(node);
-    }
+
+    UnionFind uf(nodeCount);
     size_t edgesAdded = 0;
     size_t targetEdges = nodeCount - 1;
+
     for (const auto& edge : edges) {
-        const N& from = edge.getFrom();
-        const N& to = edge.getTo();
-        if (not uf.connected(from, to)) {
-            uf.unite(from, to);
-            mst.addEdge(from, to);
+        size_t fromIdx = nodeToIndex.at(edge.getFrom());
+        size_t toIdx = nodeToIndex.at(edge.getTo());
+        if (not uf.connected(fromIdx, toIdx)) {
+            uf.unite(fromIdx, toIdx);
+            mst.addEdge(edge.getFrom(), edge.getTo());
             edgesAdded++;
             if (edgesAdded == targetEdges) {
                 break;
@@ -137,7 +127,7 @@ static fishnet::Option<G> kruskalImpl(
     if (edgesAdded != targetEdges) {
         return std::nullopt;
     }
-    return mst;
+    return std::move(mst);
 }
 
 } // namespace __impl
@@ -177,13 +167,13 @@ fishnet::Option<G> kruskal(
  * @return fishnet::Option<G> MST graph, or nullopt if graph is disconnected
  */
 template<Graph G, typename W>
-requires std::totally_ordered<std::invoke_result_t<W, const typename G::node_type&, const typename G::node_type&>> && std::is_default_constructible_v<G>
+requires std::totally_ordered<std::invoke_result_t<W, const typename G::node_type&, const typename G::node_type&>>
 fishnet::Option<G> kruskal(
     const G& graph,
     W const& weightFunction,
     G && outputGraph
 ) {
-    return __impl::kruskalImpl<G, W>(graph, weightFunction, outputGraph);
+    return __impl::kruskalImpl<G, W>(graph, weightFunction, std::forward<G>(outputGraph));
 }
 
 } // namespace fishnet::graph::MST
