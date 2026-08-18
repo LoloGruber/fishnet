@@ -1,9 +1,9 @@
 cwlVersion: v1.2
 class: CommandLineTool
-baseCommand: [FishnetShapefileSplitter]
+baseCommand: [FishnetVectorFileSplitter]
 hints:
   DockerRequirement:
-    dockerPull: logru/fishnet-apps:1.2.0
+    dockerPull: logru/fishnet-apps:1.4.0
 requirements:
   InlineJavascriptRequirement: {}
   ResourceRequirement:
@@ -39,10 +39,6 @@ inputs:
         prefix: -y
     doc: "Y offset for the naming of the output tiles"
 outputs:
-  standardOut:
-    type: stdout
-  errorOut:
-    type: stderr
   split_shapefiles:
     type: File[]
     # format: SHP

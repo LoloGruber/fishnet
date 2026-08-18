@@ -1,9 +1,9 @@
 cwlVersion: v1.2
 class: CommandLineTool
-baseCommand: [FishnetShapefileMerger]
+baseCommand: [FishnetVectorFileMerger]
 hints:
   DockerRequirement:
-    dockerPull: logru/fishnet-apps:1.2.0
+    dockerPull: logru/fishnet-apps:1.4.0
 requirements:
   InlineJavascriptRequirement: {}
   ResourceRequirement:
@@ -25,10 +25,6 @@ inputs:
         valueFrom: $(self+".shp")
     doc: "Output filename for result (Shapefile)"  
 outputs:
-  standardOut:
-    type: stdout
-  errorOut:
-    type: stderr
   mergedOutput:
     type: File
     secondaryFiles: [^.shx, ^.dbf, ^.prj, ^.cpg?, ^.qpj?]

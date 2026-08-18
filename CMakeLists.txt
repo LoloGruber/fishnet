@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(fishnet_project VERSION 1.3.1 LANGUAGES CXX)
+project(fishnet_project VERSION 1.4.0 LANGUAGES CXX)
 
 # Options
 option(FISHNET_APPS "Build common fishnet applications" ON)

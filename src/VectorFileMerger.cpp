@@ -1,4 +1,6 @@
+#include "CLI/CLI.hpp"
 #include "fishnet/GDALInitializer.hpp"
+#include <filesystem>
 #include <future>
 #include <CLI/CLI.hpp>
 #include <fishnet/Fishnet.hpp>
@@ -9,7 +11,7 @@ class ShapefileMerger: public Task {
 public:
     ShapefileMerger():Task("ShapefileMerger"){}
 
-    static fishnet::Shapefile operator()(const fishnet::util::range_of<fishnet::Shapefile> auto& inputs, std::filesystem::path && outputPath){
+    static void operator()(const fishnet::util::range_of<std::filesystem::path> auto& inputs, std::filesystem::path && outputPath){
         fishnet::GDALInitializer::init();
         std::vector<std::future<fishnet::VectorLayer<G>>> futures;
         for(size_t i = 1; i < inputs.size();i++){
@@ -27,9 +29,7 @@ public:
                 outputLayer.addFeature(std::move(feature));
             }
         }
-        fishnet::Shapefile output {outputPath};
-        fishnet::VectorIO::overwrite(outputLayer, output);
-        return output;
+        fishnet::VectorIO::overwrite(outputLayer, outputPath);
     }
 };
 
@@ -38,25 +38,17 @@ int main(int argc, char * argv[]){
     CLI::App app {"FishnetShapefileMerger"};
     std::vector<std::string> inputFilenames;
     std::string outputFilename;
-    app.add_option("-i,--inputs",inputFilenames,"Input Shapefiles storing the settlements and their attributes")->required()->each([](const std::string & str){
-        try{
-            auto file = fishnet::Shapefile(str);
-            if(not file.exists())
-                throw std::invalid_argument("File "+ file.getPath().string() + " does not exist");
-        }catch(std::invalid_argument & error){
-            throw CLI::ValidationError(error.what());
-        }
-    });
+    app.add_option("-i,--inputs",inputFilenames,"Input GIS vector files")->required()->each(CLI::ExistingFile);
     app.add_option("-o,--output",outputFilename,"Output file location")->required()->check([](const std::string & str){
         try{
-            auto file = fishnet::Shapefile(str); //TODO use current working directory / filename.shp to prevent cwl error in readonly containers
+            auto file = fishnet::getGISFileType(std::filesystem::path(str)).filter([](const auto & format){return std::ranges::contains(fishnet::SUPPORTED_VECTOR_FORMATS,format);});
+            if(not file)
+                throw std::invalid_argument("Output file type is not supported: "+ str);
             std::filesystem::path parentPath = std::filesystem::path(str).parent_path();
             if(not std::filesystem::exists(parentPath)){
                 std::filesystem::create_directories(parentPath);
             }
             return std::string();
-        }catch(std::invalid_argument & error){
-            return std::string("Invalid output path:\n"+str+"\n")+ error.what();
         }catch(std::filesystem::filesystem_error & fsError){
             return std::string("Filesystem error when checking/creating output path:\n"+str+"\n")+ fsError.what();
         }
@@ -65,10 +57,6 @@ int main(int argc, char * argv[]){
     if(inputFilenames.empty()){
         throw std::runtime_error("No input files provided");
     }
-    std::vector<fishnet::Shapefile> inputs;
-    for(auto && inputFilename: inputFilenames) {
-        inputs.emplace_back(std::move(inputFilename));
-    }
-    ShapefileMerger<GeometryType>()(inputs, std::filesystem::path{outputFilename});
+    ShapefileMerger<GeometryType>()(inputFilenames, std::filesystem::path{outputFilename});
     return 0;
 }

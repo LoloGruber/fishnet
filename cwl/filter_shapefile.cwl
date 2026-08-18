@@ -1,9 +1,9 @@
 cwlVersion: v1.2
 class: CommandLineTool
-baseCommand: [FishnetShapefilePreprocessor]
+baseCommand: [FishnetVectorFilePreprocessor]
 hints:
   DockerRequirement:
-    dockerPull: logru/fishnet-apps:1.2.1
+    dockerPull: logru/fishnet-apps:1.4.0
 requirements:
   InlineJavascriptRequirement: {}
   ResourceRequirement:
