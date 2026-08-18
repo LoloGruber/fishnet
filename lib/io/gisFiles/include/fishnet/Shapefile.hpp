@@ -32,7 +32,7 @@ public:
         return std::ranges::all_of(REQUIRED_FILES,[&path](const auto & ext){return std::filesystem::exists(path.parent_path() / std::filesystem::path(path.stem().string()+ext));});
     }
 
-    Shapefile(const std::filesystem::path & path):AbstractVectorFile(path){
+    explicit Shapefile(const std::filesystem::path & path):AbstractVectorFile(path){
         if(not supportsExtension(path))
             throw std::invalid_argument("Not a shapefile!");
     };
