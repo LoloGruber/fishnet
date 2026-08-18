@@ -1,7 +1,6 @@
 #pragma once
 #include <vector>
 #include <ranges>
-#include <stdexcept>
 #include <algorithm>
 #include <unordered_set>
 #include <sstream>

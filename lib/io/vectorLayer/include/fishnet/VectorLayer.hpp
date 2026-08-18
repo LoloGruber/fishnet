@@ -4,7 +4,6 @@
 #include <vector>
 #include <algorithm>
 #include <expected>
-#include <iostream>
 
 #include <fishnet/GeometryObject.hpp>
 #include <fishnet/CollectionConcepts.hpp>
@@ -105,7 +104,7 @@ public:
     }
 
     constexpr void addAllGeometry(util::forward_range_of<G> auto && geometries) noexcept {
-        std::ranges::for_each(geometries,[this](const auto & g){ addGeometry(g);});
+        std::ranges::for_each(geometries,[this](const auto & g){ this->addGeometry(g);});
     }
 
     /**
