@@ -1,7 +1,9 @@
 #pragma once
 #include <fishnet/VectorLayer.hpp>
 #include <fishnet/ShapefileIO.hpp>
+#include <fishnet/GeoPackageIO.hpp>
 #include <fishnet/Either.hpp>
+#include <fishnet/GISFile.hpp>
 #include <regex>
 
 namespace fishnet::__impl{
@@ -96,8 +98,50 @@ VectorLayer<G> read(const Shapefile & shapefile) {
     return read(ShapefileReader<G>(), shapefile);
 } 
 
-inline VectorLayer<geometry::Polygon<double>> readPolygonLayer(const Shapefile & shapefile) {
-    return read<geometry::Polygon<double>>(shapefile);
+template<geometry::GeometryObject G>
+VectorLayer<G> read(const GeoPackage & geopackage) {
+    return read(GeoPackageReader<G>(), geopackage);
+}
+
+/**
+ * @brief Generic tryRead overload that consumes any AbstractVectorFile and dispatches to the appropriate reader based on file extension.
+ * Returns an Either with the VectorLayer on success or an error message on failure.
+ * 
+ * @tparam G geometry type of the layer
+ * @param file AbstractVectorFile to read from
+ * @return Either<VectorLayer<G>, std::string> VectorLayer on success, error message otherwise
+ */
+template<geometry::GeometryObject G>
+Either<VectorLayer<G>, std::string> tryRead(const AbstractVectorFile & file) {
+    auto fileType = getGISFileType(file.getPath());
+    if (not fileType) {
+        return std::unexpected("Unsupported vector file type: " + file.getPath().string());
+    }
+    switch (fileType.value()) {
+        case GISFileType::SHAPEFILE:
+            return tryRead(ShapefileReader<G>(), Shapefile(file.getPath()));
+        case GISFileType::GEOPACKAGE:
+            return tryRead(GeoPackageReader<G>(), GeoPackage(file.getPath()));
+        default:
+            return std::unexpected("Unsupported vector file type: " + file.getPath().string());
+    }
+}
+
+/**
+ * @brief Generic read overload that consumes any AbstractVectorFile and dispatches to the appropriate reader based on file extension.
+ * 
+ * @tparam G geometry type of the layer
+ * @param file AbstractVectorFile to read from
+ * @return VectorLayer<G> read vector layer
+ * @throws std::runtime_error if the file type is not supported or reading fails
+ */
+template<geometry::GeometryObject G>
+VectorLayer<G> read(const AbstractVectorFile & file) {
+    return tryRead<G>(file).value_or_throw();
+}
+
+inline VectorLayer<geometry::Polygon<double>> readPolygonLayer(const AbstractVectorFile & vectorFile) {
+    return read<geometry::Polygon<double>>(vectorFile);
 }
 
 template<geometry::GeometryObject G,VectorGISFile F>
@@ -129,6 +173,74 @@ Shapefile write(const VectorLayer<G> & layer, const Shapefile & destination) {
 template<geometry::GeometryObject G>
 Shapefile overwrite(const VectorLayer<G> & layer, const Shapefile & destination) {
     return overwrite(ShapefileWriter<G>(), layer, destination);
+}
+
+template<geometry::GeometryObject G>
+GeoPackage write(const VectorLayer<G> & layer, const GeoPackage & destination) {
+    return write(GeoPackageWriter<G>(), layer, destination);
+}
+
+template<geometry::GeometryObject G>
+GeoPackage overwrite(const VectorLayer<G> & layer, const GeoPackage & destination) {
+    return overwrite(GeoPackageWriter<G>(), layer, destination);
+}
+
+/**
+ * @brief Generic write overload that consumes any AbstractVectorFile and dispatches to the appropriate writer based on file extension.
+ * 
+ * @tparam G geometry type of the layer
+ * @param layer VectorLayer to write
+ * @param destination AbstractVectorFile to write to
+ * @return AbstractVectorFile reference to the written file
+ * @throws std::runtime_error if the file type is not supported
+ */
+template<geometry::GeometryObject G>
+std::unique_ptr<AbstractVectorFile> write(const VectorLayer<G> & layer, const AbstractVectorFile & destination) {
+    auto fileType = getGISFileType(destination.getPath());
+    if (not fileType) {
+        throw std::runtime_error("Unsupported vector file type for writing: " + destination.getPath().string());
+    }
+    switch (fileType.value()) {
+        case GISFileType::SHAPEFILE: {
+            auto result = write(layer, Shapefile(destination.getPath()));
+            return std::make_unique<Shapefile>(result.getPath());
+        }
+        case GISFileType::GEOPACKAGE: {
+            auto result = write(layer, GeoPackage(destination.getPath()));
+            return std::make_unique<GeoPackage>(result.getPath());
+        }
+        default:
+            throw std::runtime_error("Unsupported vector file type for writing: " + destination.getPath().string());
+    }
+}
+
+/**
+ * @brief Generic overwrite overload that consumes any AbstractVectorFile and dispatches to the appropriate writer based on file extension.
+ * 
+ * @tparam G geometry type of the layer
+ * @param layer VectorLayer to write
+ * @param destination AbstractVectorFile to write to
+ * @return AbstractVectorFile reference to the written file
+ * @throws std::runtime_error if the file type is not supported
+ */
+template<geometry::GeometryObject G>
+std::unique_ptr<AbstractVectorFile> overwrite(const VectorLayer<G> & layer, const AbstractVectorFile & destination) {
+    auto fileType = getGISFileType(destination.getPath());
+    if (not fileType) {
+        throw std::runtime_error("Unsupported vector file type for writing: " + destination.getPath().string());
+    }
+    switch (fileType.value()) {
+        case GISFileType::SHAPEFILE: {
+            auto result = overwrite(layer, Shapefile(destination.getPath()));
+            return std::make_unique<Shapefile>(result.getPath());
+        }
+        case GISFileType::GEOPACKAGE: {
+            auto result = overwrite(layer, GeoPackage(destination.getPath()));
+            return std::make_unique<GeoPackage>(result.getPath());
+        }
+        default:
+            throw std::runtime_error("Unsupported vector file type for writing: " + destination.getPath().string());
+    }
 }
 
 } // namespace fishnet::VectorIO

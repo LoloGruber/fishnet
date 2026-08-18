@@ -2,6 +2,8 @@
 #include <fstream>
 #include <fishnet/TestUtil.hpp>
 #include <fishnet/GeoPackage.hpp>
+#include <fishnet/VectorIO.hpp>
+#include <fishnet/Shapefile.hpp>
 
 using namespace fishnet;
 using namespace testutil;
@@ -81,4 +83,90 @@ TEST_F(GeoPackageTest, exists) {
     fs::remove(tempFile);
     EXPECT_NOT_EXISTS(tempFile);
     EXPECT_FALSE(geopackage.exists());
+}
+
+TEST(GeoPackageIO, readNonExistentFile) {
+    fs::path nonExistent = fs::temp_directory_path() / "nonexistent.gpkg";
+    auto result = VectorIO::tryRead<geometry::MultiPolygon<geometry::Polygon<double>>>(GeoPackage(nonExistent));
+    EXPECT_FALSE(result.has_value());
+}
+
+TEST(GeoPackageIO, readSampleFile) {
+    fs::path sampleFile = fs::path(__FILE__).parent_path().parent_path().parent_path() / "data" / "samples" / "Corvara_IT_Africapolis.gpkg";
+    if (not fs::exists(sampleFile)) {
+        GTEST_SKIP() << "Sample GeoPackage file not found: " << sampleFile;
+    }
+    auto result = VectorIO::tryRead<geometry::MultiPolygon<geometry::Polygon<double>>>(GeoPackage(sampleFile));
+    EXPECT_TRUE(result.has_value());
+    auto layer = result.value();
+    EXPECT_SIZE(layer.getFeatures(), 7);
+}
+
+TEST(GeoPackageIO, writeAndReadBack) {
+    fs::path sampleFile = fs::path(__FILE__).parent_path().parent_path().parent_path() / "data" / "samples" / "Corvara_IT_Africapolis.gpkg";
+    fs::path outputFile = fs::temp_directory_path() / "test_output.gpkg";
+    
+    if (not fs::exists(sampleFile)) {
+        GTEST_SKIP() << "Sample GeoPackage file not found: " << sampleFile;
+    }
+    
+    // Read original
+    auto original = VectorIO::read<geometry::MultiPolygon<geometry::Polygon<double>>>(GeoPackage(sampleFile));
+    EXPECT_SIZE(original.getFeatures(), 7);
+    
+    // Write to new file
+    auto written = VectorIO::write(original, GeoPackage(outputFile));
+    EXPECT_EXISTS(outputFile);
+    
+    // Read back
+    auto readBack = VectorIO::read<geometry::MultiPolygon<geometry::Polygon<double>>>(written);
+    EXPECT_SIZE(readBack.getFeatures(), 7);
+    
+    // Cleanup
+    fs::remove(outputFile);
+}
+
+TEST(GeoPackageIO, genericReadAbstractVectorFile) {
+    fs::path sampleFile = fs::path(__FILE__).parent_path().parent_path().parent_path() / "data" / "samples" / "Corvara_IT_Africapolis.gpkg";
+    if (not fs::exists(sampleFile)) {
+        GTEST_SKIP() << "Sample GeoPackage file not found: " << sampleFile;
+    }
+    
+    GeoPackage gpkg(sampleFile);
+    auto layer = VectorIO::read<geometry::MultiPolygon<geometry::Polygon<double>>>(static_cast<const AbstractVectorFile&>(gpkg));
+    EXPECT_SIZE(layer.getFeatures(), 7);
+}
+
+TEST(GeoPackageIO, genericTryReadAbstractVectorFile) {
+    fs::path sampleFile = fs::path(__FILE__).parent_path().parent_path().parent_path() / "data" / "samples" / "Corvara_IT_Africapolis.gpkg";
+    if (not fs::exists(sampleFile)) {
+        GTEST_SKIP() << "Sample GeoPackage file not found: " << sampleFile;
+    }
+    
+    GeoPackage gpkg(sampleFile);
+    auto result = VectorIO::tryRead<geometry::MultiPolygon<geometry::Polygon<double>>>(static_cast<const AbstractVectorFile&>(gpkg));
+    EXPECT_TRUE(result.has_value());
+    EXPECT_SIZE(result.value().getFeatures(), 7);
+}
+
+TEST(GeoPackageIO, genericWriteAbstractVectorFile) {
+    fs::path sampleFile = fs::path(__FILE__).parent_path().parent_path().parent_path() / "data" / "samples" / "Corvara_IT_Africapolis.gpkg";
+    fs::path outputFile = fs::temp_directory_path() / "test_generic_output.gpkg";
+    
+    if (not fs::exists(sampleFile)) {
+        GTEST_SKIP() << "Sample GeoPackage file not found: " << sampleFile;
+    }
+    
+    auto original = VectorIO::read<geometry::MultiPolygon<geometry::Polygon<double>>>(GeoPackage(sampleFile));
+    
+    GeoPackage outputGpkg(outputFile);
+    auto result = VectorIO::write(original, static_cast<const AbstractVectorFile&>(outputGpkg));
+    EXPECT_EXISTS(outputFile);
+    
+    // Verify it was written correctly
+    auto readBack = VectorIO::read<geometry::MultiPolygon<geometry::Polygon<double>>>(GeoPackage(outputFile));
+    EXPECT_SIZE(readBack.getFeatures(), 7);
+    
+    // Cleanup
+    fs::remove(outputFile);
 }

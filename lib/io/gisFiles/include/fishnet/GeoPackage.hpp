@@ -8,7 +8,7 @@ namespace fishnet {
  */
 class GeoPackage: public AbstractVectorFile {
 public:
-    GeoPackage(std::filesystem::path path):AbstractVectorFile(path){
+    explicit GeoPackage(std::filesystem::path path):AbstractVectorFile(path){
         if(not supports(path)){
             throw std::invalid_argument("Not a GeoPackage file: "+ path.string());
         }

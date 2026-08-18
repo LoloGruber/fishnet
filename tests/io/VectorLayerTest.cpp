@@ -178,7 +178,7 @@ TEST_F(VectorLayerTest, getField) {
 
 TEST_F(VectorLayerTest, write) {
     util::AutomaticTemporaryDirectory tmp {};
-    Shapefile outputFile = {tmp / std::filesystem::path(pathToSample.getPath().stem().string()+".shp")};
+    Shapefile outputFile = Shapefile{tmp / std::filesystem::path(pathToSample.getPath().stem().string()+".shp")};
     EXPECT_FALSE(std::filesystem::exists(outputFile.getPath()));
     EXPECT_NO_FATAL_FAILURE(outputFile = VectorIO::write(sampleLayer, outputFile));
     EXPECT_TRUE(std::filesystem::exists(outputFile.getPath()));
@@ -191,7 +191,7 @@ TEST_F(VectorLayerTest, write) {
 
 TEST_F(VectorLayerTest, overwrite) {
     util::AutomaticTemporaryDirectory tmp {}; 
-    Shapefile outputFile = {tmp / std::filesystem::path(pathToSample.getPath().stem().string()+".shp")};  
+    Shapefile outputFile = Shapefile{tmp / std::filesystem::path(pathToSample.getPath().stem().string()+".shp")};  
     EXPECT_FALSE(outputFile.exists());
     EXPECT_NO_FATAL_FAILURE(outputFile = VectorIO::overwrite(sampleLayer, outputFile));
     EXPECT_TRUE(std::filesystem::exists(outputFile.getPath()));
