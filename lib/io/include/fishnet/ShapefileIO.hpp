@@ -64,14 +64,11 @@ public:
 template<geometry::GeometryObject G>
 class ShapefileWriter { 
 private:
-    bool overwrite = false;
     std::vector<std::string> options;
 public:
     ShapefileWriter() = default;
 
-    ShapefileWriter(bool overwrite) : overwrite(overwrite) {}
-
-    ShapefileWriter(bool overwrite, fishnet::util::forward_range_of<std::string> auto && options) : overwrite(overwrite) {
+    ShapefileWriter(fishnet::util::forward_range_of<std::string> auto && options) {
         for(auto && opt : options) {
             this->options.push_back(std::move(opt));
         }
