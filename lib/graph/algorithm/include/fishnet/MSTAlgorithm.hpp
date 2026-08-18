@@ -88,74 +88,55 @@ template<Graph G, typename W>
 requires std::totally_ordered<std::invoke_result_t<W, const typename G::node_type&, const typename G::node_type&>>
 static fishnet::Option<G> kruskalImpl(
     const G& graph,
-    W const& weightFunction
+    W const& weightFunction,
+    G && mst
 ) {
     using N = typename G::node_type;
+    using E = typename G::edge_type;
     using H = typename G::adj_container_type::hash_function;
     using Eq = typename G::adj_container_type::equality_predicate;
-    using T = std::invoke_result_t<W, const N&, const N&>;
 
     auto nodes = graph.getNodes();
     size_t nodeCount = std::ranges::distance(nodes);
 
     if (nodeCount == 0) {
-        return G();
+        return mst;
     }
 
     if (nodeCount == 1) {
-        G result;
         for (const auto& node : nodes) {
-            result.addNode(node);
+            mst.addNode(node);
         }
-        return result;
+        return mst;
     }
-
-    // Collect all edges with their weights
-    struct WeightedEdgeRef {
-        N from;
-        N to;
-        T weight;
+    std::vector<E> edges = fishnet::util::toVector(graph.getEdges());
+    auto weightComparator = [&weightFunction](const E& lhs, const E& rhs) {
+        return weightFunction(lhs.getFrom(), lhs.getTo()) < weightFunction(rhs.getFrom(), rhs.getTo());
     };
-
-    std::vector<WeightedEdgeRef> weightedEdges;
-    auto edges = graph.getEdges();
-    for (const auto& edge : edges) {
-        T weight = weightFunction(edge.getFrom(), edge.getTo());
-        weightedEdges.push_back({edge.getFrom(), edge.getTo(), weight});
-    }
-
-    // Sort edges by weight ascending
-    std::ranges::sort(weightedEdges, {}, &WeightedEdgeRef::weight);
-
+    std::ranges::sort(edges, weightComparator);
     UnionFind<N, H, Eq> uf;
     for (const auto& node : nodes) {
         uf.makeSet(node);
-    }
-
-    G mst;
-    for (const auto& node : nodes) {
         mst.addNode(node);
     }
-
     size_t edgesAdded = 0;
     size_t targetEdges = nodeCount - 1;
-
-    for (const auto& we : weightedEdges) {
-        if (not uf.connected(we.from, we.to)) {
-            uf.unite(we.from, we.to);
-            mst.addEdge(we.from, we.to);
+    for (const auto& edge : edges) {
+        const N& from = edge.getFrom();
+        const N& to = edge.getTo();
+        if (not uf.connected(from, to)) {
+            uf.unite(from, to);
+            mst.addEdge(from, to);
             edgesAdded++;
             if (edgesAdded == targetEdges) {
                 break;
             }
         }
     }
-
     // Check if graph is connected (MST has exactly n-1 edges)
     if (edgesAdded != targetEdges) {
         return std::nullopt;
     }
-
     return mst;
 }
 
@@ -174,12 +155,35 @@ static fishnet::Option<G> kruskalImpl(
  * @return fishnet::Option<G> MST graph, or nullopt if graph is disconnected
  */
 template<Graph G, typename W>
-requires std::totally_ordered<std::invoke_result_t<W, const typename G::node_type&, const typename G::node_type&>>
+requires std::totally_ordered<std::invoke_result_t<W, const typename G::node_type&, const typename G::node_type&>> && std::is_default_constructible_v<G>
 fishnet::Option<G> kruskal(
     const G& graph,
     W const& weightFunction
 ) {
-    return __impl::kruskalImpl<G, W>(graph, weightFunction);
+    return __impl::kruskalImpl<G, W>(graph, weightFunction, G());
+}
+
+/**
+ * @brief Compute the Minimum Spanning Tree of a graph using Kruskal's algorithm.
+ * 
+ * Returns an Option containing the MST graph if the input graph is connected.
+ * Returns nullopt if the graph is disconnected.
+ * 
+ * @tparam G graph type
+ * @tparam W weight function type
+ * @param graph input graph
+ * @param weightFunction BiFunction computing the weight of an edge from its two endpoints
+ * @param outputGraph graph to store the MST result
+ * @return fishnet::Option<G> MST graph, or nullopt if graph is disconnected
+ */
+template<Graph G, typename W>
+requires std::totally_ordered<std::invoke_result_t<W, const typename G::node_type&, const typename G::node_type&>> && std::is_default_constructible_v<G>
+fishnet::Option<G> kruskal(
+    const G& graph,
+    W const& weightFunction,
+    G && outputGraph
+) {
+    return __impl::kruskalImpl<G, W>(graph, weightFunction, outputGraph);
 }
 
 } // namespace fishnet::graph::MST
