@@ -1,3 +1,4 @@
+#pragma once
 #include <fishnet/VectorLayer.hpp>
 #include <gdal/gdal.h>
 #include <gdal/ogr_core.h>
