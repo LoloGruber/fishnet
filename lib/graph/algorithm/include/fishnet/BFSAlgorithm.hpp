@@ -7,7 +7,6 @@
 #include <fishnet/FunctionalConcepts.hpp>
 
 #include "ConnectedComponents.hpp"
-#include "ConcurrentConnectedComponents.hpp"
 #include "SearchPath.hpp"
 #include "Neighborhood.hpp"
 
@@ -182,7 +181,7 @@ util::input_range_of<typename G::edge_type> auto getPath(const G & graph, const 
 }
 
 template<Graph G, Graph O> requires std::same_as<typename G::node_type, typename O::node_type>
-auto neighborhood(const G & graph, const typename G::node_type & node, size_t order, O && outputGraph){
+G neighborhood(const G & graph, const typename G::node_type & node, size_t order, O && outputGraph){
     outputGraph.addNode(node); // adding start node to output graph, so that it is included in neighborhood of order 0
     auto neighborhood = Neighborhood(std::forward<O>(outputGraph),node,order);
     __impl::bfs(graph,neighborhood,node);
@@ -190,15 +189,46 @@ auto neighborhood(const G & graph, const typename G::node_type & node, size_t or
 }
 
 template<Graph G> requires std::is_default_constructible_v<G>
-auto neighborhood(const G & graph, const typename G::node_type & node, size_t order){
+G neighborhood(const G & graph, const typename G::node_type & node, size_t order){
     return neighborhood(graph,node,order,G());
 }
 
 template<Graph G> requires (!std::is_default_constructible_v<G> && std::is_copy_constructible_v<G>)
-auto neighborhood(const G & graph, const typename G::node_type & node, size_t order){
+G neighborhood(const G & graph, const typename G::node_type & node, size_t order){
     auto copy = graph;
     copy.clear();
     return neighborhood(graph,node,order,copy);
 }
+
+/**
+ * @brief Find all subgraphs in the given graph
+ * 
+ * @tparam G 
+ * @param graph input graph
+ * @param emptyGraphProducer producer function to create an empty graph of type G
+ * @return fishnet::util::forward_range_of<G> range of subgraphs of type G
+ */
+template<Graph G>
+fishnet::util::forward_range_of<G> subgraphs(const G & graph, fishnet::util::Producer_t<G> emptyGraphProducer){
+    auto subgraphs = Subgraphs<G>(emptyGraphProducer);
+    __impl::bfs_all(graph,subgraphs);
+    return subgraphs.get();
+}
+
+/**
+ * @brief Find all subgraphs in the given graph
+ * 
+ * @tparam G 
+ * @param graph input graph
+ * @return fishnet::util::forward_range_of<G> range of subgraphs of type G
+ */
+template<Graph G> requires std::is_default_constructible_v<G>
+fishnet::util::forward_range_of<G> subgraphs(const G & graph){
+    auto subgraphs = Subgraphs<G>();
+    __impl::bfs_all(graph,subgraphs);
+    return subgraphs.get();
+}
+
+
 
 } // namespace fishnet::graph::BFS
