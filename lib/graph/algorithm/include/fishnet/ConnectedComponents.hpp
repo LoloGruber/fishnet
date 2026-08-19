@@ -2,6 +2,7 @@
 #include "SearchResult.hpp"
 #include <unordered_map>
 #include <fishnet/BlockingQueue.hpp>
+#include <fishnet/GraphModel.hpp>
 
 namespace fishnet::graph{
 
@@ -197,7 +198,7 @@ protected:
 public:
     Subgraphs() requires std::is_default_constructible_v<G>:Base(),graphProducer([](){return G();}){}
 
-    Subgraphs(fishnet::util::Producer_t<G> emptyGraphProducer):Base(),graphProducer(emptyGraphProducer){}
+    Subgraphs(fishnet::util::Producer<G> auto emptyGraphProducer):Base(),graphProducer(std::move(emptyGraphProducer)){}
 
     std::vector<G> get() const noexcept{
         return this->subgraphs;

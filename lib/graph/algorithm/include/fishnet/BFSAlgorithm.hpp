@@ -74,6 +74,11 @@ static void bfs_all(const Graph auto & g, auto& searchResult,fishnet::util::BiPr
         }
     }
 }
+
+template<Graph G>
+static void bfs_all(const Graph auto & g, auto& searchResult){
+    bfs_all<G>(g,searchResult,fishnet::util::TrueBiPredicate());
+}
 }
 
 namespace fishnet::graph::BFS {
@@ -209,9 +214,9 @@ G neighborhood(const G & graph, const typename G::node_type & node, size_t order
  * @return fishnet::util::forward_range_of<G> range of subgraphs of type G
  */
 template<Graph G>
-fishnet::util::forward_range_of<G> subgraphs(const G & graph, fishnet::util::Producer_t<G> emptyGraphProducer){
-    auto subgraphs = Subgraphs<G>(emptyGraphProducer);
-    __impl::bfs_all(graph,subgraphs);
+fishnet::util::forward_range_of<G> auto subgraphs(const G & graph, fishnet::util::Producer<G> auto emptyGraphProducer){
+    auto subgraphs = Subgraphs<G>(std::move(emptyGraphProducer));
+    __impl::bfs_all<G>(graph,subgraphs);
     return subgraphs.get();
 }
 
@@ -223,9 +228,9 @@ fishnet::util::forward_range_of<G> subgraphs(const G & graph, fishnet::util::Pro
  * @return fishnet::util::forward_range_of<G> range of subgraphs of type G
  */
 template<Graph G> requires std::is_default_constructible_v<G>
-fishnet::util::forward_range_of<G> subgraphs(const G & graph){
+fishnet::util::forward_range_of<G> auto subgraphs(const G & graph){
     auto subgraphs = Subgraphs<G>();
-    __impl::bfs_all(graph,subgraphs);
+    __impl::bfs_all<G>(graph,subgraphs);
     return subgraphs.get();
 }
 

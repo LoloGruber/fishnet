@@ -220,8 +220,43 @@ static std::optional<std::string> unsortedRangeEqual(std::ranges::forward_range 
     return std::nullopt;
 }
 
+/**
+ * @brief Checks if two ranges are equal, ignoring order, using a custom comparator
+ * 
+ * @param actual 
+ * @param expected 
+ * @param eq comparator function (T,T) -> bool
+ * @return std::optional<std::string> contains error message if ranges are not equal, std::nullopt otherwise
+ */
+static std::optional<std::string> unsortedRangeEqualCmp(std::ranges::forward_range auto const & actual, std::ranges::forward_range auto const & expected, auto const & eq) {
+    auto buildMessage = [](auto... vals){
+        std::stringstream ss;
+        ((ss << vals), ...);
+        return ss.str();
+    };
+    if(fishnet::util::size(actual) != fishnet::util::size(expected)){
+        return buildMessage("Ranges have a different size!\nExpecting: ", fishnet::util::size(expected), " but was: ", fishnet::util::size(actual));
+    }
+    for(const auto & expectedElement : expected){
+        bool containsExpectedElement = std::ranges::find_if(actual, [&expectedElement, &eq](const auto & actualElement){
+            return eq(actualElement, expectedElement);
+        }) != std::ranges::end(actual);
+        if(!containsExpectedElement){
+            return buildMessage("Actual does not contain expected element");
+        }
+    }
+    return std::nullopt;
+}
+
 void EXPECT_UNSORTED_RANGE_EQ(std::ranges::forward_range auto const & actual, std::ranges::forward_range auto const & expected) {
     auto result = unsortedRangeEqual(actual, expected);
+    if(result.has_value()){
+        FAIL() << result.value();
+    }
+}
+
+void EXPECT_UNSORTED_RANGE_EQ(std::ranges::forward_range auto const & actual, std::ranges::forward_range auto const & expected, auto const & eq) {
+    auto result = unsortedRangeEqualCmp(actual, expected, eq);
     if(result.has_value()){
         FAIL() << result.value();
     }
