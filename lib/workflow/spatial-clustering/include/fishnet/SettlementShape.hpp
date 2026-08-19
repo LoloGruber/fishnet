@@ -53,17 +53,11 @@ public:
             if(not spatialRef.IsSame(&layer.getSpatialReference()))
                 throw std::runtime_error("Spatial reference of files do not match!\nExpecting: "+std::string(spatialRef.GetName())+"\nActual: "+layer.getSpatialReference().GetName());
             FileReference fileRef = fileRefMapper(shp);
-            auto optFishnetIdField = layer.getSizeField(idLayerName);
-            if(not optFishnetIdField) {
-                throw std::runtime_error("Could not find FISHNET_ID field in shp file: \n"+shp.getPath().string());
-            }
+            auto fishnetIDField = layer.getSizeField(idLayerName).value_or_throw("Could not find FISHNET_ID field in shp file: \n"+shp.getPath().string());
             for(const auto & feature : layer.getFeatures()) {
-                auto optId = feature.getAttribute(optFishnetIdField.value());
-                if(not optId){
-                    throw std::runtime_error("No id exists for feature with geometry:\n"+ feature.getGeometry().toString());
-                }
+                auto id = feature.getAttribute(fishnetIDField).value_or_throw("Could not find FISHNET_ID attribute in feature with geometry:\n"+ feature.getGeometry().toString());
                 if(filter(feature.getGeometry()))
-                    settlements.emplace_back(optId.value(),fileRef,std::move(feature.getGeometry()));
+                    settlements.emplace_back(id,fileRef,std::move(feature.getGeometry()));
             }   
         }
         return settlements;        

@@ -1,6 +1,5 @@
 #pragma once
 #include <unordered_map>
-#include <type_traits>
 #include "BidirectionalMap.hpp"
 namespace fishnet::util {
 
@@ -33,10 +32,9 @@ public:
     }
 
     constexpr std::optional<Value> getFromAlternative(const AltKey & secondaryKey) const noexcept {
-        auto primary = keyMap.getFrom(secondaryKey);
-        if(not primary)
-            return std::nullopt;
-        return getFromKey(primary.value());
+        return keyMap.getFrom(secondaryKey).and_then([this](const Key & primaryKey) {
+            return getFromKey(primaryKey);
+        });
     }
 
     constexpr Value getFromKeyOrElse(const Key & key, Value defaultValue) const noexcept {
@@ -46,10 +44,7 @@ public:
     }
 
     constexpr Value getFromAlternativeOrElse(const AltKey & secondaryKey, Value defaultValue)const noexcept {
-        auto primary = keyMap.getFrom(secondaryKey);
-        if(not primary)
-            return defaultValue;
-        return getFromKeyOrElse(primary.value(),std::move(defaultValue)); // use type index 
+        return getFromAlternative(secondaryKey).value_or(std::move(defaultValue));
     }
 
     constexpr std::optional<Value> get(const Key & key) const noexcept requires(not std::convertible_to<Key,AltKey>) {
