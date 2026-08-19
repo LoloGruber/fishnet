@@ -2,6 +2,7 @@
 #include <fishnet/Graph.hpp>
 #include <fishnet/BFSAlgorithm.hpp>
 #include <fishnet/TestUtil.hpp>
+#include <fishnet/BinaryAdjacency.hpp>
 #include "GraphTestUtil.h"
 #include "IDNode.h"
 
@@ -82,6 +83,23 @@ TEST_F(SubgraphsTest, isolatedNodes) {
 
 TEST_F(SubgraphsTest, withCustomProducer) {
     auto producer = []() { return UndirectedGraph<IDNode>(); };
+    auto result = BFS::subgraphs(combinedUndirected, producer);
+    EXPECT_SIZE(result, 3);
+
+    std::vector<UndirectedGraph<IDNode>> expected = {compA, compB, compC};
+    EXPECT_GRAPHS_EQ(result, expected);
+}
+
+TEST_F(SubgraphsTest, withCustomResultGraph) {
+    auto producer = []() { 
+        return fishnet::graph::GraphFactory::UndirectedGraph(
+            fishnet::graph::BinaryAdjacency(
+                fishnet::graph::AdjacencyMap<IDNode>(), 
+                [](const IDNode& node) { return std::vector<uint8_t>();}, 
+                [](const std::vector<uint8_t>& data) { return IDNode(); }
+            )
+        );
+    };
     auto result = BFS::subgraphs(combinedUndirected, producer);
     EXPECT_SIZE(result, 3);
 

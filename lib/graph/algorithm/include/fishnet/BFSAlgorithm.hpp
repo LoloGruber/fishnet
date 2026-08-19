@@ -213,9 +213,9 @@ G neighborhood(const G & graph, const typename G::node_type & node, size_t order
  * @param emptyGraphProducer producer function to create an empty graph of type G
  * @return fishnet::util::forward_range_of<G> range of subgraphs of type G
  */
-template<Graph G>
-fishnet::util::forward_range_of<G> auto subgraphs(const G & graph, fishnet::util::Producer<G> auto emptyGraphProducer){
-    auto subgraphs = Subgraphs<G>(std::move(emptyGraphProducer));
+template<Graph G, typename P, typename R = std::invoke_result_t<std::decay_t<P>>> requires std::same_as<typename G::node_type, typename R::node_type>
+fishnet::util::forward_range_of<R> auto subgraphs(const G & graph, P && emptyGraphProducer){
+    auto subgraphs = Subgraphs<R>(std::move(emptyGraphProducer));
     __impl::bfs_all<G>(graph,subgraphs);
     return subgraphs.get();
 }
