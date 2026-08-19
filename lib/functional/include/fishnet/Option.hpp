@@ -84,4 +84,7 @@ public:
 template<typename T>
 Option(std::optional<T> opt) -> Option<T>;
 
+template<typename T>
+Option(T value) -> Option<T>;
+
 }  // namespace fishnet

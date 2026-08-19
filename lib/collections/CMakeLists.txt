@@ -1,5 +1,5 @@
 SET(CollectionsLib fishnet_collections)
 add_library(${CollectionsLib} INTERFACE)
 target_include_directories(${CollectionsLib} INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
-target_link_libraries(${CollectionsLib} INTERFACE ${FISHNET}::Concepts ${FISHNET}::Math)
+target_link_libraries(${CollectionsLib} INTERFACE ${FISHNET}::Concepts ${FISHNET}::Math ${FISHNET}::Functional)
 add_library(${FISHNET}::Collections ALIAS ${CollectionsLib})

@@ -2,7 +2,8 @@
 #include <mutex>
 #include <condition_variable>
 #include <queue>
-#include "Element.hpp"
+#include <fishnet/Option.hpp>
+
 namespace fishnet::util{
 /**
  * @brief Blocking queue implementation.
@@ -13,34 +14,30 @@ template<typename T>
 class BlockingQueue {
 protected:
     mutable std::mutex mutex;
-    std::queue<Element<T>> queue;
+    std::queue<fishnet::Option<T>> queue;
     std::condition_variable waitOnNotEmpty;
     std::condition_variable waitOnNotFull;
-    static inline  Element<T> POISON_PILL = Element<T>::POISON_PILL;
+    static inline fishnet::Option<T> POISON_PILL = std::nullopt;
 public:
 
     void putPoisonPill() {
         this->put(POISON_PILL);
     }
 
-    Element<T> getPoisonPill(){
+    const fishnet::Option<T> & getPoisonPill(){
         return POISON_PILL;
     }
 
-    virtual void put(Element<T> element){
+    virtual void put(fishnet::Option<T> element){
         {
             std::unique_lock<std::mutex> lock(mutex);
-            this->queue.push(Element{element});
+            this->queue.push(std::move(element));
         }
         waitOnNotEmpty.notify_one();
     }
 
-    void put(T element) {
-        put(Element{std::move(element)});
-    }
-
-    Element<T> take(){
-        Element<T> val = POISON_PILL;
+    fishnet::Option<T> take(){
+        fishnet::Option<T> val = POISON_PILL;
         {
             std::unique_lock<std::mutex>lock(mutex);
             while(this->queue.empty()){

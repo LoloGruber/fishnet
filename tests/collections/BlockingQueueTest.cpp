@@ -46,7 +46,7 @@ struct TestConsumer{
                 q->putPoisonPill();
                 return;
             }
-            res.push_back(value.get());
+            res.push_back(value.value());
         }    
     }
 
@@ -61,7 +61,7 @@ struct TestConsumer{
                 return;
             }
             std::lock_guard<std::mutex> l(mut);
-            res.push_back(value.get());
+            res.push_back(value.value());
         }    
     }
 };

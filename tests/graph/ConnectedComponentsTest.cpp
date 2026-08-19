@@ -111,15 +111,15 @@ TEST_F(ConnectedComponentsTest, getAsMap){
 
 struct XYNodeConsumer{
     void operator()(std::shared_ptr<BlockingQueue<std::pair<int,std::vector<XYNode>>>> q, std::vector<std::vector<XYNode>> & result) {
-        auto val = Element(std::pair<int,std::vector<XYNode>>(-1,{}));
-        val.get().second.push_back(XYNode(-1,-1));
-        while(val != q->getPoisonPill()){
+        auto val = fishnet::Option(std::pair<int,std::vector<XYNode>>(-1,{}));
+        val.value().second.push_back(XYNode(-1,-1));
+        while(val){
             val = q->take();
             if(not val) {
                 q->putPoisonPill();
                 return;
             }
-            result.push_back(val.get().second);
+            result.push_back(val.value().second);
         }
     }
 };

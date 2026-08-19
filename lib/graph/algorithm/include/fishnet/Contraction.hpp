@@ -29,16 +29,16 @@ using QueuePtr = std::shared_ptr<QueueType<N>>;
 template<typename N,typename R>
 static std::vector<std::pair<int,R>> mergeWorker(QueuePtr<N>  queue, util::ReduceFunction<std::vector<N>,R> auto const& reduceFunction){
     std::vector<std::pair<int,R>> mergeResult;
-    auto current = fishnet::util::Element<std::pair<int,std::vector<N>>>::POISON_PILL;
+    fishnet::Option<std::pair<int,std::vector<N>>> current = std::nullopt;
     do{
         current = queue->take();
         if(not current) {
             queue->putPoisonPill();
             break;
         }
-        const auto & [componentId, nodes] = current.get();
+        const auto & [componentId, nodes] = current.value();
         mergeResult.emplace_back(componentId, reduceFunction(std::move(nodes)));
-    }while(current != queue->getPoisonPill());
+    }while(current);
     return mergeResult;
 }
 

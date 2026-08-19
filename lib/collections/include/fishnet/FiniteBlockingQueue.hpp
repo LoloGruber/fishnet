@@ -20,11 +20,9 @@ public:
         this->capacity = capacity;
     }
 
-    FiniteBlockingQueue():BlockingQueue<T>(){
-        this->capacity = (size_t) -1; // == size_t::max()
-    }
+    FiniteBlockingQueue():BlockingQueue<T>(), capacity((size_t) -1) {}
 
-    void put(Element<T> element)override{
+    void put(fishnet::Option<T> element)override{
         std::unique_lock<std::mutex> lock(this->mutex);
         while(this->queue.size()>= this->capacity) {
             this->waitOnNotFull.wait(lock);
