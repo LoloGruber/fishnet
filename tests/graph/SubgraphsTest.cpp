@@ -61,7 +61,7 @@ TEST_F(SubgraphsTest, multipleComponentsUndirected) {
     auto result = BFS::subgraphs(combinedUndirected);
     EXPECT_SIZE(result, 3);
 
-    std::vector<UndirectedGraph<IDNode>> expected = {compA, compB, UndirectedGraph<IDNode>(std::vector<IDNode>{IDNode()})};
+    std::vector<UndirectedGraph<IDNode>> expected = {compA, compB, compC};
     EXPECT_GRAPHS_EQ(result, expected);
 }
 
