@@ -15,9 +15,15 @@ namespace fishnet {
  * 
  */
 class OGRGeometryAdapter{
+private:
+    struct OGRGeometryDeleter {
+        void operator()(OGRGeometry* geom) const {
+            OGRGeometryFactory::destroyGeometry(geom);
+        }
+    };
 public: 
 template<typename T>
-using OGRUniquePtr = std::unique_ptr<T>;
+using OGRUniquePtr = std::unique_ptr<T, OGRGeometryDeleter>;
 
 static fishnet::geometry::Vec2D<fishnet::math::DEFAULT_NUMERIC> fromOGR(const OGRPoint & ogrPoint) noexcept {
     return fishnet::geometry::Vec2D(ogrPoint.getX(), ogrPoint.getY());
