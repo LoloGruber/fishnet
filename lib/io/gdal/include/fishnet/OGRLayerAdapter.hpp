@@ -77,29 +77,43 @@ public:
         for(int i = 0; i < layerDef->GetFieldCount();i++) {
             addOGRField(layer, layerDef->GetFieldDefn(i),i);
         }
+        auto addFeatureIfPresent = [&layer](std::optional<G> && geometry, OGRFeature * ogrFeaturePtr) -> void{
+            if (not geometry) 
+                return;
+            Feature<G> f {std::move(geometry.value())};
+            for(const auto & [_,fieldDefinition]: layer.getFieldsMap()){
+                std::visit(AddAttributeVisitor(&f,ogrFeaturePtr),fieldDefinition);
+            }
+            layer.addFeature(std::move(f));
+        };
         for(const auto & ogrFeature: ogrLayer){
             auto geo = ogrFeature->GetGeometryRef();
+            if (!geo)
+                continue;
+            auto actualWkbType = wkbFlatten(geo->getGeometryType());
+            auto expectedWkbType = GeometryTypeWKBAdapter::toWKB(G::type);
             if constexpr(G::type == fishnet::geometry::GeometryType::MULTIPOLYGON){
-                if(geo && wkbFlatten(geo->getGeometryType()) == GeometryTypeWKBAdapter::toWKB(G::polygon_type::type)) {
+                if(actualWkbType == GeometryTypeWKBAdapter::toWKB(G::polygon_type::type)) {
                     auto converted = OGRGeometryAdapter::fromOGR<G::polygon_type::type>(*geo, checked);
-                    if (not converted) 
-                        continue;
-                    Feature<G> f {{converted.value()}};
-                    for(const auto & [_,fieldDefinition]: layer.getFieldsMap()){
-                        std::visit(AddAttributeVisitor(&f,ogrFeature.get()),fieldDefinition);
-                    }
-                    layer.addFeature(std::move(f));
+                    addFeatureIfPresent(std::move(converted), ogrFeature.get());
+                    continue;
                 }                
             }
-            if(geo && wkbFlatten(geo->getGeometryType()) == GeometryTypeWKBAdapter::toWKB(G::type)) {
+            if(actualWkbType == expectedWkbType) {
                 auto converted = OGRGeometryAdapter::fromOGR<G::type>(*geo, checked);
-                if (not converted) 
-                    continue;
-                Feature<G> f {converted.value()};
-                for(const auto & [_,fieldDefinition]: layer.getFieldsMap()){
-                    std::visit(AddAttributeVisitor(&f,ogrFeature.get()),fieldDefinition);
+                addFeatureIfPresent(std::move(converted), ogrFeature.get());
+                continue;
+            }
+            //Downcast MultiPolygon to Polygon if G expects Polygon and MultiPolygon has 1 part
+            else if constexpr (G::type == fishnet::geometry::GeometryType::POLYGON) {
+                if (actualWkbType == wkbMultiPolygon) {
+                    auto * multiPoly = geo->toMultiPolygon();
+                    if (multiPoly && multiPoly->getNumGeometries() == 1) {
+                        const auto * singlePoly = multiPoly->getGeometryRef(0);
+                        auto converted = OGRGeometryAdapter::fromOGR<G::type>(*singlePoly, checked);
+                        addFeatureIfPresent(std::move(converted), ogrFeature.get());
+                    }
                 }
-                layer.addFeature(std::move(f));
             }
         }
         layer.setSpatialReference(*ogrLayer->GetSpatialRef()->Clone());
