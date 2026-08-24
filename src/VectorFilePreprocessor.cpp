@@ -42,7 +42,7 @@ private:
     }
 
     void writeOutput(fishnet::util::forward_range_of<fishnet::Feature<G>> auto && features, fishnet::VectorLayer<G> & output) const {
-        auto idField = output.getSizeField(Task::FISHNET_ID_FIELD).value_or(output.addSizeField(Task::FISHNET_ID_FIELD).value_or_throw());
+        auto idField = output.getSizeField(Task::FISHNET_ID_FIELD).or_else([&output](){return output.addSizeField(Task::FISHNET_ID_FIELD);}).value_or_throw();
         auto geometryHasher = std::hash<G>();
         for(auto && feature: features){
             feature.setAttribute(idField, fishnet::normalizeToShpFileIntField(geometryHasher(feature.getGeometry())));

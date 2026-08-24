@@ -196,10 +196,10 @@ public:
     }
 
     template<FieldValueType T>
-    constexpr fishnet::Option<FieldDefinition<T>> getField(const std::string & fieldName) const noexcept {
-        fishnet::Option<FieldDefinition<T>> optFieldDef = std::nullopt;
+    constexpr fishnet::Either<FieldDefinition<T>,error_type> getField(const std::string & fieldName) const noexcept {
+        fishnet::Either<FieldDefinition<T>,error_type> optFieldDef = std::unexpected(std::string("Field \"" + fieldName + "\" does not exist"));
         if(not fields.contains(fieldName)) {
-            return std::nullopt;
+            return optFieldDef;
         }
         // test whether the FieldVariant with name == fieldName has the correct value_type
         std::visit([&optFieldDef](auto && fieldVariant){
@@ -211,19 +211,19 @@ public:
         return optFieldDef;
     }
 
-    constexpr fishnet::Option<FieldDefinition<double>> getDoubleField(const std::string  & fieldName) const noexcept {
+    constexpr fishnet::Either<FieldDefinition<double>,error_type> getDoubleField(const std::string  & fieldName) const noexcept {
         return getField<double>(fieldName);
     }
 
-    constexpr fishnet::Option<FieldDefinition<int>> getIntegerField(const std::string  & fieldName) const noexcept {
+    constexpr fishnet::Either<FieldDefinition<int>,error_type> getIntegerField(const std::string  & fieldName) const noexcept {
         return getField<int>(fieldName);
     }
 
-    constexpr fishnet::Option<FieldDefinition<size_t>> getSizeField(const std::string & fieldName) const noexcept  {
+    constexpr fishnet::Either<FieldDefinition<size_t>,error_type> getSizeField(const std::string & fieldName) const noexcept  {
         return getField<size_t>(fieldName);
     }
 
-    constexpr fishnet::Option<FieldDefinition<std::string>> getTextField(const std::string  & fieldName) const noexcept {
+    constexpr fishnet::Either<FieldDefinition<std::string>,error_type> getTextField(const std::string  & fieldName) const noexcept {
         return getField<std::string>(fieldName);
     }
 
