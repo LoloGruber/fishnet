@@ -6,13 +6,13 @@
 namespace fishnet::util{
 
 template<typename F, typename T, typename R>
-concept UnaryFunction = std::convertible_to<F,std::function<R(const T &)>>;
+concept UnaryFunction = std::invocable<F, T> && std::convertible_to<std::invoke_result_t<F,T>, R>;
 
 template<typename T,typename R>
 using UnaryFunction_t = std::function<R(const T &)>;
 
 template<typename F, typename T, typename U,typename R>
-concept BiFunction = std::convertible_to<F,std::function<R(const T &, const U &)>>;
+concept BiFunction = std::invocable<F, T, U> && std::convertible_to<std::invoke_result_t<F,T,U>, R>;
 
 template<typename T, typename U, typename R>
 using BiFunction_t = std::function<R(const T &, const U &)>;
@@ -45,7 +45,7 @@ template<typename T, typename  R = T>
 using BiPredicate_t = std::function<bool(const T &, const R &)>;
 
 template<typename F, typename T>
-concept Producer = std::convertible_to<F,std::function<T()>>;
+concept Producer = std::invocable<F> && std::convertible_to<std::invoke_result_t<F>, T>;
 
 template<typename T>
 using Producer_t = std::function<T()>;
