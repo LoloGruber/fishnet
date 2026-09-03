@@ -104,7 +104,9 @@ public:
     }
 
     constexpr void addAllGeometry(util::forward_range_of<G> auto && geometries) noexcept {
-        std::ranges::for_each(geometries,[this](const auto & g){ this->addGeometry(g);});
+        for(auto && geometry:geometries){
+            this->addGeometry(std::forward<G>(geometry));
+        }
     }
 
     /**
@@ -129,6 +131,12 @@ public:
 
     constexpr void addFeature(const Feature<G> & feature) noexcept {
         features.push_back(feature);
+    }
+
+    constexpr void addFeatures(util::forward_range_of<Feature<G>> auto && features) noexcept {
+        for(auto && feature:features){
+            this->addFeature(std::forward<Feature<G>>(feature));
+        }
     }
 
     constexpr bool containsFeature(const Feature<G> & feature) noexcept {

@@ -89,6 +89,21 @@ TEST_F(VectorLayerTest, removeGeometry) {
     EXPECT_NOT_CONTAINS(pointLayer.getGeometries(),p1);
 }
 
+TEST_F(VectorLayerTest, addFeature) {
+    Feature<Vec2DReal> f{Vec2DReal(0,0)};
+    pointLayer.addFeature(f);
+    EXPECT_CONTAINS(pointLayer.getFeatures(),f);
+    EXPECT_SIZE(pointLayer.getFeatures(),3);
+}
+
+TEST_F(VectorLayerTest, addFeatures) {
+    std::vector<Feature<Vec2DReal>> features = {Feature<Vec2DReal>(Vec2DReal(0,0)), Feature<Vec2DReal>(Vec2DReal(1,1))};
+    pointLayer.addFeatures(features);
+    EXPECT_SIZE(pointLayer.getFeatures(),4);
+    EXPECT_CONTAINS(pointLayer.getFeatures(),features[0]);
+    EXPECT_CONTAINS(pointLayer.getFeatures(),features[1]);
+}
+
 TEST_F(VectorLayerTest, getSpatialReference) {
     const char * wktSpatRef = "GEODCRS[\"WGS 84\",DATUM[\"World Geodetic System 1984\",ELLIPSOID[\"WGS 84\", 6378137, 298.257223563, LENGTHUNIT[\"metre\", 1]]],CS[ellipsoidal, 2],AXIS[\"Latitude (lat)\", north, ORDER[1]],AXIS[\"Longitude (lon)\", east, ORDER[2]],ANGLEUNIT[\"degree\", 0.0174532925199433]]";
     OGRSpatialReference spatRef = OGRSpatialReference(wktSpatRef);
