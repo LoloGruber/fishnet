@@ -57,7 +57,7 @@ template<typename T>
 using Consumer_t = UnaryFunction_t<T,void>;
 
 template<typename F>
-concept Task = std::convertible_to<F,std::function<void()>>;
+concept Runnable = std::convertible_to<F,std::function<void()>>;
 
 template<typename Hasher,typename Key>
 concept HashFunction = UnaryFunction<Hasher,Key,size_t>;

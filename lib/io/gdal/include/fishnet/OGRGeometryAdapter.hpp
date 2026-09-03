@@ -1,7 +1,8 @@
 #pragma once
 #include <gdal/gdal.h>
 #include <gdal/ogr_geometry.h>
-#include <optional>
+#include <spdlog/spdlog.h>
+#include <fishnet/Option.hpp>
 #include <fishnet/GeometryObject.hpp>
 #include <fishnet/Vec2D.hpp>
 #include <fishnet/Ring.hpp>
@@ -34,7 +35,7 @@ static OGRUniquePtr<OGRPoint> toOGR(const fishnet::geometry::Vec2D<T> & point) n
     return OGRUniquePtr<OGRPoint>(new OGRPoint(double(point.x),double(point.y)));
 }
 
-static std::optional<fishnet::geometry::Ring<fishnet::math::DEFAULT_NUMERIC>> fromOGR(const OGRLinearRing& ogrRing) noexcept {
+static fishnet::Option<fishnet::geometry::Ring<fishnet::math::DEFAULT_NUMERIC>> fromOGR(const OGRLinearRing& ogrRing) noexcept {
     std::vector<fishnet::geometry::Vec2D<fishnet::math::DEFAULT_NUMERIC>> pointsInOrder;
     for(const auto & ogrPoint : ogrRing){
         pointsInOrder.push_back(fromOGR(ogrPoint));
@@ -42,7 +43,8 @@ static std::optional<fishnet::geometry::Ring<fishnet::math::DEFAULT_NUMERIC>> fr
     try{
         return fishnet::geometry::Ring<fishnet::math::DEFAULT_NUMERIC>(pointsInOrder);
     }catch(std::invalid_argument & exception){
-        return std::nullopt;
+        spdlog::warn("Invalid ring geometry: {}", exception.what());
+        return {};
     }
 }
 
@@ -57,23 +59,22 @@ static OGRUniquePtr<OGRLinearRing> toOGR(fishnet::geometry::IRing auto const & r
     return ogrRing;
 }
 
-static std::optional<fishnet::geometry::Polygon<fishnet::math::DEFAULT_NUMERIC>> fromOGR(const OGRPolygon & ogrPolygon, bool checked = false) noexcept {
+static fishnet::Option<fishnet::geometry::Polygon<fishnet::math::DEFAULT_NUMERIC>> fromOGR(const OGRPolygon & ogrPolygon, bool checked = false) noexcept {
     try{
         auto ogrBoundary = ogrPolygon.getExteriorRing();
-        auto fishnetBoundary = fromOGR(*ogrBoundary);
-        if(not fishnetBoundary) 
-            return std::nullopt;
-        std::vector<fishnet::geometry::Ring<fishnet::math::DEFAULT_NUMERIC>> holes;
-        for(int i = 0; i < ogrPolygon.getNumInteriorRings(); i++){
-            auto hole = fromOGR(*(ogrPolygon.getInteriorRing(i)));
-            if(not hole) 
-                continue;
-            holes.push_back(hole.value());
-        }
-        return fishnet::geometry::Polygon<fishnet::math::DEFAULT_NUMERIC>(fishnetBoundary.value(),holes, checked);
+        return fromOGR(*ogrBoundary).transform([checked,&ogrPolygon](auto && ring){
+            std::vector<fishnet::geometry::Ring<fishnet::math::DEFAULT_NUMERIC>> holes;
+            auto inserter = [&holes](auto && hole){
+                holes.push_back(std::move(hole));
+            };
+            for(int i = 0; i < ogrPolygon.getNumInteriorRings(); i++){
+                fromOGR(*(ogrPolygon.getInteriorRing(i))).if_value(inserter);
+            }
+            return fishnet::geometry::Polygon<fishnet::math::DEFAULT_NUMERIC>(ring,holes, checked);
+        });
     }catch(fishnet::geometry::InvalidGeometryException & e){
-        std::cerr << "Invalid geometry: " << e.what() << std::endl;
-        return std::nullopt;
+        spdlog::warn("Invalid polygon geometry: {}", e.what());
+        return {};
     }
 }
 
@@ -95,19 +96,20 @@ static OGRUniquePtr<OGRMultiPolygon> toOGR(fishnet::geometry::IMultiPolygon auto
     // https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry maybe change direction of inner rings
 }
 
-static std::optional<fishnet::geometry::MultiPolygon<fishnet::geometry::Polygon<fishnet::math::DEFAULT_NUMERIC>>> fromOGR(const OGRMultiPolygon & multiPolygon, bool checked = false) noexcept {
+static fishnet::Option<fishnet::geometry::MultiPolygon<fishnet::geometry::Polygon<fishnet::math::DEFAULT_NUMERIC>>> fromOGR(const OGRMultiPolygon & multiPolygon, bool checked = false) noexcept {
     try{
         
         std::vector<fishnet::geometry::Polygon<fishnet::math::DEFAULT_NUMERIC>> polygons;
+        auto inserter = [&polygons](auto && polygon){
+            polygons.push_back(std::move(polygon));
+        };
         for(auto ogrPolygonPtr : multiPolygon) {
-            auto polygon = fromOGR(*ogrPolygonPtr);
-            if (not polygon)
-                continue;
-            polygons.push_back(polygon.value());
+            fromOGR(*ogrPolygonPtr).if_value(inserter);
         }
         return fishnet::geometry::MultiPolygon<fishnet::geometry::Polygon<double>>(polygons, checked);
     }catch(fishnet::geometry::InvalidGeometryException & ex) {
-        return std::nullopt;
+        spdlog::warn("Invalid multipolygon geometry: {}", ex.what());
+        return {};
     }
 }
 
