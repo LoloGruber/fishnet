@@ -17,7 +17,7 @@ class GDALInitializer {
                 return;
             initialized = true;
             GDALAllRegister();
-            // further initialization if necessary
+            CPLSetConfigOption("OSR_DEFAULT_AXIS_MAPPING_STRATEGY","TRADITIONAL_GIS_ORDER");
         }
 };
 }
