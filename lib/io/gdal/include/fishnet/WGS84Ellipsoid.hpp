@@ -5,13 +5,6 @@
 #include <fishnet/Degrees.hpp>
 #include <fishnet/Angle.hpp>
 #include <fishnet/GeometryObject.hpp>
-#include <fishnet/Ring.hpp>
-#include <fishnet/Polygon.hpp>
-#include <fishnet/SimplePolygon.hpp>
-#include <algorithm>
-#include <ranges>
-#include "gdal/gdal.h"
-#include "gdal/ogr_geometry.h"
 #include "gdal/ogr_spatialref.h"
 #include "OGRGeometryAdapter.hpp"
 
@@ -39,25 +32,24 @@ private:
         return pow(angle.sin(), 2);
     }
 
-    /**
-     * @brief Projection to metric coordiante system
-     * @deprecated 
-     * @param ring ring to be projected
-     * @return object fulfilling the IRing concept
-     */
-    static auto projectToEckertIV(geometry::IRing auto const & ring) noexcept {
-        OGRSpatialReference targetRef = OGRSpatialReference();
-        targetRef.SetEckertIV(ring.centroid().x, 0, 0);
-        OGRCoordinateTransformation *transformation = OGRCreateCoordinateTransformation(&spatialReference, &targetRef);
-        auto ogrPolygonPointer = OGRGeometryAdapter::toOGR(ring);
-        ogrPolygonPointer->transform(transformation);
-        OCTDestroyCoordinateTransformation(transformation);
-        return OGRGeometryAdapter::fromOGR(*ogrPolygonPointer).value();
+    static auto projectToMetric(fishnet::geometry::Shape auto const & shape) {
+        using T = std::remove_cvref_t<decltype(shape)>;
+        auto centroid = shape.centroid();
+        OGRSpatialReference metric;
+        metric.SetAE(centroid.y, centroid.x, 0, 0);
+        metric.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        auto asOGR = OGRGeometryAdapter::toOGR(shape);
+        OGRCoordinateTransformation * toMetric = OGRCreateCoordinateTransformation(&spatialReference, &metric);     
+        if(toMetric == nullptr || asOGR == nullptr || asOGR->transform(toMetric) != OGRERR_NONE)
+            throw std::runtime_error("Could not transform geometry to metric");
+        OCTDestroyCoordinateTransformation(toMetric);
+        return OGRGeometryAdapter::fromOGR<T::type>(*asOGR).value_or_throw();
     }
 
     static inline OGRSpatialReference initWGS84(){
         OGRSpatialReference wgs84 = OGRSpatialReference();
         wgs84.importFromEPSG(4326);
+        wgs84.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         return wgs84;
     }
 
@@ -104,40 +96,19 @@ public:
      * @param exact applies additional correction for the distances
      * @return distance between p and q in meters
      */
-    static double distance(geometry::IPoint auto const & p, geometry::IPoint auto const & q,bool exact = true)noexcept{
+    static double distance(fishnet::geometry::IPoint auto const & p, fishnet::geometry::IPoint auto const & q,bool exact = true)noexcept{
         return distance(p.x, p.y, q.x, q.y, exact);
     }
 
     /**
-     * Calculate the area of a Polygon in m² by projection
-     * @param polygon source polygon
+     * Calculate the area of a Shape in m² by projection
+     * @param shape Shape to calculate the area of
      * @deprecated
+     * @throws runtime_error when the projection to metric fails
      * @return area in m²
      */
-    static double area(geometry::IPolygon auto const & polygon)noexcept{
-        return geometry::Polygon(projectToEckertIV(polygon.getBoundary()), std::views::transform(polygon.getHoles(), [](const auto & ring){ return projectToEckertIV(
-                ring);})).area();
-    }
-
-    /**
-     * @brief 
-     * @deprecated
-     * @param ring 
-     * @return double 
-     */
-    static double area(geometry::IRing auto const & ring) noexcept {
-        return projectToEckertIV(ring).area();
-    }
-    
-    /**
-     * @brief 
-     * @deprecated
-     * @param ring 
-     * @return double 
-     */
-    template<typename T>
-    static double area(geometry::SimplePolygon<T> const & polygon) noexcept {
-        return area(polygon.getBoundary());
+    static double area(fishnet::geometry::Shape auto const & shape){
+        return projectToMetric(shape).area();
     }
 };
 }
