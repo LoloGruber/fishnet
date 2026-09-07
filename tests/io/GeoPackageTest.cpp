@@ -12,7 +12,7 @@ namespace fs = std::filesystem;
 class GeoPackageTest : public ::testing::Test {
 protected:
     fs::path tempFile;
-    fs::path sampleFile = fishnet::util::PathHelper::projectDirectory() / "data" / "samples" / "Corvara_IT_Africapolis.gpkg";
+    fs::path sampleFile = fishnet::util::PathHelper::projectDirectory() / "data" / "samples" / "Corvara_IT.gpkg";
     void SetUp() override {
         tempFile = fs::temp_directory_path() / "test.gpkg";
         std::ofstream(tempFile).close(); // Create an empty GeoPackage file
@@ -91,30 +91,30 @@ TEST_F(GeoPackageTest, exists) {
 
 TEST_F(GeoPackageTest, readNonExistentFile) {
     fs::path nonExistent = fs::temp_directory_path() / "nonexistent.gpkg";
-    auto result = VectorIO::tryRead<geometry::MultiPolygon<geometry::Polygon<double>>>(GeoPackage(nonExistent));
+    auto result = VectorIO::tryRead<fishnet::geometry::Polygon<double>>(GeoPackage(nonExistent));
     EXPECT_FALSE(result.has_value());
 }
 
 TEST_F(GeoPackageTest, readSampleFile) {
-    auto result = VectorIO::tryRead<geometry::MultiPolygon<geometry::Polygon<double>>>(GeoPackage(sampleFile));
+    auto result = VectorIO::tryRead<fishnet::geometry::Polygon<double>>(GeoPackage(sampleFile));
     EXPECT_TRUE(result.has_value());
     auto layer = result.value();
-    EXPECT_SIZE(layer.getFeatures(), 7);
+    EXPECT_SIZE(layer.getFeatures(), 830);
 }
 
 TEST_F(GeoPackageTest, writeAndReadBack) {
     fs::path outputFile = fs::temp_directory_path() / "test_output.gpkg";
     // Read original
-    auto original = VectorIO::read<geometry::MultiPolygon<geometry::Polygon<double>>>(GeoPackage(sampleFile));
-    EXPECT_SIZE(original.getFeatures(), 7);
+    auto original = VectorIO::read<fishnet::geometry::Polygon<double>>(GeoPackage(sampleFile));
+    EXPECT_SIZE(original.getFeatures(), 830);
     
     // Write to new file
     auto written = VectorIO::write(original, GeoPackage(outputFile));
     EXPECT_EXISTS(outputFile);
     
     // Read back
-    auto readBack = VectorIO::read<geometry::MultiPolygon<geometry::Polygon<double>>>(written);
-    EXPECT_SIZE(readBack.getFeatures(), 7);
+    auto readBack = VectorIO::read<fishnet::geometry::Polygon<double>>(written);
+    EXPECT_SIZE(readBack.getFeatures(), 830);
     
     // Cleanup
     fs::remove(outputFile);
@@ -122,29 +122,29 @@ TEST_F(GeoPackageTest, writeAndReadBack) {
 
 TEST_F(GeoPackageTest, genericReadAbstractVectorFile) {
     GeoPackage gpkg(sampleFile);
-    auto layer = VectorIO::read<geometry::MultiPolygon<geometry::Polygon<double>>>(static_cast<const AbstractVectorFile&>(gpkg));
-    EXPECT_SIZE(layer.getFeatures(), 7);
+    auto layer = VectorIO::read<fishnet::geometry::Polygon<double>>(static_cast<const AbstractVectorFile&>(gpkg));
+    EXPECT_SIZE(layer.getFeatures(), 830);
 }
 
 TEST_F(GeoPackageTest, genericTryReadAbstractVectorFile) {
     GeoPackage gpkg(sampleFile);
-    auto result = VectorIO::tryRead<geometry::MultiPolygon<geometry::Polygon<double>>>(static_cast<const AbstractVectorFile&>(gpkg));
+    auto result = VectorIO::tryRead<fishnet::geometry::Polygon<double>>(static_cast<const AbstractVectorFile&>(gpkg));
     EXPECT_TRUE(result.has_value());
-    EXPECT_SIZE(result.value().getFeatures(), 7);
+    EXPECT_SIZE(result.value().getFeatures(), 830);
 }
 
 TEST_F(GeoPackageTest, genericWriteAbstractVectorFile) {
     fs::path outputFile = fs::temp_directory_path() / "test_generic_output.gpkg";
     
-    auto original = VectorIO::read<geometry::MultiPolygon<geometry::Polygon<double>>>(GeoPackage(sampleFile));
+    auto original = VectorIO::read<fishnet::geometry::Polygon<double>>(GeoPackage(sampleFile));
     
     GeoPackage outputGpkg(outputFile);
     auto result = VectorIO::write(original, static_cast<const AbstractVectorFile&>(outputGpkg));
     EXPECT_EXISTS(outputFile);
     
     // Verify it was written correctly
-    auto readBack = VectorIO::read<geometry::MultiPolygon<geometry::Polygon<double>>>(GeoPackage(outputFile));
-    EXPECT_SIZE(readBack.getFeatures(), 7);
+    auto readBack = VectorIO::read<fishnet::geometry::Polygon<double>>(GeoPackage(outputFile));
+    EXPECT_SIZE(readBack.getFeatures(), 830);
     
     // Cleanup
     fs::remove(outputFile);
