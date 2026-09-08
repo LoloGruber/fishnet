@@ -35,13 +35,13 @@ static OGRUniquePtr<OGRPoint> toOGR(const fishnet::geometry::Vec2D<T> & point) n
     return OGRUniquePtr<OGRPoint>(new OGRPoint(double(point.x),double(point.y)));
 }
 
-static fishnet::Option<fishnet::geometry::Ring<fishnet::math::DEFAULT_NUMERIC>> fromOGR(const OGRLinearRing& ogrRing) noexcept {
+static fishnet::Option<fishnet::geometry::Ring<fishnet::math::DEFAULT_NUMERIC>> fromOGR(const OGRLinearRing& ogrRing, bool checked = false) noexcept {
     std::vector<fishnet::geometry::Vec2D<fishnet::math::DEFAULT_NUMERIC>> pointsInOrder;
     for(const auto & ogrPoint : ogrRing){
         pointsInOrder.push_back(fromOGR(ogrPoint));
     }
     try{
-        return fishnet::geometry::Ring<fishnet::math::DEFAULT_NUMERIC>(pointsInOrder);
+        return fishnet::geometry::Ring<fishnet::math::DEFAULT_NUMERIC>(pointsInOrder, checked);
     }catch(std::invalid_argument & exception){
         spdlog::warn("Invalid ring geometry: {}", exception.what());
         return {};
@@ -62,13 +62,13 @@ static OGRUniquePtr<OGRLinearRing> toOGR(fishnet::geometry::IRing auto const & r
 static fishnet::Option<fishnet::geometry::Polygon<fishnet::math::DEFAULT_NUMERIC>> fromOGR(const OGRPolygon & ogrPolygon, bool checked = false) noexcept {
     try{
         auto ogrBoundary = ogrPolygon.getExteriorRing();
-        return fromOGR(*ogrBoundary).transform([checked,&ogrPolygon](auto && ring){
+        return fromOGR(*ogrBoundary, checked).transform([checked,&ogrPolygon](auto && ring){
             std::vector<fishnet::geometry::Ring<fishnet::math::DEFAULT_NUMERIC>> holes;
             auto inserter = [&holes](auto && hole){
                 holes.push_back(std::move(hole));
             };
             for(int i = 0; i < ogrPolygon.getNumInteriorRings(); i++){
-                fromOGR(*(ogrPolygon.getInteriorRing(i))).if_value(inserter);
+                fromOGR(*(ogrPolygon.getInteriorRing(i)), checked).if_value(inserter);
             }
             return fishnet::geometry::Polygon<fishnet::math::DEFAULT_NUMERIC>(ring,holes, checked);
         });

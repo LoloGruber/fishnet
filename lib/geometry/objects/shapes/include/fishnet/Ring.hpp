@@ -95,14 +95,17 @@ public:
     using numeric_type = T;
     constexpr static GeometryType type = GeometryType::RING;
 
-    Ring(util::random_access_range_of<Vec2D<T>> auto const& points){
-        this->segments = std::move(toSegments(points));
-        verifyPolygonalRing<T>(this->segments);
+    Ring(util::random_access_range_of<Vec2D<T>> auto const& points, bool checked = false):segments(toSegments(points)){
+        if(not checked){
+            verifyPolygonalRing<T>(this->segments);
+        }
     }
 
-    Ring(util::random_access_range_of<Segment<T>> auto const& segments):segments(segments){
+    Ring(util::random_access_range_of<Segment<T>> auto && segments, bool checked = false):segments(std::forward<decltype(segments)>(segments)){
         makeValid();
-        verifyPolygonalRing<T>(this->segments);
+        if(not checked){
+            verifyPolygonalRing<T>(this->segments);
+        }
     }
 
     Ring(std::initializer_list<Vec2D<T>> && points){
