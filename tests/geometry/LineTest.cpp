@@ -5,31 +5,31 @@ using namespace fishnet::geometry;
 
 TEST(LineTest, InitTwoPoints){
     auto l1 = Line(Vec2D{0,0},Vec2D(1,0));
-    EXPECT_EQ(l1.p,Vec2D(0,0));
-    EXPECT_EQ(l1.q,Vec2D(1,0));
-    EXPECT_EQ(Line(Vec2D(1,1),Vec2D(1.11,1.11)).q, Vec2D(1.11,1.11));
-    EXPECT_EQ(Line(Vec2D(1.11,1.11),Vec2D(0,0)).q, Vec2D(0,0));
+    EXPECT_EQ(l1.p(),Vec2D(0,0));
+    EXPECT_EQ(l1.q(),Vec2D(1,0));
+    EXPECT_EQ(Line(Vec2D(1,1),Vec2D(1.11,1.11)).q(), Vec2D(1.11,1.11));
+    EXPECT_EQ(Line(Vec2D(1.11,1.11),Vec2D(0,0)).q(), Vec2D(0,0));
     EXPECT_ANY_THROW(Line(Vec2D(),Vec2D()));
 }
 
 TEST(LineTest, InitSlopeYIntercept){
     auto l = Line(1,0);
-    EXPECT_EQ(l.p, Vec2D(0,0) );
-    EXPECT_EQ(l.q , Vec2D(1,1));
+    EXPECT_EQ(l.p(), Vec2D(0,0) );
+    EXPECT_EQ(l.q() , Vec2D(1,1));
     auto m = Line(3.5,2);
-    EXPECT_EQ(m.p,Vec2D(0,2));
-    EXPECT_EQ(m.q, Vec2D(1,5.5));
+    EXPECT_EQ(m.p(),Vec2D(0,2));
+    EXPECT_EQ(m.q(), Vec2D(1,5.5));
     auto n = Line(-3,2.5);
-    EXPECT_EQ(n.p, Vec2D(0,2.5));
-    EXPECT_EQ(n.q, Vec2D(1,-0.5));
+    EXPECT_EQ(n.p(), Vec2D(0,2.5));
+    EXPECT_EQ(n.q(), Vec2D(1,-0.5));
 }
 
 TEST(LineTest, CoordinateAxis){
     EXPECT_TRUE(Line<>::Y_AXIS.direction().isOrthogonal(Line<>::X_AXIS.direction()));
-    EXPECT_EQ(Line<>::Y_AXIS.p.x,0);
-    EXPECT_EQ(Line<>::Y_AXIS.q.x,0);
-    EXPECT_EQ(Line<>::X_AXIS.p.y,0);
-    EXPECT_EQ(Line<>::X_AXIS.q.y,0);
+    EXPECT_EQ(Line<>::Y_AXIS.p().x,0);
+    EXPECT_EQ(Line<>::Y_AXIS.q().x,0);
+    EXPECT_EQ(Line<>::X_AXIS.p().y,0);
+    EXPECT_EQ(Line<>::X_AXIS.q().y,0);
 }
 
 TEST(LineTest, toLine){

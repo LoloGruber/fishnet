@@ -4,7 +4,7 @@
 
 #include <fishnet/FunctionalConcepts.hpp>
 
-#include <fishnet/ShapeGeometry.hpp>
+#include <fishnet/IGeometry.hpp>
 #include <fishnet/InvalidGeometryException.hpp>
 #include <fishnet/Vec2D.hpp>
 #include <fishnet/Ring.hpp>

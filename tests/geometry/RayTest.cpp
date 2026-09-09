@@ -46,13 +46,13 @@ TEST(RayTest, verticalAndHorizontalRays){
 TEST(RayTest, toLine){
     Ray r {Vec2D(0,0),Vec2D(1,0)};
     auto l = r.toLine();
-    EXPECT_EQ(l.p, r.origin());
-    EXPECT_EQ(l.q , r.direction()+r.origin());
-    EXPECT_EQ(l.q, Vec2D(1,0));
+    EXPECT_EQ(l.p(), r.origin());
+    EXPECT_EQ(l.q() , r.direction()+r.origin());
+    EXPECT_EQ(l.q(), Vec2D(1,0));
     EXPECT_TRUE(l.isParallel(r));
     auto s = Ray(Vec2D(-2,1),Vec2D(2,1));
     auto m = s.toLine();
-    EXPECT_EQ(m.q, Vec2D(0,2));
+    EXPECT_EQ(m.q(), Vec2D(0,2));
     EXPECT_EQ(s.direction(),m.direction());
 }
 

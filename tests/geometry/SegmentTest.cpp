@@ -91,23 +91,23 @@ TEST(SegmentTest, intersects){
     EXPECT_FALSE(s.intersects(Segment(Vec2D(-3,-1),Vec2D(2,1))));
 }
 
-TEST(SegmentTest, hasOverlay){
+TEST(SegmentTest, overlaps){
     Segment s {Vec2D(0,0),Vec2D(2,2)};
-    EXPECT_TRUE(s.hasOverlay(Segment(Vec2D(-1,-1),Vec2D(0.5,0.5))));
-    EXPECT_TRUE(s.hasOverlay(s));
-    EXPECT_TRUE(s.hasOverlay(Segment(Vec2D(2,2),Vec2D(3,3))));
-    EXPECT_FALSE(s.hasOverlay(Segment(Vec2D(2,2),Vec2D(3,2)))); //not parallel
-    EXPECT_FALSE(s.hasOverlay(Segment(Vec2D(3,3),Vec2D(4,4)))); // no common points
-    EXPECT_FALSE(s.hasOverlay(Segment(Vec2D(-1,-1),Vec2D(-1,0))));
+    EXPECT_TRUE(s.overlaps(Segment(Vec2D(-1,-1),Vec2D(0.5,0.5))));
+    EXPECT_TRUE(s.overlaps(s));
+    EXPECT_TRUE(s.overlaps(Segment(Vec2D(2,2),Vec2D(3,3))));
+    EXPECT_FALSE(s.overlaps(Segment(Vec2D(2,2),Vec2D(3,2)))); //not parallel
+    EXPECT_FALSE(s.overlaps(Segment(Vec2D(3,3),Vec2D(4,4)))); // no common points
+    EXPECT_FALSE(s.overlaps(Segment(Vec2D(-1,-1),Vec2D(-1,0))));
 }
 
 TEST(SegmentTest, containsSegment){
     Segment s {Vec2D(0,0),Vec2D(2,2)};
     Segment t {Vec2D(0,0),Vec2D(1,1)};
-    EXPECT_TRUE(s.containsSegment(t));
-    EXPECT_FALSE(t.containsSegment(s));
-    EXPECT_TRUE(s.containsSegment(Segment(Vec2D(0.5,0.5),Vec2D(1.2,1.2))));
-    EXPECT_FALSE(s.containsSegment(Segment(Vec2D(0,0),Vec2D(1,2))));
+    EXPECT_TRUE(s.contains(t));
+    EXPECT_FALSE(t.contains(s));
+    EXPECT_TRUE(s.contains(Segment(Vec2D(0.5,0.5),Vec2D(1.2,1.2))));
+    EXPECT_FALSE(s.contains(Segment(Vec2D(0,0),Vec2D(1,2))));
 }
 
 TEST(SegmentTest, touches){

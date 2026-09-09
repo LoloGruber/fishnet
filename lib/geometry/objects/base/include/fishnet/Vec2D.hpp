@@ -1,11 +1,10 @@
 #pragma once
-
-#include <fishnet/NumericConcepts.hpp>
+#include <fishnet/Concepts.hpp>
 #include <fishnet/Constants.hpp>
 #include <fishnet/Degrees.hpp>
 #include <fishnet/CantorPairing.hpp>
-#include "GeometryType.hpp"
-#include <fishnet/Printable.hpp>
+#include <fishnet/IPoint.hpp>
+
 namespace fishnet::geometry{
 
 /**
@@ -35,9 +34,8 @@ public:
     constexpr static auto construct(U x, V y) noexcept{
         if constexpr(std::is_same_v<U,V>){
             return Vec2D<U>(x,y);
-        }
-        if constexpr(std::integral<U> && std::integral<V>){
-            if constexpr(sizeof(U) > sizeof(V)){ // use bigger integral type (U=long, V=int -> Vec2D<long>) 
+        }else if constexpr(std::integral<U> && std::integral<V>){
+            if constexpr(sizeof(U) > sizeof(V)){ // use bigger integral type (U=long, V=int -> Vec2D<long>)
                 return Vec2D<U>(x,y);
             }else{
                 return Vec2D<V>(x,y);
@@ -106,11 +104,10 @@ public:
         return construct(x*scalar,y*scalar);
     }
 
-    template<fishnet::math::Number U>
-    constexpr auto operator/(U scalar) const noexcept{
+    constexpr auto operator/(fishnet::math::DEFAULT_NUMERIC scalar) const noexcept{
         if(scalar==0) 
             scalar=1; // prevent division by zero, return the same Vec2D instead
-        return construct(x/scalar,y/scalar);
+        return construct(static_cast<fishnet::math::DEFAULT_NUMERIC>(x)/scalar,static_cast<fishnet::math::DEFAULT_NUMERIC>(y)/scalar);
     }
 
     template<fishnet::math::Number U>
@@ -118,32 +115,27 @@ public:
         return fishnet::math::areEqual(x,other.x) and fishnet::math::areEqual(y,other.y);
     }
 
-    template<fishnet::math::Number U>
-    constexpr auto dot(const Vec2D<U> & other) const noexcept{
+    constexpr auto dot(const IPoint auto & other) const noexcept{
         return x * other.x + y * other.y;
     }
 
-    template<fishnet::math::Number U>
-    constexpr auto cross(const Vec2D<U> & other) const noexcept{
+    constexpr auto cross(const IPoint auto & other) const noexcept{
         return x * other.y - y * other.x;
     }
 
-    template<fishnet::math::Number U>
-    constexpr bool isParallel(const Vec2D<U> & other) const noexcept{
+    constexpr bool isParallel(const IPoint auto & other) const noexcept{
         return fishnet::math::isZero(cross(other));
     }
 
-    template<fishnet::math::Number U>
-    constexpr bool isOrthogonal(const Vec2D<U> & other) const noexcept{
+    constexpr bool isOrthogonal(const IPoint auto & other) const noexcept{
         return fishnet::math::isZero(dot(other));
     }
 
     constexpr fishnet::math::DEFAULT_FLOATING_POINT length() const{
-        return sqrt(dot(*this));
+        return sqrt(static_cast<fishnet::math::DEFAULT_FLOATING_POINT>(dot(*this)));
     }
 
-    template<fishnet::math::Number U>
-    constexpr fishnet::math::DEFAULT_FLOATING_POINT distance(const Vec2D<U> & other) const {
+    constexpr fishnet::math::DEFAULT_FLOATING_POINT distance(const IPoint auto & other) const {
         return (*this-other).length();
     }
 
@@ -160,7 +152,7 @@ public:
      * @param reference for the angle
      * @return
      */
-    fishnet::math::Radians angle(const Vec2D<T> & reference) const{
+    fishnet::math::Radians angle(const IPoint auto & reference) const{
         auto dir = *this - reference;
         return fishnet::math::Radians::atan2(dir.y,dir.x);
     }
@@ -172,7 +164,7 @@ public:
      * @param angleRotate
      * @return
      */
-    fishnet::math::Radians angle(const Vec2D<T> & reference, fishnet::math::Radians angleRotate) const{
+    fishnet::math::Radians angle(const IPoint auto & reference, fishnet::math::Radians angleRotate) const{
         return angle(reference) + angleRotate;
     }
 
@@ -194,9 +186,6 @@ template<fishnet::math::Number T, fishnet::math::Number U>
 constexpr auto operator*(U scalar,Vec2D<T> vector)  noexcept{
     return vector * scalar;
 }
-
-// Explicit template instantiation for the default numeric type
-template class fishnet::geometry::Vec2D<fishnet::math::DEFAULT_NUMERIC>;  
 
 /**
  * @brief Comparator for lexigraphically-ordering of Vec2D objects
@@ -222,8 +211,7 @@ struct YLexicographicOrder{
         return lhs.y < rhs.y;
     }
 };
-using Vec2DStd = Vec2D<fishnet::math::DEFAULT_NUMERIC>;
-using Vec2DReal =Vec2D<fishnet::math::DEFAULT_FLOATING_POINT>;
+
 }
 
 namespace std{
@@ -236,5 +224,16 @@ namespace std{
             return fishnet::math::CantorPairing(xHash,yHash); // utilize cantor pairing to keep hashes unique: hash(Vec2D(2,1)) != hash(Vec2D(1,2))
         }
     };
+}
+
+namespace fishnet::geometry{
+static_assert(IPoint<Vec2D<double>>);
+static_assert(IPoint<Vec2D<int>>);
+
+using Vec2DStd = Vec2D<fishnet::math::DEFAULT_NUMERIC>;
+using Vec2DReal =Vec2D<fishnet::math::DEFAULT_FLOATING_POINT>;
+
+// Explicit template instantiation for the default numeric type
+template class fishnet::geometry::Vec2D<fishnet::math::DEFAULT_NUMERIC>;  
 }
 

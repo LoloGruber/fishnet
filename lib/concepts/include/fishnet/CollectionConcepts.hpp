@@ -51,7 +51,7 @@ concept view_over = std::ranges::view<V> && range_over<V,C>;
 template<typename Key>
 concept Hashable = requires(Key a)
 {
-    { std::hash<Key>{}(a) } -> std::convertible_to<std::size_t>;
+    { std::hash<std::remove_cvref_t<Key>>{}(a) } -> std::convertible_to<std::size_t>;
 };
 
 template<typename T>

@@ -1,3 +1,4 @@
+add_subdirectory(interfaces)
 add_subdirectory(objects)
 add_subdirectory(algorithm)
 set(GeometryLib fishnet_geometry)

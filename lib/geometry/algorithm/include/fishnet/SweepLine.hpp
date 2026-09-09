@@ -6,7 +6,7 @@
 
 #include <fishnet/CollectionConcepts.hpp>
 #include <fishnet/FunctionalConcepts.hpp>
-#include <fishnet/GeometryObject.hpp>
+#include <fishnet/IGeometry.hpp>
 
 namespace fishnet::geometry {
 

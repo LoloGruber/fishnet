@@ -1,6 +1,5 @@
 #pragma once
-#include <fishnet/ShapeGeometry.hpp>
-#include <fishnet/LinearGeometry.hpp>
+#include <fishnet/IGeometry.hpp>
 #include "Ring.hpp"
 
 namespace fishnet::geometry {
@@ -49,8 +48,6 @@ public:
     }
 
 };
-static_assert(IPolygon<SimplePolygon<double>>);
-static_assert(Shape<SimplePolygon<double>>);
 
 //Deduction guides
 template<math::Number T>
@@ -62,9 +59,7 @@ SimplePolygon(std::initializer_list<Vec2D<T>> && points)->SimplePolygon<T>;
 template<std::ranges::random_access_range R>
 SimplePolygon(const R & )->SimplePolygon<typename std::ranges::range_value_t<R>::numeric_type>;
 
-// Explicit template instantiation
-template class SimplePolygon<fishnet::math::DEFAULT_NUMERIC>;
-}
+} // namespace fishnet::geometry
 
 namespace std{
     template<typename T>
@@ -75,3 +70,10 @@ namespace std{
         }
     };
 }
+
+namespace fishnet::geometry{
+static_assert(Shape<SimplePolygon<double>>);
+static_assert(IPolygon<SimplePolygon<double>>);
+// Explicit template instantiation
+template class SimplePolygon<fishnet::math::DEFAULT_NUMERIC>;
+} // namespace fishnet::geometry

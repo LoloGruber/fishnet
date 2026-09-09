@@ -102,13 +102,11 @@ public:
      * @return true 
      * @return false 
      */
-    template<fishnet::math::Number U>
-    constexpr bool hasOverlay(const Segment<U> & other) const noexcept{
+    constexpr bool overlaps(ISegment auto const & other) const noexcept{
         return isParallel(other) and (contains(other.p()) or contains(other.q()));
     }
 
-    template<fishnet::math::Number U>
-    constexpr bool containsSegment(const Segment<U> & other) const noexcept {
+    constexpr bool contains(ISegment auto const & other) const noexcept {
         return isParallel(other) and contains(other.p()) and contains(other.q());
     }
 
@@ -121,11 +119,10 @@ public:
      * @return true 
      * @return false 
      */
-    template<fishnet::math::Number U>
-    constexpr bool touches(const Segment<U> & other) const noexcept{
+    constexpr bool touches(ISegment auto const & other) const noexcept{
         return (this->_p == other.p() or this->_p == other.q() or this->_q == other.q() or this->_q == other.p())
-            && not containsSegment(other)
-            && not other.containsSegment(*this);
+            && not contains(other)
+            && not other.contains(*this);
     }
 
     template<fishnet::math::Number U>
@@ -161,8 +158,7 @@ public:
         return std::min(_p.distance(point), _q.distance(point)); // return closest endpoint of segment to the point otherwise
     }
 
-    template<fishnet::math::Number U>
-    constexpr fishnet::math::DEFAULT_FLOATING_POINT distance(const Segment<U> & other) const noexcept {
+    constexpr fishnet::math::DEFAULT_FLOATING_POINT distance(ISegment auto const & other) const noexcept {
         std::array<fishnet::math::DEFAULT_FLOATING_POINT,4> candidates {
             other.distance(this->_p),
             other.distance(this->_q),
@@ -172,7 +168,7 @@ public:
         return *std::ranges::min_element(candidates);
     }
 
-    constexpr auto intersection(LinearGeometry auto const& other)const noexcept {
+    constexpr fishnet::Option<Vec2DReal> intersection(LinearGeometry auto const& other)const noexcept {
         return linearIntersection(*this,other);
     }
 
@@ -180,12 +176,8 @@ public:
         return "[" + this->_p.toString() +","+this->_q.toString()+"]";
     }
 };
-static_assert(ISegment<Segment<double>>);
-static_assert(LinearGeometry<Segment<double>>);
+} // namespace fishnet::geometry
 
-// Explicit template instantiation
-template class Segment<fishnet::math::DEFAULT_NUMERIC>;
-}
 namespace std{
     template<typename T>
     struct hash<fishnet::geometry::Segment<T>>{
@@ -195,3 +187,10 @@ namespace std{
         }
     };
 }
+
+namespace fishnet::geometry{
+static_assert(ISegment<Segment<double>>);
+static_assert(LinearGeometry<Segment<double>>);
+// Explicit template instantiation
+template class Segment<fishnet::math::DEFAULT_NUMERIC>;
+} // namespace fishnet::geometry

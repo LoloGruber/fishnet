@@ -1,6 +1,6 @@
 #pragma once
 #include <fishnet/Vec2D.hpp>
-#include <fishnet/ShapeGeometry.hpp>
+#include <fishnet/IGeometry.hpp>
 #include <fishnet/FunctionalConcepts.hpp>
 #include "SweepLine.hpp"
 #include <fishnet/Segment.hpp>

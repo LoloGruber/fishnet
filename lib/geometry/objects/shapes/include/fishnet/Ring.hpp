@@ -1,15 +1,14 @@
 #pragma once
-#include <vector>
 #include <ranges>
 #include <algorithm>
-#include <unordered_set>
+#include <numeric>
 #include <sstream>
-
-#include <fishnet/Segment.hpp>
+#include <vector>
 #include <fishnet/CollectionConcepts.hpp>
 #include <fishnet/FunctionalConcepts.hpp>
+#include <fishnet/IGeometry.hpp>
 #include <fishnet/Ray.hpp>
-#include <fishnet/ShapeGeometry.hpp>
+#include <fishnet/Segment.hpp>
 #include <fishnet/PolygonalRingVerification.hpp>
 #include <fishnet/PolygonDistance.hpp>
 
@@ -389,7 +388,6 @@ public:
         return oss.str();
     }
 };
-static_assert(Shape<Ring<double>>);
 
 //Deduction guides
 template<std::ranges::random_access_range R>
@@ -398,9 +396,8 @@ Ring(const R &) -> Ring<typename std::ranges::range_value_t<R>::numeric_type>;
 template<typename T>
 Ring(std::initializer_list<Vec2D<T>> && points)->Ring<T>;
 
-// Explicit template instantiation
-template class Ring<fishnet::math::DEFAULT_NUMERIC>;
-}
+} // namespace fishnet::geometry
+
 namespace std{
     template<typename T>
     struct hash<fishnet::geometry::Ring<T>>{
@@ -413,3 +410,10 @@ namespace std{
         }
     };
 }
+
+namespace fishnet::geometry{
+static_assert(Shape<Ring<double>>);
+static_assert(IRing<Ring<double>>);
+// Explicit template instantiation
+template class Ring<fishnet::math::DEFAULT_NUMERIC>;
+} // namespace fishnet::geometry

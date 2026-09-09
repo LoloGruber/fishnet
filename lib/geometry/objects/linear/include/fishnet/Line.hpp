@@ -1,8 +1,7 @@
 #pragma once
 #include <fishnet/Vec2D.hpp>
-#include <optional>
-#include <numeric>
-#include <fishnet/LinearGeometry.hpp>
+#include <fishnet/Option.hpp>
+#include <fishnet/IGeometry.hpp>
 #include <fishnet/LinearIntersection.hpp>
 
 namespace fishnet::geometry{
@@ -13,10 +12,10 @@ namespace fishnet::geometry{
  */
 template<fishnet::math::Number T = fishnet::math::DEFAULT_NUMERIC>
 class Line{
+private:
+    Vec2D<T> _p;
+    Vec2D<T> _q;
 public:
-    const Vec2D<T> p;
-    const Vec2D<T> q;
-
     const static inline Line<T> X_AXIS = Line<T>(T(0),T(0));
     const static inline Line<T> Y_AXIS = Line<T>(Vec2D<T>(0,0),Vec2D<T>(0,1));
 
@@ -47,8 +46,8 @@ public:
      * @brief Constructor for a line formed by two points
      * 
      */
-    constexpr Line(Vec2D<T> p , Vec2D<T> q):p(p),q(q){
-        if (p == q) 
+    constexpr Line(Vec2D<T> _p , Vec2D<T> _q):_p(_p),_q(_q){
+        if (_p == _q) 
             throw std::invalid_argument("Coinciding Points cannot define a Line");
     }
 
@@ -60,7 +59,7 @@ public:
      * @tparam std::is_same_v<T,fishnet::math::DEFAULT_NUMERIC>> 
      */
     template<fishnet::math::Number U, typename = std::enable_if_t<!std::is_same_v<U,T> && std::is_same_v<T,fishnet::math::DEFAULT_NUMERIC>>>
-    constexpr Line(Vec2D<T> p, Vec2D<U> q):Line(p,static_cast<Vec2D<T>>(q)){}
+    constexpr Line(Vec2D<T> _p, Vec2D<U> _q):Line(_p,static_cast<Vec2D<T>>(_q)){}
 
     /**
      * @brief Constructor for a line with heterogenous numeric types
@@ -70,13 +69,13 @@ public:
      * @tparam std::is_same_v<T,fishnet::math::DEFAULT_NUMERIC>> 
      */
     template<fishnet::math::Number U, typename = std::enable_if_t<!std::is_same_v<U,T> && std::is_same_v<T,fishnet::math::DEFAULT_NUMERIC>>>
-    constexpr Line(Vec2D<U> p , Vec2D<T> q):Line(static_cast<Vec2D<T>>(p),q){}
+    constexpr Line(Vec2D<U> _p , Vec2D<T> _q):Line(static_cast<Vec2D<T>>(_p),_q){}
 
     /**
      * @brief Constructor of line using slope and y intercept
      * 
      */
-    constexpr Line(T slope, T yIntercept):p(Vec2D<T>(0,yIntercept)),q(Vec2D<T>(1,slope+yIntercept)){}
+    constexpr Line(T slope, T yIntercept):_p(Vec2D<T>(0,yIntercept)),_q(Vec2D<T>(1,slope+yIntercept)){}
 
     /**
      * @brief Constructor of line using slope and y intercept with heterogenous type
@@ -98,22 +97,34 @@ public:
     template<fishnet::math::Number U, typename = std::enable_if_t<!std::is_same_v<U,T> && std::is_same_v<T,fishnet::math::DEFAULT_NUMERIC>>>
     constexpr Line(U slope, T yIntercept):Line(fishnet::math::DEFAULT_NUMERIC(slope),yIntercept){}
 
+    constexpr Vec2D<T> p() const noexcept{
+        return _p;
+    }
+
+    constexpr Vec2D<T> q() const noexcept{
+        return _q;
+    }
+
     constexpr Line<T> toLine() const noexcept{
-        return Line(p,q);
+        return Line(_p,_q);
     }
 
     constexpr Vec2D<T> direction() const noexcept{
-        return q-p;
+        return _q-_p;
     }
 
     constexpr bool isVertical() const noexcept{
-        return p.x == q.x;
+        return _p.x == _q.x;
     }
 
-    constexpr std::optional<fishnet::math::DEFAULT_FLOATING_POINT> yIntercept() const noexcept{
-        std::optional<Vec2DReal> intersectionWithY = intersection(Y_AXIS);
+    constexpr bool isHorizontal() const noexcept{
+        return _p.y == _q.y;
+    }
+
+    constexpr fishnet::Option<fishnet::math::DEFAULT_FLOATING_POINT> yIntercept() const noexcept{
+        fishnet::Option<Vec2DReal> intersectionWithY = intersection(Y_AXIS);
         [[likely]] if (intersectionWithY){
-            return std::optional(intersectionWithY->y);
+            return fishnet::Option(intersectionWithY->y);
         }
         return std::nullopt;
     }
@@ -128,22 +139,22 @@ public:
         using FLOAT_TYPE = fishnet::math::DEFAULT_FLOATING_POINT;
         auto dir = direction();
         if(dir.x == 0) { // line is vertical
-            return point.x == p.x; //or q.x
+            return point.x == _p.x; //or _q.x
         }
         if(dir.y == 0){ // line is horizontal
-            return point.y == p.y;
+            return point.y == _p.y;
         }
-        FLOAT_TYPE lX = FLOAT_TYPE(point.x - this->p.x) / FLOAT_TYPE(dir.x);
-        FLOAT_TYPE lY = FLOAT_TYPE(point.y - this->p.y) / FLOAT_TYPE(dir.y);
+        FLOAT_TYPE lX = FLOAT_TYPE(point.x - this->_p.x) / FLOAT_TYPE(dir.x);
+        FLOAT_TYPE lY = FLOAT_TYPE(point.y - this->_p.y) / FLOAT_TYPE(dir.y);
         return fabs(lX-lY) < fishnet::math::EPSILON;
     }
 
     constexpr bool isLeft(IPoint auto const & point) const noexcept {
-        return direction().cross(point-p) > 0;
+        return direction().cross(point-_p) > 0;
     }
 
     constexpr bool isRight(IPoint auto const & point) const noexcept {
-        return direction().cross(point-p) < 0;
+        return direction().cross(point-_p) < 0;
     }
 
     constexpr bool isParallel(LinearGeometry auto const& other) const noexcept {
@@ -158,14 +169,14 @@ public:
     constexpr bool operator==(const Line<U> & other) const noexcept {
         if(this->isParallel(other)){
             [[unlikely]] if (isVertical()){ //other must also be vertical since both are parallel
-                return this->p.x == other.p.x;
+                return this->_p.x == other.p().x;
             }
             return fabs(yIntercept().value() - other.yIntercept().value()) < fishnet::math::EPSILON;
         }
         return false;
     }
 
-    constexpr std::optional<Vec2DReal> intersection(LinearGeometry auto const& other) const noexcept {
+    constexpr fishnet::Option<Vec2DReal> intersection(LinearGeometry auto const& other) const noexcept {
         return linearIntersection(*this,other);
     }
 
@@ -174,15 +185,9 @@ public:
         if (t){
             return "Line y = " + std::to_string(slope())+" * x + "+std::to_string(t.value());
         }
-        return "Vertical Line x = "+std::to_string(p.x);
+        return "Vertical Line x = "+std::to_string(_p.x);
     }
 };
-const static inline Line<double> xAxis = Line<double>::X_AXIS;
-const static inline Line<double> yAxis = Line<double>::Y_AXIS;
-static_assert(LinearGeometry<Line<double>>);
-
-// Explicit template instantiation
-template class Line<fishnet::math::DEFAULT_NUMERIC>;
 
 //Deduction guides
 template<math::Number T>
@@ -194,10 +199,21 @@ namespace std{
     struct hash<fishnet::geometry::Line<T>>{
         constexpr static auto hasher = hash<fishnet::math::DEFAULT_FLOATING_POINT>{};
         size_t operator() (const fishnet::geometry::Line<T> & line ) const {
-            if (line.isVertical()) return hasher(line.p.x);
+            if (line.isVertical()) return hasher(line.p().x);
             size_t slopeHash = hasher(line.slope());
             size_t yInterceptHash = hasher(line.yIntercept().value());
             return fishnet::math::CantorPairing(slopeHash,yInterceptHash);
         }
     };
+}
+
+namespace fishnet::geometry{
+
+const static inline Line<double> xAxis = Line<double>::X_AXIS;
+const static inline Line<double> yAxis = Line<double>::Y_AXIS;
+static_assert(ILine<Line<double>>);
+static_assert(LinearGeometry<Line<double>>);
+
+// Explicit template instantiation
+template class Line<fishnet::math::DEFAULT_NUMERIC>;
 }

@@ -222,8 +222,6 @@ public:
     }
 
 }; 
-static_assert(IPolygon<Polygon<double>>);
-static_assert(Shape<Polygon<double>>);
 
 //Deduction guides
 template<math::Number T>
@@ -232,9 +230,7 @@ Polygon(const Ring<T> &, auto) -> Polygon<T>;
 template<math::Number T>
 Polygon(const SimplePolygon<T> &, auto) -> Polygon<T>;
 
-// Explicit template instantiation
-template class Polygon<fishnet::math::DEFAULT_NUMERIC>;
-}
+} // namespace fishnet::geometry
 
 
 namespace std{
@@ -249,3 +245,10 @@ namespace std{
         }
     };
 }
+
+namespace fishnet::geometry{
+static_assert(IPolygon<Polygon<double>>);
+static_assert(Shape<Polygon<double>>);
+// Explicit template instantiation
+template class Polygon<fishnet::math::DEFAULT_NUMERIC>;
+} // namespace fishnet::geometry

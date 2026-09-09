@@ -52,15 +52,9 @@ public:
     }
 };
 
-static_assert(IRing<Triangle<double>>);
-static_assert(Shape<Triangle<double>>);
-
 // Deduction guide
 template<math::Number T>
 Triangle(const Vec2D<T> &, const Vec2D<T> &, const Vec2D<T> &) -> Triangle<T>;
-
-// Explicit template instantiation
-template class Triangle<fishnet::math::DEFAULT_NUMERIC>;
 
 } // namespace fishnet::geometry
 
@@ -73,3 +67,10 @@ namespace std {
         }
     };
 }
+
+namespace fishnet::geometry {
+static_assert(IRing<Triangle<double>>);
+static_assert(Shape<Triangle<double>>);
+// Explicit template instantiation
+template class Triangle<fishnet::math::DEFAULT_NUMERIC>;
+} // namespace fishnet::geometry

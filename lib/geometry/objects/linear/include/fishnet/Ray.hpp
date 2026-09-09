@@ -101,7 +101,6 @@ public:
         return "Ray "+this->originPoint.toString()+" + k * "+this->directionVector.toString();
     }
 };
-static_assert(LinearGeometry<Ray<double>>);
 
 // Explicit template instantiation for the default numeric type
 template class Ray<fishnet::math::DEFAULT_NUMERIC>;
@@ -117,4 +116,9 @@ namespace std{
             return fishnet::math::CantorPairing(origin_hash,direction_hash);
         }
     };
+}
+
+namespace fishnet::geometry{
+static_assert(IRay<Ray<double>>);
+static_assert(LinearGeometry<Ray<double>>);
 }

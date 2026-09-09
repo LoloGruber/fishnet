@@ -153,7 +153,7 @@ struct Builder{
     }
 };
 
-
+#include <fishnet/Geometry.hpp>
 
 int main(){
     //concepts();
@@ -163,7 +163,6 @@ int main(){
     // std::vector<int> ints = {1,2,3};
     // static_assert(range_over<decltype(ints),CONCEPT(std::integral)>);
     //static_assert(range_over<decltype(ints),[]<std::floating_point>{}>);
-
     Builder builder = Builder().add(Data(1)).add(Data(2)).add(Data(3)); // Move Constructor of builder called
     std::cout << builder.build() << std::endl;
     std::cout << std::endl;
