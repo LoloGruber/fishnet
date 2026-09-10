@@ -1,6 +1,7 @@
 #pragma once
+#include <algorithm>
 #include <fishnet/Option.hpp>
-#include <fishnet/GeometryObject.hpp>
+#include <fishnet/IGeometry.hpp>
 #include "FieldType.hpp"
 #include "FieldDefinition.hpp"
 
@@ -43,7 +44,7 @@ namespace fishnet{
  * 
  * @tparam G geometry type
  */
-template<geometry::GeometryObject G>
+template<geometry::Geometry G>
 class Feature {
 private:
 
@@ -65,7 +66,7 @@ private:
         });
     }
 
-    template<geometry::GeometryObject O>
+    template<geometry::Geometry O>
     friend class Feature;
 
 public:
@@ -106,7 +107,7 @@ public:
         std::erase_if(attributes,[&fieldDefinition](const auto & value){return value.getFieldID() == fieldDefinition.getFieldID();});
     }
 
-    template<geometry::GeometryObject O>
+    template<geometry::Geometry O>
     constexpr void copyAttributes(const Feature<O> & source) noexcept {
         std::ranges::for_each(source.attributes,[this](const auto & value){this->attributes.push_back(value);});
     }

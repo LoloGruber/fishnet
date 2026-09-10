@@ -2,17 +2,17 @@
 #include <gtest/gtest.h>
 #include <fishnet/TestUtil.hpp>
 #include <fishnet/SimplePolygon.hpp>
-#include <fishnet/GeometryObject.hpp>
+#include <fishnet/IGeometry.hpp>
 #include "ShapeSamples.h"
 #include <fishnet/Rectangle.hpp>
 
 using namespace fishnet::geometry;
 using namespace testutil;
 
-static_assert(GeometryObject<Ring<double>>);
-static_assert(GeometryObject<SimplePolygon<int>>);
-static_assert(GeometryObject<Line<long>>);
-static_assert(GeometryObject<Vec2D<float>>);
+static_assert(Geometry<Ring<double>>);
+static_assert(Geometry<SimplePolygon<int>>);
+static_assert(Geometry<Line<long>>);
+static_assert(Geometry<Vec2D<float>>);
 
 class SimplePolygonTest : public ::testing::Test {
 protected:
@@ -54,8 +54,8 @@ TEST_F(SimplePolygonTest, getHoles) {
     EXPECT_EMPTY(simpleWithComplexBoundary->getHoles());
 }
 
-TEST_F(SimplePolygonTest, isInHole){
-    EXPECT_FALSE(simpleWithComplexBoundary->isInHole(*simpleWithComplexBoundary));
+TEST_F(SimplePolygonTest, containsInHole){
+    EXPECT_FALSE(simpleWithComplexBoundary->containsInHole(*simpleWithComplexBoundary));
 }
 
 TEST_F(SimplePolygonTest, containsPoint) {

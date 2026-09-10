@@ -14,6 +14,11 @@ public:
     using numeric_type = T;
     constexpr static GeometryType type = GeometryType::POLYGON;
 
+    using Ring<T>::contains;
+    using Ring<T>::crosses;
+    using Ring<T>::touches;
+    using Ring<T>::distance;
+
     SimplePolygon(const Ring<T> & boundary):Ring<T>(boundary){}
 
     SimplePolygon(std::initializer_list<Vec2D<T>> && points):Ring<T>(std::move(points)){}
@@ -43,8 +48,34 @@ public:
         return this->getBoundary() == other.getBoundary();
     }
 
-    constexpr bool inline isInHole(IPolygon auto const & other ) const noexcept {
+    constexpr bool isSimple() const noexcept {
+        return true;
+    }
+
+    constexpr bool inline containsInHole(IPoint auto const & point) const noexcept {
         return false;
+    }
+
+    constexpr bool inline containsInHole(IPolygon auto const & other) const noexcept {
+        return false;
+    }
+
+    constexpr bool contains(IPolygon auto const & other) const noexcept {
+        return this->getBoundary().contains(other.getBoundary());
+    }
+
+    constexpr bool crosses(IPolygon auto const & other) const noexcept {
+        return this->getBoundary().crosses(other.getBoundary());
+    }
+
+    constexpr bool touches(IPolygon auto const & other) const noexcept {
+        return this->getBoundary().touches(other.getBoundary());
+    }
+
+    constexpr fishnet::math::DEFAULT_FLOATING_POINT distance(IPolygon auto const & other) const noexcept {
+        if(this->contains(other)) return -1;
+        if(this->touches(other)) return 0;
+        return this->getBoundary().distance(other.getBoundary());
     }
 
 };

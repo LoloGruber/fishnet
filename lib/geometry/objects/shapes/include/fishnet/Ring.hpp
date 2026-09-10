@@ -264,7 +264,7 @@ public:
 
     }
 
-    constexpr util::forward_range_of<Vec2D<double>> auto intersections(LinearGeometry auto const& linearFeature) const noexcept{
+    constexpr std::unordered_set<Vec2DReal> intersections(LinearGeometry auto const& linearFeature) const noexcept{
          std::unordered_set<Vec2D<double>> intersectionSet {};
         auto intersectionView = this->getSegments() 
             | std::views::transform([linearFeature](const auto & segment){return segment.intersection(linearFeature);})  
@@ -288,7 +288,7 @@ public:
         std::vector<Vec2DReal> splittingPoints;
         splittingPoints.push_back(segment.p());
         for(const auto & s : segments){
-            [[unlikely]] if (s.containsSegment(segment))
+            [[unlikely]] if (s.contains(segment))
                  return true;
             auto inter = s.intersection(segment);
             if(inter and not s.isEndpoint(inter.value()) and not segment.isEndpoint(inter.value())){ // splitting points are must not be vertices of the ring or endpoint of the segment
@@ -343,24 +343,18 @@ public:
         return true;
     }
 
-    template<fishnet::math::Number U>
-    constexpr bool crosses(const Ring<U> & other) const noexcept {
-        return std::ranges::any_of(segments,[&other](const auto & s){return other.intersects(s);}) 
+    constexpr bool crosses(IRing auto const & other) const noexcept {
+        return std::ranges::any_of(segments,[&other](const auto & s){return other.intersects(s);})
             || std::ranges::any_of(other.getSegments(),[this](const auto & s){return this->intersects(s);});
     }
 
-    template<fishnet::math::Number U>
-    constexpr bool contains(const Ring<U> & other) const noexcept {
-        return std::ranges::all_of(other.getSegments(), [this](const Segment<U> & s){
-            if(not this->contains(s)){
-                this->contains(s);
-            }
+    constexpr bool contains(IRing auto const & other) const noexcept {
+        return std::ranges::all_of(other.getSegments(), [this](const auto & s){
             return this->contains(s);
         });
     }
 
-    template<fishnet::math::Number U>
-    constexpr bool touches(const Ring<U> & other) const noexcept {
+    constexpr bool touches(IRing auto const & other) const noexcept {
         if(this->crosses(other)) return false;
         if(this->contains(other) || other.contains(*this)) return false;
         for(const auto & p : other.getPoints()){
@@ -369,8 +363,7 @@ public:
         return false;
     }
 
-    template<fishnet::math::Number U>
-    constexpr fishnet::math::DEFAULT_FLOATING_POINT distance(const Ring<U> & other) const noexcept {
+    constexpr fishnet::math::DEFAULT_FLOATING_POINT distance(IRing auto const & other) const noexcept {
         if(this->contains(other) or other.contains(*this) or this->crosses(other))
              return -1;
         return shapeDistance(*this,other);

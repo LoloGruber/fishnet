@@ -18,7 +18,7 @@ struct VectorFilePreprocessorConfig {
     }
 };
 
-template<fishnet::geometry::GeometryObject G>
+template<fishnet::geometry::Geometry G>
 class VectorFilePreprocessor : public Task {
 private:
     VectorFilePreprocessorConfig config;

@@ -39,7 +39,10 @@ public:
     bool isOutside(PointStub<T> point) const{
         return true;
     }
-    bool isInHole(PointStub<T> point) const{
+    bool containsInHole(PointStub<T> point) const{
+        return true;
+    }
+    bool containsInHole(PolygonStub<T> polygon) const{
         return true;
     }
     bool contains(PointStub<T> point) const{
@@ -75,20 +78,14 @@ public:
     double distance(PolygonStub<T> polygon) const{
         return 0.0;
     }
+    size_t hash() const noexcept {
+        return 0;
+    }
     std::string toString() const{
         return {};
     }
 };
 } // namespace fishnet::geometry::__impl
-
-namespace std{
-    template<typename T>
-    struct hash<fishnet::geometry::__impl::PolygonStub<T>>{
-        std::size_t operator()(const fishnet::geometry::__impl::PolygonStub<T> & p) const noexcept{
-            return 0;
-        }
-    };
-}
 
 namespace fishnet::geometry{
 
@@ -115,7 +112,8 @@ concept IPolygon = GeometryBase<P> && requires(
     {polygon.isInside(point)} -> std::same_as<bool>;
     {polygon.isOnBoundary(point)} -> std::same_as<bool>;
     {polygon.isOutside(point)} -> std::same_as<bool>;
-    {polygon.isInHole(point)} -> std::same_as<bool>;
+    {polygon.containsInHole(point)} -> std::same_as<bool>;
+    {polygon.containsInHole(otherPolygon)} -> std::same_as<bool>;
     {polygon.contains(point)} -> std::same_as<bool>;
     {polygon.contains(segment)} -> std::same_as<bool>;
     {polygon.contains(ring)} -> std::same_as<bool>;

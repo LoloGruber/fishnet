@@ -61,6 +61,9 @@ public:
     fishnet::math::Radians angle(const PointStub & other, fishnet::math::Radians angleRotate) const noexcept{
         return fishnet::math::Radians::PI;
     }
+    size_t hash() const noexcept {
+        return 0;
+    }
     std::string toString() const noexcept {
         return {};
     }
@@ -70,15 +73,6 @@ constexpr auto operator*(T scalar, const PointStub<T> & point) noexcept{
     return point * scalar;
 }
 } // namespace fishnet::geometry::__impl
-
-namespace std{
-    template<typename T>
-    struct hash<fishnet::geometry::__impl::PointStub<T>>{
-        size_t operator()(const fishnet::geometry::__impl::PointStub<T> & point) const {
-            return 0;
-        }
-    };
-}
 
 namespace fishnet::geometry{
 
@@ -113,18 +107,14 @@ concept IPoint = GeometryBase<P> && requires(
     {constPoint.angle(otherPoint)} -> std::same_as<fishnet::math::Radians>;
     {constPoint.angle(otherPoint, fishnet::math::Radians(0.0))} -> std::same_as<fishnet::math::Radians>;
 };
+
+static_assert(IPoint<__impl::PointStub<double>>, "PointStub<double> does not satisfy IPoint concept");
+static_assert(IPoint<__impl::PointStub<int>>, "PointStub<int> does not satisfy IPoint concept");
+
+template<typename P>
+concept IPointOptional = IPoint<typename std::remove_cvref_t<P>::value_type>;
+
+template<typename R>
+concept PointRange = std::ranges::range<R> && IPoint<std::ranges::range_value_t<R>>;
+static_assert(PointRange<std::vector<__impl::PointStub<double>>>, "std::vector<__impl::PointStub<double>> does not satisfy PointRange concept");
 } // namespace fishnet::geometry
-
-
-
-namespace fishnet::geometry{
-    static_assert(IPoint<__impl::PointStub<double>>, "PointStub<double> does not satisfy IPoint concept");
-    static_assert(IPoint<__impl::PointStub<int>>, "PointStub<int> does not satisfy IPoint concept");
-
-    template<typename P>
-    concept IPointOptional = IPoint<typename std::remove_cvref_t<P>::value_type>;
-
-    template<typename R>
-    concept PointRange = std::ranges::range<R> && IPoint<std::ranges::range_value_t<R>>;
-    static_assert(PointRange<std::vector<__impl::PointStub<double>>>, "std::vector<__impl::PointStub<double>> does not satisfy PointRange concept");
-}

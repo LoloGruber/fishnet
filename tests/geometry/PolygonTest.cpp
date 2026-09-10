@@ -3,13 +3,13 @@
 #include <fishnet/TestUtil.hpp>
 #include "ShapeSamples.h"
 #include <fishnet/Polygon.hpp>
-#include <fishnet/GeometryObject.hpp>
+#include <fishnet/IGeometry.hpp>
 #include <list>
 
 using namespace fishnet::geometry;
 using namespace testutil;
 
-static_assert(GeometryObject<Polygon<double>>);
+static_assert(Shape<Polygon<double>>);
 static_assert(IPolygon<Polygon<double>>);
 
 class PolygonTest : public ::testing::Test {
@@ -137,9 +137,9 @@ TEST_F(PolygonTest, isOutside){
     EXPECT_FALSE(polygon->isOutside(Vec2D(0,0)));
 }
 
-TEST_F(PolygonTest, isInHole) {
-    EXPECT_TRUE(polygon->isInHole(SimplePolygon(h1)));
-    EXPECT_FALSE(polygon->isInHole(SimplePolygon<double>({{0,0},{2,0},{-1,2}})));
+TEST_F(PolygonTest, containsInHole) {
+    EXPECT_TRUE(polygon->containsInHole(SimplePolygon(h1)));
+    EXPECT_FALSE(polygon->containsInHole(SimplePolygon<double>({{0,0},{2,0},{-1,2}})));
 }
 
 TEST_F(PolygonTest, intersects) {

@@ -10,11 +10,11 @@ RingTest.cpp
 SimplePolygonTest.cpp
 PolygonTest.cpp
 MultiPolygonTest.cpp
-# kNearestNeighboursTest.cpp
-# SweepLineTest.cpp
-# PolygonNeighboursTest.cpp
-# TriangleTest.cpp
-# DelaunayTriangulationTest.cpp
+kNearestNeighboursTest.cpp
+SweepLineTest.cpp
+PolygonNeighboursTest.cpp
+TriangleTest.cpp
+DelaunayTriangulationTest.cpp
 #CharacteristicShapeTest.cpp
 )
 gtest_discover_tests(${GeometryTestBin})

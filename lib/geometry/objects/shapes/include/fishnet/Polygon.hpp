@@ -1,7 +1,7 @@
 #pragma once
 
+#include <fishnet/IGeometry.hpp>
 #include "Ring.hpp"
-#include <fishnet/ShapeGeometry.hpp>
 #include "SimplePolygon.hpp"
 
 
@@ -13,6 +13,8 @@ namespace fishnet::geometry {
  */
 template<fishnet::math::Number T>
 class Polygon : public SimplePolygon<T>{
+public:
+    using SimplePolygon<T>::contains;
 private:
     std::vector<Ring<T>> holes;
 
@@ -38,6 +40,10 @@ private:
         std::vector<Ring<T>> rings;
         std::ranges::copy(ringRange, std::back_inserter(rings));
         return rings;
+    }
+
+    constexpr bool equals(IPolygon auto const & other) const noexcept {
+        return this->getBoundary() == other.getBoundary() && std::ranges::is_permutation(this->getHoles(),other.getHoles());
     }
 
 public:
@@ -145,7 +151,7 @@ public:
         });
     }
 
-    constexpr util::forward_range_of<Vec2D<double>> auto intersections(LinearGeometry auto const & linearFeature) const noexcept {
+    constexpr std::unordered_set<Vec2D<double>> intersections(LinearGeometry auto const & linearFeature) const noexcept {
         std::unordered_set<Vec2D<double>> intersectionSet;
         std::ranges::for_each(this->getBoundary().intersections(linearFeature),[&intersectionSet](const auto & p){intersectionSet.insert(p);});
         std::ranges::for_each(this->getHoles(), [&intersectionSet,&linearFeature](const auto & hole){
@@ -154,16 +160,22 @@ public:
         return intersectionSet;
     }
 
-    constexpr bool isInHole(IPolygon auto const & other) const noexcept {
+    constexpr bool containsInHole(IPoint auto const & point) const noexcept {
+        return std::ranges::any_of(this->getHoles(),[&point](const auto & hole){
+            return hole.contains(point);
+        });
+    }
+
+    constexpr bool containsInHole(IPolygon auto const & other) const noexcept {
         return std::ranges::any_of(this->getHoles(),[&other](const auto & hole){
             return hole.contains(other.getBoundary());
         });
     }
 
     constexpr bool contains(IPolygon auto const & other) const noexcept {
-        if(*this == other) 
+        if(this->equals(other))
             return true;
-        if(isInHole(other)) 
+        if(containsInHole(other))
             return false; // inside of hole
         return this->getBoundary().contains(other.getBoundary()) && std::ranges::none_of(this->getHoles(),[&other](const auto & hole){
             // the boundary of the other polygon must not be intersected by any hole and the other polygon is not allowed to contain any hole 
@@ -172,7 +184,7 @@ public:
     }
 
     constexpr bool crosses(IPolygon auto const & other) const noexcept {
-        if(isInHole(other)) 
+        if(containsInHole(other))
             return false;
         return this->getBoundary().crosses(other.getBoundary()) || std::ranges::any_of(this->getHoles(),[&other](const auto & hole){
             return hole.crosses(other.getBoundary());
@@ -202,8 +214,9 @@ public:
         return this->getBoundary().distance(other.getBoundary());
     }
 
-    constexpr bool operator==(IPolygon auto const & other) const noexcept {
-        return this->getBoundary() == other.getBoundary() && std::ranges::is_permutation(this->getHoles(),other.getHoles());
+    template<fishnet::math::Number U>
+    constexpr bool operator==(const Polygon<U> & other) const noexcept {
+        return this->equals(other);
     }
 
     constexpr std::string toString() const noexcept {

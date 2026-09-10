@@ -9,7 +9,7 @@
 
 namespace fishnet {
 
-template<geometry::GeometryObject G>
+template<geometry::Geometry G>
 class OGRLayerAdapter {
 private:
     /**

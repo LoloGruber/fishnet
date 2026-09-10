@@ -3,10 +3,8 @@
 #include <string>
 
 #include <fishnet/Vec2D.hpp>
-#include <fishnet/NumericConcepts.hpp>
-#include <fishnet/Printable.hpp>
-#include <fishnet/GeometryType.hpp>
-#include <fishnet/ShapeGeometry.hpp>
+#include <fishnet/Concepts.hpp>
+#include <fishnet/IGeometry.hpp>
 #include "Ring.hpp"
 #include "SimplePolygon.hpp"
 
@@ -69,7 +67,7 @@ namespace std {
 }
 
 namespace fishnet::geometry {
-static_assert(IRing<Triangle<double>>);
+static_assert(IPolygon<Triangle<double>>);
 static_assert(Shape<Triangle<double>>);
 // Explicit template instantiation
 template class Triangle<fishnet::math::DEFAULT_NUMERIC>;

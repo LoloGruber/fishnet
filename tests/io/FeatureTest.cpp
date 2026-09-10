@@ -5,6 +5,7 @@
 #include "FieldDefinitionTestFactory.hpp"
 #include <fishnet/Vec2D.hpp>
 #include <fishnet/Line.hpp>
+#include <fishnet/Segment.hpp>
 #include <gtest/gtest.h>
 #include <fishnet/TestUtil.hpp>
 using namespace fishnet;

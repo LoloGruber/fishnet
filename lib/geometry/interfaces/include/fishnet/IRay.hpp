@@ -49,21 +49,14 @@ public:
     LineStub<T> toLine() const{
         return LineStub(origin(), origin()+direction());
     }
+    size_t hash() const noexcept {
+        return 0;
+    }
     std::string toString() const{
         return {};
     }
 };
 } // namespace fishnet::geometry::__impl
-
-namespace std{
-    template<typename T>
-    struct hash<fishnet::geometry::__impl::RayStub<T>>{
-        constexpr static auto hasher = hash<fishnet::math::DEFAULT_NUMERIC>{}; //convert all to double to keep hash consistent with equality function
-        size_t operator()(const fishnet::geometry::__impl::RayStub<T> & ray) const noexcept{
-            return 0;
-        }
-    };
-};
 
 namespace fishnet::geometry{
 

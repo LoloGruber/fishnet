@@ -9,9 +9,7 @@ enum class GeometryType {
 
 template<typename G, typename T = typename std::remove_cvref_t<G>::numeric_type>
 concept GeometryBase = fishnet::math::Number<T> 
-    && std::equality_comparable<std::remove_cvref_t<G>>
-    && fishnet::util::Printable<std::remove_cvref_t<G>>
-    && fishnet::util::Hashable<std::remove_cvref_t<G>>
+    && fishnet::util::Object<G>
     && requires(){
         {std::remove_cvref_t<G>::type} -> std::convertible_to<GeometryType>;
         typename std::remove_cvref_t<G>::numeric_type;

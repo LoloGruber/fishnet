@@ -15,6 +15,7 @@ class Line{
 private:
     Vec2D<T> _p;
     Vec2D<T> _q;
+    constexpr static auto hasher = std::hash<fishnet::math::DEFAULT_FLOATING_POINT>{};
 public:
     const static inline Line<T> X_AXIS = Line<T>(T(0),T(0));
     const static inline Line<T> Y_AXIS = Line<T>(Vec2D<T>(0,0),Vec2D<T>(0,1));
@@ -180,6 +181,12 @@ public:
         return linearIntersection(*this,other);
     }
 
+    constexpr size_t hash() const noexcept {
+        size_t slopeHash = hasher(this->slope());
+        size_t yInterceptHash = hasher(this->yIntercept().value_or(this->_p.x));
+        return fishnet::math::CantorPairing(slopeHash,yInterceptHash);
+    }
+
     constexpr std::string toString() const {
         auto t = yIntercept();
         if (t){
@@ -192,22 +199,6 @@ public:
 //Deduction guides
 template<math::Number T>
 Line(Vec2D<T>,Vec2D<T>) -> Line<T>;
-}
-
-namespace std{
-    template<typename T>
-    struct hash<fishnet::geometry::Line<T>>{
-        constexpr static auto hasher = hash<fishnet::math::DEFAULT_FLOATING_POINT>{};
-        size_t operator() (const fishnet::geometry::Line<T> & line ) const {
-            if (line.isVertical()) return hasher(line.p().x);
-            size_t slopeHash = hasher(line.slope());
-            size_t yInterceptHash = hasher(line.yIntercept().value());
-            return fishnet::math::CantorPairing(slopeHash,yInterceptHash);
-        }
-    };
-}
-
-namespace fishnet::geometry{
 
 const static inline Line<double> xAxis = Line<double>::X_AXIS;
 const static inline Line<double> yAxis = Line<double>::Y_AXIS;

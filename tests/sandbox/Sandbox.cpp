@@ -153,7 +153,7 @@ struct Builder{
     }
 };
 
-#include <fishnet/Geometry.hpp>
+#include <fishnet/IGeometry.hpp>
 
 int main(){
     //concepts();

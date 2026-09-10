@@ -3,7 +3,7 @@
 #include <gdal/ogr_geometry.h>
 #include <spdlog/spdlog.h>
 #include <fishnet/Option.hpp>
-#include <fishnet/GeometryObject.hpp>
+#include <fishnet/IGeometry.hpp>
 #include <fishnet/Vec2D.hpp>
 #include <fishnet/Ring.hpp>
 #include <fishnet/Polygon.hpp>

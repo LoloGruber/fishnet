@@ -40,7 +40,7 @@ public:
     bool isOutside(PointStub<T> point) const{
         return true;
     }
-    bool isInHole(PointStub<T> point) const{
+    bool containsInHole(PolygonStub<T> polygon) const{
         return true;
     }
     bool contains(PointStub<T> point) const{
@@ -73,21 +73,14 @@ public:
     double distance(PolygonStub<T> polygon) const{
         return 0.0;
     }
+    size_t hash() const noexcept {
+        return 0;
+    }
     std::string toString() const {
         return {};
     }
 };
 } // namespace fishnet::geometry::__impl
-
-namespace std{
-    template<typename T>
-    struct hash<fishnet::geometry::__impl::MultiPolygonStub<T>>{
-        size_t operator()(const fishnet::geometry::__impl::MultiPolygonStub<T> & multiPolygon) const noexcept{
-            return 0;
-        }
-    };
-} 
-
 
 namespace fishnet::geometry{
 
@@ -100,6 +93,7 @@ template<typename M>
 concept IMultiPolygon = GeometryBase<M> && requires(
     const std::remove_cvref_t<M> & multiPolygon,
     std::remove_cvref_t<M> & mutableMultiPolygon,
+    const typename std::remove_cvref_t<M>::polygon_type & ownPolygon,
     const __impl::PolygonStub<typename std::remove_cvref_t<M>::numeric_type> & polygon,
     const __impl::PointStub<typename std::remove_cvref_t<M>::numeric_type> & point,
     const __impl::SegmentStub<typename std::remove_cvref_t<M>::numeric_type> & segment,
@@ -107,15 +101,15 @@ concept IMultiPolygon = GeometryBase<M> && requires(
 ){
     typename std::remove_cvref_t<M>::polygon_type;
     {multiPolygon.getPolygons()} -> PolygonRange;
-    {mutableMultiPolygon.addPolygon(polygon)} -> std::same_as<bool>;
-    {mutableMultiPolygon.removePolygon(polygon)} -> std::same_as<bool>;
+    {mutableMultiPolygon.addPolygon(ownPolygon)} -> std::same_as<bool>;
+    {mutableMultiPolygon.removePolygon(ownPolygon)} -> std::same_as<bool>;
     {multiPolygon.area()} -> std::convertible_to<double>;
     {multiPolygon.centroid()} -> IPoint;
     {multiPolygon.aaBB()} -> IRing;
     {multiPolygon.isInside(point)} -> std::same_as<bool>;
     {multiPolygon.isOnBoundary(point)} -> std::same_as<bool>;
     {multiPolygon.isOutside(point)} -> std::same_as<bool>;
-    {multiPolygon.isInHole(point)} -> std::same_as<bool>;
+    {multiPolygon.containsInHole(polygon)} -> std::same_as<bool>;
     {multiPolygon.contains(point)} -> std::same_as<bool>;
     {multiPolygon.contains(segment)} -> std::same_as<bool>;
     {multiPolygon.contains(polygon)} -> std::same_as<bool>;

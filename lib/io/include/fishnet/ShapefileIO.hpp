@@ -1,7 +1,7 @@
 #pragma once
 #include <fishnet/IOConcepts.hpp>
 #include <fishnet/Shapefile.hpp>
-
+#include <fishnet/IGeometry.hpp>
 #include <fishnet/GDALInitializer.hpp>
 #include <fishnet/GeometryTypeWKBAdapter.hpp>
 #include <fishnet/OGRFieldAdapter.hpp>
@@ -15,7 +15,7 @@
 
 namespace fishnet {
 
-template<geometry::GeometryObject G>
+template<geometry::Geometry G>
 class ShapefileReader {
 private:
     constexpr static std::array<const char *, 1> DEFAULT_OPEN_OPTIONS = { "ADJUST_TYPE=YES"};
@@ -61,7 +61,7 @@ public:
     }
 };
 
-template<geometry::GeometryObject G>
+template<geometry::Geometry G>
 class ShapefileWriter { 
 private:
     std::vector<std::string> options;

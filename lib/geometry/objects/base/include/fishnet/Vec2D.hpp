@@ -14,6 +14,8 @@ namespace fishnet::geometry{
  */
 template<fishnet::math::Number T=fishnet::math::DEFAULT_NUMERIC>
 class Vec2D {
+private: 
+    constexpr static auto hasher = std::hash<fishnet::math::DEFAULT_NUMERIC>{}; //convert all to double to keep hash consistent with equality function
 public:   
     T x;
     T y;
@@ -143,7 +145,7 @@ public:
         return {y,-x};
     }
 
-    constexpr auto normalize() const{
+    constexpr Vec2D<fishnet::math::DEFAULT_NUMERIC> normalize() const{
         return *this / length();
     }
 
@@ -166,6 +168,12 @@ public:
      */
     fishnet::math::Radians angle(const IPoint auto & reference, fishnet::math::Radians angleRotate) const{
         return angle(reference) + angleRotate;
+    }
+
+    constexpr size_t hash() const noexcept {
+        size_t xHash = hasher(this->x);
+        size_t yHash = hasher(this->y);
+        return fishnet::math::CantorPairing(xHash,yHash); // utilize cantor pairing to keep hashes unique: hash(Vec2D(2,1)) != hash(Vec2D(1,2))
     }
 
     constexpr std::string toString() const noexcept{
@@ -212,21 +220,6 @@ struct YLexicographicOrder{
     }
 };
 
-}
-
-namespace std{
-    template<typename T>
-    struct hash<fishnet::geometry::Vec2D<T>>{
-        constexpr static auto hasher = hash<fishnet::math::DEFAULT_NUMERIC>{}; //convert all to double to keep hash consistent with equality function
-        size_t operator()(const fishnet::geometry::Vec2D<T> & vector) const {
-            size_t xHash = hasher(vector.x);
-            size_t yHash = hasher(vector.y);
-            return fishnet::math::CantorPairing(xHash,yHash); // utilize cantor pairing to keep hashes unique: hash(Vec2D(2,1)) != hash(Vec2D(1,2))
-        }
-    };
-}
-
-namespace fishnet::geometry{
 static_assert(IPoint<Vec2D<double>>);
 static_assert(IPoint<Vec2D<int>>);
 

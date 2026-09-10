@@ -1,7 +1,7 @@
 #pragma once
 #include <fishnet/IOConcepts.hpp>
 #include <fishnet/GeoPackage.hpp>
-
+#include <fishnet/IGeometry.hpp>
 #include <fishnet/GDALInitializer.hpp>
 #include <fishnet/GeometryTypeWKBAdapter.hpp>
 #include <fishnet/OGRFieldAdapter.hpp>
@@ -15,7 +15,7 @@
 
 namespace fishnet {
 
-template<geometry::GeometryObject G>
+template<geometry::Geometry G>
 class GeoPackageReader {
 private:
     std::vector<std::string> gdalOpenOptions;
@@ -55,7 +55,7 @@ public:
     }
 };
 
-template<geometry::GeometryObject G>
+template<geometry::Geometry G>
 class GeoPackageWriter {
 private:
     bool createSpatialIndex = true;

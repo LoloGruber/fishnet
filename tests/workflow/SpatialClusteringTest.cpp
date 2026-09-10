@@ -24,7 +24,7 @@ struct CountingFileRefMapper {
     }
 };
 
-template<fishnet::geometry::GeometryObject G>
+template<fishnet::geometry::Geometry G>
 class ObservableShapefileReader {
 public:
     using geometry_type = G;

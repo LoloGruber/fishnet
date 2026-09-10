@@ -1,5 +1,5 @@
 #pragma once
-#include <fishnet/GeometryType.hpp>
+#include <fishnet/GeometryBase.hpp>
 #include <gdal/ogrsf_frmts.h>
 
 namespace fishnet {

@@ -1,6 +1,7 @@
 #pragma once
 #include "SimplePolygon.hpp"
 #include <iostream>
+
 namespace fishnet::geometry {
 
 /**
@@ -61,6 +62,10 @@ public:
 
     T bottom() const noexcept {
         return _bottom;
+    }
+
+    const Ring<T> & aaBB() const noexcept {
+        return *this;
     }
 
     Rectangle<T> scale(T factor) const noexcept {

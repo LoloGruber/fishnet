@@ -172,7 +172,7 @@ public:
         return anyOf([&linearFeature](const P & p){return p.intersects(linearFeature);});
     }
 
-    constexpr util::forward_range_of<Vec2DReal> auto intersections(LinearGeometry auto const & linearGeometry) const noexcept {
+    constexpr std::unordered_set<Vec2DReal> intersections(LinearGeometry auto const & linearGeometry) const noexcept {
         std::unordered_set<Vec2DReal> intersectionSet;
         std::ranges::for_each(polygons,[&intersectionSet,&linearGeometry](const P & p){
             std::ranges::for_each(p.intersections(linearGeometry),[&intersectionSet](const auto & point){
@@ -194,8 +194,8 @@ public:
         return not contains(query) && not crosses(query) && anyOf([&query](const P & p){return p.touches(query);});
     }
 
-    constexpr bool isInHole(IPolygon auto const & query) const noexcept  {
-        return anyOf([&query](const P & p){return p.isInHole(query);});
+    constexpr bool containsInHole(IPolygon auto const & query) const noexcept  {
+        return anyOf([&query](const P & p){return p.containsInHole(query);});
     }
 
     constexpr fishnet::math::DEFAULT_FLOATING_POINT distance(IPolygon auto const & query) const noexcept {
@@ -206,7 +206,7 @@ public:
         return std::ranges::min( other.getPolygons() | std::views::transform([this](const auto & otherPolygon){return this->distance(otherPolygon);}));
     }
 
-    constexpr IRing<numeric_type> auto aaBB() const noexcept {
+    constexpr Ring<numeric_type> aaBB() const noexcept {
         auto initialPoint = std::ranges::begin(this->polygons.at(0).getBoundary().getSegments())->p();
         numeric_type high = initialPoint.y;
         numeric_type low = high;
@@ -229,8 +229,8 @@ public:
         return Ring<numeric_type>({{left,high},{right,high},{right,low},{left,low}});
     }
 
-    template<IMultiPolygon M>
-    constexpr bool operator==(M const & other) const noexcept {
+    template<IPolygon Q>
+    constexpr bool operator==(const MultiPolygon<Q> & other) const noexcept {
         if(util::size(this->polygons) != util::size(other.getPolygons()))
             return false;
         for(const auto & p: other.getPolygons()){

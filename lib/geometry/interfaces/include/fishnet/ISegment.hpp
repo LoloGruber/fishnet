@@ -85,22 +85,14 @@ public:
     SegmentStub flip() const{
         return SegmentStub(q(),p());
     }
+    size_t hash() const noexcept {
+        return 0;
+    }
     std::string toString() const{
         return {};
     }
 };
-}
-
-namespace std{
-    template<typename T>
-    struct hash<fishnet::geometry::__impl::SegmentStub<T>>{
-        constexpr static auto hasher = hash<fishnet::math::DEFAULT_NUMERIC>{}; //convert all to double to keep hash consistent with equality function
-        size_t operator()(const fishnet::geometry::__impl::SegmentStub<T> & segment) const noexcept{
-            return 0;
-        }
-    };
-};
-
+} // namespace fishnet::geometry::__impl
 
 namespace fishnet::geometry{
 

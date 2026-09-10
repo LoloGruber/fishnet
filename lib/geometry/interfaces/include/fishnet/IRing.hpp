@@ -74,20 +74,14 @@ public:
     double distance(RingStub<T> ring) const{
         return 0.0;
     }
+    size_t hash() const noexcept {
+        return 0;
+    }
     std::string toString() const{
         return {};
     }
 };
 } // namespace fishnet::geometry::__impl
-
-namespace std{
-    template<typename T>
-    struct hash<fishnet::geometry::__impl::RingStub<T>>{
-        size_t operator()(const fishnet::geometry::__impl::RingStub<T> & ring) const noexcept{
-            return 0;
-        }
-    };
-};
 
 namespace fishnet::geometry{
 
@@ -106,11 +100,11 @@ concept IRing = GeometryBase<R> && requires(
 ){
     {ring.getSegments()} -> SegmentRange;
     {ring.getPoints()} -> PointRange;
-    {ring.getBoundary()} -> std::same_as<std::remove_cvref_t<R>>;
+    {ring.getBoundary()} -> std::convertible_to<std::remove_cvref_t<R>>;
     {ring.getHoles()} -> std::ranges::range; // should always be empty
     {ring.area()} -> std::convertible_to<double>;
     {ring.centroid()} -> IPoint;
-    {ring.aaBB()} -> std::same_as<std::remove_cvref_t<R>>;
+    {ring.aaBB()} -> std::convertible_to<std::remove_cvref_t<R>>;
     {ring.isInside(point)} -> std::same_as<bool>;
     {ring.isOnBoundary(point)} -> std::same_as<bool>;
     {ring.isOutside(point)} -> std::same_as<bool>;

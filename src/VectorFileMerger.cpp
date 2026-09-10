@@ -6,7 +6,7 @@
 #include <fishnet/Fishnet.hpp>
 #include <fishnet/Task.hpp>
 
-template<fishnet::geometry::GeometryObject G>
+template<fishnet::geometry::Geometry G>
 class ShapefileMerger: public Task {
 public:
     ShapefileMerger():Task("ShapefileMerger"){}

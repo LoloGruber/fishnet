@@ -3,11 +3,12 @@
 #include <magic_enum.hpp>
 #include <fishnet/FunctionalConcepts.hpp>
 #include <fishnet/Option.hpp>
+#include <fishnet/IGeometry.hpp>
 #include "FilterType.hpp"
 #include "ApproxAreaFilter.hpp"
 #include "InsidePolygonFilter.hpp"
 
-template<fishnet::geometry::GeometryObject G>
+template<fishnet::geometry::Geometry G>
 class JSONFilterFactory{
     static_assert(fishnet::util::Predicate<ApproxAreaFilter, G>);
 public:
