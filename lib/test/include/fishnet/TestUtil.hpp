@@ -204,10 +204,10 @@ static std::optional<std::string> unsortedRangeEqual(std::ranges::forward_range 
     for(const auto & expectedElement : expected){
         bool containsExpectedElement = std::ranges::find(actual, expectedElement) != std::ranges::end(actual);
         if(!containsExpectedElement){
-            if constexpr (fishnet::util::Printable<T>){
+            if constexpr (fishnet::util::HasToString<T>){
                 return buildMessage("Actual does not contain ", expectedElement.toString());
             }else if constexpr (is_std_pair_v<T>){
-                if constexpr (fishnet::util::Printable<typename T::first_type> && fishnet::util::Printable<typename T::second_type>) {
+                if constexpr (fishnet::util::HasToString<typename T::first_type> && fishnet::util::HasToString<typename T::second_type>) {
                     return buildMessage("Actual does not contain ", "{", expectedElement.first.toString(), ", ", expectedElement.second.toString(), "}");
                 } else {
                     return buildMessage("Actual does not contain expected pair");

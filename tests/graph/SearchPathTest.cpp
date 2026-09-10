@@ -5,14 +5,10 @@
 #include <fishnet/DFSAlgorithm.hpp>
 #include "DataIDNode.h"
 
-
 using namespace fishnet::graph;
 using namespace testutil;
 using UGraph = fishnet::graph::UndirectedGraph<DataIDNode<std::string>>;
 using DGraph = fishnet::graph::DirectedGraph<DataIDNode<std::string>>;
-
-static_assert(fishnet::util::Printable<DataIDNode<std::string>>);
-static_assert(fishnet::util::Printable<UGraph::edge_type>);
 
 class SearchPathTest : public ::testing::Test{
 protected:

@@ -1,7 +1,8 @@
 #pragma once
 #include <unordered_map>
 #include <type_traits>
-#include <fishnet/CollectionConcepts.hpp>
+#include <fishnet/Concepts.hpp>
+
 namespace fishnet::util {
 
 namespace __impl{

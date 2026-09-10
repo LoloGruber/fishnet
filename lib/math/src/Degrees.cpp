@@ -46,4 +46,9 @@ Degrees Degrees::atan(double tangent){
 Degrees Degrees::atan2(double y, double x){
     return Degrees(std::atan2(y,x)*RAD_TO_DEG);
 }
+
+std::string Degrees::toString() const noexcept {
+    return std::to_string(this->getAngleValue()) + "°";
 }
+
+} // namespace fishnet::math

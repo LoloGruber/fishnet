@@ -1,6 +1,6 @@
 #pragma once
 #include <unordered_map>
-#include <fishnet/CollectionConcepts.hpp>
+#include <fishnet/Concepts.hpp>
 
 namespace fishnet::util {
 
