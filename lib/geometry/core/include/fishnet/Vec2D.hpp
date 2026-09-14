@@ -82,6 +82,14 @@ public:
         return Vec2D<U>(static_cast<U>(x),static_cast<U>(y));
     }
 
+    constexpr T getX() const noexcept{
+        return x;
+    }
+
+    constexpr T getY() const noexcept{
+        return y;
+    }
+
     /**
      * @brief Negation operator
      * e.g.: -Vec(2,1) => Vec(-2,-1)
@@ -91,14 +99,12 @@ public:
         return Vec2D<T>(-x,-y);
     }
 
-    template<fishnet::math::Number U>
-    constexpr auto operator+(const Vec2D<U> &other) const noexcept{
-        return construct(x + other.x, y + other.y);
+    constexpr auto operator+(const IPoint auto & other) const noexcept{
+        return construct(x + other.getX(), y + other.getY());
     }
 
-    template<fishnet::math::Number U>
-    constexpr auto operator-(const Vec2D<U> &other) const noexcept{
-        return construct(x-other.x, y-other.y);
+    constexpr auto operator-(const IPoint auto & other) const noexcept{
+        return construct(x-other.getX(), y-other.getY());
     }
 
     template<fishnet::math::Number U>
@@ -118,11 +124,11 @@ public:
     }
 
     constexpr auto dot(const IPoint auto & other) const noexcept{
-        return x * other.x + y * other.y;
+        return x * other.getX() + y * other.getY();
     }
 
     constexpr auto cross(const IPoint auto & other) const noexcept{
-        return x * other.y - y * other.x;
+        return x * other.getY() - y * other.getX();
     }
 
     constexpr bool isParallel(const IPoint auto & other) const noexcept{
@@ -181,19 +187,6 @@ public:
     }
 
 };
-/**
- * @brief Reversed multiplication operator, allowing commutative behavior:
- * e.g.: Vec2D(1,1) * 2 == 2 * Vec2D(1,1)
- * @tparam T numeric type of the Vec2D
- * @tparam U numeric type of scalar
- * @param scalar 
- * @param vector 
- * @return returns the result with swapped order, utilizing the implementation within Vec2D
- */
-template<fishnet::math::Number T, fishnet::math::Number U>
-constexpr auto operator*(U scalar,Vec2D<T> vector)  noexcept{
-    return vector * scalar;
-}
 
 /**
  * @brief Comparator for lexigraphically-ordering of Vec2D objects

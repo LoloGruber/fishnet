@@ -7,12 +7,19 @@ namespace fishnet::geometry::__impl{
 
 template<typename T>
 class PointStub{
-public:
+private:
     T x;
     T y;
+public:
     using numeric_type = T;
     constexpr static GeometryType type = GeometryType::POINT;
     constexpr PointStub(T x, T y) : x(x), y(y) {}
+    T getX() const noexcept{
+        return x;
+    }
+    T getY() const noexcept{
+        return y;
+    }
     PointStub operator-() const noexcept{
         return PointStub(-x, -y);
     }
@@ -87,14 +94,13 @@ concept IPoint = GeometryBase<P> && requires(
     const __impl::PointStub<typename std::remove_cvref_t<P>::numeric_type> & otherPoint,
     typename std::remove_cvref_t<P>::numeric_type number
 ){
-    {constPoint.x} -> std::convertible_to<typename std::remove_cvref_t<P>::numeric_type>;
-    {constPoint.y} -> std::convertible_to<typename std::remove_cvref_t<P>::numeric_type>;
+    {constPoint.getX()} -> std::convertible_to<typename std::remove_cvref_t<P>::numeric_type>;
+    {constPoint.getY()} -> std::convertible_to<typename std::remove_cvref_t<P>::numeric_type>;
     {std::remove_cvref_t<P>(number, number)} -> std::same_as<std::remove_cvref_t<P>>;
     {-constPoint} -> std::same_as<std::remove_cvref_t<P>>;
-    {constPoint + constPoint} -> std::same_as<std::remove_cvref_t<P>>;
-    {constPoint - constPoint} -> std::same_as<std::remove_cvref_t<P>>;
+    {constPoint + otherPoint} -> std::same_as<std::remove_cvref_t<P>>;
+    {constPoint - otherPoint} -> std::same_as<std::remove_cvref_t<P>>;
     {constPoint * number} -> std::same_as<std::remove_cvref_t<P>>;
-    {number * constPoint} -> std::same_as<std::remove_cvref_t<P>>;
     {constPoint / number} -> std::convertible_to<std::remove_cvref_t<P>>;
     {constPoint.dot(otherPoint)} -> std::convertible_to<typename std::remove_cvref_t<P>::numeric_type>;
     {constPoint.cross(otherPoint)} -> std::convertible_to<typename std::remove_cvref_t<P>::numeric_type>;
@@ -107,6 +113,20 @@ concept IPoint = GeometryBase<P> && requires(
     {constPoint.angle(otherPoint)} -> std::same_as<fishnet::math::Radians>;
     {constPoint.angle(otherPoint, fishnet::math::Radians(0.0))} -> std::same_as<fishnet::math::Radians>;
 };
+
+/**
+ * @brief Reversed multiplication operator, allowing commutative behavior:
+ * e.g.: Vec2D(1,1) * 2 == 2 * Vec2D(1,1)
+ * @tparam T numeric type of vector
+ * @tparam U numeric type of scalar
+ * @param scalar 
+ * @param vector 
+ * @return returns the result with swapped order
+ */
+template<fishnet::math::Number T, fishnet::math::Number U>
+constexpr auto operator*(U scalar,const IPoint auto & vector)  noexcept{
+    return vector * scalar;
+}
 
 static_assert(IPoint<__impl::PointStub<double>>, "PointStub<double> does not satisfy IPoint concept");
 static_assert(IPoint<__impl::PointStub<int>>, "PointStub<int> does not satisfy IPoint concept");
