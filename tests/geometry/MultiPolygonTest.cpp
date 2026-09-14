@@ -146,7 +146,7 @@ TEST_F(MultiPolygonTest, isOutside) {
 
 TEST_F(MultiPolygonTest, intersects) {
     EXPECT_FALSE(multiPolygon.intersects(Segment<double>(Vec2D(-2.8,0),Vec2D(-2.1,0))));
-    EXPECT_TRUE(multiPolygon.intersects(xAxis));
+    EXPECT_TRUE(multiPolygon.intersects(X_AXIS));
     EXPECT_TRUE(multiPolygon.intersects(Ray<double>::up({4,3.5})));
     EXPECT_FALSE(multiPolygon.intersects(Segment(Vec2D(5,2),Vec2D(2,4))));
 }

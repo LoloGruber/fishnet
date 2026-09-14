@@ -155,7 +155,7 @@ TEST_F(PolygonTest, intersections){
     std::vector<Vec2D<double>> expected = {
         {0,4},{0,3},{0,2},{0,1},{0,0},{0,-0.5}
     };
-    EXPECT_UNSORTED_RANGE_EQ(polygon->intersections(yAxis),expected);
+    EXPECT_UNSORTED_RANGE_EQ(polygon->intersections(Y_AXIS),expected);
     expected = {
         {1,2.5},{2,2.5}
     };

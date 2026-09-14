@@ -1,14 +1,12 @@
 #pragma once
+#include <algorithm>
 #include <ranges>
-#include <unordered_set>
-
 #include <fishnet/FunctionalConcepts.hpp>
-
-#include <fishnet/IGeometry.hpp>
-#include <fishnet/InvalidGeometryException.hpp>
-#include <fishnet/Vec2D.hpp>
-#include <fishnet/Ring.hpp>
 #include <fishnet/PolygonFilter.hpp>
+#include <fishnet/IGeometry.hpp>
+#include "InvalidGeometryException.hpp"
+#include "Vec2D.hpp"
+#include "Ring.hpp"
 
 namespace fishnet::geometry{
 

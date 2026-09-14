@@ -1,8 +1,8 @@
 #pragma once
-#include <fishnet/Vec2D.hpp>
 #include <fishnet/Option.hpp>
 #include <fishnet/IGeometry.hpp>
 #include <fishnet/LinearIntersection.hpp>
+#include "Vec2D.hpp"
 
 namespace fishnet::geometry{
 /**
@@ -16,9 +16,8 @@ private:
     Vec2D<T> _p;
     Vec2D<T> _q;
     constexpr static auto hasher = std::hash<fishnet::math::DEFAULT_FLOATING_POINT>{};
+    const static inline Line<T> yAxis = Line<T>(Vec2D<T>(0,0),Vec2D<T>(0,1));
 public:
-    const static inline Line<T> X_AXIS = Line<T>(T(0),T(0));
-    const static inline Line<T> Y_AXIS = Line<T>(Vec2D<T>(0,0),Vec2D<T>(0,1));
 
     /**
      * @brief Vertical line factory 
@@ -123,7 +122,7 @@ public:
     }
 
     constexpr fishnet::Option<fishnet::math::DEFAULT_FLOATING_POINT> yIntercept() const noexcept{
-        fishnet::Option<Vec2DReal> intersectionWithY = intersection(Y_AXIS);
+        fishnet::Option<Vec2DReal> intersectionWithY = intersection(yAxis);
         [[likely]] if (intersectionWithY){
             return fishnet::Option(intersectionWithY->y);
         }
@@ -200,8 +199,8 @@ public:
 template<math::Number T>
 Line(Vec2D<T>,Vec2D<T>) -> Line<T>;
 
-const static inline Line<double> xAxis = Line<double>::X_AXIS;
-const static inline Line<double> yAxis = Line<double>::Y_AXIS;
+const static inline Line<double> X_AXIS = Line<double>(0.0,0.0);
+const static inline Line<double> Y_AXIS = Line<double>(Vec2D<double>(0,0),Vec2D<double>(0,1));
 static_assert(ILine<Line<double>>);
 static_assert(LinearGeometry<Line<double>>);
 

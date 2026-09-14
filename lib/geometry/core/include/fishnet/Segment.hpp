@@ -1,8 +1,7 @@
 #pragma once
-#include <optional>
 #include <array>
 #include <algorithm>
-#include <fishnet/Vec2D.hpp>
+#include "Vec2D.hpp"
 #include "Line.hpp"
 
 namespace fishnet::geometry{

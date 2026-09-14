@@ -86,8 +86,8 @@ TEST(SegmentTest, intersects){
     Segment s {Vec2D(1,1),Vec2D(-2,2)};
     EXPECT_TRUE(s.intersects(Segment(Vec2D(0,0),Vec2D(0,3))));
     EXPECT_TRUE(s.intersects(Segment(Vec2D(2,2),Vec2D(-1,0))));
-    EXPECT_TRUE(s.intersects(yAxis));
-    EXPECT_FALSE(s.intersects(xAxis));
+    EXPECT_TRUE(s.intersects(Y_AXIS));
+    EXPECT_FALSE(s.intersects(X_AXIS));
     EXPECT_FALSE(s.intersects(Segment(Vec2D(-3,-1),Vec2D(2,1))));
 }
 
@@ -173,9 +173,9 @@ TEST(SegmentTest, intersection){
     Segment s {Vec2D(0,0),Vec2D(3,2)};
     Segment t {Vec2D(1,2),Vec2D(2,0)};
     auto inter = s.intersection(t);
-    EXPECT_EQ(*inter, Vec2D(1.5,1));
-    EXPECT_EQ(s.intersection(xAxis).value(),Vec2D(0,0));
-    EXPECT_EQ(s.intersection(Line(-4,14)).value(),Vec2D(3,2));
+    EXPECT_VALUE(inter,Vec2D(1.5,1));
+    EXPECT_VALUE(s.intersection(X_AXIS),Vec2D(0,0));
+    EXPECT_VALUE(s.intersection(Line(-4,14)),Vec2D(3,2));
     EXPECT_EQ(s.intersection(Segment(Vec2D(-2,1),Vec2D(0,1))),std::nullopt);
     EXPECT_TRUE(s.intersection(Line(Vec2D(-2,1),Vec2D(0,1))).has_value());
     EXPECT_EQ(s.intersection(Line(2,2)),std::nullopt);

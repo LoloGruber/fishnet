@@ -160,8 +160,8 @@ TEST_F(RingTest, isOnBoundary){
 }
 
 TEST_F(RingTest, intersects){
-    EXPECT_TRUE(ring->intersects(xAxis));
-    EXPECT_TRUE(ring->intersects(yAxis));
+    EXPECT_TRUE(ring->intersects(X_AXIS));
+    EXPECT_TRUE(ring->intersects(Y_AXIS));
     EXPECT_FALSE(ring->intersects(Segment(Vec2D(-2,0),Vec2D(-3,1))));
     EXPECT_FALSE(ring->intersects(Segment(Vec2D(0,0),Vec2D(1,1)))); //fully inside
     EXPECT_TRUE(ring->intersects(Ray(Vec2D(0.5,2),Vec2D(1,1))));
@@ -183,7 +183,7 @@ TEST_F(RingTest, containsSegment){
 #include <fishnet/Line.hpp>
 TEST_F(RingTest, intersections){
     std::vector<Vec2D<double>> expected {Vec2D(0,4),Vec2D(0,1),Vec2D(0,-0.5)};
-    auto actual = ring -> intersections(yAxis);
+    auto actual = ring -> intersections(Y_AXIS);
     EXPECT_CONTAINS_ALL(actual,expected);
     EXPECT_SIZE(actual, 3);
     std::vector<Vec2D<double>> exp {Vec2D(2,2),Vec2D(4,2)};

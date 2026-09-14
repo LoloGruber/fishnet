@@ -1,5 +1,4 @@
 #pragma once
-
 #include <fishnet/IGeometry.hpp>
 #include "Ring.hpp"
 #include "SimplePolygon.hpp"
