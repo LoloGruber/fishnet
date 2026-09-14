@@ -308,8 +308,8 @@ struct PolygonSegmentSweepEvent : public PolygonPointSweepLine<isXOrdered>::Inse
  */
 template<bool xSweep>
 static std::pair<Vec2DReal,Vec2DReal> closestPointsSweep(SegmentRange auto && lhs, SegmentRange auto && rhs) noexcept {
-    const auto & lInit = std::ranges::begin(lhs)->p();
-    const auto & rInit = std::ranges::begin(rhs)->p();
+    auto lInit = Vec2DReal((*std::ranges::begin(lhs)).p());
+    auto rInit = Vec2DReal((*std::ranges::begin(rhs)).p());
     PolygonPointSweepLine<xSweep> sweepLine;
     /*Initialize status with two "random" points of the segment ranges*/
     ClosestPointsResult status {lInit,rInit,fishnet::util::size(lhs),fishnet::util::size(rhs)};
@@ -343,8 +343,8 @@ static std::pair<Vec2DReal,Vec2DReal> closestPointsSweep(SegmentRange auto && lh
 
 
 static std::pair<Vec2DReal,Vec2DReal> closestPointsSweep(SegmentRange auto && lhs, SegmentRange auto && rhs) noexcept {
-    const auto & lInit = std::ranges::begin(lhs)->p();
-    const auto & rInit = std::ranges::begin(rhs)->p();
+    auto lInit = Vec2DReal((*std::ranges::begin(lhs)).p());
+    auto rInit = Vec2DReal((*std::ranges::begin(rhs)).p());
     auto dirVector = rInit - lInit;
     if(fabs(dirVector.x) > fabs(dirVector.y)){
         return closestPointsSweep<true>(lhs,rhs);
