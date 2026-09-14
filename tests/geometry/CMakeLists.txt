@@ -15,6 +15,7 @@ SweepLineTest.cpp
 PolygonNeighboursTest.cpp
 TriangleTest.cpp
 DelaunayTriangulationTest.cpp
+OGRRingAdapterTest.cpp
 #CharacteristicShapeTest.cpp
 )
 gtest_discover_tests(${GeometryTestBin})
