@@ -1,5 +1,6 @@
 #pragma once
 #include <fishnet/IGeometry.hpp>
+#include <algorithm>
 #include "Ring.hpp"
 #include <iostream>
 
@@ -44,10 +45,13 @@ public:
 
     Rectangle(T left, T top, T right, T bottom):Ring<T>({{left,top},{right,top},{right,bottom},{left,bottom}}),_left(left),_top(top),_right(right),_bottom(bottom){}
 
-    Rectangle(Vec2D<T> const& topLeft, Vec2D<T> const& botRight):Ring<T>({{topLeft.x,topLeft.y},{botRight.x,topLeft.y},{botRight.x,botRight.y},{topLeft.x,botRight.y}}),_left(topLeft.x),_top(topLeft.y),_right(botRight.x),_bottom(botRight.y){
-        if(topLeft == botRight)
-            throw fishnet::geometry::InvalidGeometryException("TopLeft and BottomRight point of Rectangle are coinciding");
-    }
+    /**
+     * @brief Construct the rectangle spanned by two opposite corners
+     * @note the corners may be given in any order, they are sorted into left/top/right/bottom
+     */
+    Rectangle(Vec2D<T> const& corner, Vec2D<T> const& oppositeCorner)
+        :Rectangle(std::min(corner.x, oppositeCorner.x), std::max(corner.y, oppositeCorner.y),
+                   std::max(corner.x, oppositeCorner.x), std::min(corner.y, oppositeCorner.y)) {}
 
     T left() const noexcept {
         return _left;
