@@ -47,7 +47,7 @@ TEST_F(OGRMultiPolygonAdapterTest, initFromPolygonRange) {
 
 TEST_F(OGRMultiPolygonAdapterTest, initFromSinglePolygon) {
     OGRPolygonAdapter polygon(left());
-    OGRMultiPolygonAdapter adapted(polygon);
+    OGRMultiPolygonAdapter adapted(std::vector<OGRPolygonAdapter>{polygon});
     EXPECT_EQ(adapted.size(), 1u);
     EXPECT_DOUBLE_EQ(adapted.area(), 4.0);
 }
@@ -288,9 +288,9 @@ TEST_F(OGRMultiPolygonAdapterTest, distanceToPolygon) {
     Polygon<double> neighbour(Polygon<double>(Ring<double>(std::vector<Vec2DReal>{{2,0},{2,2},{3,2},{3,0}})));
     EXPECT_DOUBLE_EQ(multi->distance(neighbour), 0.0);
 
-    // a contained polygon reports -1 (fishnet convention)
+    // a contained polygon has no gap to the multi-polygon
     Polygon<double> inside(unitSquareAt(0.5,0.5,0.5));
-    EXPECT_DOUBLE_EQ(multi->distance(inside), -1.0);
+    EXPECT_DOUBLE_EQ(multi->distance(inside), 0.0); // contained, hence no gap
 }
 
 TEST_F(OGRMultiPolygonAdapterTest, distanceToMultiPolygon) {

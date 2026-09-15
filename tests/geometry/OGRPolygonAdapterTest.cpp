@@ -49,7 +49,7 @@ TEST_F(OGRPolygonAdapterTest, initFromPolygon) {
 }
 
 TEST_F(OGRPolygonAdapterTest, initFromRingProducesSimplePolygon) {
-    OGRPolygonAdapter adapted(outerRing());
+    OGRPolygonAdapter adapted{Polygon<double>(outerRing())};
     EXPECT_TRUE(adapted.isSimple());
     EXPECT_EMPTY(adapted.getHoles());
     EXPECT_DOUBLE_EQ(adapted.area(), 100.0);
@@ -63,7 +63,7 @@ TEST_F(OGRPolygonAdapterTest, initFromSimplePolygon) {
 }
 
 TEST_F(OGRPolygonAdapterTest, initFromBoundaryAndHoles) {
-    OGRPolygonAdapter adapted(outerRing(), std::vector<Ring<double>>{holeRing()});
+    OGRPolygonAdapter adapted{Polygon<double>(outerRing(), std::vector<Ring<double>>{holeRing()})};
     EXPECT_FALSE(adapted.isSimple());
     EXPECT_SIZE(adapted.getHoles(), 1);
     EXPECT_DOUBLE_EQ(adapted.area(), 96.0);
@@ -108,7 +108,7 @@ TEST_F(OGRPolygonAdapterTest, getHoles) {
 
 TEST_F(OGRPolygonAdapterTest, getHolesWithMultipleHoles) {
     Ring<double> secondHole(std::vector<Vec2DReal>{{1,1},{1,2},{2,2},{2,1}});
-    OGRPolygonAdapter adapted(outerRing(), std::vector<Ring<double>>{holeRing(), secondHole});
+    OGRPolygonAdapter adapted{Polygon<double>(outerRing(), std::vector<Ring<double>>{holeRing(), secondHole})};
     EXPECT_SIZE(adapted.getHoles(), 2);
     EXPECT_DOUBLE_EQ(adapted.area(), 100.0 - 4.0 - 1.0);
 }
@@ -333,9 +333,9 @@ TEST_F(OGRPolygonAdapterTest, touches) {
 }
 
 TEST_F(OGRPolygonAdapterTest, distance) {
-    // fishnet convention: a contained polygon reports -1
+    // a contained polygon has no gap to its container
     Polygon<double> inside(Ring<double>(std::vector<Vec2DReal>{{1,1},{1,2},{2,2},{2,1}}));
-    EXPECT_DOUBLE_EQ(simple->distance(inside), -1.0);
+    EXPECT_DOUBLE_EQ(simple->distance(inside), 0.0); // contained, hence no gap
     EXPECT_DOUBLE_EQ(simple->distance(inside), referenceSimple().distance(inside));
 
     // touching polygons report 0
@@ -368,16 +368,16 @@ TEST_F(OGRPolygonAdapterTest, equality) {
 
 TEST_F(OGRPolygonAdapterTest, equalityIsIndependentOfStartingVertex) {
     Ring<double> rotatedOuter(std::vector<Vec2DReal>{{10,10},{10,0},{0,0},{0,10}});
-    OGRPolygonAdapter rotated(rotatedOuter, std::vector<Ring<double>>{holeRing()});
+    OGRPolygonAdapter rotated{Polygon<double>(rotatedOuter, std::vector<Ring<double>>{holeRing()})};
     EXPECT_EQ(*withHole, rotated);
 }
 
 TEST_F(OGRPolygonAdapterTest, hash) {
-    // a polygon without holes hashes like the equivalent fishnet polygon
-    EXPECT_EQ(simple->hash(), std::hash<Polygon<double>>{}(referenceSimple()));
-    // NOTE: for polygons with holes the hashes differ, because std::hash<Polygon<T>> accumulates
-    // the hole hashes into an int and thereby truncates them to 32 bits
+    // the hash is taken over the WKB of the canonical form, so it distinguishes polygons which
+    // differ geometrically ...
     EXPECT_NE(simple->hash(), withHole->hash());
+    // ... and agrees for polygons which do not
+    EXPECT_EQ(withHole->hash(), OGRPolygonAdapter(referenceWithHole()).hash());
 }
 
 TEST_F(OGRPolygonAdapterTest, equalPolygonsHashEqually) {
@@ -385,7 +385,7 @@ TEST_F(OGRPolygonAdapterTest, equalPolygonsHashEqually) {
     EXPECT_EQ(withHole->hash(), copy.hash());
 
     Ring<double> rotatedOuter(std::vector<Vec2DReal>{{10,10},{10,0},{0,0},{0,10}});
-    OGRPolygonAdapter rotated(rotatedOuter, std::vector<Ring<double>>{holeRing()});
+    OGRPolygonAdapter rotated{Polygon<double>(rotatedOuter, std::vector<Ring<double>>{holeRing()})};
     EXPECT_EQ(*withHole, rotated);
     EXPECT_EQ(withHole->hash(), rotated.hash());
 }

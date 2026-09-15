@@ -22,15 +22,54 @@ private:
         return OGRUniquePtr<OGRMultiPolygon>(static_cast<OGRMultiPolygon*>(OGRGeometryFactory::createGeometry(wkbMultiPolygon)));
     }
 
-    static bool covers(const OGRGeometry & covering, const OGRGeometry & covered) {
-        auto difference = OGRUniquePtr<OGRGeometry>(covered.Difference(&covering));
-        return difference && difference->IsEmpty();
+    /**
+     * @brief Bring the wrapped multi-polygon into the canonical form of GEOS
+     *
+     * Canonicalising keeps the inherited coordinate wise operator== independent of the order of
+     * the polygons and of the starting vertex of each ring, and keeps it consistent with the
+     * inherited WKB hash. It has to be repeated after every mutation of the collection.
+     */
+    void canonicalize() noexcept {
+        auto normalized = OGRUniquePtr<OGRGeometry>(geomPtr->Normalize());
+        if(normalized && wkbFlatten(normalized->getGeometryType()) == wkbMultiPolygon){
+            geomPtr.reset(normalized.release()->toMultiPolygon());
+        }
     }
 
     OGRPolygon * polygonAt(int index) const {
         return static_cast<OGRPolygon*>(geomPtr->getGeometryRef(index));
     }
 
+    /**
+     * @brief The members of the collection, wrapped without being copied
+     *
+     * Everything below only reads the members while this multi-polygon is alive, so they can be
+     * borrowed rather than cloned. The public getPolygons() hands out owning copies instead,
+     * because those may outlive this object.
+     * @warning the elements must not be stored beyond the traversal
+     */
+    auto borrowedPolygons() const -> fishnet::util::forward_range_of<OGRPolygonAdapter> auto {
+        return std::ranges::views::iota(0, geomPtr->getNumGeometries())
+            | std::ranges::views::transform([this](int i){
+                return OGRPolygonAdapter::borrowed(polygonAt(i));
+            });
+    }
+
+    /**
+     * @brief Whether a polygon may join the collection, i.e. it is no duplicate of a polygon
+     * already present, does not cross one and neither contains nor is contained by one
+     */
+    bool isAddable(const OGRPolygonAdapter & polygon) const {
+        for(const auto & present : borrowedPolygons()){
+            if(present == polygon)
+                return false;
+            if(present.crosses(polygon))
+                return false;
+            if(present.contains(polygon) || polygon.contains(present))
+                return false;
+        }
+        return true;
+    }
 public:
     using numeric_type = double;
     using polygon_type = OGRPolygonAdapter;
@@ -38,10 +77,7 @@ public:
 
     OGRMultiPolygonAdapter(OGRUniquePtr<OGRMultiPolygon> && multiPolygonPtr):Base(std::move(multiPolygonPtr)) {
         geomPtr->closeRings();
-    }
-
-    OGRMultiPolygonAdapter(const OGRPolygonAdapter & polygon):Base(emptyMultiPolygon()){
-        geomPtr->addGeometry(polygon.raw());
+        canonicalize();
     }
 
     OGRMultiPolygonAdapter(IMultiPolygon auto const & multiPolygon):Base(emptyMultiPolygon()){
@@ -49,6 +85,7 @@ public:
             OGRPolygonAdapter adapted {polygon};
             geomPtr->addGeometry(adapted.raw());
         }
+        canonicalize();
     }
 
     /**
@@ -60,21 +97,26 @@ public:
     OGRMultiPolygonAdapter(const PolygonRange auto & polygons, bool checked = false):Base(emptyMultiPolygon()){
         for(const auto & polygon : polygons){
             OGRPolygonAdapter adapted {polygon};
-            if(checked)
+            // every polygon is canonical on its own, so only the order of the members is left to
+            // canonicalise, once, after all of them have been added
+            if(checked || isAddable(adapted))
                 geomPtr->addGeometry(adapted.raw());
-            else
-                addPolygon(adapted);
         }
+        canonicalize();
     }
 
     size_t size() const noexcept {
         return static_cast<size_t>(geomPtr->getNumGeometries());
     }
 
+    /**
+     * @note every member of the wrapped multi-polygon is canonical (@see canonicalize()), so the
+     * members are handed out without normalising them again
+     */
     auto getPolygons() const -> fishnet::util::forward_range_of<OGRPolygonAdapter> auto {
         return std::ranges::views::iota(0, geomPtr->getNumGeometries())
             | std::ranges::views::transform([this](int i){
-                return OGRPolygonAdapter(OGRUniquePtr<OGRPolygon>(polygonAt(i)->clone()));
+                return OGRPolygonAdapter::fromCanonicalPolygon(*polygonAt(i));
             });
     }
 
@@ -84,21 +126,21 @@ public:
      * the polygons already present, true on success
      */
     bool addPolygon(const OGRPolygonAdapter & polygon) noexcept {
-        for(const auto & present : getPolygons()){
-            if(present == polygon)
-                return false;
-            if(present.crosses(polygon))
-                return false;
-            if(present.contains(polygon) || polygon.contains(present))
-                return false;
-        }
-        return geomPtr->addGeometry(polygon.raw()) == OGRERR_NONE;
+        if(not isAddable(polygon))
+            return false;
+        if(geomPtr->addGeometry(polygon.raw()) != OGRERR_NONE)
+            return false;
+        canonicalize();
+        return true;
     }
 
     bool removePolygon(const OGRPolygonAdapter & polygon) noexcept {
         for(int i = 0; i < geomPtr->getNumGeometries(); ++i){
             if(polygonAt(i)->Equals(polygon.raw())){
-                return geomPtr->removeGeometry(i) == OGRERR_NONE;
+                if(geomPtr->removeGeometry(i) != OGRERR_NONE)
+                    return false;
+                canonicalize();
+                return true;
             }
         }
         return false;
@@ -114,7 +156,7 @@ public:
     Vec2DReal centroid() const {
         Vec2DReal accumulatedWeightedCentroid {0.0,0.0};
         double totalArea = this->area();
-        for(const auto & polygon : getPolygons()){
+        for(const auto & polygon : borrowedPolygons()){
             accumulatedWeightedCentroid = accumulatedWeightedCentroid + polygon.centroid() * (polygon.area() / totalArea);
         }
         return accumulatedWeightedCentroid;
@@ -149,24 +191,24 @@ public:
     bool contains(const ISegment auto & segment) const {
         // a segment is contained if it is contained in one of the polygons, being spread over
         // multiple polygons of the multi-polygon does not count
-        return std::ranges::any_of(getPolygons(),[&segment](const auto & polygon){return polygon.contains(segment);});
+        return std::ranges::any_of(borrowedPolygons(),[&segment](const auto & polygon){return polygon.contains(segment);});
     }
 
     bool contains(const IPolygon auto & query) const {
-        return std::ranges::any_of(getPolygons(),[&query](const auto & polygon){return polygon.contains(query);});
+        return std::ranges::any_of(borrowedPolygons(),[&query](const auto & polygon){return polygon.contains(query);});
     }
 
     bool containsInHole(const IPolygon auto & query) const {
-        return std::ranges::any_of(getPolygons(),[&query](const auto & polygon){return polygon.containsInHole(query);});
+        return std::ranges::any_of(borrowedPolygons(),[&query](const auto & polygon){return polygon.containsInHole(query);});
     }
 
     bool intersects(const LinearGeometry auto & linearFeature) const {
-        return std::ranges::any_of(getPolygons(),[&linearFeature](const auto & polygon){return polygon.intersects(linearFeature);});
+        return std::ranges::any_of(borrowedPolygons(),[&linearFeature](const auto & polygon){return polygon.intersects(linearFeature);});
     }
 
     std::unordered_set<Vec2DReal> intersections(const LinearGeometry auto & linearFeature) const {
         std::unordered_set<Vec2DReal> intersectionSet;
-        for(const auto & polygon : getPolygons()){
+        for(const auto & polygon : borrowedPolygons()){
             for(const auto & point : polygon.intersections(linearFeature)){
                 intersectionSet.insert(point);
             }
@@ -175,41 +217,24 @@ public:
     }
 
     bool crosses(const IPolygon auto & query) const {
-        return std::ranges::any_of(getPolygons(),[&query](const auto & polygon){return polygon.crosses(query);});
+        return std::ranges::any_of(borrowedPolygons(),[&query](const auto & polygon){return polygon.crosses(query);});
     }
 
     bool touches(const IPolygon auto & query) const {
         return not contains(query) && not crosses(query)
-            && std::ranges::any_of(getPolygons(),[&query](const auto & polygon){return polygon.touches(query);});
+            && std::ranges::any_of(borrowedPolygons(),[&query](const auto & polygon){return polygon.touches(query);});
     }
 
     double distance(const IPolygon auto & query) const {
-        return std::ranges::min(getPolygons() | std::views::transform([&query](const auto & polygon){return polygon.distance(query);}));
+        return std::ranges::min(borrowedPolygons() | std::views::transform([&query](const auto & polygon){return polygon.distance(query);}));
     }
 
     double distance(const IMultiPolygon auto & other) const {
         return std::ranges::min(other.getPolygons() | std::views::transform([this](const auto & otherPolygon){return this->distance(otherPolygon);}));
     }
 
-    /**
-     * @brief Equality, independent of the order of the polygons (matching
-     * fishnet::geometry::MultiPolygon)
-     * @note OGR's own Equals() compares the members pairwise in order instead.
-     */
-    bool operator==(const OGRMultiPolygonAdapter & other) const noexcept {
-        if(geomPtr == other.geomPtr)
-            return true;
-        auto symmetricDifference = OGRUniquePtr<OGRGeometry>(geomPtr->SymDifference(other.geomPtr.get()));
-        return symmetricDifference && symmetricDifference->IsEmpty();
-    }
-
-    /**
-     * @brief Hash compatible with fishnet::geometry::MultiPolygon, i.e. independent of the order
-     * of the polygons
-     */
-    size_t hash() const noexcept {
-        auto polygonHashes = getPolygons() | std::views::transform([](const auto & polygon){return polygon.hash();});
-        return std::accumulate(std::ranges::begin(polygonHashes), std::ranges::end(polygonHashes), size_t(0));
+    double distance(const OGRMultiPolygonAdapter & other) const {
+        return std::ranges::min(other.borrowedPolygons() | std::views::transform([this](const auto & otherPolygon){return this->distance(otherPolygon);}));
     }
 };
 static_assert(IMultiPolygon<OGRMultiPolygonAdapter>);

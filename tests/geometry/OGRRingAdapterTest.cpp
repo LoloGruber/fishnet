@@ -109,20 +109,42 @@ TEST_F(OGRRingAdapterTest, copyAndMove) {
 // ============================================================================
 
 TEST_F(OGRRingAdapterTest, getPoints) {
+    // the adapter reports the points of the canonical form of the ring, which contains the same
+    // points as the ring it was built from, though not necessarily starting at the same vertex
+    EXPECT_UNSORTED_RANGE_EQ(squareRing->getPoints(), squarePoints);
+    EXPECT_UNSORTED_RANGE_EQ(complexRing->getPoints(), complexPoints);
+}
+
+TEST_F(OGRRingAdapterTest, pointsAreInCanonicalOrder) {
+    // a ring which already starts at its lexicographically smallest vertex is left as it is
     EXPECT_SORTED_RANGE_EQ(squareRing->getPoints(), squarePoints);
-    EXPECT_SORTED_RANGE_EQ(complexRing->getPoints(), complexPoints);
+
+    // ... any other ring is rotated to start there, keeping the cyclic order of its points.
+    // This is what lets equality ignore the starting vertex while staying a coordinate comparison.
+    std::vector<Vec2DReal> canonicalComplex {
+        Vec2DReal(-3,2),
+        Vec2DReal(0,4),
+        Vec2DReal(2,3),
+        Vec2DReal(2,2),
+        Vec2DReal(4,2),
+        Vec2DReal(2,0),
+        Vec2DReal(-2,-1),
+        Vec2DReal(0,1)
+    };
+    EXPECT_SORTED_RANGE_EQ(complexRing->getPoints(), canonicalComplex);
 }
 
 TEST_F(OGRRingAdapterTest, getPointsMatchesRing) {
-    EXPECT_SORTED_RANGE_EQ(squareRing->getPoints(), expectedSquare().getPoints());
-    EXPECT_SORTED_RANGE_EQ(complexRing->getPoints(), expectedComplex().getPoints());
-    EXPECT_SORTED_RANGE_EQ(convexRing->getPoints(), expectedConvex().getPoints());
+    // same vertices as the fishnet ring; the order is the canonical one, @see pointsAreInCanonicalOrder
+    EXPECT_UNSORTED_RANGE_EQ(squareRing->getPoints(), expectedSquare().getPoints());
+    EXPECT_UNSORTED_RANGE_EQ(complexRing->getPoints(), expectedComplex().getPoints());
+    EXPECT_UNSORTED_RANGE_EQ(convexRing->getPoints(), expectedConvex().getPoints());
 }
 
 TEST_F(OGRRingAdapterTest, getSegments) {
-    EXPECT_SORTED_RANGE_EQ(squareRing->getSegments(), expectedSquare().getSegments());
-    EXPECT_SORTED_RANGE_EQ(complexRing->getSegments(), expectedComplex().getSegments());
-    EXPECT_SORTED_RANGE_EQ(convexRing->getSegments(), expectedConvex().getSegments());
+    EXPECT_UNSORTED_RANGE_EQ(squareRing->getSegments(), expectedSquare().getSegments());
+    EXPECT_UNSORTED_RANGE_EQ(complexRing->getSegments(), expectedComplex().getSegments());
+    EXPECT_UNSORTED_RANGE_EQ(convexRing->getSegments(), expectedConvex().getSegments());
 }
 
 TEST_F(OGRRingAdapterTest, getBoundary) {
@@ -359,8 +381,8 @@ TEST_F(OGRRingAdapterTest, touches) {
 }
 
 TEST_F(OGRRingAdapterTest, distance) {
-    // fishnet convention: rings which contain each other or cross report -1
-    EXPECT_DOUBLE_EQ(squareRing->distance(*squareRing), -1.0);
+    // rings which contain each other or cross have no gap between them
+    EXPECT_DOUBLE_EQ(squareRing->distance(*squareRing), 0.0); // a ring has no gap to itself
     EXPECT_DOUBLE_EQ(squareRing->distance(expectedSquare()), expectedSquare().distance(expectedSquare()));
 
     // touching rings have distance 0
@@ -398,6 +420,19 @@ TEST_F(OGRRingAdapterTest, equalityIsIndependentOfStartingVertexAndWindingOrder)
     // same square, but wound the other way round
     OGRRingAdapter reversed(Ring<int>(std::vector<Vec2D<int>>{Vec2D(0,0), Vec2D(1,0), Vec2D(1,1), Vec2D(0,1)}));
     EXPECT_EQ(*squareRing, reversed);
+}
+
+TEST_F(OGRRingAdapterTest, equalRingsHashEqually) {
+    // the contract which canonicalising the wrapped geometry is there to uphold: rings which
+    // compare equal must hash equally, or they break every unordered container they are put in
+    OGRRingAdapter rotated(Ring<int>(std::vector<Vec2D<int>>{Vec2D(1,1), Vec2D(1,0), Vec2D(0,0), Vec2D(0,1)}));
+    OGRRingAdapter reversed(Ring<int>(std::vector<Vec2D<int>>{Vec2D(0,0), Vec2D(1,0), Vec2D(1,1), Vec2D(0,1)}));
+    ASSERT_EQ(*squareRing, rotated);
+    ASSERT_EQ(*squareRing, reversed);
+    EXPECT_EQ(squareRing->hash(), rotated.hash());
+    EXPECT_EQ(squareRing->hash(), reversed.hash());
+
+    EXPECT_NE(squareRing->hash(), complexRing->hash());
 }
 
 TEST_F(OGRRingAdapterTest, toString) {

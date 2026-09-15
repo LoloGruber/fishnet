@@ -207,7 +207,7 @@ TEST_F(OGRGeometryAdapterTest, initFromConcreteAdapters) {
     OGRRingAdapter ring {squareRing()};
     EXPECT_TRUE(OGRGeometryAdapter(ring).isRing());
 
-    OGRMultiPolygonAdapter multiPolygon {polygon};
+    OGRMultiPolygonAdapter multiPolygon {std::vector<OGRPolygonAdapter>{polygon}};
     EXPECT_TRUE(OGRGeometryAdapter(multiPolygon).isMultiPolygon());
 }
 

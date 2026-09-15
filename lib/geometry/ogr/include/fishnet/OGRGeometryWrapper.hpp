@@ -39,7 +39,9 @@ public:
 
     OGRGeometryAdapter(OGRUniquePtr<OGRGeometry> && geometryPtr):Base(std::move(geometryPtr)) {}
 
-    OGRGeometryAdapter(const OGRRingAdapter & ring):Base(OGRUniquePtr<OGRGeometry>(ring.raw()->clone())) {}
+    // a ring adapter is backed by a polygon, so the exterior ring is what has to be wrapped for
+    // the geometry to still be recognised as a ring
+    OGRGeometryAdapter(const OGRRingAdapter & ring):Base(OGRUniquePtr<OGRGeometry>(ring.raw()->getExteriorRing()->clone())) {}
 
     OGRGeometryAdapter(const OGRPolygonAdapter & polygon):Base(OGRUniquePtr<OGRGeometry>(polygon.raw()->clone())) {}
 

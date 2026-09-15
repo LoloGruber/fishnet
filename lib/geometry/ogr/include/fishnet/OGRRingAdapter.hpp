@@ -4,117 +4,105 @@
 #include <fishnet/Rectangle.hpp>
 #include <fishnet/RingIntersection.hpp>
 #include <fishnet/PolygonDistance.hpp>
-#include "OGRAdapterBase.hpp"
+#include "OGRPolygonalAdapter.hpp"
 
 namespace fishnet::geometry{
 
 /**
- * @brief IRing implementation backed by an OGRLinearRing
+ * @brief IRing implementation backed by an OGRPolygon holding nothing but an exterior ring
  *
  * The wrapped ring is always kept closed (first point == last point), as OGR/OGC require it.
  * The IRing facing API however exposes the open representation used throughout fishnet:
  * a ring over the points u,v,x,y,z reports exactly those points and the five segments
  * u-v, v-x, x-y, y-z and z-u.
+ * @note the points are reported in the canonical order of the wrapped polygon, which is not
+ * necessarily the order they were handed in with, @see OGRPolygonalAdapter::canonicalize()
  */
-class OGRRingAdapter: public OGRAdapterBase<OGRLinearRing>{
+class OGRRingAdapter: public OGRPolygonalAdapter{
 private:
-    using Base = OGRAdapterBase<OGRLinearRing>;
-
-    /**
-     * @brief Wrap this ring into an OGRPolygon
-     *
-     * To OGR/GEOS an OGRLinearRing is a closed curve (1D). A closed curve has no boundary of its
-     * own (the whole ring counts as its interior), so it carries no interior/boundary distinction
-     * that area predicates could use. Every area based predicate therefore has to operate on an
-     * OGRPolygon wrapping this ring instead.
-     */
-    OGRUniquePtr<OGRPolygon> toPolygon() const {
-        auto polygon = OGRUniquePtr<OGRPolygon>(static_cast<OGRPolygon*>(OGRGeometryFactory::createGeometry(wkbPolygon)));
-        polygon->addRing(geomPtr.get());
+    static OGRUniquePtr<OGRPolygon> asPolygon(OGRUniquePtr<OGRLinearRing> && ringPtr) {
+        ringPtr->closeRings();
+        auto polygon = emptyPolygon();
+        polygon->addRingDirectly(ringPtr.release());
         return polygon;
     }
 
+    OGRRingAdapter(OGRUniquePtr<OGRPolygon> && polygonPtr, Canonical canonical)
+        :OGRPolygonalAdapter(std::move(polygonPtr), canonical) {}
+
     /**
-     * @brief Copy this ring into a plain OGRLineString
+     * @brief Adopt a ring which is known to be in canonical form already
      *
-     * A bare OGRLinearRing is not independently serializable and cannot be handed to GEOS backed
-     * operations (see the OGRLinearRing class documentation): passing one either as receiver or as
-     * argument silently yields false / -1 instead of a result. Curve level operations
-     * (point on boundary, distance, ...) therefore go through an OGRLineString copy.
+     * The exterior ring of a canonical polygon is itself canonical, so extracting it does not have
+     * to pay for another GEOS normalisation. This does NOT hold for the interior rings: canonical
+     * holes are wound against their shell, so a hole has to be normalised to be comparable with a
+     * ring of the same shape built on its own. Hence this is reserved for OGRPolygonAdapter
+     * handing out its boundary, and not part of the public interface.
      */
-    OGRLineString toLineString() const {
-        OGRLineString line;
-        for(int i = 0; i < geomPtr->getNumPoints(); ++i){
-            line.addPoint(geomPtr->getX(i), geomPtr->getY(i));
-        }
-        return line;
+    static OGRRingAdapter fromCanonicalRing(const OGRLinearRing & ring) {
+        auto polygon = emptyPolygon();
+        polygon->addRingDirectly(ring.clone());
+        return OGRRingAdapter(std::move(polygon), Canonical{});
     }
 
     /**
-     * @brief Copy an arbitrary IRing into a closed OGRPolygon, ready to be used with GEOS
-     */
-    static OGRPolygon toPolygon(const IRing auto & ring) {
-        OGRLinearRing ogrRing;
-        for(const auto & point : ring.getPoints()){
-            ogrRing.addPoint(point.getX(), point.getY());
-        }
-        ogrRing.closeRings();
-        OGRPolygon polygon;
-        polygon.addRing(&ogrRing);
-        return polygon;
-    }
-
-    /**
-     * @brief Boundary inclusive containment: is every point of covered also a point of covering?
+     * @brief Adopt an interior ring of a canonical polygon
      *
-     * OGR only offers the strict (interior only) Contains predicate, whereas fishnet counts the
-     * boundary as contained. Contains() || Touches() does not express that either, since Touches()
-     * also holds when covered merely touches covering from the outside (e.g. two squares sharing a
-     * single corner). "covered minus covering is empty" is exactly boundary inclusive containment.
+     * Canonical polygons wind their holes against their shell, but the holes are in canonical form
+     * apart from that. Flipping the winding therefore yields the canonical standalone ring, which
+     * costs a linear pass over the points instead of another GEOS normalisation.
      */
-    static bool covers(const OGRGeometry & covering, const OGRGeometry & covered) {
-        auto difference = OGRUniquePtr<OGRGeometry>(covered.Difference(&covering));
-        return difference && difference->IsEmpty();
+    static OGRRingAdapter fromCanonicalHole(const OGRLinearRing & hole) {
+        auto ring = OGRUniquePtr<OGRLinearRing>(hole.clone());
+        ring->reverseWindingOrder();
+        auto polygon = emptyPolygon();
+        polygon->addRingDirectly(ring.release());
+        return OGRRingAdapter(std::move(polygon), Canonical{});
     }
+
 
     /**
-     * @brief Topological equality, i.e. both geometries cover the very same points
-     * @note OGR's own Equals() compares coordinate sequences instead, and would report two
-     * rotations of one ring as different.
+     * @brief Wrap a ring owned by somebody else, without copying its points
+     *
+     * The ring is put into a shell polygon, which is what this adapter works on, and is handed
+     * back to its owner when the shell is destroyed. Only for operating on the rings of a polygon
+     * in place, which outlives the operation.
+     * @note a borrowed hole is wound against its shell, so it is not in canonical form and must
+     * not be compared or hashed; its geometry is unaffected
+     * @warning the result must not outlive the owner of the ring
      */
-    static bool topologicallyEquals(const OGRGeometry & lhs, const OGRGeometry & rhs) {
-        auto symmetricDifference = OGRUniquePtr<OGRGeometry>(lhs.SymDifference(&rhs));
-        return symmetricDifference && symmetricDifference->IsEmpty();
+    static OGRRingAdapter borrowed(OGRLinearRing * ring) {
+        return OGRRingAdapter(__impl::borrowRingAsPolygon(ring), Canonical{});
     }
 
-public:
-    using numeric_type = double;
-    static constexpr GeometryType type = GeometryType::RING;
-
-    OGRRingAdapter(OGRUniquePtr<OGRLinearRing> && ringPtr):Base(std::move(ringPtr)) {
-        geomPtr->closeRings();
-    }
-
-    OGRRingAdapter(IRing auto const & ring):Base(OGRUniquePtr<OGRLinearRing>(static_cast<OGRLinearRing*>(OGRGeometryFactory::createGeometry(wkbLinearRing)))){
-        for(const auto & point : ring.getPoints()){
-            geomPtr->addPoint(point.getX(), point.getY());
-        }
-        geomPtr->closeRings();
-    }
+    friend class OGRPolygonAdapter;
 
     /**
      * @brief Number of points of the open representation, i.e. without the closing point
      * @note an empty ring has no closing point to drop
      */
     int openPointCount() const {
-        return std::max(0, geomPtr->getNumPoints() - 1);
+        return std::max(0, exteriorRing()->getNumPoints() - 1);
     }
+
+public:
+    using OGRPolygonalAdapter::contains;
+
+    using numeric_type = double;
+    static constexpr GeometryType type = GeometryType::RING;
+
+    OGRRingAdapter(OGRUniquePtr<OGRLinearRing> && ringPtr):OGRPolygonalAdapter(asPolygon(std::move(ringPtr))) {}
+
+    OGRRingAdapter(OGRUniquePtr<OGRPolygon> && polygonPtr):OGRPolygonalAdapter(std::move(polygonPtr)) {}
+
+    OGRRingAdapter(IRing auto const & ring):OGRPolygonalAdapter(toOGRPolygon(ring)) {}
 
     auto getSegments() const -> fishnet::util::forward_range_of<fishnet::geometry::Segment<double>> auto {
         return std::ranges::views::iota(0, openPointCount())
             | std::ranges::views::transform([this](int i) {
-                Vec2DReal p1 {geomPtr->getX(i), geomPtr->getY(i)};
-                Vec2DReal p2 {geomPtr->getX(i + 1), geomPtr->getY(i + 1)};
+                const auto * ring = exteriorRing();
+                Vec2DReal p1 {ring->getX(i), ring->getY(i)};
+                Vec2DReal p2 {ring->getX(i + 1), ring->getY(i + 1)};
                 return Segment<double>(p1, p2);
             });
     }
@@ -122,7 +110,8 @@ public:
     auto getPoints() const -> fishnet::util::forward_range_of<fishnet::geometry::Vec2DReal> auto {
         return std::ranges::views::iota(0, openPointCount())
             | std::ranges::views::transform([this](int i) {
-                return Vec2DReal(geomPtr->getX(i), geomPtr->getY(i));
+                const auto * ring = exteriorRing();
+                return Vec2DReal(ring->getX(i), ring->getY(i));
             });
     }
 
@@ -132,10 +121,6 @@ public:
 
     std::vector<OGRRingAdapter> getHoles() const{
         return {};
-    }
-
-    double area() const{
-        return geomPtr->get_Area();
     }
 
     /**
@@ -153,47 +138,6 @@ public:
         return sum / static_cast<double>(count);
     }
 
-    Rectangle<double> aaBB() const{
-        OGREnvelope boundingBox;
-        geomPtr->getEnvelope(&boundingBox);
-        return Rectangle<double>(boundingBox.MinX, boundingBox.MaxY, boundingBox.MaxX, boundingBox.MinY);
-    }
-
-    bool isInside(const IPoint auto & point) const{
-        OGRPoint ogrPoint(point.getX(), point.getY());
-        return toPolygon()->Contains(&ogrPoint);
-    }
-
-    bool isOnBoundary(const IPoint auto & point) const{
-        OGRPoint ogrPoint(point.getX(), point.getY());
-        return toLineString().Intersects(&ogrPoint);
-    }
-
-    bool isOutside(const IPoint auto & point) const{
-        OGRPoint ogrPoint(point.getX(), point.getY());
-        return toPolygon()->Disjoint(&ogrPoint);
-    }
-
-    bool contains(const IPoint auto & point) const{
-        OGRPoint ogrPoint(point.getX(), point.getY());
-        return not toPolygon()->Disjoint(&ogrPoint);
-    }
-
-    bool contains(const ISegment auto & segment) const{
-        OGRLineString ogrLine;
-        ogrLine.addPoint(segment.p().getX(), segment.p().getY());
-        ogrLine.addPoint(segment.q().getX(), segment.q().getY());
-        return covers(*toPolygon(), ogrLine);
-    }
-
-    bool contains(const IRing auto & ring) const{
-        return covers(*toPolygon(), toPolygon(ring));
-    }
-
-    bool contains(const OGRRingAdapter & other) const{
-        return covers(*toPolygon(), *other.toPolygon());
-    }
-
     bool intersects(const LinearGeometry auto & linearFeature) const{
         return ringIntersects(*this, linearFeature);
     }
@@ -207,12 +151,17 @@ public:
     }
 
     bool crosses(const IRing auto & other) const{
+        if(not this->aaBB().overlap(other.aaBB()))
+            return false;
         return std::ranges::any_of(this->getSegments(),[&other](const auto & s){return other.intersects(s);})
             || std::ranges::any_of(other.getSegments(),[this](const auto & s){return this->intersects(s);});
     }
 
     bool touches(const IRing auto & other) const{
-        if(this->crosses(other)) return false;
+        if(not this->aaBB().overlap(other.aaBB()))
+            return false;
+        if(this->crosses(other)) 
+            return false;
         if(this->contains(other) || other.contains(*this)) return false;
         for(const auto & p : other.getPoints()){
             if(this->isOnBoundary(p)) return true;
@@ -222,26 +171,14 @@ public:
 
     double distance(const IRing auto & other) const{
         if(this->contains(other) or other.contains(*this) or this->crosses(other))
-             return -1;
+             return 0;
         return shapeDistance(*this,other);
     }
 
     double distance(const OGRRingAdapter & other) const{
         if(this->contains(other) or other.contains(*this) or this->crosses(other))
-             return -1;
-        auto thisLine = this->toLineString();
-        auto otherLine = other.toLineString();
-        return thisLine.Distance(&otherLine);
-    }
-
-    /**
-     * @brief Equality, independent of the starting vertex and of the winding order
-     * (matching fishnet::geometry::Ring)
-     */
-    bool operator==(const OGRRingAdapter & other) const noexcept {
-        if(geomPtr == other.geomPtr)
-            return true;
-        return topologicallyEquals(*toPolygon(), *other.toPolygon());
+             return 0;
+        return geomPtr->Distance(other.geomPtr.get());
     }
 };
 static_assert(IRing<OGRRingAdapter>);

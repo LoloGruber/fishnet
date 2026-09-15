@@ -1,10 +1,9 @@
 #pragma once
-#include <numeric>
 #include <vector>
 #include <fishnet/IGeometry.hpp>
 #include <fishnet/Rectangle.hpp>
 #include <fishnet/PolygonDistance.hpp>
-#include "OGRAdapterBase.hpp"
+#include "OGRPolygonalAdapter.hpp"
 #include "OGRRingAdapter.hpp"
 
 namespace fishnet::geometry{
@@ -12,111 +11,89 @@ namespace fishnet::geometry{
 /**
  * @brief IPolygon implementation backed by an OGRPolygon
  *
- * The exterior ring forms the boundary, the interior rings are the holes. Unlike a bare
- * OGRLinearRing, an OGRPolygon is a first class GEOS geometry, so the spatial predicates can be
- * delegated to OGR directly. Where OGR/OGC and fishnet disagree, fishnet's convention wins, so that
- * an OGR backed polygon is substitutable for a fishnet::geometry::Polygon:
+ * The exterior ring forms the boundary, the interior rings are the holes. Where OGR/OGC and
+ * fishnet disagree, fishnet's convention wins, so that an OGR backed polygon is substitutable for
+ * a fishnet::geometry::Polygon:
  * - contains() includes the boundary, whereas OGR's Contains() is interior only
  * - centroid() is the area weighted centroid over the mean-of-points centroids of its rings
- * - distance() returns -1 for a contained polygon and 0 for a touching one
+ * - distance() returns 0 for polygons which overlap in any way
  */
-class OGRPolygonAdapter: public OGRAdapterBase<OGRPolygon>{
+class OGRPolygonAdapter: public OGRPolygonalAdapter{
 private:
-    using Base = OGRAdapterBase<OGRPolygon>;
+    OGRPolygonAdapter(OGRUniquePtr<OGRPolygon> && polygonPtr, Canonical canonical)
+        :OGRPolygonalAdapter(std::move(polygonPtr), canonical) {}
 
-    static OGRUniquePtr<OGRPolygon> emptyPolygon() {
-        return OGRUniquePtr<OGRPolygon>(static_cast<OGRPolygon*>(OGRGeometryFactory::createGeometry(wkbPolygon)));
-    }
-
-    static OGRLinearRing toLinearRing(const IRing auto & ring) {
-        OGRLinearRing ogrRing;
-        for(const auto & point : ring.getPoints()){
-            ogrRing.addPoint(point.getX(), point.getY());
-        }
-        ogrRing.closeRings();
-        return ogrRing;
+    /**
+     * @brief Adopt a polygon which is known to be in canonical form already
+     *
+     * The members of a canonical multi-polygon are canonical themselves, so handing one out does
+     * not have to pay for another GEOS normalisation. Reserved for OGRMultiPolygonAdapter, as
+     * adopting a polygon which is not actually canonical breaks the invariant operator== and
+     * hash() rely on.
+     */
+    static OGRPolygonAdapter fromCanonicalPolygon(const OGRPolygon & polygon) {
+        return OGRPolygonAdapter(OGRUniquePtr<OGRPolygon>(polygon.clone()), Canonical{});
     }
 
     /**
-     * @brief Copy an arbitrary IPolygon into an OGRPolygon, ready to be used with GEOS
+     * @brief Wrap a polygon owned by somebody else, without copying it
+     *
+     * Only for operating on the members of a multi-polygon in place: the multi-polygon outlives
+     * the loop, so nothing can dangle. Never hand one of these out.
+     * @warning the result must not outlive the owner of the polygon
      */
-    static OGRPolygon toOGRPolygon(const IPolygon auto & polygon) {
-        OGRPolygon ogrPolygon;
-        auto boundary = toLinearRing(polygon.getBoundary());
-        ogrPolygon.addRing(&boundary);
-        for(const auto & hole : polygon.getHoles()){
-            auto ogrHole = toLinearRing(hole);
-            ogrPolygon.addRing(&ogrHole);
-        }
-        return ogrPolygon;
-    }
-
-    static OGRPolygon toOGRPolygon(const IRing auto & ring) {
-        OGRPolygon ogrPolygon;
-        auto boundary = toLinearRing(ring);
-        ogrPolygon.addRing(&boundary);
-        return ogrPolygon;
+    static OGRPolygonAdapter borrowed(OGRPolygon * polygon) {
+        return OGRPolygonAdapter(__impl::borrow(polygon), Canonical{});
     }
 
     /**
-     * @brief Boundary inclusive containment, @see OGRRingAdapter
+     * @brief The boundary of this polygon, without copying its points
+     * @warning only for use within an operation, which this polygon outlives
      */
-    static bool covers(const OGRGeometry & covering, const OGRGeometry & covered) {
-        auto difference = OGRUniquePtr<OGRGeometry>(covered.Difference(&covering));
-        return difference && difference->IsEmpty();
+    OGRRingAdapter borrowedBoundary() const {
+        return OGRRingAdapter::borrowed(geomPtr->getExteriorRing());
     }
 
-    OGRLinearRing * exteriorRing() const {
-        return geomPtr->getExteriorRing();
+    /**
+     * @brief The holes of this polygon, without copying their points
+     * @note these are wound against the shell and therefore not in canonical form: their geometry
+     * is exact, but they must not be compared or hashed. getHoles() hands out canonical copies.
+     * @warning only for use within an operation, which this polygon outlives
+     */
+    auto borrowedHoles() const -> fishnet::util::forward_range_of<OGRRingAdapter> auto {
+        return std::ranges::views::iota(0, geomPtr->getNumInteriorRings())
+            | std::ranges::views::transform([this](int i){
+                return OGRRingAdapter::borrowed(geomPtr->getInteriorRing(i));
+            });
     }
+
+    friend class OGRMultiPolygonAdapter;
 
 public:
+    using OGRPolygonalAdapter::contains;
     using numeric_type = double;
     static constexpr GeometryType type = GeometryType::POLYGON;
 
-    OGRPolygonAdapter(OGRUniquePtr<OGRPolygon> && polygonPtr):Base(std::move(polygonPtr)) {
-        geomPtr->closeRings();
-    }
+    OGRPolygonAdapter(OGRUniquePtr<OGRPolygon> && polygonPtr):OGRPolygonalAdapter(std::move(polygonPtr)) {}
 
-    OGRPolygonAdapter(IPolygon auto const & polygon):Base(emptyPolygon()){
-        auto boundary = toLinearRing(polygon.getBoundary());
-        geomPtr->addRing(&boundary);
-        for(const auto & hole : polygon.getHoles()){
-            auto ogrHole = toLinearRing(hole);
-            geomPtr->addRing(&ogrHole);
-        }
-    }
+    OGRPolygonAdapter(IPolygon auto const & polygon):OGRPolygonalAdapter(toOGRPolygon(polygon)) {}
 
     /**
-     * @brief Construct a simple polygon (no holes) from a ring
+     * @note the wrapped polygon is canonical, hence so is its exterior ring
      */
-    template<IRing R> requires (not IPolygon<R>)
-    OGRPolygonAdapter(R const & boundary):Base(emptyPolygon()){
-        auto ogrBoundary = toLinearRing(boundary);
-        geomPtr->addRing(&ogrBoundary);
-    }
-
-    /**
-     * @brief Construct a polygon from a boundary ring and its holes
-     */
-    OGRPolygonAdapter(const IRing auto & boundary, const RingRange auto & holes):Base(emptyPolygon()){
-        auto ogrBoundary = toLinearRing(boundary);
-        geomPtr->addRing(&ogrBoundary);
-        for(const auto & hole : holes){
-            auto ogrHole = toLinearRing(hole);
-            geomPtr->addRing(&ogrHole);
-        }
-    }
-
     OGRRingAdapter getBoundary() const {
-        return OGRRingAdapter(OGRUniquePtr<OGRLinearRing>(exteriorRing()->clone()));
+        return OGRRingAdapter::fromCanonicalRing(*exteriorRing());
     }
 
+    /**
+     * @note the wrapped polygon is canonical, so its holes only have to be turned the right way
+     * round, @see OGRRingAdapter::fromCanonicalHole
+     */
     std::vector<OGRRingAdapter> getHoles() const {
         std::vector<OGRRingAdapter> holes;
         holes.reserve(static_cast<size_t>(geomPtr->getNumInteriorRings()));
         for(int i = 0; i < geomPtr->getNumInteriorRings(); ++i){
-            holes.emplace_back(OGRUniquePtr<OGRLinearRing>(geomPtr->getInteriorRing(i)->clone()));
+            holes.emplace_back(OGRRingAdapter::fromCanonicalHole(*geomPtr->getInteriorRing(i)));
         }
         return holes;
     }
@@ -126,100 +103,43 @@ public:
     }
 
     /**
-     * @brief Area enclosed by the boundary, reduced by the area of the holes
-     */
-    double area() const {
-        return geomPtr->get_Area();
-    }
-
-    /**
      * @brief Area weighted centroid of the polygon, obtained by decomposition into its rings
      * @note fishnet defines the centroid of a ring as the mean of its points, which is what the
      * decomposition below is built on; it is not the geometric centroid OGR/GEOS would compute.
      */
     Vec2DReal centroid() const {
-        auto boundary = getBoundary();
+        auto boundary = borrowedBoundary();
         auto totalAreaIncludingHoles = boundary.area();
         auto accumulatedCentroid = boundary.centroid() * totalAreaIncludingHoles;
         auto accumulatedArea = totalAreaIncludingHoles;
-        for(const auto & hole : getHoles()){
+        for(const auto & hole : borrowedHoles()){
             accumulatedCentroid = accumulatedCentroid + hole.centroid() * -hole.area();
             accumulatedArea -= hole.area();
         }
         return accumulatedCentroid / accumulatedArea;
     }
 
-    Rectangle<double> aaBB() const {
-        OGREnvelope boundingBox;
-        geomPtr->getEnvelope(&boundingBox);
-        return Rectangle<double>(boundingBox.MinX, boundingBox.MaxY, boundingBox.MaxX, boundingBox.MinY);
-    }
-
-    bool isInside(const IPoint auto & point) const {
-        OGRPoint ogrPoint(point.getX(), point.getY());
-        return geomPtr->Contains(&ogrPoint);
-    }
-
-    /**
-     * @note the boundary of a polygon comprises its exterior ring and the rings of its holes
-     */
-    bool isOnBoundary(const IPoint auto & point) const {
-        OGRPoint ogrPoint(point.getX(), point.getY());
-        return geomPtr->Touches(&ogrPoint);
-    }
-
-    bool isOutside(const IPoint auto & point) const {
-        OGRPoint ogrPoint(point.getX(), point.getY());
-        return geomPtr->Disjoint(&ogrPoint);
-    }
-
     bool containsInHole(const IPoint auto & point) const {
-        auto holes = getHoles();
-        return std::ranges::any_of(holes, [&point](const auto & hole){return hole.contains(point);});
+        return std::ranges::any_of(borrowedHoles(), [&point](const auto & hole){return hole.contains(point);});
     }
 
     bool containsInHole(const IPolygon auto & other) const {
-        auto holes = getHoles();
-        return std::ranges::any_of(holes, [&other](const auto & hole){return hole.contains(other.getBoundary());});
-    }
-
-    bool contains(const IPoint auto & point) const {
-        OGRPoint ogrPoint(point.getX(), point.getY());
-        return not geomPtr->Disjoint(&ogrPoint);
-    }
-
-    bool contains(const ISegment auto & segment) const {
-        OGRLineString ogrLine;
-        ogrLine.addPoint(segment.p().getX(), segment.p().getY());
-        ogrLine.addPoint(segment.q().getX(), segment.q().getY());
-        return covers(*geomPtr, ogrLine);
-    }
-
-    bool contains(const IRing auto & ring) const {
-        return covers(*geomPtr, toOGRPolygon(ring));
-    }
-
-    bool contains(const IPolygon auto & other) const {
-        return covers(*geomPtr, toOGRPolygon(other));
-    }
-
-    bool contains(const OGRPolygonAdapter & other) const {
-        return covers(*geomPtr, *other.geomPtr);
+        auto otherBoundary = other.getBoundary();
+        return std::ranges::any_of(borrowedHoles(), [&otherBoundary](const auto & hole){return hole.contains(otherBoundary);});
     }
 
     bool intersects(const LinearGeometry auto & linearFeature) const {
-        if(getBoundary().intersects(linearFeature))
+        if(borrowedBoundary().intersects(linearFeature))
             return true;
-        auto holes = getHoles();
-        return std::ranges::any_of(holes, [&linearFeature](const auto & hole){return hole.intersects(linearFeature);});
+        return std::ranges::any_of(borrowedHoles(), [&linearFeature](const auto & hole){return hole.intersects(linearFeature);});
     }
 
     std::unordered_set<Vec2DReal> intersections(const LinearGeometry auto & linearFeature) const {
         std::unordered_set<Vec2DReal> intersectionSet;
-        for(const auto & point : getBoundary().intersections(linearFeature)){
+        for(const auto & point : borrowedBoundary().intersections(linearFeature)){
             intersectionSet.insert(point);
         }
-        for(const auto & hole : getHoles()){
+        for(const auto & hole : borrowedHoles()){
             for(const auto & point : hole.intersections(linearFeature)){
                 intersectionSet.insert(point);
             }
@@ -230,59 +150,43 @@ public:
     bool crosses(const IPolygon auto & other) const {
         if(containsInHole(other))
             return false;
-        if(getBoundary().crosses(other.getBoundary()))
+        auto otherBoundary = other.getBoundary();
+        if(borrowedBoundary().crosses(otherBoundary))
             return true;
-        auto holes = getHoles();
-        return std::ranges::any_of(holes, [&other](const auto & hole){return hole.crosses(other.getBoundary());});
+        return std::ranges::any_of(borrowedHoles(), [&otherBoundary](const auto & hole){return hole.crosses(otherBoundary);});
     }
 
     bool touches(const IPolygon auto & other) const {
         if(this->crosses(other))
             return false;
-        if(getBoundary().touches(other.getBoundary()))
+        auto otherBoundary = other.getBoundary();
+        if(borrowedBoundary().touches(otherBoundary))
             return true;
-        auto holes = getHoles();
-        return std::ranges::any_of(holes, [&other](const auto & hole){
+        return std::ranges::any_of(borrowedHoles(), [&otherBoundary](const auto & hole){
             // a hole fully contains the other polygon and touches it at least at one point
-            return hole.contains(other.getBoundary()) && std::ranges::any_of(other.getBoundary().getPoints(),[&hole](const auto & p){
+            return hole.contains(otherBoundary) && std::ranges::any_of(otherBoundary.getPoints(),[&hole](const auto & p){
                 return hole.isOnBoundary(p);
             });
         });
     }
 
+    /**
+     * @brief Distance between the two polygons
+     * @return 0 if the polygons overlap in any way, i.e. if one contains or touches the other,
+     * otherwise the distance between their boundaries, measured through a hole where applicable
+     */
     double distance(const IPolygon auto & other) const {
         if(this->contains(other))
-            return -1;
+            return 0;
         if(this->touches(other))
             return 0;
-        for(const auto & hole : getHoles()){
-            if(hole.contains(other.getBoundary())){
-                return shapeDistance(hole, other.getBoundary());
+        auto otherBoundary = other.getBoundary();
+        for(const auto & hole : borrowedHoles()){
+            if(hole.contains(otherBoundary)){
+                return shapeDistance(hole, otherBoundary);
             }
         }
-        return getBoundary().distance(other.getBoundary());
-    }
-
-    /**
-     * @brief Equality: equal boundaries and equal holes, regardless of their order or of the
-     * starting vertex of any ring (matching fishnet::geometry::Polygon)
-     * @note OGR's own Equals() compares coordinate sequences instead and would report two
-     * rotations of one polygon as different.
-     */
-    bool operator==(const OGRPolygonAdapter & other) const noexcept {
-        if(geomPtr == other.geomPtr)
-            return true;
-        auto symmetricDifference = OGRUniquePtr<OGRGeometry>(geomPtr->SymDifference(other.geomPtr.get()));
-        return symmetricDifference && symmetricDifference->IsEmpty();
-    }
-
-    /**
-     * @brief Hash compatible with fishnet::geometry::Polygon
-     */
-    size_t hash() const noexcept {
-        auto holeHashes = getHoles() | std::views::transform([](const auto & hole){return hole.hash();});
-        size_t holesHash = std::accumulate(std::ranges::begin(holeHashes), std::ranges::end(holeHashes), size_t(0));
-        return getBoundary().hash() ^ holesHash;
+        return borrowedBoundary().distance(otherBoundary);
     }
 };
 static_assert(IPolygon<OGRPolygonAdapter>);
