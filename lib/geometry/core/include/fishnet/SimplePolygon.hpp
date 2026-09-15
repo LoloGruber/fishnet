@@ -1,6 +1,7 @@
 #pragma once
 #include <fishnet/IGeometry.hpp>
 #include "Ring.hpp"
+#include "Rectangle.hpp"
 
 namespace fishnet::geometry {
 /**
@@ -39,7 +40,7 @@ public:
         return std::ranges::empty_view<Ring<T>>();
     }
 
-    constexpr Ring<T> aaBB() const noexcept {
+    constexpr Rectangle<T> aaBB() const noexcept {
         return this->getBoundary().aaBB();
     }
 
@@ -72,8 +73,13 @@ public:
         return this->getBoundary().touches(other.getBoundary());
     }
 
+    /**
+     * @brief Distance between the two polygons
+     * @return 0 if the polygons overlap in any way, i.e. if one contains or touches the other,
+     * otherwise the distance between their boundaries
+     */
     constexpr fishnet::math::DEFAULT_FLOATING_POINT distance(IPolygon auto const & other) const noexcept {
-        if(this->contains(other)) return -1;
+        if(this->contains(other)) return 0;
         if(this->touches(other)) return 0;
         return this->getBoundary().distance(other.getBoundary());
     }

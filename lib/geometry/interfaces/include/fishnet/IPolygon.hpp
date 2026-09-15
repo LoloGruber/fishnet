@@ -27,8 +27,8 @@ public:
     PointStub<double> centroid() const{
         return PointStub<double>(0,0);
     }
-    RingStub<T> aaBB() const{
-        return RingStub<T>({}, {});
+    EnvelopeStub<T> aaBB() const{
+        return EnvelopeStub<T>(0,0,0,0);
     }
     bool isInside(PointStub<T> point) const{
         return true;
@@ -108,7 +108,7 @@ concept IPolygon = GeometryBase<P> && requires(
     {polygon.isSimple()} -> std::same_as<bool>;
     {polygon.area()} -> std::convertible_to<double>;
     {polygon.centroid()} -> IPoint;
-    {polygon.aaBB()} -> IRing;
+    {polygon.aaBB()} -> IEnvelope;
     {polygon.isInside(point)} -> std::same_as<bool>;
     {polygon.isOnBoundary(point)} -> std::same_as<bool>;
     {polygon.isOutside(point)} -> std::same_as<bool>;

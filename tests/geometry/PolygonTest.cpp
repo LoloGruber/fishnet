@@ -201,7 +201,7 @@ TEST_F(PolygonTest, touchesPolygon) {
 }
 
 TEST_F(PolygonTest, distance) {
-    EXPECT_EQ(polygon->distance(*polygon), -1);
+    EXPECT_EQ(polygon->distance(*polygon), 0); // a polygon has no gap to itself
     Polygon<double> touchingDistance {
         SimplePolygonSamples::aaBB({-2,-1},{0,-3}),
         {SimplePolygonSamples::aaBB({-1.5,-1.5},{-0.5,-2.5})}

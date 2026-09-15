@@ -15,6 +15,9 @@
 
 namespace fishnet::geometry{
 
+template<fishnet::math::Number T>
+class Rectangle;
+
 enum class PointLocation{
     INSIDE,OUTSIDE,BOUNDARY
 };
@@ -170,9 +173,9 @@ public:
     /**
      * @brief Computes the axis-aligned bounding box of the ring
      * Calculated be computing the extreme points in every direction and forming a rectangle
-     * @return Ring representing the aaBB
+     * @return Rectangle representing the aaBB
      */
-    constexpr Ring<T> aaBB() const noexcept {
+    constexpr Rectangle<T> aaBB() const noexcept {
         T high = this->segments.at(0).p().y;
         T low = high;
         T right = this->segments.at(0).p().x;
@@ -188,7 +191,7 @@ public:
             if(p.x < left)
                 left = p.x;
         }
-        return Ring<T>({{left,high},{right,high},{right,low},{left,low}});
+        return Rectangle<T>(left,high,right,low);
     }
 
     constexpr bool contains(IPoint auto const & point) const noexcept {
@@ -319,9 +322,14 @@ public:
         return false;
     }
 
+    /**
+     * @brief Distance between the two rings
+     * @return 0 if the rings overlap in any way, i.e. if one contains the other or they cross,
+     * otherwise the distance between their boundaries
+     */
     constexpr fishnet::math::DEFAULT_FLOATING_POINT distance(IRing auto const & other) const noexcept {
         if(this->contains(other) or other.contains(*this) or this->crosses(other))
-             return -1;
+             return 0;
         return shapeDistance(*this,other);
 
     }
@@ -361,8 +369,10 @@ namespace std{
 }
 
 namespace fishnet::geometry{
-static_assert(Shape<Ring<double>>);
-static_assert(IRing<Ring<double>>);
+// NOTE: static_assert(IRing<Ring<double>>) lives in Rectangle.hpp: the concept can only be
+// checked once Rectangle, the envelope type aaBB() returns, is complete.
 // Explicit template instantiation
 template class Ring<fishnet::math::DEFAULT_NUMERIC>;
 } // namespace fishnet::geometry
+
+#include "Rectangle.hpp"

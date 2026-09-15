@@ -65,7 +65,7 @@ public:
         return _bottom;
     }
 
-    const Ring<T> & aaBB() const noexcept {
+    const Rectangle<T> & aaBB() const noexcept {
         return *this;
     }
 
@@ -144,3 +144,10 @@ namespace std{
         }
     };
 }
+
+namespace fishnet::geometry{
+static_assert(IEnvelope<Rectangle<double>>);
+static_assert(Shape<Ring<double>>);
+static_assert(IRing<Ring<double>>);
+static_assert(IRing<Rectangle<double>>);
+} // namespace fishnet::geometry

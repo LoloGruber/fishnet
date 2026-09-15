@@ -241,7 +241,7 @@ TEST_F(RingTest, touchesRing){
 TEST_F(RingTest, distanceToRing){
     EXPECT_EQ(ring->distance(*convex),1.0);
     EXPECT_EQ(convex->distance(*ring),1.0);
-    EXPECT_EQ(ring->distance(*square), -1);
+    EXPECT_EQ(ring->distance(*square), 0); // square is contained in ring, hence no gap between them
     EXPECT_EQ(ring->distance(Ring<int>(std::vector<Vec2D<int>>{{3,3},{4,4},{5,3},{5,2},{4,2}})),0.0);
     EXPECT_EQ(LinearRingSamples::aaRhombus({0,0},1).distance(LinearRingSamples::aaBB({2,1},{3,-1})),1.0);
 }

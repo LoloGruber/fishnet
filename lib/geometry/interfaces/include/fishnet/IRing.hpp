@@ -5,6 +5,45 @@
 
 namespace fishnet::geometry::__impl{
 template<typename T>
+class RingStub;
+
+template<typename T>
+class EnvelopeStub{
+public:
+    using numeric_type = T;
+    constexpr static GeometryType type = GeometryType::RING;
+    EnvelopeStub(T left, T top, T right, T bottom){}
+    bool contains(const PointStub<T> & point) const{
+        return true;
+    }
+    bool overlap(const EnvelopeStub<T> & other) const{
+        return true;
+    }
+    T left() const{
+        return 0;
+    }
+    T right() const{
+        return 0;
+    }
+    T top() const{
+        return 0;
+    }
+    T bottom() const{
+        return 0;
+    }
+    bool operator==(const EnvelopeStub<T> & other) const noexcept{
+        return true;
+    }
+    size_t hash() const noexcept {
+        return 0;
+    }
+    std::string toString() const{
+        return {};
+    }
+};
+
+
+template<typename T>
 class RingStub{
 public:
     using numeric_type = T;
@@ -32,8 +71,8 @@ public:
     PointStub<double> centroid() const{
         return PointStub<double>(0,0);
     }
-    RingStub<T> aaBB() const{
-        return RingStub<T>({}, {});
+    EnvelopeStub<T> aaBB() const{
+        return EnvelopeStub<T>(0, 0, 0, 0);
     }
     bool isInside(PointStub<T> point) const{
         return true;
@@ -85,6 +124,16 @@ public:
 
 namespace fishnet::geometry{
 
+template<typename E>
+concept IEnvelope = GeometryBase<E> && requires(const std::remove_cvref_t<E> & env, const __impl::PointStub<typename std::remove_cvref_t<E>::numeric_type> & point){
+    {env.contains(point)} -> std::same_as<bool>;
+    {env.overlap(env)} -> std::same_as<bool>;
+    {env.left()} -> std::convertible_to<typename std::remove_cvref_t<E>::numeric_type>;
+    {env.right()} -> std::convertible_to<typename std::remove_cvref_t<E>::numeric_type>;
+    {env.top()} -> std::convertible_to<typename std::remove_cvref_t<E>::numeric_type>;
+    {env.bottom()} -> std::convertible_to<typename std::remove_cvref_t<E>::numeric_type>;
+};
+
 /**
  * @brief  Interface for a ring
  * A ring is a closed loop of segments, forming a boundary of a shape.
@@ -104,7 +153,7 @@ concept IRing = GeometryBase<R> && requires(
     {ring.getHoles()} -> std::ranges::range; // should always be empty
     {ring.area()} -> std::convertible_to<double>;
     {ring.centroid()} -> IPoint;
-    {ring.aaBB()} -> std::convertible_to<std::remove_cvref_t<R>>;
+    {ring.aaBB()} -> IEnvelope;
     {ring.isInside(point)} -> std::same_as<bool>;
     {ring.isOnBoundary(point)} -> std::same_as<bool>;
     {ring.isOutside(point)} -> std::same_as<bool>;

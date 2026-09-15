@@ -7,6 +7,7 @@
 #include "InvalidGeometryException.hpp"
 #include "Vec2D.hpp"
 #include "Ring.hpp"
+#include "Rectangle.hpp"
 
 namespace fishnet::geometry{
 
@@ -204,7 +205,7 @@ public:
         return std::ranges::min( other.getPolygons() | std::views::transform([this](const auto & otherPolygon){return this->distance(otherPolygon);}));
     }
 
-    constexpr Ring<numeric_type> aaBB() const noexcept {
+    constexpr Rectangle<numeric_type> aaBB() const noexcept {
         auto initialPoint = std::ranges::begin(this->polygons.at(0).getBoundary().getSegments())->p();
         numeric_type high = initialPoint.y;
         numeric_type low = high;
@@ -224,7 +225,7 @@ public:
             if(p.x < left)
                 left = p.x;
         }
-        return Ring<numeric_type>({{left,high},{right,high},{right,low},{left,low}});
+        return Rectangle<numeric_type>(left,high,right,low);
     }
 
     template<IPolygon Q>

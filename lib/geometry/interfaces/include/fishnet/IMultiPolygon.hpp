@@ -28,8 +28,8 @@ public:
     PointStub<double> centroid() const{
         return PointStub<double>(0,0);
     }
-    RingStub<T> aaBB() const{
-        return RingStub<T>({}, {});
+    EnvelopeStub<T> aaBB() const{
+        return EnvelopeStub<T>(0, 0, 0, 0);
     }
     bool isInside(PointStub<T> point) const{
         return true;
@@ -105,7 +105,7 @@ concept IMultiPolygon = GeometryBase<M> && requires(
     {mutableMultiPolygon.removePolygon(ownPolygon)} -> std::same_as<bool>;
     {multiPolygon.area()} -> std::convertible_to<double>;
     {multiPolygon.centroid()} -> IPoint;
-    {multiPolygon.aaBB()} -> IRing;
+    {multiPolygon.aaBB()} -> IEnvelope;
     {multiPolygon.isInside(point)} -> std::same_as<bool>;
     {multiPolygon.isOnBoundary(point)} -> std::same_as<bool>;
     {multiPolygon.isOutside(point)} -> std::same_as<bool>;

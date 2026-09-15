@@ -200,8 +200,13 @@ public:
         });
     }
 
+    /**
+     * @brief Distance between the two polygons
+     * @return 0 if the polygons overlap in any way, i.e. if one contains or touches the other,
+     * otherwise the distance between their boundaries, measured through a hole where applicable
+     */
     constexpr fishnet::math::DEFAULT_FLOATING_POINT distance(IPolygon auto const & other) const noexcept {
-        if(this->contains(other)) return -1;
+        if(this->contains(other)) return 0;
         if(this->touches(other)) return 0;
         // check if in any hole and compute distance
         for(const auto & hole: getHoles()){
