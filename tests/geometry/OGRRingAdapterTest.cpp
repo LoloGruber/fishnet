@@ -5,7 +5,7 @@
 #include <fishnet/Line.hpp>
 
 using namespace fishnet::geometry;
-using namespace testutil;
+using namespace fishnet::test;
 
 class OGRRingAdapterTest : public ::testing::Test {
 protected:
@@ -73,7 +73,7 @@ TEST_F(OGRRingAdapterTest, getPoints) {
     std::vector<Vec2DReal> expected {
         Vec2DReal(0,0), Vec2DReal(0,1), Vec2DReal(1,1), Vec2DReal(1,0), Vec2DReal(0,0)
     };
-    EXPECT_RANGE_EQ(squareRing->getPoints(), expected);
+    EXPECT_SORTED_RANGE_EQ(squareRing->getPoints(), expected);
 }
 
 TEST_F(OGRRingAdapterTest, getSegments) {
@@ -83,7 +83,7 @@ TEST_F(OGRRingAdapterTest, getSegments) {
         Segment<double>(Vec2DReal(1,1), Vec2DReal(1,0)),
         Segment<double>(Vec2DReal(1,0), Vec2DReal(0,0))
     };
-    EXPECT_RANGE_EQ(squareRing->getSegments(), expected);
+    EXPECT_SORTED_RANGE_EQ(squareRing->getSegments(), expected);
 }
 
 TEST_F(OGRRingAdapterTest, getBoundary) {
