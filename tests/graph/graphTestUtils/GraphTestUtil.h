@@ -96,21 +96,21 @@ static fishnet::graph::UndirectedGraph<XYNode> getCompleteXYGraph(std::vector<XY
 }
 
 static void EXPECT_GRAPH_EQ(const auto & g1, const auto & g2){
-    testutil::EXPECT_UNSORTED_RANGE_EQ(g1.getNodes(),g2.getNodes());
-    testutil::EXPECT_UNSORTED_RANGE_EQ(g1.getEdges(),g2.getEdges());
+    fishnet::test::EXPECT_UNSORTED_RANGE_EQ(g1.getNodes(),g2.getNodes());
+    fishnet::test::EXPECT_UNSORTED_RANGE_EQ(g1.getEdges(),g2.getEdges());
 }
 
 static auto graphEqComparator(){
     return [](const auto & g1, const auto & g2) -> bool {
-        auto nodesEqual = testutil::unsortedRangeEqual(g1.getNodes(), g2.getNodes());
-        if(nodesEqual.has_value()) return false;
-        auto edgesEqual = testutil::unsortedRangeEqual(g1.getEdges(), g2.getEdges());
-        return !edgesEqual.has_value();
+        auto nodesAssertion = fishnet::test::__impl::unsortedRangeEqual(g1.getNodes(), g2.getNodes());
+        if(!nodesAssertion) return false;
+        auto edgesEqual = fishnet::test::__impl::unsortedRangeEqual(g1.getEdges(), g2.getEdges());
+        return edgesEqual;
     };
 }
 
 static void EXPECT_GRAPHS_EQ(const auto & actualGraphs, const auto & expectedGraphs){
-    testutil::EXPECT_UNSORTED_RANGE_EQ(actualGraphs, expectedGraphs, graphEqComparator());
+    fishnet::test::EXPECT_UNSORTED_RANGE_EQ(actualGraphs, expectedGraphs, graphEqComparator());
 }
 
 

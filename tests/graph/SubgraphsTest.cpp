@@ -7,7 +7,7 @@
 #include "IDNode.h"
 
 using namespace fishnet::graph;
-using namespace testutil;
+using namespace fishnet::test;
 
 class SubgraphsTest : public ::testing::Test {
 protected:

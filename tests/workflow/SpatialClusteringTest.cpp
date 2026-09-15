@@ -76,7 +76,7 @@ TEST_F(SpatialClusteringTest, BFSClustering){
     auto clustering = fishnet::BFSClustering<node_type>{distancePredicate};
     auto result = clustering(graph);
     EXPECT_TRUE(result.clusters.size() > 0);
-    testutil::EXPECT_EMPTY(result.noise);
+    fishnet::test::EXPECT_EMPTY(result.noise);
     std::vector<fishnet::geometry::MultiPolygon<geometry_type>> clusters;
     auto reduceFunction = IDReduceFunction{FileReference{42}};
     for(auto && cluster: result.clusters){

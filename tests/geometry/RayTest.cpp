@@ -4,7 +4,7 @@
 #include <fishnet/Segment.hpp>
 
 using namespace fishnet::geometry;
-using namespace testutil;
+using namespace fishnet::test;
 
 TEST(RayTest, init){
     Ray r {Vec2D(1,1),Vec2D(1,0)};

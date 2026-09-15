@@ -7,7 +7,7 @@
 
 namespace fs = std::filesystem;
 using namespace fishnet;
-using namespace testutil;
+using namespace fishnet::test;
 
 class GeoTiffTest : public ::testing::Test {
 protected:

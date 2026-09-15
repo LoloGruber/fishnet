@@ -5,7 +5,7 @@
 #include "ShapeSamples.h"
 #include <fishnet/TestUtil.hpp>
 
-using namespace testutil;
+using namespace fishnet::test;
 using namespace fishnet::geometry;
 
 struct xOrdering{

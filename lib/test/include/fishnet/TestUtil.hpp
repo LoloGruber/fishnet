@@ -1,362 +1,281 @@
 #pragma once
 #include <gtest/gtest.h>
-#include <memory>
-#include <concepts>
-#include <algorithm>
-#include <filesystem>
 #include <ranges>
+#include <stacktrace>
+#include <string>
+#include <type_traits>
+#include <utility>
+#include <filesystem>
 #include <fishnet/Concepts.hpp>
 
-namespace testutil{
 
-static void TODO() {
-    FAIL() << "Test not implemented yet";
-}
+namespace fishnet::test{
 
-template<typename T>
-static bool contains(const  fishnet::util::input_range_of<std::unique_ptr<T>> auto & collection, const std::unique_ptr<T> & element) {
-    return collection.end() != std::find_if(collection.begin(),collection.end(),[&element](const std::unique_ptr<T> & current){return *element == *current;});
-}
+namespace __impl{
 
+template <typename T>
+constexpr std::string_view get_type_name() {
+    std::string_view name;
+#if defined(__clang__) || defined(__GNUC__)
+    name = __PRETTY_FUNCTION__;
+#elif defined(_MSC_VER)
+    name = __FUNCSIG__;
+#else
+    return "unknown_type";
+#endif
 
-template<typename T>
-static bool contains(const fishnet::util::input_range_of<std::shared_ptr<T>> auto & collection, const std::shared_ptr<T> & element) {
-    return collection.end() != std::find_if(collection.begin(),collection.end(),[&element](const std::shared_ptr<T> & current){return *element == *current;});
-}
-
-template<typename T, typename U> requires std::derived_from<U,T>
-static bool contains(const fishnet::util::input_range_of<T> auto & collection, const U & element){
-    for(auto & e : collection) {
-        if(dynamic_cast<const U&>(e) == element){
-            return true;
+    // 1. Look for the exact starting token of the type value assignment
+    size_t start = name.find("T = ");
+    if (start != std::string_view::npos) {
+        start += 4; // Shift past "T = "
+        
+        // Find where the type definition stops (either a semicolon or a bracket)
+        size_t end = name.find_first_of(";]", start);
+        if (end != std::string_view::npos) {
+            return name.substr(start, end - start);
         }
     }
-    return false;
-}
 
-template<typename T, typename U> requires std::derived_from<U,T>
-static bool contains(const  fishnet::util::input_range_of<std::unique_ptr<T>> auto & collection, const std::unique_ptr<U> & element){
-    for(auto & e : collection) {
-        if(dynamic_cast< U&>(*e) == *element){
-            return true;
-        }
+    // 2. Fallback for MSVC or non-standard configurations (searches the innermost template)
+    start = name.find_last_of('<');
+    size_t end = name.find_last_of(">]");
+    if (start != std::string_view::npos && end != std::string_view::npos && end > start) {
+        return name.substr(start + 1, end - start - 1);
     }
-    return false;
+
+    return name; // Absolute fallback safety
 }
 
 template<typename T>
-static bool contains(const fishnet::util::input_range_of<T> auto & collection, const T & element){
-    return collection.end() != std::ranges::find(collection,element);
-}
-
-template<typename T>
-static bool containsView(fishnet::util::view_of<T> auto view, const T & element){
-    return view.end() != std::ranges::find(view,element);
-}
-
-static bool containsAll(const std::ranges::input_range auto & collection, const std::ranges::input_range auto & toBeContained) {
-    return std::ranges::all_of(toBeContained.begin(),toBeContained.end(),[&collection](const auto & element){return contains(collection,element);});
-}
-
-template<typename T>
-static bool containsAll(const fishnet::util::input_range_of<T> auto & collection, const T & element) {
-    return contains(collection,element);
-}
-
-template<typename T, typename... Args>
-static bool containsAll(const fishnet::util::input_range_of<T> auto collection, const T & element,Args... args){
-    return contains(collection,element) && containsAll(collection,args...);
-}
-
-
-static bool containsAllView(std::ranges::view auto view, const std::ranges::input_range auto & toBeContained){
-    return std::ranges::all_of(toBeContained,[view](const auto & e){return containsView(view,e);});
-}
-
-template<typename T>
-void EXPECT_CONTAINS( fishnet::util::input_range_of<T> auto & collection, const T & element){
-    EXPECT_NE(std::find(collection.begin(), collection.end(), element), collection.end()) << "Expected Element not contained in Collection";
-}
-
-template<typename T>
-void EXPECT_CONTAINS( fishnet::util::input_range_of<T> auto && collection, const T & element){
-    EXPECT_NE(std::find(collection.begin(), collection.end(), element), collection.end()) << "Expected Element not contained in Collection";
-}
-
-template<typename T>
-void EXPECT_NOT_CONTAINS( fishnet::util::input_range_of<T> auto & collection, const T & element){
-    EXPECT_EQ(std::find(collection.begin(), collection.end(), element), collection.end());
-}
-
-template<typename T>
-void EXPECT_NOT_CONTAINS( fishnet::util::input_range_of<T> auto && collection, const T & element){
-    EXPECT_EQ(std::find(collection.begin(), collection.end(), element), collection.end());
-}
-
-template<typename T> 
-void EXPECT_CONTAINS(const  fishnet::util::input_range_of<std::unique_ptr<T>> auto & collection, const std::unique_ptr<T> & element){
-    bool result = contains<T>(collection,element);
-    EXPECT_TRUE(result);
-}
-
-template<typename T> 
-void EXPECT_NOT_CONTAINS(const  fishnet::util::input_range_of<std::unique_ptr<T>> auto & collection, const std::unique_ptr<T> & element){
-    bool result = contains<T>(collection,element);
-    EXPECT_FALSE(result);
-}
-
-template<typename T>
-void EXPECT_CONTAINS(const fishnet::util::input_range_of<std::shared_ptr<T>> auto & collection, const std::shared_ptr<T> & element){
-    bool result = contains<T>(collection,element);
-    EXPECT_TRUE(result);
-}
-
-
-template<typename T>
-void EXPECT_NOT_CONTAINS(const fishnet::util::input_range_of<std::shared_ptr<T>> auto & collection, const std::shared_ptr<T> & element){
-    bool result = contains<T>(collection,element);
-    EXPECT_FALSE(result);
-}
-
-
-template<typename T, typename U> requires std::derived_from<U,T>
-void EXPECT_CONTAINS(const fishnet::util::input_range_of<T> auto & collection, const U & element){
-    bool result = contains<T,U>(collection,element);
-    EXPECT_TRUE(result);
-}
-
-
-template<typename T, typename U> requires std::derived_from<U,T>
-void EXPECT_NOT_CONTAINS(const fishnet::util::input_range_of<T> auto & collection, const U & element){
-    bool result = contains<T,U>(collection,element);
-    EXPECT_FALSE(result);
-}
-
-template<typename T, typename U> requires std::derived_from<U,T>
-void EXPECT_CONTAINS(const  fishnet::util::input_range_of<std::unique_ptr<T>> auto & collection, const std::unique_ptr<U> & element){
-    bool result =  contains<T,U>(collection,element);
-    EXPECT_TRUE(result);
-}
-
-template<typename T, typename U> requires std::derived_from<U,T>
-void EXPECT_NOT_CONTAINS(const  fishnet::util::input_range_of<std::unique_ptr<T>> auto & collection, const std::unique_ptr<U> & element){
-    bool result =  contains<T,U>(collection,element);
-    EXPECT_FALSE(result);
-}
-
-
-void EXPECT_CONTAINS_ALL(const std::ranges::input_range auto & collection, const std::ranges::input_range auto & toBeContained){
-    bool result = containsAll(collection,toBeContained);
-    EXPECT_TRUE(result);
-}
-
-template<typename T>
-void EXPECT_CONTAINS_ALL(const fishnet::util::input_range_of<T> auto & collection, const T & element){
-    bool collectionContainsElement = contains(collection,element);
-    EXPECT_TRUE(collectionContainsElement);
-    if(not collectionContainsElement){
-        std::cout << "Collection does not contain element: "<< element;
-    } 
-}
-
-template<typename... Args>
-void EXPECT_CONTAINS_ALL(const std::ranges::input_range auto & collection,const auto & element, Args... args){
-    bool collectionContainsElement = contains(collection,element);
-    EXPECT_TRUE(collectionContainsElement);
-    if(collectionContainsElement)
-        EXPECT_CONTAINS_ALL(collection,args...);
-    else{
-        std::cout << "Collection does not contain element: "<< element << std::endl;
-    }
-}
-
-void EXPECT_CONTAINS_ALL( std::ranges::view auto  view, std::ranges::range auto & toBeContained){
-    bool result = containsAllView(view,toBeContained);
-    EXPECT_TRUE(result);
-}
-
-template<typename T>
-struct is_std_pair : std::false_type {};
-
-template<typename F, typename S>
-struct is_std_pair<std::pair<F, S>> : std::true_type {};
-
-template<typename T>
-constexpr bool is_std_pair_v = is_std_pair<T>::value;
-
-/**
- * @brief Checks if two ranges are equal, ignoring order
- * 
- * @param actual 
- * @param expected 
- * @return std::optional<std::string> contains error message if ranges are not equal, std::nullopt otherwise
- */
-static std::optional<std::string> unsortedRangeEqual(std::ranges::forward_range auto const & actual, std::ranges::forward_range auto const & expected) {
-    auto buildMessage = [](auto... vals){
-        std::stringstream ss;
-        ((ss << vals), ...);
-        return ss.str();
-    };
-    if(fishnet::util::size(actual) != fishnet::util::size(expected)){
-        return buildMessage("Ranges have a different size!\nExpecting: ", fishnet::util::size(expected), " but was: ", fishnet::util::size(actual));
-    }
-    using T = std::remove_cvref_t<decltype(*std::ranges::begin(expected))>;
-    for(const auto & expectedElement : expected){
-        bool containsExpectedElement = std::ranges::find(actual, expectedElement) != std::ranges::end(actual);
-        if(!containsExpectedElement){
-            if constexpr (fishnet::util::HasToString<T>){
-                return buildMessage("Actual does not contain ", expectedElement.toString());
-            }else if constexpr (is_std_pair_v<T>){
-                if constexpr (fishnet::util::HasToString<typename T::first_type> && fishnet::util::HasToString<typename T::second_type>) {
-                    return buildMessage("Actual does not contain ", "{", expectedElement.first.toString(), ", ", expectedElement.second.toString(), "}");
-                } else {
-                    return buildMessage("Actual does not contain expected pair");
-                }
-            } else {
-                return buildMessage("Actual does not contain expected element");
-            }
-        }
-    }
-    return std::nullopt;
-}
-
-/**
- * @brief Checks if two ranges are equal, ignoring order, using a custom comparator
- * 
- * @param actual 
- * @param expected 
- * @param eq comparator function (T,T) -> bool
- * @return std::optional<std::string> contains error message if ranges are not equal, std::nullopt otherwise
- */
-static std::optional<std::string> unsortedRangeEqualCmp(std::ranges::forward_range auto const & actual, std::ranges::forward_range auto const & expected, auto const & eq) {
-    auto buildMessage = [](auto... vals){
-        std::stringstream ss;
-        ((ss << vals), ...);
-        return ss.str();
-    };
-    if(fishnet::util::size(actual) != fishnet::util::size(expected)){
-        return buildMessage("Ranges have a different size!\nExpecting: ", fishnet::util::size(expected), " but was: ", fishnet::util::size(actual));
-    }
-    for(const auto & expectedElement : expected){
-        bool containsExpectedElement = std::ranges::find_if(actual, [&expectedElement, &eq](const auto & actualElement){
-            return eq(actualElement, expectedElement);
-        }) != std::ranges::end(actual);
-        if(!containsExpectedElement){
-            return buildMessage("Actual does not contain expected element");
-        }
-    }
-    return std::nullopt;
-}
-
-void EXPECT_UNSORTED_RANGE_EQ(std::ranges::forward_range auto const & actual, std::ranges::forward_range auto const & expected) {
-    auto result = unsortedRangeEqual(actual, expected);
-    if(result.has_value()){
-        FAIL() << result.value();
-    }
-}
-
-void EXPECT_UNSORTED_RANGE_EQ(std::ranges::forward_range auto const & actual, std::ranges::forward_range auto const & expected, auto const & eq) {
-    auto result = unsortedRangeEqualCmp(actual, expected, eq);
-    if(result.has_value()){
-        FAIL() << result.value();
-    }
-}
-
-void EXPECT_RANGE_EQ(const std::ranges::input_range auto &  lhs, const std::ranges::input_range auto & rhs){
-    auto actual = std::ranges::cbegin(lhs);
-    auto expected = std::ranges::cbegin(rhs);
-    while(actual != std::ranges::cend(lhs) and expected != std::ranges::cend(rhs)){
-        EXPECT_EQ(*actual,*expected) << "Elements of input ranges are not equal";
-        if (*actual != *expected) return;
-        ++actual; ++expected;
-    }
-    if(actual != std::ranges::cend(lhs) or expected != std::ranges::cend(rhs)) FAIL() << "Ranges have a different size!";
-}
-
-template<typename T, typename U> requires std::derived_from<U,T>
-void EXPECT_CONTAINS_ALL(const fishnet::util::input_range_of<T> auto & collection, const fishnet::util::input_range_of<U> auto & toBeContained){
-    bool result = containsAll<T,U>(collection,toBeContained);
-    EXPECT_TRUE(result);
-}
-
-template<typename T, typename U> requires std::derived_from<U,T>
-void EXPECT_CONTAINS_ALL(const  fishnet::util::input_range_of<std::unique_ptr<T>> auto & collection, const fishnet::util::input_range_of<std::unique_ptr<U>> auto & toBeContained){
-    bool result = containsAll<T,U>(collection,toBeContained);
-    EXPECT_TRUE(result);
-}
-
-
-template<typename U, typename T>
-void EXPECT_BAD_CAST( T & t){
-    try{
-        auto casted = (U&)(t);
-        FAIL();
-    }catch(std::bad_cast & e){
-        SUCCEED();
-    }
-}
-
-template<typename T,typename U> requires std::derived_from<U,T>
-void EXPECT_REF_EQ(const  fishnet::util::input_range_of<std::unique_ptr<T>> auto& expected, const fishnet::util::input_range_of<std::unique_ptr<U>> auto & actual){
-    if(expected.size() != actual.size()){
-        FAIL();
-    }
-    for(int i = 0; i < expected.size(); i++) {
-        EXPECT_EQ(*expected[i],*actual[i]);
-    }
-}
-
-template<std::ranges::range R>
-void EXPECT_SIZE(R && container, size_t expectedSize) {
-    EXPECT_EQ(fishnet::util::size(container),expectedSize);
-}
-
-void EXPECT_EMPTY(std::ranges::range auto && container){
-    EXPECT_SIZE(container,0);
-}
-
-void EXPECT_EMPTY(std::ranges::range auto & container){
-    EXPECT_SIZE(container,0);
-}
-
-void EXPECT_IN_RANGE(fishnet::math::Number auto value, fishnet::math::Number auto lower, fishnet::math::Number auto upper){
-    EXPECT_TRUE(value >= lower);
-    EXPECT_TRUE(value < upper);
-}
-
-template<typename ExpectedType>
-void EXPECT_TYPE(const auto & value){
-    bool hasCorrectType = std::same_as<decltype(value),const ExpectedType &>;
-    EXPECT_TRUE(hasCorrectType);
-}
+concept Printable = requires(std::stringstream ss,const std::remove_cvref_t<T> & value) {
+    {ss << value};
+};
 
 template<typename T>
 concept OptionalOrExpected = requires(const T & t){
     {t.has_value()} -> std::convertible_to<bool>;
+    {t.value()} -> std::convertible_to<typename std::remove_cvref_t<T>::value_type>;
 };
 
-void EXPECT_VALUE(const OptionalOrExpected auto & opt){
-    EXPECT_TRUE(opt.has_value());
+template<typename T>
+concept AssociativeContainer = requires(std::remove_cvref_t<T> container, typename std::remove_cvref_t<T>::key_type key) {
+    {container.find(key)} -> std::same_as<typename std::remove_cvref_t<T>::iterator>;
+};
+
+static inline void printValue(std::stringstream & ss, const auto & value) {
+    if constexpr (Printable<std::remove_cvref_t<decltype(value)>>) {
+        ss << value;
+    } else {
+        ss << '?';
+    }
 }
 
-void ASSERT_VALUE(const OptionalOrExpected auto & opt){
-    ASSERT_TRUE(opt.has_value());
+static std::string printContainer(std::ranges::input_range auto && container) {
+    std::pair<char, char> containerBoundary = std::make_pair('[', ']');
+    if constexpr (AssociativeContainer<std::remove_cvref_t<decltype(container)>>) {
+        containerBoundary = std::make_pair('{', '}');
+    }
+    std::stringstream ss;
+    ss << containerBoundary.first;
+    bool isFirst = true;
+    for(const auto & element : container) {
+        if(!isFirst) {
+            ss << ", ";
+        }
+        printValue(ss, element);
+        isFirst = false;
+    }
+    ss << containerBoundary.second;
+    return ss.str();
 }
 
-void EXPECT_VALUE(const OptionalOrExpected auto & opt, const typename std::remove_cvref_t<decltype(opt)>::value_type &expectedValue){
-    EXPECT_TRUE(opt.has_value());
-    EXPECT_EQ(opt.value(), expectedValue);
+static auto message(auto... vals) {
+    std::stringstream ss;
+    ss << "\033[1;31m";
+    ((printValue(ss, vals)), ...);
+    ss << "\033[0m";
+    return ss.str();
 }
 
-void EXPECT_EMPTY(const OptionalOrExpected auto & opt){
-    EXPECT_FALSE(opt.has_value());
+static auto trace(){
+    std::stringstream ss;
+    ss << "\033[1;36m";
+    ss << "Stack trace:" << std::endl;
+    auto st = std::stacktrace::current();
+    auto it = st.begin();
+    while(it != st.end() && it->source_file().ends_with("TestUtil.hxx"))
+         ++it;
+    --it;
+    auto first = it;
+    while(not it->source_file().ends_with("gtest.cc") && it != st.end()) {
+        if (it != first)
+            ss << std::endl;
+        ss << "\t" << it->source_file() << ":" << it->source_line();
+        ++it;
+    }
+    ss << "\033[0m";
+    return ss.str();
+}
+
+static auto messageWithTrace(auto... vals) {
+    std::stringstream ss;
+    ss << message(vals...) << std::endl;
+    ss << trace();
+    return ss.str();
+}
+
+template<typename T, typename Eq = std::equal_to<>>
+static testing::AssertionResult contains(std::ranges::input_range auto && collection, const T & element, Eq const & eq = Eq{}) {
+    if(std::ranges::end(collection) != std::ranges::find_if(collection, [&element, &eq](const auto & e) { return eq(e, element); })){
+        return testing::AssertionSuccess() << message("Collection ", printContainer(collection), " contains element: ", element);
+    }else{
+        return testing::AssertionFailure() << message("Collection ", printContainer(collection), " does not contain element: ", element);
+    }
+}
+
+template<typename Eq = std::equal_to<>>
+static testing::AssertionResult unsortedRangeEqual(std::ranges::forward_range auto const & actual, std::ranges::forward_range auto const & expected, Eq const & eq = Eq{}) {
+    using A = std::ranges::range_value_t<decltype(actual)>;
+    using E = std::ranges::range_value_t<decltype(expected)>;
+    static_assert(fishnet::util::BiFunction<decltype(eq), A, E,bool>, "eq must be a binary function that takes two arguments of type A and E");
+    if(fishnet::util::size(actual) != fishnet::util::size(expected)){
+        return testing::AssertionFailure() << message("Ranges have a different size!\nExpecting: ", fishnet::util::size(expected), " but was: ", fishnet::util::size(actual));
+    }
+    for(const auto & expectedElement : expected){
+        auto result = contains(actual, expectedElement, eq);
+        if(!result){
+            return result;
+        }
+    }
+    return testing::AssertionSuccess() << message("Ranges are equal (ignoring order)");
+}
+
+template<typename Eq = std::equal_to<>>
+static testing::AssertionResult sortedRangeEqual(std::ranges::forward_range auto const & actual, std::ranges::forward_range auto const & expected, Eq const & eq = Eq{}) {
+    using A = std::ranges::range_value_t<decltype(actual)>;
+    using E = std::ranges::range_value_t<decltype(expected)>;
+    static_assert(std::convertible_to<A,E>, "Actual and expected collection must have convertible value type");
+    static_assert(fishnet::util::BiFunction<decltype(eq), A, E,bool>, "eq must be a binary function that takes two arguments of type A and E");
+    auto actualIt = std::ranges::cbegin(actual);
+    auto expectedIt = std::ranges::cbegin(expected);
+    while(actualIt != std::ranges::cend(actual) && expectedIt != std::ranges::cend(expected)){
+        if(!eq(*actualIt,*expectedIt)){
+            if constexpr (Printable<A> && Printable<E>) {
+                return testing::AssertionFailure() << message("Ranges differ at index ", std::distance(std::ranges::cbegin(actual), actualIt), "! Expecting ", *expectedIt, " but was: ", *actualIt);
+            } else {
+                return testing::AssertionFailure() << message("Ranges differ at index ", std::distance(std::ranges::cbegin(actual), actualIt));
+            }
+        }
+        ++actualIt;
+        ++expectedIt;
+    }
+    if(actualIt != std::ranges::cend(actual) or expectedIt != std::ranges::cend(expected)) {
+        return testing::AssertionFailure() << message("Ranges have a different size!", "Expecting: ", fishnet::util::size(expected), " but was: ", fishnet::util::size(actual));
+    }
+    return testing::AssertionSuccess() << message("Ranges are equal (in order)");
+}
+} // namespace fishnet::test::__impl
+
+static void TODO() {
+   FAIL() << __impl::messageWithTrace("Test not implemented yet");  
+}
+
+template<typename T>
+static void EXPECT_CONTAINS(fishnet::util::input_range_of<T> auto && collection, const T & element) {
+    EXPECT_TRUE(__impl::contains(collection,element)) << __impl::trace();
+}
+
+template<typename T>
+static void EXPECT_NOT_CONTAINS(fishnet::util::input_range_of<T> auto && collection, const T & element) {
+    EXPECT_FALSE(__impl::contains(collection,element)) << __impl::trace();
+}
+
+static void EXPECT_CONTAINS_ALL(std::ranges::input_range auto && collection, std::ranges::input_range auto && expected){
+    for(const auto & element : expected){
+        EXPECT_TRUE(__impl::contains(collection,element)) << __impl::trace();
+    }
+}
+
+template<typename... Args>
+static void EXPECT_CONTAINS_ALL(std::ranges::input_range auto && collection, const Args & ...args){
+    (EXPECT_CONTAINS(collection,args), ...);
+}
+
+static void EXPECT_UNSORTED_RANGE_EQ(std::ranges::forward_range auto const & actual, std::ranges::forward_range auto const & expected) {
+    EXPECT_TRUE(__impl::unsortedRangeEqual(actual, expected)) << __impl::trace();
+}
+
+static void EXPECT_UNSORTED_RANGE_EQ(std::ranges::forward_range auto const & actual, std::ranges::forward_range auto const & expected, auto const & eq) {
+    EXPECT_TRUE(__impl::unsortedRangeEqual(actual, expected, eq)) << __impl::trace();
+}
+
+static void EXPECT_SORTED_RANGE_EQ(std::ranges::forward_range auto const & actual, std::ranges::forward_range auto const & expected) {
+    EXPECT_TRUE(__impl::sortedRangeEqual(actual, expected)) << __impl::trace();
+}
+
+static void EXPECT_SORTED_RANGE_EQ(std::ranges::forward_range auto const & actual, std::ranges::forward_range auto const & expected, auto const & eq) {
+    EXPECT_TRUE(__impl::sortedRangeEqual(actual, expected, eq)) << __impl::trace();
+}
+    
+static void EXPECT_SIZE(std::ranges::range auto && range, size_t expectedSize) {
+    EXPECT_EQ(fishnet::util::size(range),expectedSize) << __impl::messageWithTrace("Expected size of range: ", expectedSize, " but was: ", fishnet::util::size(range));
+}
+
+static void EXPECT_EMPTY(std::ranges::range auto && range) {
+    EXPECT_EQ(fishnet::util::size(range), 0) << __impl::messageWithTrace("Expected range to be empty but was: ", __impl::printContainer(range));
+}
+
+template<typename ExpectedType>
+static void EXPECT_TYPE(const auto & value){
+    if constexpr (not std::is_same_v<std::remove_cvref_t<decltype(value)>, ExpectedType>){
+        constexpr std::string_view expectedTypeName = __impl::get_type_name<ExpectedType>();
+        constexpr std::string_view actualTypeName = __impl::get_type_name<std::remove_cvref_t<decltype(value)>>();
+        FAIL() << __impl::messageWithTrace("Expected type: '", expectedTypeName, "' but was: '", actualTypeName, "'");
+    }else{
+        SUCCEED();
+    }
+}
+
+static void EXPECT_VALUE(const __impl::OptionalOrExpected auto & wrapper, const typename std::remove_cvref_t<decltype(wrapper)>::value_type & expectedValue){
+    EXPECT_TRUE(wrapper.has_value()) << __impl::messageWithTrace("Expected wrapper to have value: '", expectedValue, "' but was empty");
+    if(wrapper.has_value()){
+        if(wrapper.value() == expectedValue){
+            SUCCEED();
+        }else{
+            FAIL() << __impl::messageWithTrace("Wrapper has value: '", wrapper.value(), "' but was expecting: '", expectedValue, "'");
+        }
+    }
+}
+
+static void EXPECT_VALUE(const __impl::OptionalOrExpected auto & wrapper){
+    EXPECT_TRUE(wrapper.has_value()) << __impl::messageWithTrace("Expected wrapper to have value but was empty");
+    if(wrapper.has_value()){
+        SUCCEED();
+    }
+}
+
+static void ASSERT_VALUE(const __impl::OptionalOrExpected auto & wrapper) {
+    ASSERT_TRUE(wrapper.has_value()) << __impl::messageWithTrace("Expected wrapper to have value but was empty");  
+}
+
+static void EXPECT_EMPTY(const __impl::OptionalOrExpected auto & wrapper){
+    if(wrapper.has_value()){
+        FAIL() << __impl::messageWithTrace("Expected wrapper to be empty but was: '", wrapper.value(), "'");
+    }else{
+        SUCCEED();
+    }
 }
 
 static void EXPECT_EXISTS(const std::filesystem::path & path){
-    EXPECT_TRUE(std::filesystem::exists(path)) << "Expecting path "<<path<<" to exist";
+    EXPECT_TRUE(std::filesystem::exists(path)) << __impl::messageWithTrace("Expecting path ", path, " to exist");
 }
 
 static void EXPECT_NOT_EXISTS(const std::filesystem::path & path){
-    EXPECT_FALSE(std::filesystem::exists(path)) << "Expecting path "<<path<<" to not exist";
+    EXPECT_FALSE(std::filesystem::exists(path)) << __impl::messageWithTrace("Expecting path ", path, " to not exist");
 }
+
+void EXPECT_IN_RANGE(fishnet::math::Number auto value, fishnet::math::Number auto lower, fishnet::math::Number auto upper){
+    EXPECT_TRUE(value >= lower) << __impl::messageWithTrace("Expected value ", value, " to be greater than or equal to lower bound ", lower);
+    EXPECT_TRUE(value < upper) << __impl::messageWithTrace("Expected value ", value, " to be less than upper bound ", upper);
 }
+} // namespace fishnet::test

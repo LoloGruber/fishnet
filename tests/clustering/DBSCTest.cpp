@@ -5,7 +5,7 @@
 
 using T = fishnet::geometry::Vec2DStd;
 using G = fishnet::graph::UndirectedGraph<T>;
-using namespace testutil;
+using namespace fishnet::test;
 
 struct PointDistanceFunction {
     static double operator()(const T & lhs, const T & rhs) {
@@ -15,8 +15,8 @@ struct PointDistanceFunction {
 
 void EXPECT_CONTAINS_CLUSTER(const std::vector<std::vector<T>> & clusters, const fishnet::util::forward_range_of<T> auto & expectedCluster){
     for(const auto & c : clusters){
-        auto errorMessage = unsortedRangeEqual(c, expectedCluster);
-        if(not errorMessage.has_value()){
+        auto assertionResult = __impl::unsortedRangeEqual(c, expectedCluster);
+        if(assertionResult){
             SUCCEED();
             return;
         }

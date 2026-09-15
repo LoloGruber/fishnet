@@ -4,7 +4,7 @@
 #include <fishnet/TestUtil.hpp>
 #include "ShapeSamples.h"
 
-using namespace testutil;
+using namespace fishnet::test;
 using namespace fishnet::geometry;
 using namespace fishnet::math;
 

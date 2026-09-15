@@ -9,7 +9,7 @@
 #include <gtest/gtest.h>
 #include <fishnet/TestUtil.hpp>
 using namespace fishnet;
-using namespace testutil;
+using namespace fishnet::test;
 
 TEST(FeatureTest, init) {
     EXPECT_NO_FATAL_FAILURE(Feature(geometry::Vec2DStd(0,0)));

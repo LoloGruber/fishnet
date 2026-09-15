@@ -2,7 +2,7 @@
 
 #include <fishnet/TestUtil.hpp>
 #include <fishnet/NestedMap.hpp>
-using namespace testutil;
+using namespace fishnet::test;
 using namespace fishnet::util;
 
 class NestedMapTest: public ::testing::Test {

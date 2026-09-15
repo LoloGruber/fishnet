@@ -6,7 +6,7 @@
 #include "DataIDNode.h"
 
 using namespace fishnet::graph;
-using namespace testutil;
+using namespace fishnet::test;
 using UGraph = fishnet::graph::UndirectedGraph<DataIDNode<std::string>>;
 using DGraph = fishnet::graph::DirectedGraph<DataIDNode<std::string>>;
 

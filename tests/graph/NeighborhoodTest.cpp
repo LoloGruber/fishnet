@@ -6,7 +6,7 @@
 #include "MoveOnlyAdjacency.hpp"
 
 using namespace fishnet::graph;
-using namespace testutil;
+using namespace fishnet::test;
 using N = DataIDNode<std::string>;
 using G = UndirectedGraph<N>;
 using E = typename G::edge_type;

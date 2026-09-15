@@ -4,7 +4,7 @@
 
 static inline int MAX_VALUE= 10000;
 
-using namespace testutil;
+using namespace fishnet::test;
 using namespace fishnet::util;
 
 class BlockingQueueTest: public ::testing::Test {

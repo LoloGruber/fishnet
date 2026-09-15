@@ -8,7 +8,7 @@
 
 using namespace fishnet::graph;
 using namespace nlohmann;
-using namespace testutil;
+using namespace fishnet::test;
 
 struct XYNodeJSON{
     static json operator()(const XYNode & node){

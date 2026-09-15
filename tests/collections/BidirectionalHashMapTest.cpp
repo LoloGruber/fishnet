@@ -2,7 +2,7 @@
 #include <fishnet/TestUtil.hpp>
 #include <fishnet/BidirectionalMap.hpp>
 
-using namespace testutil;
+using namespace fishnet::test;
 
 class BidirectionalHashMapTest: public ::testing::Test {
 protected:
