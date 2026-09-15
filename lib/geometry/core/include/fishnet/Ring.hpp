@@ -11,6 +11,7 @@
 #include <fishnet/Segment.hpp>
 #include <fishnet/PolygonalRingVerification.hpp>
 #include <fishnet/PolygonDistance.hpp>
+#include <fishnet/RingIntersection.hpp>
 
 namespace fishnet::geometry{
 
@@ -208,60 +209,15 @@ public:
 
     /**
      * @brief test whether a linear feature intersects the ring
-     * Check every intersection of the linear feature with the segments of the ring:
-     * If the endpoints of the intersected segment are on opposite sides of the linear feature -> TRUE
-     * If intersection point is vertex of the ring:
-     *      s1.p()-----------s1.q() == intersection point == s2.p()----------s2.q()
-     *      -> Test if s1.p() and s2.() are on the same side of the linear feature, if not it must be a intersection -> TRUE
-     * Additional checks depending on type linear feature:
-     * - L == ISegment:
-     *      skip if intersection is endpoint of both the segment of the boundary and the linear feature 
-     *      otherwise test if any of the endpoints of the linear feature are outside of the ring -> TRUE 
-     * - L == IRing:
-     *      skip if intersection is the origin of the ray
-     *  
+     * @see ringIntersects, which is shared by all IRing implementations
      * @tparam L linear feature type
-     * @param linearFeature 
-     * @return true 
-     * @return false 
+     * @param linearFeature
+     * @return true
+     * @return false
      */
     template<LinearGeometry L>
     constexpr bool intersects( const L & linearFeature) const noexcept {
-        // Helper lambda to check whether two points are on the same side of the linearFeature (or on the line)
-        auto onSameSide = [linearFeature](const Vec2D<T> & lhs, const Vec2D<T> & rhs) {
-            auto line = linearFeature.toLine();
-            if(line.contains(rhs) || line.contains(lhs)){
-                return true;
-            }
-            return line.isLeft(lhs) == line.isLeft(rhs);
-        }; 
-        for(size_t i = 0; i < segments.size(); ++i){
-            auto current = segments[i];
-            auto inter = current.intersection(linearFeature);
-            if constexpr(ISegment<L>){
-                if(inter && (linearFeature.isEndpoint(inter.value()) && current.isEndpoint(inter.value())))
-                     continue;
-                if(inter && (linearFeature.isEndpoint(inter.value())) && (isOutside(linearFeature.p()) || isOutside(linearFeature.q())))
-                    return true;
-            }
-            if constexpr(IRay<L>){
-                if(inter && inter.value() == linearFeature.origin())
-                     continue;
-            }
-            if(inter && current.isEndpoint(inter.value())) { // intersection is vertex of ring
-                if(current.p() == inter.value()){
-                    if(not onSameSide(current.q(),segments[(i-1)%segments.size()].p()))
-                        return true;
-                }else{ // inter.value() == current.q()
-                    if(not onSameSide(current.p(),segments[(i+1)%segments.size()].q())) 
-                        return true;
-                }
-            }else if(inter){
-                if(not onSameSide(current.p(),current.q())) return true;
-            }
-        }
-        return false;
-
+        return ringIntersects(*this, linearFeature);
     }
 
     constexpr std::unordered_set<Vec2DReal> intersections(LinearGeometry auto const& linearFeature) const noexcept{

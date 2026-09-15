@@ -16,6 +16,9 @@ PolygonNeighboursTest.cpp
 TriangleTest.cpp
 DelaunayTriangulationTest.cpp
 OGRRingAdapterTest.cpp
+OGRPolygonAdapterTest.cpp
+OGRMultiPolygonAdapterTest.cpp
+OGRGeometryAdapterTest.cpp
 #CharacteristicShapeTest.cpp
 )
 gtest_discover_tests(${GeometryTestBin})
