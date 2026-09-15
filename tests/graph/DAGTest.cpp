@@ -3,7 +3,7 @@
 #include <fishnet/TestUtil.hpp>
 
 using namespace fishnet::graph;
-using namespace testutil;
+using namespace fishnet::test;
 using DAGGraphType = decltype(GraphFactory::DAG<size_t>());
 
 class DAGTest: public ::testing::Test{

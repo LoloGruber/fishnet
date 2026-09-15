@@ -3,7 +3,7 @@
 #include <fishnet/TestUtil.hpp>
 
 using namespace fishnet::geometry;
-using namespace testutil;
+using namespace fishnet::test;
 
 class kNearestNeighboursTest: public ::testing::Test{
 protected:

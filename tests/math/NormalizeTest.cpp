@@ -4,6 +4,7 @@
 #include <fishnet/TestUtil.hpp>
 
 using namespace fishnet::math;
+using namespace fishnet::test;
 
 TEST(NormalizeTest, Normalize2PI){
     std::vector<double> testValues = {
@@ -14,7 +15,7 @@ TEST(NormalizeTest, Normalize2PI){
         results.push_back(normalize(v,TWO_PI));
     }
     for(auto v : results){
-        testutil::EXPECT_IN_RANGE(v,0,TWO_PI);
+        EXPECT_IN_RANGE(v,0,TWO_PI);
     }
     EXPECT_EQ(normalize(PI,TWO_PI),PI);
     EXPECT_EQ(normalize(0,TWO_PI),0);
@@ -30,7 +31,7 @@ TEST(NormalizeTest, NormalizePlusMinusPI){
         results.push_back(normalize(v,-PI,PI));
     }
     for(auto v : results){
-        testutil::EXPECT_IN_RANGE(v,-PI,PI);
+        EXPECT_IN_RANGE(v,-PI,PI);
     }
     EXPECT_EQ(normalize(0,-PI,PI),0);
     EXPECT_EQ(normalize(-PI,-PI,PI),-PI);
@@ -43,7 +44,7 @@ TEST(NormalizeTest, NormalizeDegree){
         0.0, -180.0,90.0,360.0,720.0,359.0,361.0,-0.1
     };
     for(auto v: testValues){
-        testutil::EXPECT_IN_RANGE(normalize(v,360.0),0.0,360.0);
+        EXPECT_IN_RANGE(normalize(v,360.0),0.0,360.0);
     }
     EXPECT_EQ(normalize(360.0,360.0),0);
     EXPECT_EQ(normalize(90.0,360.0),90.0);

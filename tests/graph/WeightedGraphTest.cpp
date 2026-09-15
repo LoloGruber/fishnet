@@ -11,7 +11,7 @@ struct DistanceFunction{
         return n1.distanceTo(n2);
     }
 };
-using namespace testutil;
+using namespace fishnet::test;
 using namespace fishnet::graph;
 using WG = Weighted<UndirectedGraph<XYNode>,double,DistanceFunction>;
 using DG = GraphDecorator<WG,UndirectedGraph<XYNode>,typename WG::edge_type>;

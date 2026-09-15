@@ -3,6 +3,8 @@
 #include <fishnet/BFSClustering.hpp>
 #include "ClusteringTestUtil.hpp"
 
+using namespace fishnet::test;
+
 class BFSClusteringTest: public ::testing::Test{
 protected:
     static inline std::vector<fishnet::geometry::Vec2DStd> points = {
@@ -19,7 +21,7 @@ TEST_F(BFSClusteringTest, NoRelationPredicate){
     fishnet::BFSClustering<fishnet::geometry::Vec2DStd> bfsClustering;
     auto result = bfsClustering(graph);
     EXPECT_EQ(result.clusters.size(), 1);
-    testutil::EXPECT_EMPTY(result.noise);
+    EXPECT_EMPTY(result.noise);
 }
 
 TEST_F(BFSClusteringTest, DistanceRelationPredicate){
@@ -30,5 +32,5 @@ TEST_F(BFSClusteringTest, DistanceRelationPredicate){
     fishnet::BFSClustering<fishnet::geometry::Vec2DStd> bfsClustering (std::move(distancePredicate));
     auto result = bfsClustering(graph);
     EXPECT_EQ(result.clusters.size(), 5);
-    testutil::EXPECT_EMPTY(result.noise);
+    EXPECT_EMPTY(result.noise);
 }

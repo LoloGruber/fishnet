@@ -6,7 +6,7 @@
 
 using DGraph = fishnet::graph::DirectedGraph<IDNode>;
 using DEdge = DGraph::edge_type;
-using namespace testutil;
+using namespace fishnet::test;
 using namespace fishnet::graph;
 
 class DirectedGraphTest: public ::testing::Test{

@@ -7,7 +7,7 @@
 #include <fishnet/Rectangle.hpp>
 
 using namespace fishnet::geometry;
-using namespace testutil;
+using namespace fishnet::test;
 
 static_assert(GeometryObject<Ring<double>>);
 static_assert(GeometryObject<SimplePolygon<int>>);

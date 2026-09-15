@@ -4,7 +4,7 @@
 
 using namespace fishnet::geometry;
 using namespace fishnet::math;
-using namespace testutil;
+using namespace fishnet::test;
 
 TEST(SegmentTest, init){
     Segment s {Vec2D(0,0),Vec2D(1,0)};

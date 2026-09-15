@@ -3,7 +3,7 @@
 #include <fishnet/TestUtil.hpp>
 
 using namespace fishnet::geometry;
-using namespace testutil;
+using namespace fishnet::test;
 
 class RingTest: public ::testing::Test{
 protected:
@@ -46,11 +46,11 @@ TEST_F(RingTest, init){
         Segment(Vec2D(1,0),Vec2D(0,0))
     };
     Ring r {segments};
-    EXPECT_RANGE_EQ(r.getSegments(),segments);
+    EXPECT_SORTED_RANGE_EQ(r.getSegments(),segments);
     std::vector<Vec2D<int>> expectedPoints {
         Vec2D(0,0), Vec2D(0,1),Vec2D(1,1),Vec2D(1,0)
     };
-    EXPECT_RANGE_EQ(r.getPoints(), expectedPoints);
+    EXPECT_SORTED_RANGE_EQ(r.getPoints(), expectedPoints);
     std::vector<Vec2D<int>> notEnoughPoints {Vec2D<int>(0,0),Vec2D<int>(1,1)};
     EXPECT_ANY_THROW(Ring(std::vector<Vec2D<int>>()));
     EXPECT_ANY_THROW(Ring{notEnoughPoints});
@@ -82,8 +82,8 @@ TEST_F(RingTest, init){
         Segment(Vec2D(1,1),Vec2D(1,0)), 
         Segment(Vec2D(1,0),Vec2D(0,0))
     };
-    EXPECT_RANGE_EQ(valid.getPoints(),expectedPoints);
-    EXPECT_RANGE_EQ(valid.getSegments(),expectedSegments);
+    EXPECT_SORTED_RANGE_EQ(valid.getPoints(),expectedPoints);
+    EXPECT_SORTED_RANGE_EQ(valid.getSegments(),expectedSegments);
 }
 
 TEST_F(RingTest, castToDouble) {
@@ -92,7 +92,7 @@ TEST_F(RingTest, castToDouble) {
 }
 
 TEST_F(RingTest, getter){
-    EXPECT_RANGE_EQ(ring->getPoints(),points);
+    EXPECT_SORTED_RANGE_EQ(ring->getPoints(),points);
     std::vector<Segment<double>> expectedRingSegments {
         Segment<double>(Vec2D<double>(0,4),Vec2D<double>(2,3)),
         Segment<double>(Vec2D<double>(2,3),Vec2D<double>(2,2)),
@@ -103,9 +103,9 @@ TEST_F(RingTest, getter){
         Segment<double>(Vec2D<double>(0,1),Vec2D<double>(-3,2)),
         Segment<double>(Vec2D<double>(-3,2),Vec2D<double>(0,4))
     };
-    EXPECT_RANGE_EQ(ring->getSegments(),expectedRingSegments);
+    EXPECT_SORTED_RANGE_EQ(ring->getSegments(),expectedRingSegments);
 
-    EXPECT_RANGE_EQ(convex->getSegments(),segments);
+    EXPECT_SORTED_RANGE_EQ(convex->getSegments(),segments);
     std::vector<Vec2D<double>> expectedPointsConvex {
         Vec2D(3,4),
         Vec2D(4,5),
@@ -113,7 +113,7 @@ TEST_F(RingTest, getter){
         Vec2D(5,3),
         Vec2D(4,3),
     };
-    EXPECT_RANGE_EQ(convex->getPoints(),expectedPointsConvex);
+    EXPECT_SORTED_RANGE_EQ(convex->getPoints(),expectedPointsConvex);
 }
 
 TEST_F(RingTest, aaBB){

@@ -8,7 +8,7 @@
 #include <cstring>
 
 using namespace fishnet::graph;
-using namespace testutil;
+using namespace fishnet::test;
 
 struct XYNodeToBinary{
     static std::vector<uint8_t> operator()(const XYNode & node) {

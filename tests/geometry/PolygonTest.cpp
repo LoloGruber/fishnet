@@ -7,7 +7,7 @@
 #include <list>
 
 using namespace fishnet::geometry;
-using namespace testutil;
+using namespace fishnet::test;
 
 static_assert(GeometryObject<Polygon<double>>);
 static_assert(IPolygon<Polygon<double>>);

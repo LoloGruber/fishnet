@@ -10,7 +10,7 @@
 
 using namespace fishnet::graph;
 using namespace fishnet::util;
-using namespace testutil;
+using namespace fishnet::test;
 
 struct DistanceFunction {
     double operator()(const XYNode& n1, const XYNode& n2) const {

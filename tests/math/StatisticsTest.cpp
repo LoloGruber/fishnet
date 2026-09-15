@@ -3,7 +3,7 @@
 #include <gtest/gtest.h>
 #include <vector>
 
-using namespace testutil; 
+using namespace fishnet::test; 
 
 struct Node {
     double value;

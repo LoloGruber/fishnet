@@ -6,7 +6,7 @@
 #include <fishnet/TemporaryDirectiory.h>
 #include <fishnet/VectorIO.hpp>
 
-using namespace testutil;
+using namespace fishnet::test;
 using namespace fishnet;
 using namespace fishnet::geometry;
 

@@ -2,7 +2,7 @@
 #include <fishnet/OGRGeometryAdapter.hpp>
 #include <fishnet/TestUtil.hpp>
 
-using namespace testutil;
+using namespace fishnet::test;
 using namespace fishnet::geometry;
 TEST(OGRAdapterTest, Point){
     auto ogrP = fishnet::OGRGeometryAdapter::OGRUniquePtr<OGRPoint>(new OGRPoint(2.5,-5));
@@ -63,5 +63,5 @@ TEST(OGRAdapterTest, Polygon ){
     for(const auto & p : ogrConvertedBack->getExteriorRing()) {
         actualBoundary.push_back(p);
     }
-    EXPECT_RANGE_EQ(actualBoundary,expectedBoundaryPoints);
+    EXPECT_SORTED_RANGE_EQ(actualBoundary,expectedBoundaryPoints);
 }
