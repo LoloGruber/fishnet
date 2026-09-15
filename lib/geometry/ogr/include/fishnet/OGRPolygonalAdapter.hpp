@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include <fishnet/IGeometry.hpp>
 #include <fishnet/Segment.hpp>
 #include <fishnet/Rectangle.hpp>
@@ -90,6 +91,28 @@ protected:
         }
     }
 
+    /**
+     * @brief Whether the bounding box spanned by two points overlaps the one of this polygon
+     *
+     * Anything outside the bounding box is outside the polygon, which answers the common case
+     * without handing the geometry to GEOS at all.
+     * @note deliberately plain comparisons rather than a Rectangle: the box of an axis aligned
+     * segment is degenerate, which Rectangle cannot represent (it builds a Ring and would throw),
+     * and Rectangle's two point constructor expects its corners in top-left/bottom-right order,
+     * which two endpoints of a segment are not.
+     */
+    bool envelopeOverlaps(const IPoint auto & lhs, const IPoint auto & rhs) const noexcept {
+        OGREnvelope envelope;
+        geomPtr->getEnvelope(&envelope);
+        // NOTE: not std::minmax, which returns references to its arguments and would dangle here
+        const double lhsX = lhs.getX(), rhsX = rhs.getX();
+        const double lhsY = lhs.getY(), rhsY = rhs.getY();
+        const double minX = std::min(lhsX, rhsX), maxX = std::max(lhsX, rhsX);
+        const double minY = std::min(lhsY, rhsY), maxY = std::max(lhsY, rhsY);
+        return maxX >= envelope.MinX && minX <= envelope.MaxX
+            && maxY >= envelope.MinY && minY <= envelope.MaxY;
+    }
+
     const OGRLinearRing * exteriorRing() const noexcept {
         return geomPtr->getExteriorRing();
     }
@@ -157,7 +180,18 @@ public:
         return not geomPtr->Disjoint(&ogrPoint);
     }
 
+    /**
+     * @note unlike the two dimensional overloads below, this one cannot use Contains: a segment
+     * which grazes the boundary and lies otherwise outside satisfies Touches but is not covered,
+     * and Contains alone misses a segment running along an edge. covers() answers both correctly,
+     * and measures cheaper than any of the DE-9IM predicates on top of that. Only the bounding box
+     * is tested first, to answer the common "nowhere near" case without calling GEOS at all.
+     */
     bool contains(const ISegment auto & segment) const {
+        if(not segment.isValid())
+            return contains(segment.p()); // a degenerate segment is contained if its point is
+        if(not envelopeOverlaps(segment.p(), segment.q()))
+            return false;
         OGRLineString ogrLine;
         ogrLine.addPoint(segment.p().getX(), segment.p().getY());
         ogrLine.addPoint(segment.q().getX(), segment.q().getY());

@@ -148,6 +148,8 @@ public:
     }
 
     bool crosses(const IPolygon auto & other) const {
+        if(not this->aaBB().overlap(other.aaBB()))
+            return false; // polygons whose bounding boxes are apart cannot share a single point
         if(containsInHole(other))
             return false;
         auto otherBoundary = other.getBoundary();
@@ -157,6 +159,8 @@ public:
     }
 
     bool touches(const IPolygon auto & other) const {
+        if(not this->aaBB().overlap(other.aaBB()))
+            return false; // polygons whose bounding boxes are apart cannot touch
         if(this->crosses(other))
             return false;
         auto otherBoundary = other.getBoundary();
@@ -176,10 +180,14 @@ public:
      * otherwise the distance between their boundaries, measured through a hole where applicable
      */
     double distance(const IPolygon auto & other) const {
-        if(this->contains(other))
-            return 0;
-        if(this->touches(other))
-            return 0;
+        // polygons whose bounding boxes are apart can neither contain nor touch each other, so
+        // the gap between their boundaries is all there is left to compute
+        if(this->aaBB().overlap(other.aaBB())){
+            if(this->contains(other))
+                return 0;
+            if(this->touches(other))
+                return 0;
+        }
         auto otherBoundary = other.getBoundary();
         for(const auto & hole : borrowedHoles()){
             if(hole.contains(otherBoundary)){

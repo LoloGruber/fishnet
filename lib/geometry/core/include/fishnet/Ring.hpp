@@ -303,6 +303,8 @@ public:
     }
 
     constexpr bool crosses(IRing auto const & other) const noexcept {
+        if(not this->aaBB().overlap(other.aaBB()))
+            return false; // rings whose bounding boxes are apart cannot share a single point
         return std::ranges::any_of(segments,[&other](const auto & s){return other.intersects(s);})
             || std::ranges::any_of(other.getSegments(),[this](const auto & s){return this->intersects(s);});
     }
@@ -314,6 +316,8 @@ public:
     }
 
     constexpr bool touches(IRing auto const & other) const noexcept {
+        if(not this->aaBB().overlap(other.aaBB()))
+            return false; // rings whose bounding boxes are apart cannot touch
         if(this->crosses(other)) return false;
         if(this->contains(other) || other.contains(*this)) return false;
         for(const auto & p : other.getPoints()){
@@ -328,10 +332,9 @@ public:
      * otherwise the distance between their boundaries
      */
     constexpr fishnet::math::DEFAULT_FLOATING_POINT distance(IRing auto const & other) const noexcept {
-        if(this->contains(other) or other.contains(*this) or this->crosses(other))
+        if(this->aaBB().overlap(other.aaBB()) && (this->contains(other) or other.contains(*this) or this->crosses(other)))
              return 0;
         return shapeDistance(*this,other);
-
     }
 
     constexpr std::string toString() const noexcept {
