@@ -6,7 +6,7 @@
 #include <vector>
 
 using namespace fishnet::geometry;
-using namespace testutil;
+using namespace fishnet::test;
 
 class DelaunayTriangulationTest : public ::testing::Test {};
 
@@ -73,6 +73,6 @@ TEST_F(DelaunayTriangulationTest, uniqueEdgesNoDuplicates) {
     DelaunayTriangulation dt(points);
 
     auto edgesOpt = dt.edges();
-    ASSERT_TRUE(edgesOpt.has_value());
-    testutil::EXPECT_SIZE(edgesOpt.value(), 6);
+    ASSERT_VALUE(edgesOpt);
+    EXPECT_SIZE(edgesOpt.value(), 6);
 }

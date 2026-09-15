@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <fishnet/Vec2D.hpp>
 #include <fishnet/TestUtil.hpp>
-using namespace testutil;
+using namespace fishnet::test;
 using namespace fishnet::geometry;
 using namespace fishnet::math;
 
@@ -165,7 +165,7 @@ TEST(Vec2DTest, LexicographicOrdering){
         {-2,3},{-2,5},{0,0},{0,0.00004},{1,1},{2,1},{3,2},{3,3}  
     };
     std::ranges::sort(points,LexicographicOrder{});
-    EXPECT_RANGE_EQ(points,expected);
+    EXPECT_SORTED_RANGE_EQ(points,expected);
 }
 
 

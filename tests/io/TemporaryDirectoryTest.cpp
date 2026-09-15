@@ -2,7 +2,7 @@
 #include <fishnet/TemporaryDirectiory.h>
 #include <fstream>
 
-using namespace testutil;
+using namespace fishnet::test;
 using namespace fishnet::util;
 
 TEST(TemporaryDirectoryTest, init){

@@ -6,7 +6,7 @@
 #include <fishnet/DegreeCentrality.hpp>
 
 using namespace fishnet::graph;
-using namespace testutil;
+using namespace fishnet::test;
 class CentralityTest: public ::testing::Test{
 protected:
     void SetUp() override {

@@ -1,1 +1,0 @@
-add_executable(sandbox Sandbox.cpp CRTPExample.h Concepts.h)

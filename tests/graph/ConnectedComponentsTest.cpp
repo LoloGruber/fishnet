@@ -13,7 +13,7 @@ static_assert(fishnet::util::BiPredicate<fishnet::util::TrueBiPredicate,XYNode>)
 
 using namespace fishnet::graph;
 using namespace fishnet::util;
-using namespace testutil;
+using namespace fishnet::test;
 class ConnectedComponentsTest
 : public ::testing::Test{
 protected:

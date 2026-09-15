@@ -1,7 +1,7 @@
 #include <fishnet/TestUtil.hpp>
 #include <fishnet/BidirectionalMap.hpp>
 
-using namespace testutil;
+using namespace fishnet::test;
 
 
 class BidirectionalMultiHashMapTest: public ::testing::Test {

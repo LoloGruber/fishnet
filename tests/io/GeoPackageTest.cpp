@@ -6,7 +6,7 @@
 #include <fishnet/Shapefile.hpp>
 
 using namespace fishnet;
-using namespace testutil;
+using namespace fishnet::test;
 namespace fs = std::filesystem;
 
 class GeoPackageTest : public ::testing::Test {

@@ -6,7 +6,7 @@
 #include "ShapeSamples.h"
 #include <unordered_map>
 
-using namespace testutil;
+using namespace fishnet::test;
 using namespace fishnet::geometry;
 using PolygonType = fishnet::geometry::SimplePolygon<double>;
 

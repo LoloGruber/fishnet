@@ -6,7 +6,7 @@
 #include "GraphTestUtil.h"
 
 using UGraph =  fishnet::graph::UndirectedGraph<IDNode>;
-using namespace testutil;
+using namespace fishnet::test;
 using namespace fishnet::graph;
 
 class UndirectedGraphTest: public ::testing::Test {
