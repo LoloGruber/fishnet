@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <fishnet/Vec2D.hpp>
 #include <fishnet/TestUtil.hpp>
+#include <algorithm>
 using namespace fishnet::test;
 using namespace fishnet::geometry;
 using namespace fishnet::math;

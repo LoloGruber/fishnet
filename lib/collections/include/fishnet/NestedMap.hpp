@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include <unordered_map>
 #include <fishnet/Concepts.hpp>
 
