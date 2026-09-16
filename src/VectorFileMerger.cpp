@@ -6,19 +6,18 @@
 #include <fishnet/Fishnet.hpp>
 #include <fishnet/Task.hpp>
 
-template<fishnet::geometry::AnyGeometry G>
 class ShapefileMerger: public Task {
 public:
     ShapefileMerger():Task("ShapefileMerger"){}
 
     static void operator()(const fishnet::util::range_of<std::filesystem::path> auto& inputs, std::filesystem::path && outputPath){
         fishnet::GDALInitializer::init();
-        std::vector<std::future<fishnet::VectorLayer<G>>> futures;
+        std::vector<std::future<fishnet::VectorLayer<fishnet::geometry::OGRGeometryAdapter>>> futures;
         for(size_t i = 1; i < inputs.size();i++){
-            futures.push_back(std::async(std::launch::async,[&inputs,i](){return fishnet::VectorIO::read<G>(inputs[i]);}));
+            futures.push_back(std::async(std::launch::async,[&inputs,i](){return fishnet::VectorIO::read(inputs[i]);}));
         }
-        auto firstLayer = fishnet::VectorIO::read<G>(inputs.front());
-        auto outputLayer = fishnet::VectorIO::emptyCopy<G>(firstLayer);
+        auto firstLayer = fishnet::VectorIO::read(inputs.front());
+        auto outputLayer = fishnet::VectorIO::emptyCopy(firstLayer);
         for(auto && feature: firstLayer.getFeatures()){
             outputLayer.addFeature(std::move(feature));
         }
@@ -34,7 +33,6 @@ public:
 };
 
 int main(int argc, char * argv[]){
-    using GeometryType = fishnet::geometry::OGRGeometryAdapter;
     CLI::App app {"FishnetShapefileMerger"};
     std::vector<std::string> inputFilenames;
     std::string outputFilename;
@@ -57,6 +55,6 @@ int main(int argc, char * argv[]){
     if(inputFilenames.empty()){
         throw std::runtime_error("No input files provided");
     }
-    ShapefileMerger<GeometryType>()(inputFilenames, std::filesystem::path{outputFilename});
+    ShapefileMerger()(inputFilenames, std::filesystem::path{outputFilename});
     return 0;
 }

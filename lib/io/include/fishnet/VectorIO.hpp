@@ -73,7 +73,7 @@ VectorLayer<G> empty(const OGRSpatialReference & spatialReference) {
  * @param source source layer to copy the spatial reference and fields from
  * @return VectorLayer<G> empty vector layer with the same spatial reference and fields as the source layer
  */
-template<geometry::AnyGeometry G,geometry::AnyGeometry O>
+template<geometry::AnyGeometry G=geometry::OGRGeometryAdapter,geometry::AnyGeometry O>
 VectorLayer<G> emptyCopy(const VectorLayer<O> & source) {
     auto layer = empty<G>(source.getSpatialReference());
     source.copyFields(layer);
