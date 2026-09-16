@@ -2,6 +2,7 @@
 #include <numeric>
 #include <fishnet/IGeometry.hpp>
 #include <fishnet/Rectangle.hpp>
+#include <fishnet/MultiPolygon.hpp>
 #include <fishnet/PolygonDistance.hpp>
 #include "OGRAdapterBase.hpp"
 #include "OGRPolygonAdapter.hpp"
@@ -144,6 +145,19 @@ public:
             }
         }
         return false;
+    }
+
+    /**
+     * @brief Copy the multi-polygon out into a fishnet MultiPolygon, which precomputes its segments
+     * @see OGRRingAdapter::toNative()
+     */
+    MultiPolygon<Polygon<double>> toNative() const {
+        std::vector<Polygon<double>> polygons;
+        polygons.reserve(this->size());
+        for(const auto & polygon : borrowedPolygons()){
+            polygons.push_back(polygon.toNative());
+        }
+        return MultiPolygon<Polygon<double>>(polygons, true);
     }
 
     double area() const {

@@ -2,6 +2,7 @@
 #include <vector>
 #include <fishnet/IGeometry.hpp>
 #include <fishnet/Rectangle.hpp>
+#include <fishnet/Polygon.hpp>
 #include <fishnet/PolygonDistance.hpp>
 #include "OGRPolygonalAdapter.hpp"
 #include "OGRRingAdapter.hpp"
@@ -100,6 +101,19 @@ public:
 
     bool isSimple() const {
         return geomPtr->getNumInteriorRings() == 0;
+    }
+
+    /**
+     * @brief Copy the polygon out into a fishnet Polygon, which precomputes its segments
+     * @see OGRRingAdapter::toNative()
+     */
+    Polygon<double> toNative() const {
+        std::vector<Ring<double>> holes;
+        holes.reserve(static_cast<size_t>(geomPtr->getNumInteriorRings()));
+        for(const auto & hole : getHoles()){
+            holes.push_back(hole.toNative());
+        }
+        return Polygon<double>(getBoundary().toNative(), holes, true);
     }
 
     /**

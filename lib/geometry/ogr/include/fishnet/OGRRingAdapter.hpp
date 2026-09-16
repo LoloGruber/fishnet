@@ -119,6 +119,17 @@ public:
         return *this;
     }
 
+    /**
+     * @brief Copy the ring out into a fishnet Ring, which precomputes its segments
+     *
+     * Segment access on an adapter is lazy, so code walking the same ring over and over is better
+     * served by a native ring. The points come from OGR and are taken as valid, validating them
+     * again here would cost far more than the conversion itself.
+     */
+    Ring<double> toNative() const {
+        return Ring<double>(getPoints(), true);
+    }
+
     std::vector<OGRRingAdapter> getHoles() const{
         return {};
     }
