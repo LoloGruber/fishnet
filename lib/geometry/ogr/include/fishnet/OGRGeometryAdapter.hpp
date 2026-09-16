@@ -1,8 +1,4 @@
 #pragma once
-// NOTE: this header is deliberately not called OGRGeometryAdapter.hpp, although that is the class
-// it provides: the legacy fishnet::OGRGeometryAdapter (lib/io/gdal) already occupies that file name
-// on the include path. Rename this file once the legacy adapter is retired.
-#include <string>
 #include <fishnet/Option.hpp>
 #include "OGRAdapterBase.hpp"
 #include "OGRRingAdapter.hpp"
@@ -26,21 +22,11 @@ namespace fishnet::geometry{
 class OGRGeometryAdapter: public OGRAdapterBase<OGRGeometry>{
 private:
     using Base = OGRAdapterBase<OGRGeometry>;
-
-    /**
-     * @brief WKB type of the wrapped geometry, without its Z/M modifiers
-     */
-    OGRwkbGeometryType flatType() const noexcept {
-        return wkbFlatten(geomPtr->getGeometryType());
-    }
-
 public:
     using numeric_type = double;
 
     OGRGeometryAdapter(OGRUniquePtr<OGRGeometry> && geometryPtr):Base(std::move(geometryPtr)) {}
 
-    // a ring adapter is backed by a polygon, so the exterior ring is what has to be wrapped for
-    // the geometry to still be recognised as a ring
     OGRGeometryAdapter(const OGRRingAdapter & ring):Base(OGRUniquePtr<OGRGeometry>(ring.raw()->getExteriorRing()->clone())) {}
 
     OGRGeometryAdapter(const OGRPolygonAdapter & polygon):Base(OGRUniquePtr<OGRGeometry>(polygon.raw()->clone())) {}
@@ -48,16 +34,12 @@ public:
     OGRGeometryAdapter(const OGRMultiPolygonAdapter & multiPolygon):Base(OGRUniquePtr<OGRGeometry>(multiPolygon.raw()->clone())) {}
 
     /**
-     * @brief WKB type of the wrapped geometry, without its Z/M modifiers
+     * @brief Geometry type of the wrapped geometry
      * @note OGR reports wkbLineString for an OGRLinearRing, as a linear ring has no WKB type of
      * its own; @see isRing()
      */
-    OGRwkbGeometryType wkbType() const noexcept {
-        return flatType();
-    }
-
-    std::string geometryName() const noexcept {
-        return geomPtr->getGeometryName();
+    GeometryType geometryType() const noexcept {
+        return GeometryTypeWKBAdapter::fromWKB(wkbFlatten(geomPtr->getGeometryType()));
     }
 
     bool isEmpty() const noexcept {
@@ -71,15 +53,15 @@ public:
      * handed to OGRRingAdapter
      */
     bool isRing() const noexcept {
-        return flatType() == wkbLineString && not isEmpty() && geomPtr->toLineString()->getNumPoints() >= 3;
+        return geometryType() == GeometryType::RING && not isEmpty() && geomPtr->toLineString()->getNumPoints() >= 3;
     }
 
     bool isPolygon() const noexcept {
-        return flatType() == wkbPolygon && not isEmpty();
+        return geometryType() == GeometryType::POLYGON && not isEmpty();
     }
 
     bool isMultiPolygon() const noexcept {
-        return flatType() == wkbMultiPolygon && not isEmpty();
+        return geometryType() == GeometryType::MULTIPOLYGON && not isEmpty();
     }
 
     /**
@@ -89,8 +71,6 @@ public:
     Option<OGRRingAdapter> toRing() const {
         if(not isRing())
             return {};
-        // works for an OGRLinearRing as well as for a plain OGRLineString, and avoids downcasting
-        // to OGRLinearRing, which would be undefined behaviour for the latter
         const auto * lineString = geomPtr->toLineString();
         auto ring = OGRUniquePtr<OGRLinearRing>(static_cast<OGRLinearRing*>(OGRGeometryFactory::createGeometry(wkbLinearRing)));
         for(int i = 0; i < lineString->getNumPoints(); ++i){
@@ -117,14 +97,6 @@ public:
         if(not isMultiPolygon())
             return {};
         return OGRMultiPolygonAdapter(OGRUniquePtr<OGRMultiPolygon>(geomPtr->toMultiPolygon()->clone()));
-    }
-
-    /**
-     * @note OGRAdapterBase::hash() cannot be used, as a geometry which happens to be a bare
-     * OGRLinearRing has no WKB representation
-     */
-    size_t hash() const noexcept {
-        return std::hash<std::string>{}(this->toString());
     }
 };
 }

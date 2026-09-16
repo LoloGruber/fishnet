@@ -2,6 +2,7 @@
 #include <gdal/ogr_geometry.h>
 #include <memory>
 #include <cassert>
+#include <fishnet/GeometryBase.hpp>
 
 namespace fishnet::geometry::__impl{
 
@@ -73,6 +74,11 @@ static OGRUniquePtr<OGRPolygon> borrowRingAsPolygon(OGRLinearRing * ring) noexce
 }
 } // namespace __impl
 
+/**
+ * @brief Base class for OGR geometry adapters, which owns an OGR geometry
+ * 
+ * @tparam T child class of OGRGeometry
+ */
 template<typename T> requires std::is_base_of_v<OGRGeometry, T>
 class OGRAdapterBase{
 protected:
@@ -122,4 +128,33 @@ public:
         return geomPtr->exportToWkt();
     }
 };
-}
+/**
+ * @brief Convert fishnet::geometry::GeometryType <-> OGRwkbGeometryType
+ * 
+ */
+class GeometryTypeWKBAdapter{
+public:
+    static OGRwkbGeometryType toWKB(GeometryType type){
+        switch (type)
+        {
+            case geometry::GeometryType::POINT: return wkbPoint;
+            case geometry::GeometryType::POLYGON: return wkbPolygon;
+            case geometry::GeometryType::RING: return wkbLinearRing;
+            case geometry::GeometryType::MULTIPOLYGON: return wkbMultiPolygon;
+        default:
+            throw std::invalid_argument("Geometry type: "+std::to_string(type)+" could not be converted into wkb format");
+        }
+    }
+    static geometry::GeometryType fromWKB(OGRwkbGeometryType type){
+        switch(type){
+            case wkbPoint: return geometry::GeometryType::POINT;
+            // OGR has no WKB type of its own for a linear ring and reports it as a line string
+            case wkbLinearRing:
+            case wkbLineString: return geometry::GeometryType::RING;
+            case wkbPolygon: return geometry::GeometryType::POLYGON;
+            case wkbMultiPolygon: return geometry::GeometryType::MULTIPOLYGON;
+            default: throw std::invalid_argument("wkbGeometryType could not be converted into a Fishnet geometry type");
+        }
+    }
+};
+} // namespace fishnet::geometry

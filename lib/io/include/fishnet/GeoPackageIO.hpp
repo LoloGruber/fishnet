@@ -3,7 +3,6 @@
 #include <fishnet/GeoPackage.hpp>
 #include <fishnet/IGeometry.hpp>
 #include <fishnet/GDALInitializer.hpp>
-#include <fishnet/GeometryTypeWKBAdapter.hpp>
 #include <fishnet/OGRFieldAdapter.hpp>
 #include <fishnet/OGRGeometryAdapter.hpp>
 #include <fishnet/OGRLayerAdapter.hpp>
@@ -89,7 +88,7 @@ public:
         OGRLayer * outputLayer = outputDataset->CreateLayer(
             output.getPath().stem().c_str(),
             layer.getSpatialReference().Clone(),
-            GeometryTypeWKBAdapter::toWKB(G::type),
+            fishnet::geometry::GeometryTypeWKBAdapter::toWKB(G::type),
             const_cast<char **>(createOptions)
         );
         if (outputLayer == nullptr) {

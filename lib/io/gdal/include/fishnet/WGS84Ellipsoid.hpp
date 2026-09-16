@@ -6,7 +6,7 @@
 #include <fishnet/Angle.hpp>
 #include <fishnet/IGeometry.hpp>
 #include "gdal/ogr_spatialref.h"
-#include "OGRGeometryAdapter.hpp"
+#include "OGRGeometryConverter.hpp"
 
 namespace fishnet {
 

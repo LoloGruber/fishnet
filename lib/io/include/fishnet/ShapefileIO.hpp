@@ -3,7 +3,6 @@
 #include <fishnet/Shapefile.hpp>
 #include <fishnet/IGeometry.hpp>
 #include <fishnet/GDALInitializer.hpp>
-#include <fishnet/GeometryTypeWKBAdapter.hpp>
 #include <fishnet/OGRFieldAdapter.hpp>
 #include <fishnet/OGRGeometryAdapter.hpp>
 #include <fishnet/OGRLayerAdapter.hpp>
@@ -82,7 +81,7 @@ public:
         output.remove(); // delete already existing files, if present
         GDALDataset * outputDataset = driver->Create(output.getPath().c_str(),0,0,0,GDT_Unknown,0);
         const char * const options[] = {"SPATIAL_INDEX=YES",nullptr};
-        OGRLayer * outputLayer = outputDataset->CreateLayer(output.getPath().c_str(),layer.getSpatialReference().Clone(),GeometryTypeWKBAdapter::toWKB(G::type),const_cast<char **>(options));
+        OGRLayer * outputLayer = outputDataset->CreateLayer(output.getPath().c_str(),layer.getSpatialReference().Clone(),fishnet::geometry::GeometryTypeWKBAdapter::toWKB(G::type),const_cast<char **>(options));
         auto result = OGRLayerAdapter<G>::toOGR(layer,outputLayer);
         outputLayer->SyncToDisk();
         GDALClose(outputDataset);

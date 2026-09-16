@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include <fishnet/TestUtil.hpp>
-#include <fishnet/OGRGeometryWrapper.hpp>
+#include <fishnet/OGRGeometryAdapter.hpp>
 #include <fishnet/Ring.hpp>
 #include <fishnet/Polygon.hpp>
 
@@ -57,18 +57,12 @@ protected:
 // Type inspection
 // ============================================================================
 
-TEST_F(OGRGeometryAdapterTest, wkbType) {
-    EXPECT_EQ(OGRGeometryAdapter(polygonGeometry()).wkbType(), wkbPolygon);
-    EXPECT_EQ(OGRGeometryAdapter(multiPolygonGeometry()).wkbType(), wkbMultiPolygon);
-    EXPECT_EQ(OGRGeometryAdapter(pointGeometry()).wkbType(), wkbPoint);
+TEST_F(OGRGeometryAdapterTest, geometryType) {
+    EXPECT_EQ(OGRGeometryAdapter(polygonGeometry()).geometryType(), GeometryType::POLYGON);
+    EXPECT_EQ(OGRGeometryAdapter(multiPolygonGeometry()).geometryType(), GeometryType::MULTIPOLYGON);
+    EXPECT_EQ(OGRGeometryAdapter(pointGeometry()).geometryType(), GeometryType::POINT);
     // OGR has no WKB type of its own for a linear ring and reports it as a line string
-    EXPECT_EQ(OGRGeometryAdapter(ringGeometry()).wkbType(), wkbLineString);
-}
-
-TEST_F(OGRGeometryAdapterTest, geometryName) {
-    EXPECT_EQ(OGRGeometryAdapter(polygonGeometry()).geometryName(), "POLYGON");
-    EXPECT_EQ(OGRGeometryAdapter(multiPolygonGeometry()).geometryName(), "MULTIPOLYGON");
-    EXPECT_EQ(OGRGeometryAdapter(ringGeometry()).geometryName(), "LINEARRING");
+    EXPECT_EQ(OGRGeometryAdapter(ringGeometry()).geometryType(), GeometryType::RING);
 }
 
 TEST_F(OGRGeometryAdapterTest, typePredicates) {

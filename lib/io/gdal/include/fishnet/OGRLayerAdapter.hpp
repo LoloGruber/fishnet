@@ -1,10 +1,11 @@
 #pragma once
 #include <fishnet/VectorLayer.hpp>
+#include <fishnet/OGRGeometryAdapter.hpp>
 #include <gdal/gdal.h>
+#include "ogrsf_frmts.h"
 #include <gdal/ogr_core.h>
 #include <gdal/gdal_priv.h>
-#include "GeometryTypeWKBAdapter.hpp"
-#include "OGRGeometryAdapter.hpp"
+#include "OGRGeometryConverter.hpp"
 #include "OGRFieldAdapter.hpp"
 
 namespace fishnet {
@@ -91,9 +92,9 @@ public:
             if (!geo)
                 continue;
             auto actualWkbType = wkbFlatten(geo->getGeometryType());
-            auto expectedWkbType = GeometryTypeWKBAdapter::toWKB(G::type);
+            auto expectedWkbType = fishnet::geometry::GeometryTypeWKBAdapter::toWKB(G::type);
             if constexpr(G::type == fishnet::geometry::GeometryType::MULTIPOLYGON){
-                if(actualWkbType == GeometryTypeWKBAdapter::toWKB(G::polygon_type::type)) {
+                if(actualWkbType == fishnet::geometry::GeometryTypeWKBAdapter::toWKB(G::polygon_type::type)) {
                     auto converted = OGRGeometryAdapter::fromOGR<G::polygon_type::type>(*geo, checked);
                     addFeatureIfPresent(std::move(converted), ogrFeature.get());
                     continue;
