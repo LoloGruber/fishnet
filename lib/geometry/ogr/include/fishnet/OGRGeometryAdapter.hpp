@@ -180,6 +180,25 @@ public:
         return OGRMultiPolygonAdapter(OGRUniquePtr<OGRMultiPolygon>(released->toMultiPolygon(), deleter));
     }
 
+
+    /**
+     * @brief Narrow to G, leaving this adapter intact
+     * @note where the result has to own a geometry of its own this copies the wrapped one,
+     * @see narrowTo() && for the version which hands it over instead
+     */
+    template<OGRLayerGeometry G>
+    Option<G> narrowTo() const & {
+        // a point is read out by value and a ring is rebuilt from the points either way, so neither
+        // gains anything from copying the whole geometry first
+        if constexpr (std::same_as<G, Vec2DReal>)
+            return toPoint();
+        else if constexpr (std::same_as<G, OGRRingAdapter>)
+            return toRing();
+        else
+            return OGRGeometryAdapter(*this).narrowTo<G>();
+    }
+
+
     /**
      * @brief Narrow to G, coercing between polygon and multi-polygon where the shape is the same
      *
@@ -189,15 +208,6 @@ public:
      * Option, and the geometry is left where it was.
      * @note on success this adapter is left moved-from and must not be used again
      */
-    /**
-     * @brief Narrow to G, leaving this adapter intact
-     * @note this copies the wrapped geometry, @see narrowTo() && for the version which hands it over
-     */
-    template<OGRLayerGeometry G>
-    Option<G> narrowTo() const & {
-        return OGRGeometryAdapter(*this).narrowTo<G>();
-    }
-
     template<OGRLayerGeometry G>
     Option<G> narrowTo() && {
         if constexpr (std::same_as<G, OGRGeometryAdapter>){
@@ -208,7 +218,7 @@ public:
             return toRing();
         } else if constexpr (std::same_as<G, OGRPolygonAdapter>){
             if(auto polygon = std::move(*this).toPolygon())
-                return std::move(polygon);
+                return polygon;
             auto multiPolygon = std::move(*this).toMultiPolygon();
             if(not multiPolygon || multiPolygon.value().size() != 1)
                 return {};
@@ -216,7 +226,7 @@ public:
             return *std::ranges::begin(polygons);
         } else if constexpr (std::same_as<G, OGRMultiPolygonAdapter>){
             if(auto multiPolygon = std::move(*this).toMultiPolygon())
-                return std::move(multiPolygon);
+                return multiPolygon;
             auto polygon = std::move(*this).toPolygon();
             if(not polygon)
                 return {};
