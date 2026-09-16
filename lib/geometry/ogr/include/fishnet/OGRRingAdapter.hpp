@@ -54,7 +54,7 @@ private:
      */
     static OGRRingAdapter fromCanonicalHole(const OGRLinearRing & hole) {
         auto ring = OGRUniquePtr<OGRLinearRing>(hole.clone());
-        ring->reverseWindingOrder();
+        ring->reversePoints();
         auto polygon = emptyPolygon();
         polygon->addRingDirectly(ring.release());
         return OGRRingAdapter(std::move(polygon), Canonical{});

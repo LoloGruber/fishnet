@@ -113,7 +113,7 @@ public:
     size_t hash() const noexcept {
         size_t nSize = geomPtr->WkbSize();
         std::vector<unsigned char> pabyData(nSize);
-        geomPtr->exportToWkb(wkbNDR, pabyData.data());
+        geomPtr->exportToWkb(pabyData.data());
         std::string_view bytes(reinterpret_cast<const char*>(pabyData.data()), nSize);
         return std::hash<std::string_view>{}(bytes);
     }
