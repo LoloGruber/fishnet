@@ -1,7 +1,6 @@
 FROM ghcr.io/osgeo/gdal:ubuntu-small-3.12.2
 # Install dependencies and build tools
 RUN apt-get update && apt-get install -y \
-    libssl-dev \
     build-essential \
     cmake \
     git \
