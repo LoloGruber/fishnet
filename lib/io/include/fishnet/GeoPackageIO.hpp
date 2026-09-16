@@ -14,25 +14,20 @@
 
 namespace fishnet {
 
-template<geometry::Geometry G>
+template<geometry::OGRLayerGeometry G>
 class GeoPackageReader {
 private:
     std::vector<std::string> gdalOpenOptions;
-    bool checked = true;
 public:
     using geometry_type = G;
     using file_type = GeoPackage;
 
     GeoPackageReader() = default;
 
-    GeoPackageReader(fishnet::util::forward_range_of<std::string> auto && openOptions, bool checked) : checked(checked) {
+    GeoPackageReader(fishnet::util::forward_range_of<std::string> auto && openOptions) {
         for(auto && opt : openOptions) {
             this->gdalOpenOptions.push_back(std::move(opt));
         }
-    }
-
-    void setChecked(bool checked) {
-        this->checked = checked;
     }
 
     Either<VectorLayer<G>,std::string> operator()(const GeoPackage & geopackage) const {
@@ -48,13 +43,13 @@ public:
         auto * ds = (GDALDataset *) GDALOpenEx(geopackage.getPath().c_str(), GDAL_OF_VECTOR, nullptr, openOptions, nullptr);
         if(ds == nullptr)
             return std::unexpected("Could not open GeoPackage: \"" + geopackage.getPath().string() + "\" with GDAL");
-        auto layer = OGRLayerAdapter<G>::fromOGR(ds->GetLayer(0), checked);
+        auto layer = OGRLayerAdapter<G>::fromOGR(ds->GetLayer(0));
         GDALClose(ds);
         return layer;
     }
 };
 
-template<geometry::Geometry G>
+template<geometry::OGRWritableGeometry G>
 class GeoPackageWriter {
 private:
     bool createSpatialIndex = true;
@@ -88,7 +83,7 @@ public:
         OGRLayer * outputLayer = outputDataset->CreateLayer(
             output.getPath().stem().c_str(),
             layer.getSpatialReference().Clone(),
-            fishnet::geometry::GeometryTypeWKBAdapter::toWKB(G::type),
+            OGRLayerAdapter<G>::layerGeometryType(),
             const_cast<char **>(createOptions)
         );
         if (outputLayer == nullptr) {
@@ -109,7 +104,7 @@ public:
     }
 };
 
-static_assert(VectorLayerReader<GeoPackageReader<geometry::Polygon<double>>, GeoPackage, geometry::Polygon<double>>, "GeoPackageReader must satisfy VectorLayerReader concept");
-static_assert(VectorLayerWriter<GeoPackageWriter<geometry::Polygon<double>>, geometry::Polygon<double>, GeoPackage>, "GeoPackageWriter must satisfy VectorLayerWriter concept");
+static_assert(VectorLayerReader<GeoPackageReader<geometry::OGRPolygonAdapter>, GeoPackage, geometry::OGRPolygonAdapter>, "GeoPackageReader must satisfy VectorLayerReader concept");
+static_assert(VectorLayerWriter<GeoPackageWriter<geometry::OGRPolygonAdapter>, geometry::OGRPolygonAdapter, GeoPackage>, "GeoPackageWriter must satisfy VectorLayerWriter concept");
 
 } // namespace fishnet

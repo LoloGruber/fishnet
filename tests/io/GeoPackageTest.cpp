@@ -91,12 +91,12 @@ TEST_F(GeoPackageTest, exists) {
 
 TEST_F(GeoPackageTest, readNonExistentFile) {
     fs::path nonExistent = fs::temp_directory_path() / "nonexistent.gpkg";
-    auto result = VectorIO::tryRead<fishnet::geometry::Polygon<double>>(GeoPackage(nonExistent));
+    auto result = VectorIO::tryRead<fishnet::geometry::OGRPolygonAdapter>(GeoPackage(nonExistent));
     EXPECT_FALSE(result.has_value());
 }
 
 TEST_F(GeoPackageTest, readSampleFile) {
-    auto result = VectorIO::tryRead<fishnet::geometry::Polygon<double>>(GeoPackage(sampleFile));
+    auto result = VectorIO::tryRead<fishnet::geometry::OGRPolygonAdapter>(GeoPackage(sampleFile));
     EXPECT_TRUE(result.has_value());
     auto layer = result.value();
     EXPECT_SIZE(layer.getFeatures(), 830);
@@ -105,7 +105,7 @@ TEST_F(GeoPackageTest, readSampleFile) {
 TEST_F(GeoPackageTest, writeAndReadBack) {
     fs::path outputFile = fs::temp_directory_path() / "test_output.gpkg";
     // Read original
-    auto original = VectorIO::read<fishnet::geometry::Polygon<double>>(GeoPackage(sampleFile));
+    auto original = VectorIO::read<fishnet::geometry::OGRPolygonAdapter>(GeoPackage(sampleFile));
     EXPECT_SIZE(original.getFeatures(), 830);
     
     // Write to new file
@@ -113,7 +113,7 @@ TEST_F(GeoPackageTest, writeAndReadBack) {
     EXPECT_EXISTS(outputFile);
     
     // Read back
-    auto readBack = VectorIO::read<fishnet::geometry::Polygon<double>>(written);
+    auto readBack = VectorIO::read<fishnet::geometry::OGRPolygonAdapter>(written);
     EXPECT_SIZE(readBack.getFeatures(), 830);
     
     // Cleanup
@@ -122,13 +122,13 @@ TEST_F(GeoPackageTest, writeAndReadBack) {
 
 TEST_F(GeoPackageTest, genericReadAbstractVectorFile) {
     GeoPackage gpkg(sampleFile);
-    auto layer = VectorIO::read<fishnet::geometry::Polygon<double>>(static_cast<const AbstractVectorFile&>(gpkg));
+    auto layer = VectorIO::read<fishnet::geometry::OGRPolygonAdapter>(static_cast<const AbstractVectorFile&>(gpkg));
     EXPECT_SIZE(layer.getFeatures(), 830);
 }
 
 TEST_F(GeoPackageTest, genericTryReadAbstractVectorFile) {
     GeoPackage gpkg(sampleFile);
-    auto result = VectorIO::tryRead<fishnet::geometry::Polygon<double>>(static_cast<const AbstractVectorFile&>(gpkg));
+    auto result = VectorIO::tryRead<fishnet::geometry::OGRPolygonAdapter>(static_cast<const AbstractVectorFile&>(gpkg));
     EXPECT_TRUE(result.has_value());
     EXPECT_SIZE(result.value().getFeatures(), 830);
 }
@@ -136,14 +136,14 @@ TEST_F(GeoPackageTest, genericTryReadAbstractVectorFile) {
 TEST_F(GeoPackageTest, genericWriteAbstractVectorFile) {
     fs::path outputFile = fs::temp_directory_path() / "test_generic_output.gpkg";
     
-    auto original = VectorIO::read<fishnet::geometry::Polygon<double>>(GeoPackage(sampleFile));
+    auto original = VectorIO::read<fishnet::geometry::OGRPolygonAdapter>(GeoPackage(sampleFile));
     
     GeoPackage outputGpkg(outputFile);
     auto result = VectorIO::write(original, static_cast<const AbstractVectorFile&>(outputGpkg));
     EXPECT_EXISTS(outputFile);
     
     // Verify it was written correctly
-    auto readBack = VectorIO::read<fishnet::geometry::Polygon<double>>(GeoPackage(outputFile));
+    auto readBack = VectorIO::read<fishnet::geometry::OGRPolygonAdapter>(GeoPackage(outputFile));
     EXPECT_SIZE(readBack.getFeatures(), 830);
     
     // Cleanup

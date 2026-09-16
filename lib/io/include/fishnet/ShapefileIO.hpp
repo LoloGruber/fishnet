@@ -14,12 +14,11 @@
 
 namespace fishnet {
 
-template<geometry::Geometry G>
+template<geometry::OGRLayerGeometry G>
 class ShapefileReader {
 private:
     constexpr static std::array<const char *, 1> DEFAULT_OPEN_OPTIONS = { "ADJUST_TYPE=YES"};
     std::vector<std::string> gdalOpenOptions;
-    bool checked = true;
 public:
     using geometry_type = G;
     using file_type = Shapefile;
@@ -30,14 +29,10 @@ public:
         }
     }
 
-    ShapefileReader(fishnet::util::forward_range_of<std::string> auto && openOptions, bool checked) : checked(checked) {
+    ShapefileReader(fishnet::util::forward_range_of<std::string> auto && openOptions) {
         for(auto && opt : openOptions) {
             this->gdalOpenOptions.push_back(std::move(opt));
         }
-    }
-
-    void setChecked(bool checked) {
-        this->checked = checked;
     }
 
     Either<VectorLayer<G>,std::string> operator()(const Shapefile & shapefile) const {
@@ -54,13 +49,13 @@ public:
         auto * ds = (GDALDataset *) GDALOpenEx(shapefile.getPath().c_str(), GDAL_OF_VECTOR,nullptr, openOptions,nullptr);
         if(ds == nullptr)
             return std::unexpected("Could not open Shapefile: \"" + shapefile.getPath().string() + "\" with GDAL");
-        auto layer = OGRLayerAdapter<G>::fromOGR(ds->GetLayer(0),checked);
+        auto layer = OGRLayerAdapter<G>::fromOGR(ds->GetLayer(0));
         GDALClose(ds);
         return layer;
     }
 };
 
-template<geometry::Geometry G>
+template<geometry::OGRWritableGeometry G>
 class ShapefileWriter { 
 private:
     std::vector<std::string> options;
@@ -81,7 +76,7 @@ public:
         output.remove(); // delete already existing files, if present
         GDALDataset * outputDataset = driver->Create(output.getPath().c_str(),0,0,0,GDT_Unknown,0);
         const char * const options[] = {"SPATIAL_INDEX=YES",nullptr};
-        OGRLayer * outputLayer = outputDataset->CreateLayer(output.getPath().c_str(),layer.getSpatialReference().Clone(),fishnet::geometry::GeometryTypeWKBAdapter::toWKB(G::type),const_cast<char **>(options));
+        OGRLayer * outputLayer = outputDataset->CreateLayer(output.getPath().c_str(),layer.getSpatialReference().Clone(),OGRLayerAdapter<G>::layerGeometryType(),const_cast<char **>(options));
         auto result = OGRLayerAdapter<G>::toOGR(layer,outputLayer);
         outputLayer->SyncToDisk();
         GDALClose(outputDataset);
@@ -91,6 +86,6 @@ public:
     }
 };
 
-static_assert(VectorLayerReader<ShapefileReader<geometry::Polygon<double>>, Shapefile, geometry::Polygon<double>>, "ShapefileReader must satisfy VectorLayerReader concept");
-static_assert(VectorLayerWriter<ShapefileWriter<geometry::Polygon<double>>, geometry::Polygon<double>, Shapefile>, "ShapefileWriter must satisfy VectorLayerWriter concept");
+static_assert(VectorLayerReader<ShapefileReader<geometry::OGRPolygonAdapter>, Shapefile, geometry::OGRPolygonAdapter>, "ShapefileReader must satisfy VectorLayerReader concept");
+static_assert(VectorLayerWriter<ShapefileWriter<geometry::OGRPolygonAdapter>, geometry::OGRPolygonAdapter, Shapefile>, "ShapefileWriter must satisfy VectorLayerWriter concept");
 } // namespace fishnet

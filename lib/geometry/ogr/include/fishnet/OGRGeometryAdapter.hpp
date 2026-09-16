@@ -31,6 +31,17 @@ concept OGRLayerGeometry =
     || std::same_as<G, OGRGeometryAdapter>;
 
 /**
+ * @brief A geometry which can be written to an OGR data source
+ *
+ * Wider than OGRLayerGeometry, which is what a layer can be *read* into: reading has to build the
+ * geometry from the source, whereas writing starts from one which already exists, and a fishnet
+ * value type converts into an OGR geometry just as well as an adapter hands its own over. Segments,
+ * rays and lines are left out, as WKB has no representation for them.
+ */
+template<typename G>
+concept OGRWritableGeometry = IPoint<G> || Shape<G> || DynamicGeometry<G>;
+
+/**
  * @brief Adapter for an OGRGeometry of statically unknown type, as handed out by a data source
  *
  * Narrows the wrapped geometry to one of the concrete adapters. Every conversion verifies the WKB
@@ -203,7 +214,7 @@ public:
                 return {};
             auto polygons = multiPolygon.value().getPolygons();
             return *std::ranges::begin(polygons);
-        } else {
+        } else if constexpr (std::same_as<G, OGRMultiPolygonAdapter>){
             if(auto multiPolygon = std::move(*this).toMultiPolygon())
                 return std::move(multiPolygon);
             auto polygon = std::move(*this).toPolygon();
@@ -212,20 +223,12 @@ public:
             std::vector<OGRPolygonAdapter> parts;
             parts.push_back(std::move(polygon.value()));
             return OGRMultiPolygonAdapter(parts, true);
+        } else {
+            static_assert(false, "narrowTo has no case for this geometry: a type was added to "
+                "OGRLayerGeometry without saying how an OGR geometry is narrowed to it");
         }
     }
 };
-
-/**
- * @brief A geometry which can be written to an OGR data source
- *
- * Wider than OGRLayerGeometry, which is what a layer can be *read* into: reading has to build the
- * geometry from the source, whereas writing starts from one which already exists, and a fishnet
- * value type converts into an OGR geometry just as well as an adapter hands its own over. Segments,
- * rays and lines are left out, as WKB has no representation for them.
- */
-template<typename G>
-concept OGRWritableGeometry = IPoint<G> || Shape<G> || DynamicGeometry<G>;
 
 static_assert(OGRWritableGeometry<OGRPolygonAdapter>);
 static_assert(OGRWritableGeometry<OGRGeometryAdapter>);
