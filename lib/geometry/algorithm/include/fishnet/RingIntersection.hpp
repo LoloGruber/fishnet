@@ -27,8 +27,9 @@ namespace fishnet::geometry {
 template<typename R, LinearGeometry L>
 constexpr static bool ringIntersects(const R & ring, const L & linearFeature) noexcept {
     auto segments = ring.getSegments();
-    auto size = std::ranges::size(segments);
-    auto segmentAt = [&segments](size_t index){return *(std::ranges::begin(segments) + index);};
+    using difference_type = std::ranges::range_difference_t<decltype(segments)>;
+    auto size = std::ranges::ssize(segments);
+    auto segmentAt = [&segments](difference_type index){return *(std::ranges::begin(segments) + index);};
     // Helper lambda to check whether two points are on the same side of the linearFeature (or on the line)
     auto onSameSide = [&linearFeature](const auto & lhs, const auto & rhs) {
         auto line = linearFeature.toLine();
@@ -37,7 +38,7 @@ constexpr static bool ringIntersects(const R & ring, const L & linearFeature) no
         }
         return line.isLeft(lhs) == line.isLeft(rhs);
     };
-    for(size_t i = 0; i < size; ++i){
+    for(difference_type i = 0; i < size; ++i){
         auto current = segmentAt(i);
         auto inter = current.intersection(linearFeature);
         if constexpr(ISegment<L>){

@@ -150,9 +150,8 @@ public:
      */
     constexpr fishnet::math::DEFAULT_FLOATING_POINT area() const noexcept {
         fishnet::math::DEFAULT_FLOATING_POINT area = 0;
-        auto const& points = this->getPoints();
-        for(size_t i = 0; i < points.size(); i++){
-            area += points[i].cross(points[(i+1)%points.size()]);
+        for(size_t i = 0; i < segments.size(); i++){
+            area += segments[i].p().cross(segments[(i+1)%segments.size()].p());
         }
         return 0.5 * fabs(area);
     }
@@ -275,14 +274,14 @@ public:
         // Find common segment to start comparision
         Segment<T> const & start = this->segments.front();
         auto segmentViewOther = other.getSegments();
-        int indexOfStart = -1;
+        size_t indexOfStart = segmentViewOther.size();
         for(size_t i = 0; i < segmentViewOther.size(); ++i){
             if(segmentViewOther[i] == start){
-                indexOfStart = int(i);
+                indexOfStart = i;
                 break;
             }
         }
-        if(indexOfStart == -1) 
+        if(indexOfStart == segmentViewOther.size())
             return false; // no common segment found -> not equal
 
         auto nextIndex = [size,indexOfStart](size_t index){return (indexOfStart+index) % size;};
@@ -357,7 +356,6 @@ template<typename T>
 Ring(std::initializer_list<Vec2D<T>> && points)->Ring<T>;
 
 } // namespace fishnet::geometry
-
 namespace std{
     template<typename T>
     struct hash<fishnet::geometry::Ring<T>>{
@@ -370,12 +368,10 @@ namespace std{
         }
     };
 }
-
-namespace fishnet::geometry{
-// NOTE: static_assert(IRing<Ring<double>>) lives in Rectangle.hpp: the concept can only be
-// checked once Rectangle, the envelope type aaBB() returns, is complete.
-// Explicit template instantiation
-template class Ring<fishnet::math::DEFAULT_NUMERIC>;
-} // namespace fishnet::geometry
-
+// NOTE: the explicit instantiation of Ring<DEFAULT_NUMERIC> lives in Rectangle.hpp, not here:
+// aaBB() returns Rectangle<T> by value, so instantiating Ring<T> requires Rectangle<T> to be
+// complete. Whichever of Ring.hpp/Rectangle.hpp is included first, by the time Rectangle.hpp
+// reaches its own explicit instantiation both types are guaranteed complete; placing it here
+// instead is order-dependent (fails when something includes Rectangle.hpp before Ring.hpp).
 #include "Rectangle.hpp"
+
