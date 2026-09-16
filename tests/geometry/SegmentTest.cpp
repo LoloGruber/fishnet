@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <cmath>
 #include <fishnet/Segment.hpp>
 #include <fishnet/TestUtil.hpp>
 
@@ -185,4 +186,25 @@ TEST(SegmentTest, toString){
     Segment s{Vec2D(0,0),Vec2D(3,2)};
     EXPECT_EQ(s.toString(),"[(0,0),(3,2)]");
     std::cout << "Test console output for Segment: " << s << std::endl;
+}
+/**
+ * @brief contains() must agree with Vec2D::operator== about a point sitting on an endpoint
+ *
+ * contains() works on a lambda normalised over the segment, so a tolerance applied to that lambda
+ * means EPSILON * length in coordinate space. On the segments of a WGS84 building footprint the
+ * direction is ~9e-5 degrees, which used to shrink the effective tolerance to ~9e-17 - below one
+ * ulp of a coordinate near 50. A point one ulp past the endpoint, as produced by an intersection,
+ * was then reported as not contained even though Vec2D still called it equal to that endpoint.
+ * Ring's ray casting miscounted the crossing and reported interior points as outside.
+ */
+TEST(SegmentTest, containsPointWhichEqualsAnEndpoint){
+    Segment vertical {Vec2D(9.9595317235047229, 49.827392684956379), Vec2D(9.9595317235047229, 49.827482684956379)};
+    Vec2D justPastEnd {vertical.q().getX(), std::nextafter(vertical.q().getY(), 100.0)};
+    ASSERT_EQ(justPastEnd, vertical.q()) << "the two points are equal as far as Vec2D is concerned";
+    EXPECT_TRUE(vertical.contains(justPastEnd)) << "so the segment has to contain it as well";
+
+    Segment horizontal {Vec2D(9.9595317235047229, 49.827482684956379), Vec2D(9.9596217235047229, 49.827482684956379)};
+    Vec2D justPastRight {std::nextafter(horizontal.q().getX(), 100.0), horizontal.q().getY()};
+    ASSERT_EQ(justPastRight, horizontal.q());
+    EXPECT_TRUE(horizontal.contains(justPastRight));
 }
