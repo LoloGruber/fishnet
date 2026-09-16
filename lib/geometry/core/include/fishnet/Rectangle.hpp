@@ -103,6 +103,10 @@ template<Shape S>
 Rectangle(const S &) -> Rectangle<typename S::numeric_type>;
 
 // Explicit template instantiation
+// Ring<DEFAULT_NUMERIC> is instantiated here rather than in Ring.hpp: aaBB() returns Rectangle<T>
+// by value, so it needs Rectangle<T> complete, which is only guaranteed at this point regardless
+// of whether Ring.hpp or Rectangle.hpp gets included first (see the NOTE in Ring.hpp).
+template class Ring<fishnet::math::DEFAULT_NUMERIC>;
 template class Rectangle<fishnet::math::DEFAULT_NUMERIC>;
 
 /**
