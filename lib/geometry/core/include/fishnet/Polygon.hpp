@@ -223,6 +223,13 @@ public:
         return this->equals(other);
     }
 
+    constexpr size_t hash() const noexcept{
+        auto boundaryHash = this->getBoundary().hash();
+        auto holesHashView = this->getHoles() | std::views::transform([](const auto & ring){return ring.hash();});
+        auto holesHash = std::accumulate(std::ranges::begin(holesHashView),std::ranges::end(holesHashView),size_t(0));
+        return boundaryHash ^ holesHash;
+    }
+
     constexpr std::string toString() const noexcept {
         std::ostringstream oss;
         oss << "Boundary: ";
@@ -237,7 +244,6 @@ public:
         oss << "}";
         return oss.str();
     }
-
 }; 
 
 //Deduction guides
@@ -247,23 +253,6 @@ Polygon(const Ring<T> &, auto) -> Polygon<T>;
 template<math::Number T>
 Polygon(const SimplePolygon<T> &, auto) -> Polygon<T>;
 
-} // namespace fishnet::geometry
-
-
-namespace std{
-    template<typename T>
-    struct hash<fishnet::geometry::Polygon<T>>{
-        constexpr static auto ringHasher = hash<fishnet::geometry::Ring<T>>{};
-        size_t operator()(const fishnet::geometry::Polygon<T> & polygon) const noexcept {
-            auto boundaryHash = ringHasher(polygon.getBoundary());
-            auto holesHashView = polygon.getHoles() | std::views::transform([](const auto & ring){return ringHasher(ring);});
-            auto holesHash = std::accumulate(std::ranges::begin(holesHashView),std::ranges::end(holesHashView),0);
-            return boundaryHash ^ holesHash;
-        }
-    };
-}
-
-namespace fishnet::geometry{
 static_assert(IPolygon<Polygon<double>>);
 static_assert(Shape<Polygon<double>>);
 // Explicit template instantiation

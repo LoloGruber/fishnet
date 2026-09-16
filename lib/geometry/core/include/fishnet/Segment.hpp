@@ -177,23 +177,14 @@ public:
         return linearIntersection(*this,other);
     }
 
+    constexpr size_t hash() const noexcept {
+        return this->_p.hash() ^ this->_q.hash();
+    }
+    
     constexpr std::string toString() const noexcept {
         return "[" + this->_p.toString() +","+this->_q.toString()+"]";
     }
 };
-} // namespace fishnet::geometry
-
-namespace std{
-    template<typename T>
-    struct hash<fishnet::geometry::Segment<T>>{
-        constexpr static auto hasher = hash<fishnet::geometry::Vec2D<T>>{};
-        size_t operator()(const fishnet::geometry::Segment<T> & segment) const {
-            return hasher(segment.p()) ^ hasher(segment.q());
-        }
-    };
-}
-
-namespace fishnet::geometry{
 static_assert(ISegment<Segment<double>>);
 static_assert(LinearGeometry<Segment<double>>);
 // Explicit template instantiation

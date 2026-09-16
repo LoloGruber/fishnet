@@ -97,6 +97,10 @@ public:
         return linearIntersection(*this,other);
     }
 
+    constexpr size_t hash() const noexcept {
+        return fishnet::math::CantorPairing(originPoint.hash(), directionVector.normalize().hash());
+    }
+
     constexpr std::string toString() const {
         return "Ray "+this->originPoint.toString()+" + k * "+this->directionVector.toString();
     }
@@ -104,21 +108,6 @@ public:
 
 // Explicit template instantiation for the default numeric type
 template class Ray<fishnet::math::DEFAULT_NUMERIC>;
-}
-namespace std{
-    template<typename T>
-    struct hash<fishnet::geometry::Ray<T>>{
-        constexpr static auto hasher = hash<fishnet::geometry::Vec2D<T>>{};
-        constexpr static auto doubleHasher = hash<fishnet::geometry::Vec2D<fishnet::math::DEFAULT_NUMERIC>>{};
-        size_t operator()(const fishnet::geometry::Ray<T> & ray) const {
-            size_t origin_hash = hasher(ray.origin());
-            size_t direction_hash = doubleHasher(ray.direction().normalize());
-            return fishnet::math::CantorPairing(origin_hash,direction_hash);
-        }
-    };
-}
-
-namespace fishnet::geometry{
 static_assert(IRay<Ray<double>>);
 static_assert(LinearGeometry<Ray<double>>);
 }

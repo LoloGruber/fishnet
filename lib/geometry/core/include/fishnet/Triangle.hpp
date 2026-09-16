@@ -54,19 +54,6 @@ public:
 template<math::Number T>
 Triangle(const Vec2D<T> &, const Vec2D<T> &, const Vec2D<T> &) -> Triangle<T>;
 
-} // namespace fishnet::geometry
-
-namespace std {
-    template<typename T>
-    struct hash<fishnet::geometry::Triangle<T>> {
-        constexpr static auto ringHasher = hash<fishnet::geometry::Ring<T>>{};
-        size_t operator()(const fishnet::geometry::Triangle<T> & triangle) const noexcept {
-            return ringHasher(triangle.getBoundary()) + 1;
-        }
-    };
-}
-
-namespace fishnet::geometry {
 static_assert(IPolygon<Triangle<double>>);
 static_assert(Shape<Triangle<double>>);
 // Explicit template instantiation

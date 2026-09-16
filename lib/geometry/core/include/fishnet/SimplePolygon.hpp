@@ -96,19 +96,6 @@ SimplePolygon(std::initializer_list<Vec2D<T>> && points)->SimplePolygon<T>;
 template<std::ranges::random_access_range R>
 SimplePolygon(const R & )->SimplePolygon<typename std::ranges::range_value_t<R>::numeric_type>;
 
-} // namespace fishnet::geometry
-
-namespace std{
-    template<typename T>
-    struct hash<fishnet::geometry::SimplePolygon<T>>{
-        constexpr static auto ringHasher = hash<fishnet::geometry::Ring<T>>{};
-        size_t operator()(const fishnet::geometry::SimplePolygon<T> & polygon) const noexcept {
-            return ringHasher(polygon.getBoundary()) +1;
-        }
-    };
-}
-
-namespace fishnet::geometry{
 static_assert(Shape<SimplePolygon<double>>);
 static_assert(IPolygon<SimplePolygon<double>>);
 // Explicit template instantiation

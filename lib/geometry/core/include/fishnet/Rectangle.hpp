@@ -140,20 +140,6 @@ static Rectangle<typename std::ranges::range_value_t<R>::numeric_type> minimalBo
     }
     return Rectangle<number>(left,top,right,bottom);
 }
-} // namespace fishnet::geometry
-
-
-namespace std{
-    template<typename T>
-    struct hash<fishnet::geometry::Rectangle<T>>{
-        constexpr static auto simplePolygonHasher = hash<fishnet::geometry::Ring<T>>{};
-        size_t operator()(const fishnet::geometry::Rectangle<T> & rectangle) const noexcept {
-            return simplePolygonHasher(static_cast<const fishnet::geometry::Ring<T> &>(rectangle));
-        }
-    };
-}
-
-namespace fishnet::geometry{
 static_assert(IEnvelope<Rectangle<double>>);
 static_assert(Shape<Ring<double>>);
 static_assert(IRing<Ring<double>>);

@@ -240,6 +240,11 @@ public:
         return true;
     }
 
+    constexpr size_t hash() const noexcept {
+        auto polygonHashes = this->getPolygons() | std::views::transform([](const auto & p){return p.hash();});
+        return std::accumulate(std::ranges::begin(polygonHashes),std::ranges::end(polygonHashes),size_t(0));
+    }
+
     constexpr std::string toString() const noexcept {
         std::ostringstream oss;
         oss << "{";
@@ -253,14 +258,4 @@ public:
         return oss.str();
     }
 };
-}
-namespace std{
-    template<typename P>
-    struct hash<fishnet::geometry::MultiPolygon<P>>{
-        constexpr static auto polygonHasher = std::hash<P>{};
-        size_t operator()(const fishnet::geometry::MultiPolygon<P> & multiPolygon) const noexcept {
-            auto polygonHashes = multiPolygon.getPolygons() | std::views::transform([](const auto & p){return polygonHasher(p);});
-            return std::accumulate(std::ranges::begin(polygonHashes),std::ranges::end(polygonHashes),0);
-        }
-    };
-}
+} // namespace fishnet::geometry

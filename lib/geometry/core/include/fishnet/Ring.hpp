@@ -336,6 +336,12 @@ public:
         return shapeDistance(*this,other);
     }
 
+    constexpr size_t hash() const noexcept {
+            auto segmentsHashView = this->getSegments() | std::views::transform([](const auto & segment){return segment.hash();});
+            auto centroidHash = this->centroid().hash();
+            return std::accumulate(std::ranges::begin(segmentsHashView),std::ranges::end(segmentsHashView),centroidHash);
+    }
+
     constexpr std::string toString() const noexcept {
         std::ostringstream oss;
         bool first = true;
@@ -356,18 +362,7 @@ template<typename T>
 Ring(std::initializer_list<Vec2D<T>> && points)->Ring<T>;
 
 } // namespace fishnet::geometry
-namespace std{
-    template<typename T>
-    struct hash<fishnet::geometry::Ring<T>>{
-        constexpr static auto segmentHasher = hash<fishnet::geometry::Segment<T>>{};
-        constexpr static auto pointHasher = hash<fishnet::geometry::Vec2DReal>{};
-        size_t operator()(const fishnet::geometry::Ring<T> & ring) const noexcept{
-            auto segmentsHashView = ring.getSegments() | std::views::transform([](const auto & segment){return segmentHasher(segment);});
-            auto centroidHash = pointHasher(ring.centroid());
-            return std::accumulate(std::ranges::begin(segmentsHashView),std::ranges::end(segmentsHashView),centroidHash);
-        }
-    };
-}
+
 // NOTE: the explicit instantiation of Ring<DEFAULT_NUMERIC> lives in Rectangle.hpp, not here:
 // aaBB() returns Rectangle<T> by value, so instantiating Ring<T> requires Rectangle<T> to be
 // complete. Whichever of Ring.hpp/Rectangle.hpp is included first, by the time Rectangle.hpp
