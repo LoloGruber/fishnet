@@ -6,6 +6,7 @@
 #include <expected>
 
 #include <fishnet/IGeometry.hpp>
+#include <fishnet/ObjectConcepts.hpp>
 #include <fishnet/CollectionConcepts.hpp>
 #include <fishnet/FunctionalConcepts.hpp>
 #include <fishnet/Either.hpp>
@@ -23,7 +24,7 @@ namespace fishnet {
  * Stores a SpatialReference
  * @tparam G
  */
-template<geometry::Geometry G>
+template<geometry::AnyGeometry G>
 class VectorLayer{
 private:
     OGRSpatialReference spatialRef;
@@ -47,7 +48,7 @@ private:
         this->features.erase(removed.begin(),removed.end());
     }
 
-    template<geometry::Geometry T>
+    template<geometry::AnyGeometry T>
     friend class VectorLayer; // allow other VectorLayers to access the private members
 
 public: 
@@ -196,7 +197,7 @@ public:
         fields.clear();
     }
 
-    template<geometry::Geometry T>
+    template<geometry::AnyGeometry T>
     constexpr void copyFields(VectorLayer<T> & other) const noexcept {
         for(auto [fieldName,fieldVariant]:fields){
             other.fields.try_emplace(fieldName,fieldVariant);

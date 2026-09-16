@@ -1,4 +1,5 @@
 #pragma once
+#include <fishnet/ObjectConcepts.hpp>
 #include <string>
 #include <variant>
 #include "FieldType.hpp"
@@ -43,7 +44,7 @@ class FieldDefinition {
 private:
     friend class FieldDefinitionTestFactory<T>;
 
-    template<geometry::Geometry G>
+    template<geometry::AnyGeometry G>
     friend class VectorLayer; 
 
     std::string fieldName;
