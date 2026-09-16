@@ -13,12 +13,12 @@ using namespace fishnet::geometry;
 class VectorLayerTest: public ::testing::Test {
 protected:
     void SetUp() override {
-        sampleLayer = VectorIO::read<geometry::Polygon<double>>(pathToSample);
+        sampleLayer = VectorIO::read<geometry::OGRPolygonAdapter>(pathToSample);
         pointLayer = VectorLayer<geometry::Vec2DReal>(sampleLayer.getSpatialReference());
         pointLayer.addAllGeometry(points);
     }
     Shapefile pathToSample {util::PathHelper::projectDirectory() / std::filesystem::path("data/testing/regions/Corvara_Small_Preprocessed.shp")};
-    VectorLayer<geometry::Polygon<double>> sampleLayer = VectorIO::read<geometry::Polygon<double>>(pathToSample);
+    VectorLayer<geometry::OGRPolygonAdapter> sampleLayer = VectorIO::read<geometry::OGRPolygonAdapter>(pathToSample);
     VectorLayer<geometry::Vec2DReal> pointLayer = VectorLayer<geometry::Vec2DReal>(sampleLayer.getSpatialReference());
     Vec2DReal p1 = {0.5,1};
     Vec2DReal p2 = {3,-1};
@@ -27,23 +27,23 @@ protected:
 
 TEST_F(VectorLayerTest, read){
     EXPECT_TRUE(std::filesystem::exists(pathToSample.getPath())) << "Path to testcase sample does not exist: " << pathToSample.getPath();
-    auto layer = VectorIO::read<geometry::Polygon<double>>(pathToSample);
-    EXPECT_TYPE<VectorLayer<geometry::Polygon<double>>>(layer);
+    auto layer = VectorIO::read<geometry::OGRPolygonAdapter>(pathToSample);
+    EXPECT_TYPE<VectorLayer<geometry::OGRPolygonAdapter>>(layer);
     EXPECT_FALSE(layer.isEmpty()) << "Layer should not be empty after successful read";
 }
 
 TEST_F(VectorLayerTest, init){
     EXPECT_TRUE(std::filesystem::exists(pathToSample.getPath()));
-    auto layer = VectorIO::read<fishnet::geometry::Polygon<double>>(pathToSample);
+    auto layer = VectorIO::read<fishnet::geometry::OGRPolygonAdapter>(pathToSample);
 
     Shapefile notExistsFile {util::PathHelper::projectDirectory() / std::filesystem::path("tests/io/does_not_exists.shp")};
-    EXPECT_ANY_THROW(VectorIO::read<fishnet::geometry::Polygon<double>>(notExistsFile));
-    EXPECT_NO_THROW(VectorLayer<geometry::Polygon<double>>(layer.getSpatialReference()));
+    EXPECT_ANY_THROW(VectorIO::read<fishnet::geometry::OGRPolygonAdapter>(notExistsFile));
+    EXPECT_NO_THROW(VectorLayer<geometry::OGRPolygonAdapter>(layer.getSpatialReference()));
     EXPECT_FALSE(notExistsFile.exists());
-    auto empty = VectorLayer<fishnet::geometry::Polygon<double>>(layer.getSpatialReference());
+    auto empty = VectorLayer<fishnet::geometry::OGRPolygonAdapter>(layer.getSpatialReference());
     EXPECT_EMPTY(empty.getGeometries());
     EXPECT_EMPTY(empty.getFeatures());
-    EXPECT_NO_THROW(VectorLayer<geometry::Polygon<double>>(layer.getSpatialReference()));
+    EXPECT_NO_THROW(VectorLayer<geometry::OGRPolygonAdapter>(layer.getSpatialReference()));
 }
 
 TEST_F(VectorLayerTest,getGeometries) {
@@ -197,7 +197,7 @@ TEST_F(VectorLayerTest, write) {
     EXPECT_FALSE(std::filesystem::exists(outputFile.getPath()));
     EXPECT_NO_FATAL_FAILURE(outputFile = VectorIO::write(sampleLayer, outputFile));
     EXPECT_TRUE(std::filesystem::exists(outputFile.getPath()));
-    EXPECT_UNSORTED_RANGE_EQ(sampleLayer.getGeometries(),VectorIO::read<geometry::Polygon<double>>(outputFile).getGeometries());
+    EXPECT_UNSORTED_RANGE_EQ(sampleLayer.getGeometries(),VectorIO::read<geometry::OGRPolygonAdapter>(outputFile).getGeometries());
     Shapefile outputFileIncremented = fishnet::__impl::IncrementFilenameMapper<Shapefile>()(outputFile);
     EXPECT_NO_FATAL_FAILURE(outputFile = VectorIO::write(sampleLayer, outputFileIncremented));
     EXPECT_TRUE(std::filesystem::exists(outputFile.getPath()));

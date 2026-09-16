@@ -1,6 +1,7 @@
 set(IOTestBin Test-IO)
 add_executable(${IOTestBin}
         VectorLayerTest.cpp
+        OGRVectorLayerTest.cpp
         ShapefileTest.cpp
         GeotiffTest.cpp
         FeatureTest.cpp

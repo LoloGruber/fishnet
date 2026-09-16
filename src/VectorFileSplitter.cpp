@@ -10,7 +10,7 @@
 #include <magic_enum.hpp>
 
 using namespace fishnet;
-using GeometryType = fishnet::geometry::SimplePolygon<double>;
+using GeometryType = fishnet::geometry::OGRPolygonAdapter;
 
 struct VectorFileSplitterConfig {
     uint32_t depth;

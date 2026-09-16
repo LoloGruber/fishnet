@@ -6,7 +6,7 @@
 #include <fishnet/Fishnet.hpp>
 #include <fishnet/Task.hpp>
 
-template<fishnet::geometry::Geometry G>
+template<fishnet::geometry::AnyGeometry G>
 class ShapefileMerger: public Task {
 public:
     ShapefileMerger():Task("ShapefileMerger"){}
@@ -34,7 +34,7 @@ public:
 };
 
 int main(int argc, char * argv[]){
-    using GeometryType = fishnet::geometry::MultiPolygon<fishnet::geometry::Polygon<double>>;
+    using GeometryType = fishnet::geometry::OGRGeometryAdapter;
     CLI::App app {"FishnetShapefileMerger"};
     std::vector<std::string> inputFilenames;
     std::string outputFilename;

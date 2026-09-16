@@ -74,7 +74,7 @@ public:
 constexpr static const char * OUTPUT_SUFFIX = "_filtered";
 
 int main(int argc, char * argv[]){
-    using ShapeType = fishnet::geometry::Polygon<double>;
+    using ShapeType = fishnet::geometry::OGRPolygonAdapter;
     CLI::App app{"Shapefile Preprocessor"};
     std::string configFilename;
     std::string inputFilename;
