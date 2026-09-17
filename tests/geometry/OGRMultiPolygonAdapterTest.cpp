@@ -24,7 +24,7 @@ protected:
     static Polygon<double> left()  { return unitSquareAt(0,0,2); }
     static Polygon<double> right() { return unitSquareAt(5,0,2); }
 
-    static MultiPolygon<Polygon<double>> reference() {
+    static MultiPolygon<Polygon<double>> native() {
         return MultiPolygon<Polygon<double>>(std::vector<Polygon<double>>{left(), right()});
     }
 
@@ -53,9 +53,9 @@ TEST_F(OGRMultiPolygonAdapterTest, initFromSinglePolygon) {
 }
 
 TEST_F(OGRMultiPolygonAdapterTest, initFromMultiPolygon) {
-    OGRMultiPolygonAdapter adapted(reference());
+    OGRMultiPolygonAdapter adapted(native());
     EXPECT_EQ(adapted.size(), 2u);
-    EXPECT_DOUBLE_EQ(adapted.area(), reference().area());
+    EXPECT_DOUBLE_EQ(adapted.area(), native().area());
 }
 
 TEST_F(OGRMultiPolygonAdapterTest, initFromOGRPtr) {
@@ -138,13 +138,13 @@ TEST_F(OGRMultiPolygonAdapterTest, removePolygonWhichIsNotPresent) {
 
 TEST_F(OGRMultiPolygonAdapterTest, area) {
     EXPECT_DOUBLE_EQ(multi->area(), 8.0);
-    EXPECT_DOUBLE_EQ(multi->area(), reference().area());
+    EXPECT_DOUBLE_EQ(multi->area(), native().area());
 }
 
 TEST_F(OGRMultiPolygonAdapterTest, centroid) {
     // both squares have the same area, so the centroid is the midpoint of their centroids
     EXPECT_EQ(multi->centroid(), Vec2DReal(3.5,1));
-    EXPECT_EQ(multi->centroid(), reference().centroid());
+    EXPECT_EQ(multi->centroid(), native().centroid());
 }
 
 TEST_F(OGRMultiPolygonAdapterTest, centroidIsAreaWeighted) {
@@ -187,7 +187,7 @@ TEST_F(OGRMultiPolygonAdapterTest, isOutside) {
 }
 
 TEST_F(OGRMultiPolygonAdapterTest, pointLocationMatchesMultiPolygon) {
-    auto ref = reference();
+    auto ref = native();
     std::vector<Vec2DReal> probes {{1,1},{6,1},{3,1},{0,0},{5,1},{-1,-1},{2,2}};
     for(const auto & probe : probes){
         EXPECT_EQ(multi->isInside(probe), ref.isInside(probe)) << probe.toString();
@@ -218,11 +218,11 @@ TEST_F(OGRMultiPolygonAdapterTest, containsSegment) {
 TEST_F(OGRMultiPolygonAdapterTest, containsPolygon) {
     Polygon<double> inLeft(unitSquareAt(0.5,0.5,0.5));
     EXPECT_TRUE(multi->contains(inLeft));
-    EXPECT_EQ(multi->contains(inLeft), reference().contains(inLeft));
+    EXPECT_EQ(multi->contains(inLeft), native().contains(inLeft));
 
     Polygon<double> outside(unitSquareAt(20,20,1));
     EXPECT_FALSE(multi->contains(outside));
-    EXPECT_EQ(multi->contains(outside), reference().contains(outside));
+    EXPECT_EQ(multi->contains(outside), native().contains(outside));
 }
 
 // ============================================================================
@@ -232,7 +232,7 @@ TEST_F(OGRMultiPolygonAdapterTest, containsPolygon) {
 TEST_F(OGRMultiPolygonAdapterTest, intersects) {
     // a horizontal line at y=1 crosses both squares
     EXPECT_TRUE(multi->intersects(Line<double>::horizontalLine(1)));
-    EXPECT_EQ(multi->intersects(Line<double>::horizontalLine(1)), reference().intersects(Line<double>::horizontalLine(1)));
+    EXPECT_EQ(multi->intersects(Line<double>::horizontalLine(1)), native().intersects(Line<double>::horizontalLine(1)));
     // a segment strictly inside one square crosses nothing
     EXPECT_FALSE(multi->intersects(Segment(Vec2DReal(0.5,0.5), Vec2DReal(1.5,1.5))));
     EXPECT_FALSE(multi->intersects(Segment(Vec2DReal(20,20), Vec2DReal(21,21))));
@@ -257,11 +257,11 @@ TEST_F(OGRMultiPolygonAdapterTest, intersections) {
 TEST_F(OGRMultiPolygonAdapterTest, crosses) {
     Polygon<double> overlappingLeft(unitSquareAt(1,1,2));
     EXPECT_TRUE(multi->crosses(overlappingLeft));
-    EXPECT_EQ(multi->crosses(overlappingLeft), reference().crosses(overlappingLeft));
+    EXPECT_EQ(multi->crosses(overlappingLeft), native().crosses(overlappingLeft));
 
     Polygon<double> disjoint(unitSquareAt(20,20,1));
     EXPECT_FALSE(multi->crosses(disjoint));
-    EXPECT_EQ(multi->crosses(disjoint), reference().crosses(disjoint));
+    EXPECT_EQ(multi->crosses(disjoint), native().crosses(disjoint));
 
     // a polygon in the gap touches nothing and crosses nothing
     Polygon<double> inGap(Polygon<double>(Ring<double>(std::vector<Vec2DReal>{{3,0.5},{3,1.5},{4,1.5},{4,0.5}})));
@@ -271,18 +271,18 @@ TEST_F(OGRMultiPolygonAdapterTest, crosses) {
 TEST_F(OGRMultiPolygonAdapterTest, touches) {
     Polygon<double> neighbour(Polygon<double>(Ring<double>(std::vector<Vec2DReal>{{2,0},{2,2},{3,2},{3,0}})));
     EXPECT_TRUE(multi->touches(neighbour));
-    EXPECT_EQ(multi->touches(neighbour), reference().touches(neighbour));
+    EXPECT_EQ(multi->touches(neighbour), native().touches(neighbour));
 
     Polygon<double> disjoint(unitSquareAt(20,20,1));
     EXPECT_FALSE(multi->touches(disjoint));
-    EXPECT_EQ(multi->touches(disjoint), reference().touches(disjoint));
+    EXPECT_EQ(multi->touches(disjoint), native().touches(disjoint));
 }
 
 TEST_F(OGRMultiPolygonAdapterTest, distanceToPolygon) {
     // the closest of the two squares determines the distance
     Polygon<double> away(Polygon<double>(Ring<double>(std::vector<Vec2DReal>{{9,0},{9,2},{10,2},{10,0}})));
     EXPECT_DOUBLE_EQ(multi->distance(away), 2.0);
-    EXPECT_DOUBLE_EQ(multi->distance(away), reference().distance(away));
+    EXPECT_DOUBLE_EQ(multi->distance(away), native().distance(away));
 
     // a touching polygon reports 0
     Polygon<double> neighbour(Polygon<double>(Ring<double>(std::vector<Vec2DReal>{{2,0},{2,2},{3,2},{3,0}})));
@@ -296,6 +296,38 @@ TEST_F(OGRMultiPolygonAdapterTest, distanceToPolygon) {
 TEST_F(OGRMultiPolygonAdapterTest, distanceToMultiPolygon) {
     OGRMultiPolygonAdapter other(std::vector<Polygon<double>>{unitSquareAt(9,0,1), unitSquareAt(20,20,1)});
     EXPECT_DOUBLE_EQ(multi->distance(other), 2.0);
+}
+
+// Cross-checks the OGRMultiPolygonAdapter-to-OGRMultiPolygonAdapter fast path (native GEOS
+// Distance()) against the generic IMultiPolygon template path, which distanceToMultiPolygon above
+// does not exercise since its "other" happens to only ever be the closest member.
+TEST_F(OGRMultiPolygonAdapterTest, distanceAgreesBetweenNativeAndGenericPath) {
+    auto check = [](const OGRMultiPolygonAdapter & lhs, const MultiPolygon<Polygon<double>> & rhsNative) {
+        OGRMultiPolygonAdapter rhsAdapter(rhsNative);
+        EXPECT_DOUBLE_EQ(lhs.distance(rhsAdapter), lhs.distance(rhsNative))
+            << "lhs=" << lhs.toString() << " rhs=" << rhsAdapter.toString();
+    };
+
+    // disjoint: nearest pair is left() to the close square
+    check(*multi, MultiPolygon<Polygon<double>>(std::vector<Polygon<double>>{unitSquareAt(9,0,1), unitSquareAt(20,20,1)}));
+
+    // touching: one member of other touches left()
+    check(*multi, MultiPolygon<Polygon<double>>(std::vector<Polygon<double>>{unitSquareAt(2,0,1), unitSquareAt(20,20,1)}));
+
+    // contained: one member of other sits fully inside right()
+    check(*multi, MultiPolygon<Polygon<double>>(std::vector<Polygon<double>>{unitSquareAt(5.5,0.5,0.5), unitSquareAt(20,20,1)}));
+
+    // through a hole: one member of other sits inside a hole of a polygon with holes
+    Ring<double> outer(std::vector<Vec2DReal>{{0,0},{0,10},{10,10},{10,0}});
+    Ring<double> hole(std::vector<Vec2DReal>{{4,4},{4,6},{6,6},{6,4}});
+    Polygon<double> withHole(outer, std::vector<Ring<double>>{hole});
+    OGRMultiPolygonAdapter holed(std::vector<Polygon<double>>{withHole});
+    check(holed, MultiPolygon<Polygon<double>>(std::vector<Polygon<double>>{
+        Polygon<double>(Ring<double>(std::vector<Vec2DReal>{{4.5,4.5},{4.5,5.5},{5.5,5.5},{5.5,4.5}}))
+    }));
+
+    // identical multi-polygon
+    check(*multi, native());
 }
 
 TEST_F(OGRMultiPolygonAdapterTest, containsInHole) {

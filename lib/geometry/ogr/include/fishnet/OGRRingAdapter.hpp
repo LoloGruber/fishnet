@@ -187,8 +187,6 @@ public:
     }
 
     double distance(const OGRRingAdapter & other) const{
-        if(this->contains(other) or other.contains(*this) or this->crosses(other))
-             return 0;
         return geomPtr->Distance(other.geomPtr.get());
     }
 };

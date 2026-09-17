@@ -210,6 +210,17 @@ public:
         }
         return borrowedBoundary().distance(otherBoundary);
     }
+
+    /**
+     * @brief Distance between two OGR backed polygons
+     * @note geomPtr already has its holes subtracted, so GEOS' own Distance() returns 0 exactly
+     * when the two regions overlap or touch and the true gap to the nearest boundary (a hole's
+     * rim included) otherwise - the same result the generic overload above computes by hand,
+     * without having to inspect bounding boxes or holes here
+     */
+    double distance(const OGRPolygonAdapter & other) const {
+        return geomPtr->Distance(other.geomPtr.get());
+    }
 };
 static_assert(IPolygon<OGRPolygonAdapter>);
 static_assert(Shape<OGRPolygonAdapter>);

@@ -247,8 +247,14 @@ public:
         return std::ranges::min(other.getPolygons() | std::views::transform([this](const auto & otherPolygon){return this->distance(otherPolygon);}));
     }
 
+    /**
+     * @brief Distance between two OGR backed multi-polygons
+     * @note mirrors the generic overloads above (0 if any pair of member polygons overlaps or
+     * touches, otherwise the smallest gap between any pair), but leaves finding that pair to GEOS
+     * instead of checking every polygon of this against every polygon of other by hand
+     */
     double distance(const OGRMultiPolygonAdapter & other) const {
-        return std::ranges::min(other.borrowedPolygons() | std::views::transform([this](const auto & otherPolygon){return this->distance(otherPolygon);}));
+        return geomPtr->Distance(other.geomPtr.get());
     }
 };
 static_assert(IMultiPolygon<OGRMultiPolygonAdapter>);

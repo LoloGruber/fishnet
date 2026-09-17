@@ -356,6 +356,53 @@ TEST_F(OGRPolygonAdapterTest, distanceToPolygonInHole) {
     EXPECT_DOUBLE_EQ(withHole->distance(inHole), 0.5);
 }
 
+// Cross-checks the OGRPolygonAdapter-to-OGRPolygonAdapter fast path (native GEOS Distance())
+// against the generic IPolygon template path, which the tests above never exercise since they
+// always pass a plain Polygon<double> as the argument.
+TEST_F(OGRPolygonAdapterTest, distanceAgreesBetweenNativeAndGenericPath) {
+    auto check = [](const OGRPolygonAdapter & lhs, const Polygon<double> & rhsNative) {
+        OGRPolygonAdapter rhsAdapter(rhsNative);
+        EXPECT_DOUBLE_EQ(lhs.distance(rhsAdapter), lhs.distance(rhsNative))
+            << "lhs=" << lhs.toString() << " rhs=" << rhsAdapter.toString();
+    };
+
+    Polygon<double> inside(Ring<double>(std::vector<Vec2DReal>{{1,1},{1,2},{2,2},{2,1}}));
+    check(*simple, inside);
+
+    Polygon<double> neighbour(Ring<double>(std::vector<Vec2DReal>{{10,0},{10,10},{20,10},{20,0}}));
+    check(*simple, neighbour);
+
+    Polygon<double> away(Ring<double>(std::vector<Vec2DReal>{{12,0},{12,10},{20,10},{20,0}}));
+    check(*simple, away);
+
+    Polygon<double> inHole(Ring<double>(std::vector<Vec2DReal>{{4.5,4.5},{4.5,5.5},{5.5,5.5},{5.5,4.5}}));
+    check(*withHole, inHole);
+
+    // touches the hole's rim exactly, rather than sitting strictly inside it
+    Polygon<double> touchingHoleRim(Ring<double>(std::vector<Vec2DReal>{{4,4},{4,5},{5,5},{5,4}}));
+    check(*withHole, touchingHoleRim);
+
+    // straddles the hole's rim: partially inside the hole, partially in the solid area
+    Polygon<double> straddlingHoleRim(Ring<double>(std::vector<Vec2DReal>{{3,4.5},{3,5.5},{5,5.5},{5,4.5}}));
+    check(*withHole, straddlingHoleRim);
+
+    // crosses the outer boundary: partially inside, partially outside the whole polygon
+    Polygon<double> crossingOuter(Ring<double>(std::vector<Vec2DReal>{{-1,4},{-1,6},{1,6},{1,4}}));
+    check(*simple, crossingOuter);
+    check(*withHole, crossingOuter);
+
+    // identical polygon
+    check(*withHole, referenceWithHole());
+
+    // two disjoint holes: nearest approach is through the closer one
+    Polygon<double> outerBig(Ring<double>(std::vector<Vec2DReal>{{0,0},{0,20},{20,20},{20,0}}));
+    Ring<double> holeA(std::vector<Vec2DReal>{{2,2},{2,4},{4,4},{4,2}});
+    Ring<double> holeB(std::vector<Vec2DReal>{{10,10},{10,12},{12,12},{12,10}});
+    OGRPolygonAdapter twoHoles{Polygon<double>(outerBig, std::vector<Ring<double>>{holeA, holeB})};
+    Polygon<double> inHoleB(Ring<double>(std::vector<Vec2DReal>{{10.5,10.5},{10.5,11.5},{11.5,11.5},{11.5,10.5}}));
+    check(twoHoles, inHoleB);
+}
+
 // ============================================================================
 // Base class behavior
 // ============================================================================
