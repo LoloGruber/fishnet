@@ -71,6 +71,17 @@ private:
         }
         return true;
     }
+
+    friend class OGRGeometryAdapter;
+
+    /**
+     * @brief Hand the wrapped multi-polygon over as a standalone geometry, without copying it
+     * @note the multi-polygon is left moved-from and must not be used again
+     */
+    OGRUniquePtr<OGRGeometry> releaseGeometry() && noexcept {
+        auto deleter = geomPtr.get_deleter();
+        return OGRUniquePtr<OGRGeometry>(geomPtr.release(), deleter);
+    }
 public:
     using numeric_type = double;
     using polygon_type = OGRPolygonAdapter;

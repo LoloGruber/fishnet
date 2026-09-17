@@ -69,6 +69,16 @@ private:
     }
 
     friend class OGRMultiPolygonAdapter;
+    friend class OGRGeometryAdapter;
+
+    /**
+     * @brief Hand the wrapped polygon over as a standalone geometry, without copying it
+     * @note the polygon is left moved-from and must not be used again
+     */
+    OGRUniquePtr<OGRGeometry> releaseGeometry() && noexcept {
+        auto deleter = geomPtr.get_deleter();
+        return OGRUniquePtr<OGRGeometry>(geomPtr.release(), deleter);
+    }
 
 public:
     using OGRPolygonalAdapter::contains;

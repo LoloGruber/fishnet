@@ -76,6 +76,7 @@ private:
     }
 
     friend class OGRPolygonAdapter;
+    friend class OGRGeometryAdapter;
 
     /**
      * @brief Number of points of the open representation, i.e. without the closing point
@@ -83,6 +84,19 @@ private:
      */
     int openPointCount() const {
         return std::max(0, exteriorRing()->getNumPoints() - 1);
+    }
+
+    /**
+     * @brief Hand the wrapped ring over as a standalone geometry, without copying its points
+     *
+     * Detaches the exterior ring from the shell polygon it is kept in rather than cloning it, so
+     * the shell is left empty (and is discarded along with this adapter, which must not be used
+     * again on success).
+     */
+    OGRUniquePtr<OGRGeometry> releaseGeometry() && noexcept {
+        auto * ring = geomPtr->getExteriorRing();
+        geomPtr->removeRing(0, false); // detach without deleting; the emptied shell is discarded with this adapter
+        return OGRUniquePtr<OGRGeometry>(ring);
     }
 
 public:
