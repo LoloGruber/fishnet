@@ -41,6 +41,33 @@ concept OGRLayerGeometry =
 template<typename G>
 concept OGRWritableGeometry = IPoint<G> || Shape<G> || DynamicGeometry<G>;
 
+namespace __impl{
+    // overload set used only in an unevaluated context (@see NarrowTarget below) to compute which
+    // concrete adapter narrowTo() should produce for a given G: itself for one of the adapters (or
+    // Vec2DReal), otherwise whichever adapter models the same kind of shape as G
+    template<OGRLayerGeometry G>
+    G narrowTargetOf();
+
+    template<typename G> requires (not OGRLayerGeometry<G>) && IRing<G>
+    OGRRingAdapter narrowTargetOf();
+
+    template<typename G> requires (not OGRLayerGeometry<G>) && IPolygon<G>
+    OGRPolygonAdapter narrowTargetOf();
+
+    template<typename G> requires (not OGRLayerGeometry<G>) && IMultiPolygon<G>
+    OGRMultiPolygonAdapter narrowTargetOf();
+}
+
+/**
+ * @brief What narrowTo<G>() produces: G itself for one of the OGRLayerGeometry types, otherwise
+ * whichever OGR adapter models the same kind of shape as G
+ *
+ * This is what lets narrowTo() also accept a plain fishnet::geometry::Ring/Polygon/MultiPolygon
+ * (or any other IRing/IPolygon/IMultiPolygon), and not just the OGR adapters listed there.
+ */
+template<typename G>
+using NarrowTarget = decltype(__impl::narrowTargetOf<G>());
+
 /**
  * @brief Adapter for an OGRGeometry of statically unknown type, as handed out by a data source
  *
@@ -66,6 +93,29 @@ public:
     OGRGeometryAdapter(const OGRPolygonAdapter & polygon):Base(OGRUniquePtr<OGRGeometry>(polygon.raw()->clone())) {}
 
     OGRGeometryAdapter(const OGRMultiPolygonAdapter & multiPolygon):Base(OGRUniquePtr<OGRGeometry>(multiPolygon.raw()->clone())) {}
+
+    /**
+     * @brief Adopt a ring, polygon or multi-polygon which is no longer needed, without cloning it
+     * @note the source adapter is left moved-from and must not be used again
+     */
+    OGRGeometryAdapter(OGRRingAdapter && ring):Base(std::move(ring).releaseGeometry()) {}
+
+    OGRGeometryAdapter(OGRPolygonAdapter && polygon):Base(std::move(polygon).releaseGeometry()) {}
+
+    OGRGeometryAdapter(OGRMultiPolygonAdapter && multiPolygon):Base(std::move(multiPolygon).releaseGeometry()) {}
+
+    /**
+     * @brief Build from any ring, polygon or multi-polygon which is not already one of the OGR
+     * adapters above, by first converting it through the corresponding adapter
+     *
+     * The adapter does the actual conversion (walking the shape's points/rings); the temporary it
+     * produces is then adopted by the move constructor above rather than cloned.
+     */
+    OGRGeometryAdapter(const IRing auto & ring):OGRGeometryAdapter(OGRRingAdapter(ring)) {}
+
+    OGRGeometryAdapter(const IPolygon auto & polygon):OGRGeometryAdapter(OGRPolygonAdapter(polygon)) {}
+
+    OGRGeometryAdapter(const IMultiPolygon auto & multiPolygon):OGRGeometryAdapter(OGRMultiPolygonAdapter(multiPolygon)) {}
 
     /**
      * @brief Geometry type of the wrapped geometry
@@ -186,13 +236,14 @@ public:
      * @note where the result has to own a geometry of its own this copies the wrapped one,
      * @see narrowTo() && for the version which hands it over instead
      */
-    template<OGRLayerGeometry G>
-    Option<G> narrowTo() const & {
+    template<typename G> requires OGRLayerGeometry<G> || Shape<G>
+    Option<NarrowTarget<G>> narrowTo() const & {
+        using Target = NarrowTarget<G>;
         // a point is read out by value and a ring is rebuilt from the points either way, so neither
         // gains anything from copying the whole geometry first
-        if constexpr (std::same_as<G, Vec2DReal>)
+        if constexpr (std::same_as<Target, Vec2DReal>)
             return toPoint();
-        else if constexpr (std::same_as<G, OGRRingAdapter>)
+        else if constexpr (std::same_as<Target, OGRRingAdapter>)
             return toRing();
         else
             return OGRGeometryAdapter(*this).narrowTo<G>();
@@ -202,21 +253,26 @@ public:
     /**
      * @brief Narrow to G, coercing between polygon and multi-polygon where the shape is the same
      *
+     * G is not limited to the OGR adapters: any other IRing/IPolygon/IMultiPolygon (a plain
+     * fishnet::geometry::Ring/Polygon/MultiPolygon, for instance) narrows to whichever adapter
+     * models the same kind of shape, @see NarrowTarget.
+     *
      * A data source does not always hold the geometry type its layer declares: a polygon layer may
      * carry a multi-polygon of a single part, and a multi-polygon layer a lone polygon. Both denote
      * the same shape, so they are converted rather than dropped. Anything else yields an empty
      * Option, and the geometry is left where it was.
      * @note on success this adapter is left moved-from and must not be used again
      */
-    template<OGRLayerGeometry G>
-    Option<G> narrowTo() && {
-        if constexpr (std::same_as<G, OGRGeometryAdapter>){
+    template<typename G> requires OGRLayerGeometry<G> || Shape<G>
+    Option<NarrowTarget<G>> narrowTo() && {
+        using Target = NarrowTarget<G>;
+        if constexpr (std::same_as<Target, OGRGeometryAdapter>){
             return std::move(*this); // a layer which takes anything has nothing to narrow
-        } else if constexpr (std::same_as<G, Vec2DReal>){
+        } else if constexpr (std::same_as<Target, Vec2DReal>){
             return toPoint();
-        } else if constexpr (std::same_as<G, OGRRingAdapter>){
+        } else if constexpr (std::same_as<Target, OGRRingAdapter>){
             return toRing();
-        } else if constexpr (std::same_as<G, OGRPolygonAdapter>){
+        } else if constexpr (std::same_as<Target, OGRPolygonAdapter>){
             if(auto polygon = std::move(*this).toPolygon())
                 return polygon;
             auto multiPolygon = std::move(*this).toMultiPolygon();
@@ -224,7 +280,7 @@ public:
                 return {};
             auto polygons = multiPolygon.value().getPolygons();
             return *std::ranges::begin(polygons);
-        } else if constexpr (std::same_as<G, OGRMultiPolygonAdapter>){
+        } else if constexpr (std::same_as<Target, OGRMultiPolygonAdapter>){
             if(auto multiPolygon = std::move(*this).toMultiPolygon())
                 return multiPolygon;
             auto polygon = std::move(*this).toPolygon();

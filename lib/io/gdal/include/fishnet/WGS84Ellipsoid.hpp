@@ -5,8 +5,8 @@
 #include <fishnet/Degrees.hpp>
 #include <fishnet/Angle.hpp>
 #include <fishnet/IGeometry.hpp>
+#include <fishnet/OGRGeometryAdapter.hpp>
 #include "gdal/ogr_spatialref.h"
-#include "OGRGeometryConverter.hpp"
 
 namespace fishnet {
 
@@ -38,12 +38,12 @@ private:
         OGRSpatialReference metric;
         metric.SetAE(centroid.y, centroid.x, 0, 0);
         metric.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-        auto asOGR = OGRGeometryAdapter::toOGR(shape);
-        OGRCoordinateTransformation * toMetric = OGRCreateCoordinateTransformation(&spatialReference, &metric);     
-        if(toMetric == nullptr || asOGR == nullptr || asOGR->transform(toMetric) != OGRERR_NONE)
+        fishnet::geometry::OGRGeometryAdapter asOGR(shape);
+        OGRCoordinateTransformation * toMetric = OGRCreateCoordinateTransformation(&spatialReference, &metric);
+        if(toMetric == nullptr || asOGR.raw()->transform(toMetric) != OGRERR_NONE)
             throw std::runtime_error("Could not transform geometry to metric");
         OCTDestroyCoordinateTransformation(toMetric);
-        return OGRGeometryAdapter::fromOGR<T::type>(*asOGR).value_or_throw();
+        return std::move(asOGR).narrowTo<T>().value_or_throw();
     }
 
     static inline OGRSpatialReference initWGS84(){
