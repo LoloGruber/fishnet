@@ -3,11 +3,10 @@
 #include "IDNode.h"
 #include <functional>
 #include <string>
-#include <fishnet/Printable.hpp>
+#include <fishnet/ObjectConcepts.hpp>
 
 template<typename T>
-class DataIDNode : public IDNode
-{
+class DataIDNode : public IDNode {
 private:
     T data;
 public:
@@ -19,13 +18,11 @@ public:
     std::string toString() const noexcept requires std::convertible_to<T,std::string>{
         return std::string(data);
     }
+
+    size_t hash() const noexcept requires fishnet::util::Hashable<T> {
+        return std::hash<T>{}(this->data);
+    }
 };
 
-namespace std{
-    template<typename T>
-    struct hash<DataIDNode<T>>{
-        size_t operator()(const DataIDNode<T> & k) const {
-            return (std::size_t) k.getId();
-        }
-    };
-}
+static_assert(fishnet::util::Hashable<DataIDNode<std::string>>);
+static_assert(fishnet::util::HasToString<DataIDNode<std::string>>);

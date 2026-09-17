@@ -1,3 +1,11 @@
+find_package(GDAL REQUIRED)
+if (GDAL_FOUND)
+  message(STATUS "Found GDAL: ${GDAL_VERSION}")
+  message(STATUS "Using GDAL include dir: ${GDAL_INCLUDE_DIR}")
+  message(STATUS "Using GDAL libraries: ${GDAL_LIBRARIES}")
+else()
+    message(FATAL_ERROR "GDAL not found. Please install GDAL and try again.")
+endif()
 add_subdirectory(concepts)
 add_subdirectory(clustering)
 add_subdirectory(collections)
@@ -10,7 +18,6 @@ add_subdirectory(workflow)
 if(${FISHNET_TEST_LIB})
     add_subdirectory(test)
 endif()
-
 set(FishnetLibs
         ${FISHNET}::Concepts
         ${FISHNET}::Clustering

@@ -1,0 +1,5 @@
+set(GeometryCoreLib fishnet_geometry_core)
+add_library(${GeometryCoreLib} INTERFACE)
+target_include_directories(${GeometryCoreLib} INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
+target_link_libraries(${GeometryCoreLib} INTERFACE fishnet_geometry_interface fishnet_geometry_algorithm)
+add_library(${FISHNET}::Geometry::Core ALIAS ${GeometryCoreLib})

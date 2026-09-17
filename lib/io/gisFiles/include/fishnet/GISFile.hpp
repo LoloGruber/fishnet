@@ -3,7 +3,7 @@
 #include <array>
 #include <fishnet/Option.hpp>
 #include <utility>
-#include <fishnet/Printable.hpp>
+#include <fishnet/ObjectConcepts.hpp>
 #include <fishnet/PathHelper.h>
 
 namespace fishnet{
@@ -172,7 +172,7 @@ public:
  * @tparam File GIS file implementation type
  */
 template<typename File>
-concept GISFile = std::derived_from<File,AbstractGISFile> && util::Printable<File> && requires (const File & constF, File & file, std::filesystem::path p){
+concept GISFile = std::derived_from<File,AbstractGISFile> && fishnet::util::HasToString<File> && requires (const File & constF, File & file, std::filesystem::path p){
     {file.move(p)}-> std::same_as<File &>;
     {constF.copy(p)} -> std::same_as<File>;
     {File(p)};

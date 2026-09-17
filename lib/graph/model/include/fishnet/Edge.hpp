@@ -18,14 +18,12 @@ concept UniversalNodeRef = std::same_as<N,std::remove_cvref_t<NodeType>>;
  * @tparam N node type
  */
 template<typename E, typename N=E::node_type>
-concept Edge = requires(const E & e, const E & o, const N & cNodeRef /*, N&& nodeRval*/){
+concept Edge = fishnet::util::HasHashMethod<E> && std::equality_comparable<E> && requires(const E & e, const E & o, const N & cNodeRef /*, N&& nodeRval*/){
     {E(cNodeRef,cNodeRef)};
     /*{E(nodeRval,nodeRval)};*/
     {E::isDirected()} -> std::convertible_to<bool>;
     {e.getFrom()} -> std::same_as<const N &>;
     {e.getTo()} -> std::same_as<const N &>;
-    {e == o} -> std::convertible_to<bool>;
-    {e.hash()} -> std::convertible_to<size_t>;
     typename E::node_type;
     typename E::hash_function;
     typename E::equality_predicate;
@@ -119,7 +117,7 @@ namespace fishnet::graph::__impl{
                 }
             }
 
-            std::string toString() const noexcept requires fishnet::util::Printable<N>{
+            std::string toString() const noexcept requires fishnet::util::HasToString<N>{
                 std::ostringstream oss;                    
                 oss << "(" << this->from.toString() << ")";
                 if constexpr(Directed){
@@ -193,13 +191,3 @@ using DirectedEdge = __impl::BaseEdge<N,true,Hash,Equal>;
 template<Edge E, Annotation A , WeightFunction<typename E::node_type,A> W>
 using WeightEdge = __impl::WeightedEdgeDecorator<E,A,W>;
 }
-
-namespace std{
-    using namespace fishnet::graph;
-    template<Edge E>
-    struct hash<E>{
-        size_t operator()(const E & edge) const noexcept {
-            return edge.hash();
-        }
-    };
-};

@@ -1,10 +1,9 @@
-#ifndef TEST_XYNode_H
-#define TEST_XYNode_H
+#pragma once
 #include <functional>
 #include <math.h>
-#include <fishnet/Printable.hpp>
-class XYNode
-{
+#include <fishnet/ObjectConcepts.hpp>
+
+class XYNode {
 private:
     double x;
     double y;
@@ -32,18 +31,12 @@ public:
     std::string toString() const {
         return "("+std::to_string(this->x)+","+std::to_string(this->y)+")";
     }
+
+    size_t hash() const {
+        size_t x_hash = std::hash<double>{}(this->x);
+        size_t y_hash = std::hash<double>{}(this->y);
+        return ((x_hash + y_hash+1)* (x_hash+y_hash)) / 2 + y_hash;
+    }
 };
 
-static_assert(fishnet::util::Printable<XYNode>, "XYNode should be printable");
-
-namespace std{
-    template<>
-    struct hash<XYNode>{
-        size_t operator()(const XYNode & n) const {
-            size_t x_hash = hash<double>{}(n.getX());
-            size_t y_hash = hash<double>{}(n.getY());
-            return ((x_hash + y_hash+1)* (x_hash+y_hash)) / 2 + y_hash;
-        }
-    };
-}
-#endif
+static_assert(fishnet::util::Object<XYNode>,"XYNode should be an object");

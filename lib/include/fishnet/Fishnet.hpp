@@ -3,7 +3,7 @@
 #include <fishnet/BFSAlgorithm.hpp>
 #include <fishnet/Contraction.hpp>
 // Geometry
-#include <fishnet/GeometryObject.hpp>
+#include <fishnet/IGeometry.hpp>
 #include <fishnet/Polygon.hpp>
 #include <fishnet/MultiPolygon.hpp>
 #include <fishnet/PolygonNeighbours.hpp>

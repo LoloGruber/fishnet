@@ -1,6 +1,7 @@
 #pragma once
 #include <fishnet/GraphDecorator.hpp>
 #include <unordered_map>
+#include <algorithm>
 
 namespace fishnet::graph{
 /**

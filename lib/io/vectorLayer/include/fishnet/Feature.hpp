@@ -1,6 +1,8 @@
 #pragma once
+#include <algorithm>
 #include <fishnet/Option.hpp>
-#include <fishnet/GeometryObject.hpp>
+#include <fishnet/IGeometry.hpp>
+#include <fishnet/ObjectConcepts.hpp>
 #include "FieldType.hpp"
 #include "FieldDefinition.hpp"
 
@@ -40,10 +42,12 @@ class FieldValue {
 namespace fishnet{
 /**
  * @brief Feature implementation storing a geometry and associated attributes
- * 
- * @tparam G geometry type
+ *
+ * @tparam G geometry type. A feature only ever compares and copies what it stores, so this is
+ * util::Object rather than geometry::Geometry: that admits the geometries of the geometry module
+ * as well as a type erased one, which models no single shape and would be rejected by Geometry.
  */
-template<geometry::GeometryObject G>
+template<geometry::AnyGeometry G>
 class Feature {
 private:
 
@@ -65,7 +69,7 @@ private:
         });
     }
 
-    template<geometry::GeometryObject O>
+    template<geometry::AnyGeometry O>
     friend class Feature;
 
 public:
@@ -106,7 +110,7 @@ public:
         std::erase_if(attributes,[&fieldDefinition](const auto & value){return value.getFieldID() == fieldDefinition.getFieldID();});
     }
 
-    template<geometry::GeometryObject O>
+    template<geometry::AnyGeometry O>
     constexpr void copyAttributes(const Feature<O> & source) noexcept {
         std::ranges::for_each(source.attributes,[this](const auto & value){this->attributes.push_back(value);});
     }

@@ -1,8 +1,7 @@
 #pragma once
-
 #include "Angle.hpp"
 #include "Radians.hpp"
-#include <ostream>
+#include <string>
 
 namespace fishnet::math{
 /**
@@ -25,19 +24,6 @@ public:
     double sin() const;
     double cos() const;
     double tan() const;
-
-    friend std::ostream& operator<<(std::ostream& os, const Degrees& deg) {
-        os << deg.angle << "°";
-        return os;
-    }
+    std::string toString() const noexcept;
 };
-}
-
-namespace std {
-    template<>
-    struct hash<fishnet::math::Degrees>{
-        size_t operator()(const fishnet::math::Degrees & deg) const {
-            return hash<double>{}(deg.getAngleValue());
-        }
-    };
-}
+} // namespace fishnet::math

@@ -61,7 +61,7 @@ namespace fishnet::VectorIO {
  * @param spatialReference spatial reference for the layer
  * @return VectorLayer<G> empty vector layer with the given spatial reference
  */
-template<geometry::GeometryObject G>
+template<geometry::AnyGeometry G>
 VectorLayer<G> empty(const OGRSpatialReference & spatialReference) {
     return VectorLayer<G>(spatialReference);
 }
@@ -73,11 +73,62 @@ VectorLayer<G> empty(const OGRSpatialReference & spatialReference) {
  * @param source source layer to copy the spatial reference and fields from
  * @return VectorLayer<G> empty vector layer with the same spatial reference and fields as the source layer
  */
-template<geometry::GeometryObject G,geometry::GeometryObject O>
+template<geometry::AnyGeometry G=geometry::OGRGeometryAdapter,geometry::AnyGeometry O>
 VectorLayer<G> emptyCopy(const VectorLayer<O> & source) {
     auto layer = empty<G>(source.getSpatialReference());
     source.copyFields(layer);
     return layer;
+}
+
+/**
+ * @brief Copy a layer into one of another geometry type, carrying its spatial reference, fields
+ * and attributes
+ *
+ * This is the step between reading and computing: a layer is read without knowing what it holds and
+ * is then brought into the geometry type the computation actually needs.
+ * @param convert maps a geometry of the source to an Option<G>; features whose geometry it rejects
+ * are dropped, which is what makes a mixed layer usable as a layer of one type
+ */
+template<geometry::AnyGeometry G,geometry::AnyGeometry O>
+VectorLayer<G> transform(const VectorLayer<O> & source, auto && convert) {
+    auto result = emptyCopy<G>(source);
+    for(const auto & feature : source.getFeatures()){
+        auto geometry = convert(feature.getGeometry());
+        if(not geometry)
+            continue;
+        Feature<G> transformed {std::move(geometry.value())};
+        transformed.copyAttributes(feature);
+        result.addFeature(std::move(transformed));
+    }
+    return result;
+}
+
+/**
+ * @brief Bring a layer read without a geometry type into a layer of one
+ *
+ * Geometries of another type are dropped, except where narrowing coerces them,
+ * @see fishnet::geometry::OGRGeometryAdapter::narrowTo
+ */
+template<geometry::OGRLayerGeometry G>
+VectorLayer<G> narrow(const VectorLayer<geometry::OGRGeometryAdapter> & source) {
+    return transform<G>(source, [](const auto & geometry){
+        return geometry.template narrowTo<G>();
+    });
+}
+
+/**
+ * @brief Copy a layer of OGR backed geometries into one of the equivalent fishnet value types
+ *
+ * Worth it for computations which walk the segments of a geometry repeatedly, as a native geometry
+ * precomputes them where an adapter reads them off the OGR geometry on every pass.
+ */
+template<geometry::AnyGeometry O>
+requires requires(const O & geometry){ geometry.toNative(); }
+auto nativeCopy(const VectorLayer<O> & source) {
+    using G = std::remove_cvref_t<decltype(std::declval<const O&>().toNative())>;
+    return transform<G>(source, [](const auto & geometry){
+        return fishnet::Option<G>(geometry.toNative());
+    });
 }
 
 template<VectorLayerReader Reader>
@@ -93,12 +144,12 @@ auto read(const Reader & reader, const typename Reader::file_type & file) -> std
     return tryRead(reader,file).value_or_throw();
 }
 
-template<geometry::GeometryObject G>
+template<geometry::OGRLayerGeometry G = geometry::OGRGeometryAdapter>
 VectorLayer<G> read(const Shapefile & shapefile) {
     return read(ShapefileReader<G>(), shapefile);
 } 
 
-template<geometry::GeometryObject G>
+template<geometry::OGRLayerGeometry G = geometry::OGRGeometryAdapter>
 VectorLayer<G> read(const GeoPackage & geopackage) {
     return read(GeoPackageReader<G>(), geopackage);
 }
@@ -111,7 +162,7 @@ VectorLayer<G> read(const GeoPackage & geopackage) {
  * @param file AbstractVectorFile to read from
  * @return Either<VectorLayer<G>, std::string> VectorLayer on success, error message otherwise
  */
-template<geometry::GeometryObject G>
+template<geometry::OGRLayerGeometry G = geometry::OGRGeometryAdapter>
 Either<VectorLayer<G>, std::string> tryRead(const AbstractVectorFile & file) {
     auto fileType = getGISFileType(file.getPath());
     if (not fileType) {
@@ -135,52 +186,52 @@ Either<VectorLayer<G>, std::string> tryRead(const AbstractVectorFile & file) {
  * @return VectorLayer<G> read vector layer
  * @throws std::runtime_error if the file type is not supported or reading fails
  */
-template<geometry::GeometryObject G>
+template<geometry::OGRLayerGeometry G = geometry::OGRGeometryAdapter>
 VectorLayer<G> read(const AbstractVectorFile & file) {
     return tryRead<G>(file).value_or_throw();
 }
 
-inline VectorLayer<geometry::Polygon<double>> readPolygonLayer(const AbstractVectorFile & vectorFile) {
-    return read<geometry::Polygon<double>>(vectorFile);
+inline VectorLayer<geometry::OGRPolygonAdapter> readPolygonLayer(const AbstractVectorFile & vectorFile) {
+    return read<geometry::OGRPolygonAdapter>(vectorFile);
 }
 
-template<geometry::GeometryObject G,VectorGISFile F>
+template<geometry::OGRWritableGeometry G,VectorGISFile F>
 Either<F,std::string> tryOverwrite(const VectorLayerWriter<G,F> auto & writer, const VectorLayer<G> & layer, const F & destination){
     return writer(layer, destination);
 }
 
-template<geometry::GeometryObject G,VectorGISFile F>
+template<geometry::OGRWritableGeometry G,VectorGISFile F>
 Either<F,std::string> tryWrite(const VectorLayerWriter<G,F> auto & writer, const VectorLayer<G> & layer, const F & destination){
     auto nonOverwritingWriter = __impl::NonOverwritingVectorLayerWriter<G,F,std::remove_cvref_t<decltype(writer)>>(writer,__impl::IncrementFilenameMapper<F>());
     return tryOverwrite(nonOverwritingWriter, layer, destination);
 }
 
-template<geometry::GeometryObject G,VectorGISFile F>
+template<geometry::OGRWritableGeometry G,VectorGISFile F>
 F write(const VectorLayerWriter<G,F> auto & writer, const VectorLayer<G> & layer, const F & destination){
     return tryWrite(writer, layer, destination).value_or_throw();
 }
 
-template<geometry::GeometryObject G,VectorGISFile F>
+template<geometry::OGRWritableGeometry G,VectorGISFile F>
 F overwrite(const VectorLayerWriter<G,F> auto & writer, const VectorLayer<G> & layer, const F & destination) {
     return tryOverwrite(writer, layer, destination).value_or_throw();
 }
 
-template<geometry::GeometryObject G>
+template<geometry::OGRWritableGeometry G>
 Shapefile write(const VectorLayer<G> & layer, const Shapefile & destination) {
     return write(ShapefileWriter<G>(), layer, destination);
 }
 
-template<geometry::GeometryObject G>
+template<geometry::OGRWritableGeometry G>
 Shapefile overwrite(const VectorLayer<G> & layer, const Shapefile & destination) {
     return overwrite(ShapefileWriter<G>(), layer, destination);
 }
 
-template<geometry::GeometryObject G>
+template<geometry::OGRWritableGeometry G>
 GeoPackage write(const VectorLayer<G> & layer, const GeoPackage & destination) {
     return write(GeoPackageWriter<G>(), layer, destination);
 }
 
-template<geometry::GeometryObject G>
+template<geometry::OGRWritableGeometry G>
 GeoPackage overwrite(const VectorLayer<G> & layer, const GeoPackage & destination) {
     return overwrite(GeoPackageWriter<G>(), layer, destination);
 }
@@ -194,7 +245,7 @@ GeoPackage overwrite(const VectorLayer<G> & layer, const GeoPackage & destinatio
  * @return AbstractVectorFile reference to the written file
  * @throws std::runtime_error if the file type is not supported
  */
-template<geometry::GeometryObject G>
+template<geometry::OGRWritableGeometry G>
 std::unique_ptr<AbstractVectorFile> write(const VectorLayer<G> & layer, const AbstractVectorFile & destination) {
     auto fileType = getGISFileType(destination.getPath());
     if (not fileType) {
@@ -223,7 +274,7 @@ std::unique_ptr<AbstractVectorFile> write(const VectorLayer<G> & layer, const Ab
  * @return AbstractVectorFile reference to the written file
  * @throws std::runtime_error if the file type is not supported
  */
-template<geometry::GeometryObject G>
+template<geometry::OGRWritableGeometry G>
 std::unique_ptr<AbstractVectorFile> overwrite(const VectorLayer<G> & layer, const AbstractVectorFile & destination) {
     auto fileType = getGISFileType(destination.getPath());
     if (not fileType) {

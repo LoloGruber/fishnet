@@ -3,13 +3,13 @@
 #include <fishnet/TestUtil.hpp>
 #include "ShapeSamples.h"
 #include <fishnet/Polygon.hpp>
-#include <fishnet/GeometryObject.hpp>
+#include <fishnet/IGeometry.hpp>
 #include <list>
 
 using namespace fishnet::geometry;
 using namespace fishnet::test;
 
-static_assert(GeometryObject<Polygon<double>>);
+static_assert(Shape<Polygon<double>>);
 static_assert(IPolygon<Polygon<double>>);
 
 class PolygonTest : public ::testing::Test {
@@ -137,9 +137,9 @@ TEST_F(PolygonTest, isOutside){
     EXPECT_FALSE(polygon->isOutside(Vec2D(0,0)));
 }
 
-TEST_F(PolygonTest, isInHole) {
-    EXPECT_TRUE(polygon->isInHole(SimplePolygon(h1)));
-    EXPECT_FALSE(polygon->isInHole(SimplePolygon<double>({{0,0},{2,0},{-1,2}})));
+TEST_F(PolygonTest, containsInHole) {
+    EXPECT_TRUE(polygon->containsInHole(SimplePolygon(h1)));
+    EXPECT_FALSE(polygon->containsInHole(SimplePolygon<double>({{0,0},{2,0},{-1,2}})));
 }
 
 TEST_F(PolygonTest, intersects) {
@@ -155,7 +155,7 @@ TEST_F(PolygonTest, intersections){
     std::vector<Vec2D<double>> expected = {
         {0,4},{0,3},{0,2},{0,1},{0,0},{0,-0.5}
     };
-    EXPECT_UNSORTED_RANGE_EQ(polygon->intersections(yAxis),expected);
+    EXPECT_UNSORTED_RANGE_EQ(polygon->intersections(Y_AXIS),expected);
     expected = {
         {1,2.5},{2,2.5}
     };
@@ -201,7 +201,7 @@ TEST_F(PolygonTest, touchesPolygon) {
 }
 
 TEST_F(PolygonTest, distance) {
-    EXPECT_EQ(polygon->distance(*polygon), -1);
+    EXPECT_EQ(polygon->distance(*polygon), 0); // a polygon has no gap to itself
     Polygon<double> touchingDistance {
         SimplePolygonSamples::aaBB({-2,-1},{0,-3}),
         {SimplePolygonSamples::aaBB({-1.5,-1.5},{-0.5,-2.5})}

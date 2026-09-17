@@ -1,8 +1,9 @@
 #pragma once
+#include <fishnet/ObjectConcepts.hpp>
 #include <string>
 #include <variant>
 #include "FieldType.hpp"
-#include <fishnet/GeometryObject.hpp>
+#include <fishnet/IGeometry.hpp>
 
 // Forward-Declaration needed for testing
 template<fishnet::FieldValueType T>
@@ -43,7 +44,7 @@ class FieldDefinition {
 private:
     friend class FieldDefinitionTestFactory<T>;
 
-    template<geometry::GeometryObject G>
+    template<geometry::AnyGeometry G>
     friend class VectorLayer; 
 
     std::string fieldName;

@@ -1,5 +1,5 @@
 #pragma once
-#include <fishnet/ShapeGeometry.hpp>
+#include <fishnet/IGeometry.hpp>
 #include <fishnet/Rectangle.hpp>
 #include <fishnet/NumericConcepts.hpp>
 namespace fishnet::geometry {
@@ -9,7 +9,7 @@ namespace fishnet::geometry {
  * 
  * @tparam P polygon type
  */
-template<typename T, class ShapeProjection=std::identity> requires geometry::Shape<std::invoke_result_t<ShapeProjection,T>>
+template<typename T, class ShapeProjection=std::identity> requires fishnet::geometry::Shape<std::invoke_result_t<ShapeProjection,T>>
 class BoundingBoxWrapper {
 private:
     const T element; 
@@ -49,7 +49,7 @@ public:
 template<typename T>
 concept IBoundingBoxWrapper = requires(T t){
     {t.getBoundingBox()} -> std::convertible_to<Rectangle<fishnet::math::DEFAULT_NUMERIC>>;
-    {t.getPolygon()} -> geometry::Shape;
+    {t.getPolygon()} -> fishnet::geometry::Shape;
     typename T::element_type;
     typename T::geometry_type;
 };

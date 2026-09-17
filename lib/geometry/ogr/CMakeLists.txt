@@ -1,0 +1,5 @@
+set(GeometryGDALAdapter fishnet_geometry_ogr)
+add_library(${GeometryGDALAdapter} INTERFACE)
+target_include_directories(${GeometryGDALAdapter} INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
+target_link_libraries(${GeometryGDALAdapter} INTERFACE fishnet_geometry_core ${FISHNET}::Functional GDAL::GDAL)
+add_library(${FISHNET}::Geometry::OGR ALIAS ${GeometryGDALAdapter})

@@ -9,7 +9,7 @@
 #include <ogr_geometry.h>
 
 #include <fishnet/Vec2D.hpp>
-#include <fishnet/LinearGeometry.hpp>
+#include <fishnet/IGeometry.hpp>
 #include <fishnet/Segment.hpp>
 #include <fishnet/CollectionConcepts.hpp>
 #include <fishnet/Triangle.hpp>

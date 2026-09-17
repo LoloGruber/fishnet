@@ -3,7 +3,7 @@
 using namespace fishnet;
 
 int main() {
-    using G = geometry::Polygon<double>;
+    using G = geometry::OGRPolygonAdapter;
     Shapefile input {"/path/to/file.shp"};
     auto inputLayer = VectorIO::read<G>(input);
     auto polygons = inputLayer.getGeometries();

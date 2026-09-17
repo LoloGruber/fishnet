@@ -3,6 +3,7 @@
 #include <cmath>
 #include <stdexcept>
 #include <functional>
+#include <fishnet/ObjectConcepts.hpp>
 
 namespace fishnet::math::__impl{
 /**
@@ -113,6 +114,10 @@ public:
     double getAngleValue() const {
         return angle;
     } 
+
+    size_t hash() const noexcept {
+        return std::hash<double>{}(this->getAngleValue());
+    }
 };
 }
 namespace fishnet::math{

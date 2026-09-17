@@ -4,9 +4,9 @@
 #include <fishnet/Radians.hpp>
 #include <fishnet/Degrees.hpp>
 #include <fishnet/Angle.hpp>
-#include <fishnet/GeometryObject.hpp>
+#include <fishnet/IGeometry.hpp>
 #include "gdal/ogr_spatialref.h"
-#include "OGRGeometryAdapter.hpp"
+#include "OGRGeometryConverter.hpp"
 
 namespace fishnet {
 

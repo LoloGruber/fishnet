@@ -1,15 +1,22 @@
 #pragma once
 #include <fishnet/VectorLayer.hpp>
+#include <fishnet/OGRGeometryAdapter.hpp>
 #include <gdal/gdal.h>
+#include "ogrsf_frmts.h"
 #include <gdal/ogr_core.h>
 #include <gdal/gdal_priv.h>
-#include "GeometryTypeWKBAdapter.hpp"
-#include "OGRGeometryAdapter.hpp"
 #include "OGRFieldAdapter.hpp"
 
 namespace fishnet {
 
-template<geometry::GeometryObject G>
+/**
+ * @brief Reads and writes a VectorLayer whose geometries are backed by the OGR data source
+ *
+ * Nothing is rebuilt out of the data source on the way in, and nothing is rebuilt point by point on
+ * the way out. @see fishnet::geometry::OGRLayerGeometry for the geometries this covers, and the
+ * adapters' toNative() for getting a fishnet value type back where one is needed.
+ */
+template<geometry::OGRWritableGeometry G>
 class OGRLayerAdapter {
 private:
     /**
@@ -64,12 +71,24 @@ private:
     };
 public:
     /**
+     * @brief WKB type an output layer holding G has to be created with
+     */
+    static OGRwkbGeometryType layerGeometryType() {
+        if constexpr (fishnet::geometry::DynamicGeometry<G>)
+            return wkbUnknown; // takes whatever its features happen to hold
+        else
+            return fishnet::geometry::GeometryTypeWKBAdapter::toWKB(G::type);
+    }
+
+    /**
      * @brief Converts an OGRLayer to a fishnet::VectorLayer
      * 
      * @param ogrLayer pointer to the OGRLayer
      * @return util::Either<VectorLayer<G>, std::string> VectorLayer if successful, error message otherwise
+     * @note features whose geometry is missing, or of a type a layer of G cannot hold, are skipped
      */
-    static Either<VectorLayer<G>, std::string> fromOGR(OGRLayer * ogrLayer,bool checked = false){
+    static Either<VectorLayer<G>, std::string> fromOGR(OGRLayer * ogrLayer)
+    requires geometry::OGRLayerGeometry<G> {
         if(ogrLayer == nullptr)
             return std::unexpected("Could not read from OGRLayer, pointer is null");
         VectorLayer<G> layer {};
@@ -78,7 +97,7 @@ public:
             addOGRField(layer, layerDef->GetFieldDefn(i),i);
         }
         auto addFeatureIfPresent = [&layer](std::optional<G> && geometry, OGRFeature * ogrFeaturePtr) -> void{
-            if (not geometry) 
+            if (not geometry)
                 return;
             Feature<G> f {std::move(geometry.value())};
             for(const auto & [_,fieldDefinition]: layer.getFieldsMap()){
@@ -87,34 +106,14 @@ public:
             layer.addFeature(std::move(f));
         };
         for(const auto & ogrFeature: ogrLayer){
-            auto geo = ogrFeature->GetGeometryRef();
-            if (!geo)
+            if (ogrFeature->GetGeometryRef() == nullptr)
                 continue;
-            auto actualWkbType = wkbFlatten(geo->getGeometryType());
-            auto expectedWkbType = GeometryTypeWKBAdapter::toWKB(G::type);
-            if constexpr(G::type == fishnet::geometry::GeometryType::MULTIPOLYGON){
-                if(actualWkbType == GeometryTypeWKBAdapter::toWKB(G::polygon_type::type)) {
-                    auto converted = OGRGeometryAdapter::fromOGR<G::polygon_type::type>(*geo, checked);
-                    addFeatureIfPresent(std::move(converted), ogrFeature.get());
-                    continue;
-                }                
-            }
-            if(actualWkbType == expectedWkbType) {
-                auto converted = OGRGeometryAdapter::fromOGR<G::type>(*geo, checked);
-                addFeatureIfPresent(std::move(converted), ogrFeature.get());
-                continue;
-            }
-            //Downcast MultiPolygon to Polygon if G expects Polygon and MultiPolygon has 1 part
-            else if constexpr (G::type == fishnet::geometry::GeometryType::POLYGON) {
-                if (actualWkbType == wkbMultiPolygon) {
-                    auto * multiPoly = geo->toMultiPolygon();
-                    if (multiPoly && multiPoly->getNumGeometries() == 1) {
-                        const auto * singlePoly = multiPoly->getGeometryRef(0);
-                        auto converted = OGRGeometryAdapter::fromOGR<G::type>(*singlePoly, checked);
-                        addFeatureIfPresent(std::move(converted), ogrFeature.get());
-                    }
-                }
-            }
+            // The geometry is taken off the feature rather than copied out of it: the feature is
+            // destroyed at the end of this iteration, so borrowing it would leave the layer holding
+            // dangling pointers. Which geometries a layer of G accepts is narrowTo's business.
+            fishnet::geometry::OGRGeometryAdapter geometry {
+                fishnet::geometry::OGRUniquePtr<OGRGeometry>(ogrFeature->StealGeometry())};
+            addFeatureIfPresent(std::move(geometry).template narrowTo<G>(), ogrFeature.get());
         }
         layer.setSpatialReference(*ogrLayer->GetSpatialRef()->Clone());
         return layer;
@@ -140,7 +139,34 @@ public:
         }
         for(const auto & f : layer.getFeatures()){
             auto * feature = new OGRFeature(outputLayer->GetLayerDefn());
-            feature->SetGeometry(OGRGeometryAdapter::toOGR(f.getGeometry()).get());
+            // the geometry is backed by an OGR geometry already, so it is handed over as it is
+            // instead of being rebuilt point by point
+            if constexpr (fishnet::geometry::DynamicGeometry<G>) {
+                // a type erased geometry needs no inspection at all, whatever it holds is written
+                feature->SetGeometry(f.getGeometry().raw());
+            } else if constexpr (G::type == fishnet::geometry::GeometryType::POINT) {
+                OGRPoint point {f.getGeometry().getX(), f.getGeometry().getY()};
+                feature->SetGeometry(&point);
+            } else if constexpr (std::same_as<G, fishnet::geometry::OGRRingAdapter>) {
+                // a ring adapter wraps its ring in a shell polygon, the ring is its boundary
+                feature->SetGeometry(f.getGeometry().raw()->getExteriorRing());
+            } else if constexpr (fishnet::geometry::OGRLayerGeometry<G>) {
+                feature->SetGeometry(f.getGeometry().raw()); // already backed by an OGR geometry
+            } else if constexpr (fishnet::geometry::IRing<G>) {
+                // a fishnet geometry is converted through the adapter of its own kind, which is
+                // the same conversion the adapters offer everywhere else
+                fishnet::geometry::OGRRingAdapter adapted {f.getGeometry()};
+                feature->SetGeometry(adapted.raw()->getExteriorRing());
+            } else if constexpr (fishnet::geometry::IPolygon<G>) {
+                fishnet::geometry::OGRPolygonAdapter adapted {f.getGeometry()};
+                feature->SetGeometry(adapted.raw());
+            } else if constexpr (fishnet::geometry::IMultiPolygon<G>) {
+                fishnet::geometry::OGRMultiPolygonAdapter adapted {f.getGeometry()};
+                feature->SetGeometry(adapted.raw());
+            } else {
+                static_assert(false, "toOGR has no case for this geometry: a type was added to "
+                    "OGRWritableGeometry without saying how it is turned into an OGR geometry");
+            }
 
             for(const auto & [fieldName,fieldDefinition]: layer.getFieldsMap()){
                 // visitor to set attributes for OGRFeature

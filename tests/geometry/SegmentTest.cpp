@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <cmath>
 #include <fishnet/Segment.hpp>
 #include <fishnet/TestUtil.hpp>
 
@@ -86,28 +87,28 @@ TEST(SegmentTest, intersects){
     Segment s {Vec2D(1,1),Vec2D(-2,2)};
     EXPECT_TRUE(s.intersects(Segment(Vec2D(0,0),Vec2D(0,3))));
     EXPECT_TRUE(s.intersects(Segment(Vec2D(2,2),Vec2D(-1,0))));
-    EXPECT_TRUE(s.intersects(yAxis));
-    EXPECT_FALSE(s.intersects(xAxis));
+    EXPECT_TRUE(s.intersects(Y_AXIS));
+    EXPECT_FALSE(s.intersects(X_AXIS));
     EXPECT_FALSE(s.intersects(Segment(Vec2D(-3,-1),Vec2D(2,1))));
 }
 
-TEST(SegmentTest, hasOverlay){
+TEST(SegmentTest, overlaps){
     Segment s {Vec2D(0,0),Vec2D(2,2)};
-    EXPECT_TRUE(s.hasOverlay(Segment(Vec2D(-1,-1),Vec2D(0.5,0.5))));
-    EXPECT_TRUE(s.hasOverlay(s));
-    EXPECT_TRUE(s.hasOverlay(Segment(Vec2D(2,2),Vec2D(3,3))));
-    EXPECT_FALSE(s.hasOverlay(Segment(Vec2D(2,2),Vec2D(3,2)))); //not parallel
-    EXPECT_FALSE(s.hasOverlay(Segment(Vec2D(3,3),Vec2D(4,4)))); // no common points
-    EXPECT_FALSE(s.hasOverlay(Segment(Vec2D(-1,-1),Vec2D(-1,0))));
+    EXPECT_TRUE(s.overlaps(Segment(Vec2D(-1,-1),Vec2D(0.5,0.5))));
+    EXPECT_TRUE(s.overlaps(s));
+    EXPECT_TRUE(s.overlaps(Segment(Vec2D(2,2),Vec2D(3,3))));
+    EXPECT_FALSE(s.overlaps(Segment(Vec2D(2,2),Vec2D(3,2)))); //not parallel
+    EXPECT_FALSE(s.overlaps(Segment(Vec2D(3,3),Vec2D(4,4)))); // no common points
+    EXPECT_FALSE(s.overlaps(Segment(Vec2D(-1,-1),Vec2D(-1,0))));
 }
 
 TEST(SegmentTest, containsSegment){
     Segment s {Vec2D(0,0),Vec2D(2,2)};
     Segment t {Vec2D(0,0),Vec2D(1,1)};
-    EXPECT_TRUE(s.containsSegment(t));
-    EXPECT_FALSE(t.containsSegment(s));
-    EXPECT_TRUE(s.containsSegment(Segment(Vec2D(0.5,0.5),Vec2D(1.2,1.2))));
-    EXPECT_FALSE(s.containsSegment(Segment(Vec2D(0,0),Vec2D(1,2))));
+    EXPECT_TRUE(s.contains(t));
+    EXPECT_FALSE(t.contains(s));
+    EXPECT_TRUE(s.contains(Segment(Vec2D(0.5,0.5),Vec2D(1.2,1.2))));
+    EXPECT_FALSE(s.contains(Segment(Vec2D(0,0),Vec2D(1,2))));
 }
 
 TEST(SegmentTest, touches){
@@ -173,9 +174,9 @@ TEST(SegmentTest, intersection){
     Segment s {Vec2D(0,0),Vec2D(3,2)};
     Segment t {Vec2D(1,2),Vec2D(2,0)};
     auto inter = s.intersection(t);
-    EXPECT_EQ(*inter, Vec2D(1.5,1));
-    EXPECT_EQ(s.intersection(xAxis).value(),Vec2D(0,0));
-    EXPECT_EQ(s.intersection(Line(-4,14)).value(),Vec2D(3,2));
+    EXPECT_VALUE(inter,Vec2D(1.5,1));
+    EXPECT_VALUE(s.intersection(X_AXIS),Vec2D(0,0));
+    EXPECT_VALUE(s.intersection(Line(-4,14)),Vec2D(3,2));
     EXPECT_EQ(s.intersection(Segment(Vec2D(-2,1),Vec2D(0,1))),std::nullopt);
     EXPECT_TRUE(s.intersection(Line(Vec2D(-2,1),Vec2D(0,1))).has_value());
     EXPECT_EQ(s.intersection(Line(2,2)),std::nullopt);
@@ -185,4 +186,25 @@ TEST(SegmentTest, toString){
     Segment s{Vec2D(0,0),Vec2D(3,2)};
     EXPECT_EQ(s.toString(),"[(0,0),(3,2)]");
     std::cout << "Test console output for Segment: " << s << std::endl;
+}
+/**
+ * @brief contains() must agree with Vec2D::operator== about a point sitting on an endpoint
+ *
+ * contains() works on a lambda normalised over the segment, so a tolerance applied to that lambda
+ * means EPSILON * length in coordinate space. On the segments of a WGS84 building footprint the
+ * direction is ~9e-5 degrees, which used to shrink the effective tolerance to ~9e-17 - below one
+ * ulp of a coordinate near 50. A point one ulp past the endpoint, as produced by an intersection,
+ * was then reported as not contained even though Vec2D still called it equal to that endpoint.
+ * Ring's ray casting miscounted the crossing and reported interior points as outside.
+ */
+TEST(SegmentTest, containsPointWhichEqualsAnEndpoint){
+    Segment vertical {Vec2D(9.9595317235047229, 49.827392684956379), Vec2D(9.9595317235047229, 49.827482684956379)};
+    Vec2D justPastEnd {vertical.q().getX(), std::nextafter(vertical.q().getY(), 100.0)};
+    ASSERT_EQ(justPastEnd, vertical.q()) << "the two points are equal as far as Vec2D is concerned";
+    EXPECT_TRUE(vertical.contains(justPastEnd)) << "so the segment has to contain it as well";
+
+    Segment horizontal {Vec2D(9.9595317235047229, 49.827482684956379), Vec2D(9.9596217235047229, 49.827482684956379)};
+    Vec2D justPastRight {std::nextafter(horizontal.q().getX(), 100.0), horizontal.q().getY()};
+    ASSERT_EQ(justPastRight, horizontal.q());
+    EXPECT_TRUE(horizontal.contains(justPastRight));
 }

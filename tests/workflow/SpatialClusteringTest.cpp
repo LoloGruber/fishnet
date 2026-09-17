@@ -14,7 +14,7 @@
 
 
 const static std::filesystem::path testFile = fishnet::util::PathHelper::projectDirectory() / "data" / "testing" / "regions" / "Corvara_Small_Preprocessed.shp";
-using geometry_type = fishnet::geometry::Polygon<double>;
+using geometry_type = fishnet::geometry::OGRPolygonAdapter;
 using node_type = SettlementShape<geometry_type>;
 
 struct CountingFileRefMapper {
@@ -24,7 +24,7 @@ struct CountingFileRefMapper {
     }
 };
 
-template<fishnet::geometry::GeometryObject G>
+template<fishnet::geometry::Geometry G>
 class ObservableShapefileReader {
 public:
     using geometry_type = G;

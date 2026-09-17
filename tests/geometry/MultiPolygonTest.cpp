@@ -146,7 +146,7 @@ TEST_F(MultiPolygonTest, isOutside) {
 
 TEST_F(MultiPolygonTest, intersects) {
     EXPECT_FALSE(multiPolygon.intersects(Segment<double>(Vec2D(-2.8,0),Vec2D(-2.1,0))));
-    EXPECT_TRUE(multiPolygon.intersects(xAxis));
+    EXPECT_TRUE(multiPolygon.intersects(X_AXIS));
     EXPECT_TRUE(multiPolygon.intersects(Ray<double>::up({4,3.5})));
     EXPECT_FALSE(multiPolygon.intersects(Segment(Vec2D(5,2),Vec2D(2,4))));
 }
@@ -165,12 +165,12 @@ TEST_F(MultiPolygonTest, containsPolygon) {
     EXPECT_FALSE(multiPolygon.contains(SimplePolygon(complex.aaBB().getPoints())));
 }
 
-TEST_F(MultiPolygonTest, isInHolePolygon) {
-    EXPECT_FALSE(multiPolygon.isInHole(complex));
-    EXPECT_FALSE(multiPolygon.isInHole(convex));
+TEST_F(MultiPolygonTest, containsInHolePolygon) {
+    EXPECT_FALSE(multiPolygon.containsInHole(complex));
+    EXPECT_FALSE(multiPolygon.containsInHole(convex));
     MultiPolygon<Polygon<double>> multiWithHoles {Polygon<double>(complex,{SimplePolygonSamples::aaBB({0,3},{1,2})})};
-    EXPECT_TRUE(multiWithHoles.isInHole(SimplePolygonSamples::aaBB({0.5,2.5},{0.7,2.2})));
-    EXPECT_FALSE(multiWithHoles.isInHole(SimplePolygonSamples::triangle({0,3},{1,2},{2,2})));
+    EXPECT_TRUE(multiWithHoles.containsInHole(SimplePolygonSamples::aaBB({0.5,2.5},{0.7,2.2})));
+    EXPECT_FALSE(multiWithHoles.containsInHole(SimplePolygonSamples::triangle({0,3},{1,2},{2,2})));
 }
 
 TEST_F(MultiPolygonTest, crossesPolygon) {

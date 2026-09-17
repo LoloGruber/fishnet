@@ -1,5 +1,5 @@
 #pragma once
-#include <fishnet/ShapeGeometry.hpp>
+#include <fishnet/IGeometry.hpp>
 #include <fishnet/ContainedOrInHoleFilter.hpp>
 
 /**

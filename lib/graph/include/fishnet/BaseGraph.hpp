@@ -1,5 +1,6 @@
 #pragma once
 #include <ranges>
+#include <algorithm>
 #include <fishnet/AdjacencyContainer.hpp>
 #include <fishnet/GraphModel.hpp>
 #include <fishnet/Edge.hpp>

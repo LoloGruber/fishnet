@@ -1,5 +1,6 @@
 #pragma once
 #include <concepts>
+
 namespace fishnet::math{
 
 template<typename T>
@@ -11,7 +12,8 @@ concept convertible_without_loss = requires(From f){To{f};};
 using DEFAULT_FLOATING_POINT = double;
 using DEFAULT_NUMERIC = double;
 using DEFAULT_INTEGRAL = int;
-}
+
+} // fishnet::math
 
 
 

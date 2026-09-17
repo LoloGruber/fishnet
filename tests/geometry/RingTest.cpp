@@ -160,8 +160,8 @@ TEST_F(RingTest, isOnBoundary){
 }
 
 TEST_F(RingTest, intersects){
-    EXPECT_TRUE(ring->intersects(xAxis));
-    EXPECT_TRUE(ring->intersects(yAxis));
+    EXPECT_TRUE(ring->intersects(X_AXIS));
+    EXPECT_TRUE(ring->intersects(Y_AXIS));
     EXPECT_FALSE(ring->intersects(Segment(Vec2D(-2,0),Vec2D(-3,1))));
     EXPECT_FALSE(ring->intersects(Segment(Vec2D(0,0),Vec2D(1,1)))); //fully inside
     EXPECT_TRUE(ring->intersects(Ray(Vec2D(0.5,2),Vec2D(1,1))));
@@ -183,7 +183,7 @@ TEST_F(RingTest, containsSegment){
 #include <fishnet/Line.hpp>
 TEST_F(RingTest, intersections){
     std::vector<Vec2D<double>> expected {Vec2D(0,4),Vec2D(0,1),Vec2D(0,-0.5)};
-    auto actual = ring -> intersections(yAxis);
+    auto actual = ring -> intersections(Y_AXIS);
     EXPECT_CONTAINS_ALL(actual,expected);
     EXPECT_SIZE(actual, 3);
     std::vector<Vec2D<double>> exp {Vec2D(2,2),Vec2D(4,2)};
@@ -230,9 +230,6 @@ TEST_F(RingTest, containsRing){
     EXPECT_TRUE(ring->contains(triangleInside));
 }
 
-    #include <fishnet/ShapeGeometry.hpp>
-    static_assert(Shape<Ring<double>>);
-
 TEST_F(RingTest, touchesRing){
     EXPECT_FALSE(ring->touches(Ring<int>(std::vector<Vec2D<int>>{{2,1},{4,1},{4,-1},{2,-1}})));
     EXPECT_FALSE(ring->touches(*ring));
@@ -244,7 +241,7 @@ TEST_F(RingTest, touchesRing){
 TEST_F(RingTest, distanceToRing){
     EXPECT_EQ(ring->distance(*convex),1.0);
     EXPECT_EQ(convex->distance(*ring),1.0);
-    EXPECT_EQ(ring->distance(*square), -1);
+    EXPECT_EQ(ring->distance(*square), 0); // square is contained in ring, hence no gap between them
     EXPECT_EQ(ring->distance(Ring<int>(std::vector<Vec2D<int>>{{3,3},{4,4},{5,3},{5,2},{4,2}})),0.0);
     EXPECT_EQ(LinearRingSamples::aaRhombus({0,0},1).distance(LinearRingSamples::aaBB({2,1},{3,-1})),1.0);
 }
