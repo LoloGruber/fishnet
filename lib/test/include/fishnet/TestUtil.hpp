@@ -127,9 +127,18 @@ static auto messageWithTrace(auto... vals) {
 template<typename T, typename Eq = std::equal_to<>>
 static testing::AssertionResult contains(std::ranges::input_range auto && collection, const T & element, Eq const & eq = Eq{}) {
     if(std::ranges::end(collection) != std::ranges::find_if(collection, [&element, &eq](const auto & e) { return eq(e, element); })){
-        return testing::AssertionSuccess() << message("Collection ", printContainer(collection), " contains element: ", element);
+        return testing::AssertionSuccess();
     }else{
         return testing::AssertionFailure() << message("Collection ", printContainer(collection), " does not contain element: ", element);
+    }
+}
+
+template<typename T, typename Eq = std::equal_to<>>
+static testing::AssertionResult notContains(std::ranges::input_range auto && collection, const T & element, Eq const & eq = Eq{}) {
+    if(std::ranges::end(collection) == std::ranges::find_if(collection, [&element, &eq](const auto & e) { return eq(e, element); })){
+        return testing::AssertionSuccess();
+    }else{
+        return testing::AssertionFailure() << message("Collection ", printContainer(collection), " contains element: ", element);
     }
 }
 
@@ -187,7 +196,7 @@ static void EXPECT_CONTAINS(fishnet::util::input_range_of<T> auto && collection,
 
 template<typename T>
 static void EXPECT_NOT_CONTAINS(fishnet::util::input_range_of<T> auto && collection, const T & element) {
-    EXPECT_FALSE(__impl::contains(collection,element)) << __impl::trace();
+    EXPECT_TRUE(__impl::notContains(collection,element)) << __impl::trace();
 }
 
 static void EXPECT_CONTAINS_ALL(std::ranges::input_range auto && collection, std::ranges::input_range auto && expected){
