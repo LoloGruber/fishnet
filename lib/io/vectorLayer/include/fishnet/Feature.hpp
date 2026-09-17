@@ -50,8 +50,6 @@ namespace fishnet{
 template<geometry::AnyGeometry G>
 class Feature {
 private:
-
-
     G geometry;
     std::vector<__impl::FieldValue> attributes;
 
@@ -115,12 +113,16 @@ public:
         std::ranges::for_each(source.attributes,[this](const auto & value){this->attributes.push_back(value);});
     }
 
-    constexpr const G & getGeometry() const noexcept{
+    constexpr const G & getGeometry() const & noexcept{
         return this->geometry;
     }
 
-    constexpr auto getGeometry() noexcept {
+    constexpr G & getGeometry() & noexcept {
         return this->geometry;
+    }
+
+    constexpr G && getGeometry() && noexcept {
+        return std::move(this->geometry);
     }
 
     constexpr bool operator==(const Feature<G> & feature) const noexcept {
