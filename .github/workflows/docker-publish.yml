@@ -1,16 +1,18 @@
 name: Publish Docker Images
 
-# Images are published for a release tag only, so that a version on Docker Hub always corresponds
-# to a tagged commit. Mirrors what docker/update.sh does by hand.
-# Release tags are bare versions, and historically of either two or three components (1.5, 1.0.1).
 on:
   push:
     tags:
       - '[0-9]+.[0-9]+'
       - '[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (must match the project version in CMakeLists.txt)'
+        required: true
 
 env:
-  IMAGE_NAMESPACE: logru
+  IMAGE_NAMESPACE: ${{ secrets.DOCKERHUB_USERNAME }}
   DEPS_IMAGE: fishnet-deps
   APPS_IMAGE: fishnet-apps
 
