@@ -1,8 +1,11 @@
+# IDEs
 /.cache
 /.vscode
+/.idea
+# CMake
 /build
 /build-release
-/.idea
+/build-asan
 /cmake-build-debug
+# Testing
 /tmp
-data/WSF
