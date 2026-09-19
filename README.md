@@ -21,7 +21,7 @@ The Fishnet library is organized into the following modules:
 | Module | Namespace | Description |
 |--------|-----------|-------------|
 | **Graph** | `fishnet::graph` | Graph data structures and algorithms including BFS, DFS, connected components, centrality measures (degree, betweenness), graph contraction, and neighborhood search. Supports directed, undirected, and acyclic graphs. |
-| **Geometry** | `fishnet::geometry` | Geometric primitives (polygons, lines, points, rings, rectangles) and spatial algorithms including sweep-line, polygon intersection, buffering, and distance computations. |
+| **Geometry** | `fishnet::geometry` | Geometric primitives (polygons, lines, points, rings, rectangles), OGR/GDAL-backed adapters for the same primitives, and spatial algorithms including sweep-line, polygon intersection, buffering, and distance computations. |
 | **I/O** | `fishnet` | File I/O abstractions, GDAL integration for reading/writing GIS vector data (Shapefile, GeoPackage), vector layer management, and filesystem utilities. |
 | **Clustering** | `fishnet` | Spatial clustering algorithms for grouping geometric features based on proximity and other criteria. |
 | **Collections** | `fishnet::util` | Custom container types and data structures extending the C++ standard library for framework-specific use cases. |
@@ -32,7 +32,7 @@ The Fishnet library is organized into the following modules:
 
 ## Dependencies
 ### System Dependencies
-The fishnet library depends on [**GDAL**](https://gdal.org/en/stable/) to provide GIS IO functionality. 
+Fishnet requires a C++23 compiler (e.g. GCC 13+) and depends on [**GDAL**](https://gdal.org/en/stable/) to provide GIS IO functionality.
 GDAL must be installed on the system to build / run fishnet applications. On Ubuntu-based system this can be achieved using the following command:
 ```shell
 sudo apt-get install -y libgdal-dev
@@ -54,14 +54,14 @@ The following example shows how to store polygons, obtained from a Shapefile, in
 using namespace fishnet;
 
 int main() {
-    using G = geometry::Polygon<double>;
+    using G = geometry::OGRPolygonAdapter;
     Shapefile input {"/path/to/file.shp"};
     auto inputLayer = VectorIO::read<G>(input);
     auto polygons = inputLayer.getGeometries();
     // scale aaBB of polygon by this factor; intersecting buffers -> adjacent
     double bufferMultiplier = 2; 
     size_t maximumNumberOfNeighbours = 5;
-    auto adjacencies = geometry::findNeighbouringPolygons(polygons,bufferMultiplier,maximumNumberOfNeighbours);
+    auto adjacencies = geometry::PolygonNeighbours::sweepWithFixedBuffer(polygons,bufferMultiplier,maximumNumberOfNeighbours);
     auto polygonGraph = graph::GraphFactory::UndirectedGraph<G>();
     polygonGraph.addEdges(adjacencies);
     // copy spatial reference from input layer
@@ -86,7 +86,16 @@ target_link_libraries(polygonGraph PRIVATE Fishnet::Fishnet)
 
 
 # Fishnet Binaries
-Fishnet also provides some common functionalities when processing vector files under the [src](src/) directory and additional examples under [example](example/) directory.
+Fishnet also provides some common command line applications for processing vector files, found under the [src](src/) directory, plus additional example applications under [example](example/).
+
+| Binary | Description |
+| --- | --- |
+| **FishnetVectorFileSplitter** | Splits a vector file into a quadtree of tiles (`-d/--depth` levels deep, `4^depth` partitions), to parallelize downstream processing over large datasets. |
+| **FishnetVectorFilePreprocessor** | Filters the features of a vector file according to a JSON-described set of predicates (e.g. `ApproxAreaFilter`, `InsidePolygonFilter`), or passes them through unchanged with `--no-filter`. |
+| **FishnetVectorFileMerger** | Merges multiple vector files back into a single output file. |
+
+Run any binary with `--help` for its full set of options.
+
 ## Installation
 Before the binaries can be build using *cmake*, the **GDAL** library has to be installed on the machine. Then the installer script can be invoked as follows:
 ```shell
@@ -99,6 +108,13 @@ cd build
 cmake ..
 cmake --build . <add custom cmake parameters here>
 ```
+### Docker
+Pre-built images are also published to Docker Hub, see [docker/](docker/) for the Dockerfiles and build script:
+| Image | Purpose |
+| --- | --- |
+| [`logru/fishnet-deps`](https://hub.docker.com/r/logru/fishnet-deps) | Build-time dependencies (GDAL, compiler toolchain) |
+| [`logru/fishnet-apps`](https://hub.docker.com/r/logru/fishnet-apps) | The Fishnet binaries, built and ready to run |
+
 ## CMake Options
 | Name | Description  | Default
 | --- | --- | --- |
