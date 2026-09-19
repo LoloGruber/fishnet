@@ -4,6 +4,7 @@
 #include <fishnet/Rectangle.hpp>
 #include <fishnet/MultiPolygon.hpp>
 #include <fishnet/PolygonDistance.hpp>
+#include <fishnet/CollectionConcepts.hpp>
 #include "OGRAdapterBase.hpp"
 #include "OGRPolygonAdapter.hpp"
 
@@ -124,12 +125,21 @@ public:
     /**
      * @note every member of the wrapped multi-polygon is canonical (@see canonicalize()), so the
      * members are handed out without normalising them again
+     * @note ref-qualified, same as OGRRingAdapter::getSegments(): the lvalue (`&`) overload below
+     * lazily reads through `this` on every access, cheap as long as this multi-polygon outlives the
+     * view; the rvalue (`&&`) overload, selected when `this` is itself a temporary, instead copies
+     * the polygons out into an owning vector before that temporary is destroyed.
      */
-    auto getPolygons() const -> fishnet::util::forward_range_of<OGRPolygonAdapter> auto {
+    auto getPolygons() const & -> fishnet::util::forward_range_of<OGRPolygonAdapter> auto {
         return std::ranges::views::iota(0, geomPtr->getNumGeometries())
             | std::ranges::views::transform([this](int i){
                 return OGRPolygonAdapter::fromCanonicalPolygon(*polygonAt(i));
             });
+    }
+
+    /// @copydoc getPolygons()
+    std::vector<OGRPolygonAdapter> getPolygons() const && {
+        return fishnet::util::toVector(this->getPolygons());
     }
 
     /**

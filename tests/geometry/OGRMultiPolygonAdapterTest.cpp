@@ -330,6 +330,17 @@ TEST_F(OGRMultiPolygonAdapterTest, distanceAgreesBetweenNativeAndGenericPath) {
     check(*multi, native());
 }
 
+// Exercises fishnet::geometry::closestPoints(IMultiPolygon, IMultiPolygon) (PolygonDistance.hpp),
+// which OGRMultiPolygonAdapter::distance() never reaches (it has its own GEOS-backed and
+// per-polygon overloads that take priority). That free function chains
+// polygon.getBoundary().getSegments() directly on a temporary OGRPolygonAdapter/OGRRingAdapter, so
+// this is the regression test for that lifetime hazard rather than just a distance cross-check.
+TEST_F(OGRMultiPolygonAdapterTest, closestPointsFreeFunctionAgreesWithDistance) {
+    OGRMultiPolygonAdapter other(std::vector<Polygon<double>>{unitSquareAt(9,0,1), unitSquareAt(20,20,1)});
+    auto [p, q] = fishnet::geometry::closestPoints(*multi, other);
+    EXPECT_DOUBLE_EQ(p.distance(q), multi->distance(other));
+}
+
 TEST_F(OGRMultiPolygonAdapterTest, containsInHole) {
     Ring<double> outer(std::vector<Vec2DReal>{{0,0},{0,10},{10,10},{10,0}});
     Ring<double> hole(std::vector<Vec2DReal>{{4,4},{4,6},{6,6},{6,4}});

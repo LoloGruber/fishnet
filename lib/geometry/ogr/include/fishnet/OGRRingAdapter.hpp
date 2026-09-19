@@ -4,6 +4,7 @@
 #include <fishnet/Rectangle.hpp>
 #include <fishnet/RingIntersection.hpp>
 #include <fishnet/PolygonDistance.hpp>
+#include <fishnet/CollectionConcepts.hpp>
 #include "OGRPolygonalAdapter.hpp"
 
 namespace fishnet::geometry{
@@ -17,6 +18,14 @@ namespace fishnet::geometry{
  * u-v, v-x, x-y, y-z and z-u.
  * @note the points are reported in the canonical order of the wrapped polygon, which is not
  * necessarily the order they were handed in with, @see OGRPolygonalAdapter::canonicalize()
+ * @note getSegments() and getPoints() are ref-qualified: the lvalue (`&`) overload returns a view
+ * that lazily reads through `this` on every access, cheap but only valid as long as this adapter is
+ * (e.g. a named local or a longer-lived object accessed by reference); the rvalue (`&&`) overload,
+ * selected when `this` is itself a temporary, e.g. `polygon.getBoundary().getSegments()` where
+ * getBoundary() hands back a fresh, unnamed OGRRingAdapter, instead copies the result out into an
+ * owning vector before that temporary is destroyed at the end of the full expression. Splitting on
+ * value category like this keeps both the common lazy path and this once-off temporary chain safe
+ * without callers having to know or care which one they hit.
  */
 class OGRRingAdapter: public OGRPolygonalAdapter{
 private:
@@ -111,7 +120,13 @@ public:
 
     OGRRingAdapter(IRing auto const & ring):OGRPolygonalAdapter(toOGRPolygon(ring)) {}
 
-    auto getSegments() const -> fishnet::util::forward_range_of<fishnet::geometry::Segment<double>> auto {
+    /**
+     * @brief The segments of the ring, lazily read through this adapter on every access
+     * @note lvalue overload: the returned view keeps reading through `this` on every iteration, which
+     * is cheap as long as the adapter it reads through outlives the view, e.g. a named local or a
+     * longer-lived object accessed by reference. @see the `&&` overload below for the rvalue case.
+     */
+    auto getSegments() const & -> fishnet::util::forward_range_of<fishnet::geometry::Segment<double>> auto {
         return std::ranges::views::iota(0, openPointCount())
             | std::ranges::views::transform([this](int i) {
                 const auto * ring = exteriorRing();
@@ -121,12 +136,32 @@ public:
             });
     }
 
-    auto getPoints() const -> fishnet::util::forward_range_of<fishnet::geometry::Vec2DReal> auto {
+    /**
+     * @brief The segments of the ring, eagerly copied out into an owning vector
+     * @note rvalue overload, selected when `this` is about to be destroyed, e.g.
+     * `polygon.getBoundary().getSegments()` where getBoundary() hands back a fresh, unnamed
+     * OGRRingAdapter: the lvalue overload's view would keep reading through that temporary after it
+     * is gone, at the end of the full expression. A `const &` overload alone would not catch this,
+     * since a const lvalue reference binds to an rvalue too and the view would dangle just the same;
+     * only an overload specifically for rvalues lets us swap in a self-contained copy instead. Callers
+     * do not need to know or care which overload fires: both hand back a forward_range of Segment.
+     */
+    std::vector<fishnet::geometry::Segment<double>> getSegments() const && {
+        return fishnet::util::toVector(this->getSegments());
+    }
+
+    /// @copydoc getSegments()
+    auto getPoints() const & -> fishnet::util::forward_range_of<fishnet::geometry::Vec2DReal> auto {
         return std::ranges::views::iota(0, openPointCount())
             | std::ranges::views::transform([this](int i) {
                 const auto * ring = exteriorRing();
                 return Vec2DReal(ring->getX(i), ring->getY(i));
             });
+    }
+
+    /// @copydoc getSegments() const&&
+    std::vector<fishnet::geometry::Vec2DReal> getPoints() const && {
+        return fishnet::util::toVector(this->getPoints());
     }
 
     const OGRRingAdapter & getBoundary() const{

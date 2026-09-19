@@ -97,6 +97,7 @@ TEST_F(OGRPolygonAdapterTest, copyAndMove) {
 
 TEST_F(OGRPolygonAdapterTest, getBoundary) {
     EXPECT_EQ(withHole->getBoundary(), OGRRingAdapter(outerRing()));
+    // exercises the rvalue overload of getPoints(): getBoundary() hands back a temporary here
     EXPECT_SORTED_RANGE_EQ(withHole->getBoundary().getPoints(), outerRing().getPoints());
 }
 
