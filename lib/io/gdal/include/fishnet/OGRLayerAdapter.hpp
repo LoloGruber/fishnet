@@ -115,7 +115,8 @@ public:
                 fishnet::geometry::OGRUniquePtr<OGRGeometry>(ogrFeature->StealGeometry())};
             addFeatureIfPresent(std::move(geometry).template narrowTo<G>(), ogrFeature.get());
         }
-        layer.setSpatialReference(*ogrLayer->GetSpatialRef()->Clone());
+        if (auto * spatialRef = ogrLayer->GetSpatialRef(); spatialRef != nullptr)
+            layer.setSpatialReference(*spatialRef);
         return layer;
     }
     /**
