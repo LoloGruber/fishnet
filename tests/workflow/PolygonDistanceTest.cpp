@@ -22,18 +22,20 @@ template<ExecutionMode ExecMode>
 static std::pair<geometry::Vec2DReal,geometry::Vec2DReal> runScenario(fishnet::geometry::IPolygon auto const & lhs, fishnet::geometry::IPolygon auto const & rhs, size_t repetitions, std::string_view filename){
     assert(repetitions > 0 && lhs != rhs);
     std::pair<geometry::Vec2DReal,geometry::Vec2DReal> result;
-    size_t numberOfSegments = fishnet::util::size(lhs.getBoundary().getSegments())*fishnet::util::size(rhs.getBoundary().getSegments());
+    auto lhsBoundary = lhs.getBoundary();
+    auto rhsBoundary = rhs.getBoundary();
+    size_t numberOfSegments = fishnet::util::size(lhsBoundary.getSegments())*fishnet::util::size(rhsBoundary.getSegments());
     benchmarkFile << filename <<";"<< std::string(magic_enum::enum_name(ExecMode)) << ";";
-    benchmarkFile << fishnet::util::size(lhs.getBoundary().getSegments()) <<";"<<fishnet::util::size(rhs.getBoundary().getSegments())<< ";"<<numberOfSegments <<";";
+    benchmarkFile << fishnet::util::size(lhsBoundary.getSegments()) <<";"<<fishnet::util::size(rhsBoundary.getSegments())<< ";"<<numberOfSegments <<";";
     util::StopWatch timer;
 
     for([[maybe_unused]] auto _ : std::views::iota(0UL,repetitions)){
         if constexpr(ExecMode == ExecutionMode::BRUTE_FORCE){
-            result = geometry::__impl::closestPointsBruteForce(lhs.getBoundary().getSegments(),rhs.getBoundary().getSegments());
+            result = geometry::__impl::closestPointsBruteForce(lhsBoundary.getSegments(),rhsBoundary.getSegments());
         }else if constexpr(ExecMode == ExecutionMode::SWEEP_LINE_X){
-            result = geometry::__impl::closestPointsSweep<true>(lhs.getBoundary().getSegments(),rhs.getBoundary().getSegments());
+            result = geometry::__impl::closestPointsSweep<true>(lhsBoundary.getSegments(),rhsBoundary.getSegments());
         }else if constexpr(ExecMode == ExecutionMode::SWEEP_LINE_Y){
-            result = geometry::__impl::closestPointsSweep<false>(lhs.getBoundary().getSegments(), rhs.getBoundary().getSegments());
+            result = geometry::__impl::closestPointsSweep<false>(lhsBoundary.getSegments(), rhsBoundary.getSegments());
         }else if constexpr(ExecMode == ExecutionMode::DEFAULT){
             result = geometry::closestPoints(lhs,rhs);
         }
