@@ -45,7 +45,7 @@ public:
         GDALPolygonize(
             src->GetRasterBand(1),
             maskZero?src->GetRasterBand(1):nullptr,
-            layer,
+            OGRLayer::ToHandle(layer),
             fieldID,
             papszOptions,
             showProgress?GDALTermProgress:nullptr,

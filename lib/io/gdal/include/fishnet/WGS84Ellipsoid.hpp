@@ -42,7 +42,7 @@ private:
         OGRCoordinateTransformation * toMetric = OGRCreateCoordinateTransformation(&spatialReference, &metric);
         if(toMetric == nullptr || asOGR.raw()->transform(toMetric) != OGRERR_NONE)
             throw std::runtime_error("Could not transform geometry to metric");
-        OCTDestroyCoordinateTransformation(toMetric);
+        OCTDestroyCoordinateTransformation(OGRCoordinateTransformation::ToHandle(toMetric));
         return std::move(asOGR).narrowTo<T>().value_or_throw();
     }
 
