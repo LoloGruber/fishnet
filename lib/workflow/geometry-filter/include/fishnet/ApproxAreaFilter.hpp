@@ -15,7 +15,8 @@ public:
 
     bool operator() (const fishnet::geometry::IPolygon auto & p) const noexcept {
         double areaInLongLat = p.area();
-        for(const auto & anySegment : p.getBoundary().getSegments()){
+        auto boundary = p.getBoundary();
+        for(const auto & anySegment : boundary.getSegments()){
             double squaredFactor = pow(fishnet::WGS84Ellipsoid::distance(anySegment.p(),anySegment.q()),2)/pow(anySegment.length(),2); // estimates a factor to convert from lon,lat to m² for the polygon in question
             double approxArea = areaInLongLat * squaredFactor;
             return approxArea >= requiredArea; // return on first segment, as all segments should be similar in length and thus the factor should be similar
