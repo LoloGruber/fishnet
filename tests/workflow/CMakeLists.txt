@@ -1,6 +1,7 @@
 set(WorkflowTestBin Test-Workflow)
 add_executable(${WorkflowTestBin}
 PolygonDistanceTest.cpp
+SettlementShapeTest.cpp
 SpatialClusteringTest.cpp
 )
 gtest_discover_tests(${WorkflowTestBin})
