@@ -1,6 +1,5 @@
-#ifndef TEST_DummyNode_H
-#define TEST_DummyNode_H
-#include <functional>
+#pragma once
+#include <fishnet/ObjectConcepts.hpp>
 
 class IDNode
 {
@@ -22,17 +21,13 @@ public:
         return this->id == other.getId();
     }
 
+    size_t hash() const noexcept {
+        return (size_t) this->id;
+    }
+
+    std::string toString() const {
+        return "IDNode(" + std::to_string(this->id) + ")";
+    }
+
 };
-
-namespace std {
-    template<>
-    struct hash<IDNode>{
-        size_t operator()(const IDNode & k) const{
-            return (std::size_t) k.getId();
-        }
-    };
-}
-
-
-
-#endif
+static_assert(fishnet::util::Object<IDNode>,"IDNode should be an Object");

@@ -33,6 +33,10 @@ public:
         return this->key() == other.key();
     }
 
+    size_t hash() const noexcept {
+        return this->id;
+    }
+
     template<fishnet::VectorGISFile F,fishnet::util::Predicate<S> Filter = fishnet::util::TruePredicate>
     static std::vector<SettlementShape<S>> read(
         fishnet::util::range_of<F> auto const & files,
@@ -74,13 +78,3 @@ public:
         return read<F,Filter>(std::views::single(file),std::forward<decltype(reader)>(reader),std::forward<decltype(fileRefMapper)>(fileRefMapper),filter,idLayerName);
     }
 };
-
-
-namespace std {
-    template<fishnet::geometry::Shape S>
-    struct hash<SettlementShape<S>> {
-        size_t operator()(const SettlementShape<S> & settlement) const noexcept {
-            return std::hash<size_t>()(settlement.key());
-        }
-    };
-}
