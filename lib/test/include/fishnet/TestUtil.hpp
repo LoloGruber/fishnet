@@ -103,9 +103,8 @@ static auto trace(){
     ss << "Stack trace:" << std::endl;
     auto st = std::stacktrace::current();
     auto it = st.begin();
-    while(it != st.end() && it->source_file().ends_with("TestUtil.hxx"))
+    while(it != st.end() && it->source_file().ends_with("TestUtil.hpp"))
          ++it;
-    --it;
     auto first = it;
     while(not it->source_file().ends_with("gtest.cc") && it != st.end()) {
         if (it != first)
